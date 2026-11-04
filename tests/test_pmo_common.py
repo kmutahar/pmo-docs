@@ -62,6 +62,16 @@ class Common(unittest.TestCase):
         self.assertIsNone(pc.doc_type("no front matter"))
         self.assertEqual(pc.split_front_matter("---\n: [\n---\nb")[0], {})
 
+    def test_non_map_front_matter_and_non_text_type(self):
+        self.assertEqual(pc.split_front_matter("---\n- a\n---\nb")[0], {})
+        with self.assertRaises(pc.yaml.YAMLError):
+            pc.split_front_matter("---\n- a\n---\nb", strict=True)
+        self.assertIsNone(pc.doc_type("---\ntype: [x]\n---\nb"))
+
+    def test_to_date_datetime(self):
+        import datetime
+        self.assertEqual(pc.to_date(datetime.datetime(2026, 1, 2, 3, 4)), datetime.date(2026, 1, 2))
+
     def test_cell_escapes(self):
         self.assertEqual(pc.cell(["a|b", None, 3]), "a\\|b, , 3")
         self.assertEqual(pc.cell("x\ny"), "x y")

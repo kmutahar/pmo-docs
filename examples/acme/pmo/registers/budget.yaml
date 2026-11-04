@@ -1,0 +1,3 @@
+budget:
+  - {id: B-1, item: Hosting, low: 100, medium: 150, high: 250, note: Per month, origin: kickoff}
+  - {id: B-2, item: Payment vendor fee, low: 0, medium: 50, high: 120, note: Per month, origin: kickoff}

@@ -1,0 +1,5 @@
+issues:
+  - {id: I-1, title: Typo on home page, description: Heading is misspelled, severity: low, owner: bob, status: open, origin: review, raised: 2026-03-02, resolved: null, related_tasks: [T-2]}
+  - {id: I-2, title: Slow search, description: Search takes seconds, severity: medium, owner: alice, status: in-progress, origin: review, raised: 2026-03-03, resolved: null, related_tasks: []}
+  - {id: I-3, title: Login fails on staging, description: Users get an error page, severity: high, owner: alice, status: open, origin: test, raised: 2026-03-08, resolved: null, related_tasks: [T-1]}
+  - {id: I-4, title: Staging down, description: Server crashed once, severity: critical, owner: alice, status: resolved, origin: test, raised: 2026-03-04, resolved: 2026-03-06, related_tasks: [T-1]}

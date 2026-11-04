@@ -1,0 +1,3 @@
+objectives:
+  - {id: O-1, title: Launch the portal, kind: delivery, measure: Beta users, target: 10, due: 2026-04-30, status: in-progress, origin: kickoff}
+  - {id: O-2, title: Keep the team informed, kind: process, measure: Weekly reports sent, target: 8, due: 2026-04-30, status: in-progress, origin: kickoff}

@@ -1,0 +1,3 @@
+milestones:
+  - {id: M-1, title: Staging ready, period: 2026-03, due: 2026-03-20, status: in-progress, owner: alice, exit_criteria: Staging passes smoke tests, depends_on: []}
+  - {id: M-2, title: Beta launch, period: 2026-04, due: 2026-04-30, status: not-started, owner: bob, exit_criteria: Ten users signed in, depends_on: [M-1]}

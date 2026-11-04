@@ -64,12 +64,15 @@ def find_asset(root, cfg, kind, name):
 
 
 def split_front_matter(text, strict=False):
-    """(front matter dict or None when absent, body). Invalid YAML gives {}, or raises yaml.YAMLError when strict."""
+    """(front matter dict or None when absent, body). Invalid YAML, or YAML that is not a map, gives {}, or raises yaml.YAMLError when strict."""
     m = re.match(r"\A---\n(.*?)\n---\n", text, flags=re.S)
     if not m:
         return None, text
     try:
-        return (yaml.safe_load(m.group(1)) or {}), text[m.end():]
+        fm = yaml.safe_load(m.group(1)) or {}
+        if not isinstance(fm, dict):
+            raise yaml.YAMLError("front matter is not a map of keys")
+        return fm, text[m.end():]
     except yaml.YAMLError:
         if strict:
             raise
@@ -77,9 +80,9 @@ def split_front_matter(text, strict=False):
 
 
 def doc_type(text):
-    """A document's type is its front-matter `type`, or None."""
-    fm, _ = split_front_matter(text)
-    return (fm or {}).get("type")
+    """A document's type is its front-matter `type` (a string), or None."""
+    t = (split_front_matter(text)[0] or {}).get("type")
+    return t if isinstance(t, str) else None
 
 
 def load_register(root, cfg, name):
@@ -94,6 +97,8 @@ def load_register(root, cfg, name):
 def to_date(v):
     if not v:
         return None
+    if isinstance(v, datetime.datetime):
+        return v.date()
     return v if isinstance(v, datetime.date) else datetime.date.fromisoformat(str(v))
 
 

@@ -1,0 +1,3 @@
+changes:
+  - {id: CR-1, title: Add dark mode, requested_by: bob, date: 2026-03-06, description: Users asked for a dark theme, impact: Two more days, status: proposed, decided_by: null, decided_on: null, related_tasks: [T-2]}
+  - {id: CR-2, title: Drop the export page, requested_by: sam, date: 2026-02-20, description: Export is not needed for beta, impact: Saves three days, status: approved, decided_by: sam, decided_on: 2026-02-22, related_tasks: []}

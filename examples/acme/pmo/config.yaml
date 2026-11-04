@@ -1,0 +1,4 @@
+schema_version: 1
+project:
+  name: Acme Portal
+  manager: Sam Example

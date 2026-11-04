@@ -1,0 +1,3 @@
+capacity:
+  - {period: 2026-03, person: alice, working_days: 20, leave_days: 2, notes: ""}
+  - {period: 2026-03, person: bob, working_days: 20, leave_days: 0, notes: ""}

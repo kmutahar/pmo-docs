@@ -1,0 +1,3 @@
+actions:
+  - {id: ACT-1, text: Send vendor shortlist, owner: bob, due: 2026-03-12, status: open, source: MTG-1}
+  - {id: ACT-2, text: Book the demo room, owner: alice, due: 2026-03-08, status: done, source: MTG-1}

@@ -1,0 +1,3 @@
+risks:
+  - {id: R-1, title: Vendor delay, description: Payment vendor may reply late, probability: high, impact: high, owner: bob, mitigation: Ask two vendors, status: open, origin: kickoff, raised: 2026-02-10, closed: null}
+  - {id: R-2, title: Key person away, description: Alice may be on leave in April, probability: low, impact: medium, owner: sam, mitigation: Share the setup notes, status: closed, origin: kickoff, raised: 2026-02-10, closed: 2026-03-01}

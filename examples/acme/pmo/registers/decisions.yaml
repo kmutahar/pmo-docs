@@ -1,0 +1,3 @@
+decisions:
+  - {id: DEC-1, title: Use weekly releases, context: Team wants steady delivery, decision: Release every Thursday, options: [weekly, monthly], consequences: Smaller changes, decided_by: sam, date: 2026-02-12, status: accepted, supersedes: null, related: []}
+  - {id: DEC-2, title: Host on shared cloud, context: Need cheap hosting, decision: Use the shared cloud account, options: [shared, own], consequences: Lower cost, decided_by: sam, date: 2026-03-09, status: proposed, supersedes: null, related: [DEC-1]}
