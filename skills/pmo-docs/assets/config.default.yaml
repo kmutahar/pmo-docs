@@ -166,13 +166,13 @@ doc_types:
     title: Project plan
     template: project-plan.md
     name: "{title}.md"
-    generated_from: [tasks, milestones, priorities, teams, risks, dependencies, objectives]
+    generated_from: [tasks, milestones, priorities, teams, risks, assumptions, dependencies, changes, roster]
     stale_days: 30
   project-charter:
     title: Project charter
     template: project-charter.md
     name: "{title}.md"
-    generated_from: [objectives, milestones, risks, assumptions, roster]
+    generated_from: [objectives, priorities, budget, assumptions, roster]
     stale_days: 90
   change-request:
     title: Change request
@@ -188,24 +188,24 @@ doc_types:
     title: Team checklist
     template: team-checklist.md
     name: "{title}.md"
-    generated_from: [tasks, teams, roster]
+    generated_from: [tasks, teams, milestones]
     stale_days: 14
   roadmap:
     title: Roadmap
     template: roadmap.md
     name: "{title}.md"
-    generated_from: [milestones, priorities, objectives]
+    generated_from: [milestones, priorities, dependencies]
     stale_days: 30
   retrospective:
     title: Retrospective
     template: retrospective.md
     name: "{period} - {title}.md"
-    generated_from: []
+    generated_from: [tasks, issues, changes, actions]
   delivery-report:
     title: Delivery report
     template: delivery-report.md
     name: "{period} - {title}.md"
-    generated_from: [tasks, milestones, priorities, issues, changes, budget]
+    generated_from: [tasks, milestones, priorities, issues, risks, changes]
     stale_days: 30
   capacity-plan:
     title: Capacity plan
