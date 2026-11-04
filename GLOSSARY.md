@@ -59,11 +59,11 @@ A kind of document the project produces, such as a project charter or a weekly s
 _Avoid_: document kind, template type
 
 **Template**:
-The skeleton and contract of one doc type: the sections a document must have and the checks it must pass.
+The skeleton and contract of one doc type: the sections a document must have and the checks it must pass. The checks are declared in the template's own front matter, so an override carries its own.
 _Avoid_: form, skeleton, boilerplate
 
 **Check**:
-A rule a draft must meet, declared for its doc type.
+A rule a draft must meet, declared in the front matter of its doc type's template. A check that names a missing section fails.
 _Avoid_: lint, test
 
 **Period**:

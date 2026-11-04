@@ -1,6 +1,6 @@
 # pmo-docs: build and release plan
 
-Status: plan only. Nothing is built yet. Last updated 2026-11-04 (second review).
+Status: plan only. Nothing is built yet. Last updated 2026-11-04 (second review, checks decision).
 
 `pmo-docs` is a project-office and documentation workflow for AI coding agents. A project keeps its facts in **registers** (YAML files: tasks, risks, issues, decisions, and so on). Scripts render views from them, and the agent drafts documents from **templates** that tools check against a contract.
 
@@ -126,11 +126,16 @@ These bugs and rule conflicts were found in the source and must not be copied ac
 13. **Edit one entry, not the file.** Each entry is one line; tracking finds it with `grep -n 'id: T-014'` and edits that line.
 14. **A `where` tool.** `scripts/where.py <type> [period]` prints the document path, template path, `generated_from` and the winning override. It replaces path rules written in prose and is what makes overrides work.
 
-### 3.2 Per-type checks (open)
+### 3.2 Per-type checks (decided 2026-11-04)
 
 `structure_check` today has rules keyed by English heading names, so a renamed section silently turns a check off. In v0.1 each doc type declares `checks:`, with a few named kinds (`required_cells`, `equal_count`, `listed_have_sections`).
 
-**Open, decide before Phase C touches `structure_check`:** where the checks are declared. In `config.yaml` (all checks in one place; an override template means editing two files), or in each template's front matter (an override carries its own checks, which matches the glossary's "skeleton and contract"). Also open: whether a check that names a missing section fails instead of skipping.
+**Decision:** the checks live in each template's front matter, not in `config.yaml`. An override template carries its own checks, so one file and one `template_version` cover the skeleton and its contract. A check that names a missing section **fails** instead of skipping, so a renamed heading is caught, and an override that removes a section must remove its check in the same file.
+
+- `structure_check` reads the checks from the winning template (the lookup `where.py` reports), never from the draft.
+- Finish strips the `checks:` block from the finished document and keeps `template_version`.
+- No `checks_off` key in config for now. A project that needs to drop one check overrides the template; add the key only when a real project asks.
+- Rejected: checks in `config.yaml` (an override means editing two files that can drift, and the `based_on` drift warning would miss a check change) and a hybrid (a second place to look and a merge rule).
 
 ### 3.3 Setup
 
@@ -181,7 +186,7 @@ Build the repo by **copying engine files into `tmp/source/`** and generalising f
 - Write `assets/config.default.yaml` from scratch, using the source config only as a reference for the shape.
 - Vendor PyYAML into `scripts/_vendor/` and add the Python version check.
 - Make priorities, statuses, severity and dates config-driven.
-- Settle where checks live (3.2), then move the `structure_check` rules there.
+- Move the `structure_check` rules into template front matter (3.2).
 - Apply the fixes in 3.1.
 - Replace project names in templates with `{{project}}` and `{{manager}}`.
 - Write `setup.md` and `setup.py` (3.3) and `where.py`.
@@ -378,7 +383,7 @@ Sources:
 - [ ] v0.5: test on other agents
 - [ ] 1.0: config schema stable, upgrades from every 0.x tested
 - [ ] After 1.0: team support
-- [ ] Decide: where checks live (3.2), before Phase C touches `structure_check`
+- [x] Decided: checks live in template front matter; a check naming a missing section fails (3.2, 2026-11-04)
 - [ ] Decide: the source project's path (section 6)
 - [x] Decided: public from the start (section 7)
 - [x] Decided: roadmap, schema version, tests and CI, raw-copy workspace, changelog rules, glossary, documents folder (sections 1 and 3.3, 2026-11-04)
