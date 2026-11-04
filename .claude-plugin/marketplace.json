@@ -1,0 +1,13 @@
+{
+  "name": "pmo-docs",
+  "owner": {
+    "name": "kmutahar"
+  },
+  "plugins": [
+    {
+      "name": "pmo-docs",
+      "source": "./",
+      "description": "A project-office and documentation workflow packaged as an Agent Skill: registers, generated views, document templates and checks."
+    }
+  ]
+}
