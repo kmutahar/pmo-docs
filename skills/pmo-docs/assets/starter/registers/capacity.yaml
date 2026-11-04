@@ -1,0 +1,3 @@
+# capacity: one entry per line, e.g.
+#   - {period: ..., person: ..., working_days: ..., leave_days: ..., notes: ...}
+capacity: []

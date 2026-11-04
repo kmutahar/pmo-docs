@@ -1,0 +1,4 @@
+# priorities: one entry per line, e.g.
+#   - {id: ..., title: ..., goals: ..., output: ..., depends_on: ..., blocks: ..., owner: ..., acceptance: ..., accepted_by: ..., accepted_on: ..., status: ..., note: ..., due: ...}
+# ids look like P-1
+priorities: []

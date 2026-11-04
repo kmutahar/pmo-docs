@@ -1,0 +1,4 @@
+# issues: one entry per line, e.g.
+#   - {id: ..., title: ..., description: ..., severity: ..., owner: ..., status: ..., origin: ..., raised: ..., resolved: ..., related_tasks: ...}
+# ids look like I-1
+issues: []

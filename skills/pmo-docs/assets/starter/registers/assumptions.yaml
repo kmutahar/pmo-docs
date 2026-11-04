@@ -1,0 +1,4 @@
+# assumptions: one entry per line, e.g.
+#   - {id: ..., text: ..., owner: ..., status: ..., validate_by: ..., origin: ...}
+# ids look like A-1
+assumptions: []

@@ -1,0 +1,4 @@
+# dependencies: one entry per line, e.g.
+#   - {id: ..., type: ..., from: ..., to: ..., text: ..., status: ...}
+# ids look like D-1
+dependencies: []

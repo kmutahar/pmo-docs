@@ -1,0 +1,4 @@
+# budget: one entry per line, e.g.
+#   - {id: ..., item: ..., low: ..., medium: ..., high: ..., note: ..., origin: ...}
+# ids look like B-1
+budget: []

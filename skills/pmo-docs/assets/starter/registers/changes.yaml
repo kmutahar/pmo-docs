@@ -1,0 +1,4 @@
+# changes: one entry per line, e.g.
+#   - {id: ..., title: ..., requested_by: ..., date: ..., description: ..., impact: ..., status: ..., decided_by: ..., decided_on: ..., related_tasks: ...}
+# ids look like CR-1
+changes: []

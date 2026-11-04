@@ -1,0 +1,3 @@
+# roster: one entry per line, e.g.
+#   - {slug: ..., name: ..., role: ...}
+roster: []

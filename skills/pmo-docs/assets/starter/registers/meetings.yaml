@@ -1,0 +1,4 @@
+# meetings: one entry per line, e.g.
+#   - {id: ..., title: ..., date: ..., attendees: ..., decisions: ..., actions: ..., minutes_doc: ...}
+# ids look like MTG-1
+meetings: []

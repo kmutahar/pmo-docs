@@ -1,0 +1,4 @@
+# decisions: one entry per line, e.g.
+#   - {id: ..., title: ..., context: ..., decision: ..., options: ..., consequences: ..., decided_by: ..., date: ..., status: ..., supersedes: ..., related: ...}
+# ids look like DEC-1
+decisions: []

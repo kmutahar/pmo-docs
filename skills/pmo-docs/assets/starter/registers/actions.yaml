@@ -1,0 +1,4 @@
+# actions: one entry per line, e.g.
+#   - {id: ..., text: ..., owner: ..., due: ..., status: ..., source: ...}
+# ids look like ACT-1
+actions: []
