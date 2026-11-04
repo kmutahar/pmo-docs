@@ -6,7 +6,7 @@
 set -u
 cd "$(dirname "$0")/.." || exit 2
 fail=0
-skip=(':!dev/scrub.sh' ':!LICENSE')
+skip=(':!dev/scrub.sh' ':!LICENSE' ':!skills/pmo-docs/scripts/_vendor') # vendored upstream code
 
 # Scans what a commit would publish: the index (staged copies, not the files on disk)
 # plus untracked files that are about to be added. Gitignored files (tmp/) are skipped.
