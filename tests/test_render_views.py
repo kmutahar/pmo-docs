@@ -71,6 +71,12 @@ class RenderViews(unittest.TestCase):
             self.assertIn(part, out)
         self.assertFalse((self.views / "tasks.md").exists())  # nothing written on errors
 
+    def test_task_priority_must_be_in_priority_order(self):
+        self.append("tasks", "  - {id: T-9, title: x, status: open, priority: urgent}")
+        code, out = run(self.root)
+        self.assertEqual(code, 1)
+        self.assertIn("priority 'urgent'", out)
+
     def test_impossible_date_is_reported(self):
         self.append("tasks", "  - {id: T-9, title: x, status: done, due: 2026-02-30}")
         code, out = run(self.root)

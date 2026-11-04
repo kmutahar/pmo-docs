@@ -50,7 +50,8 @@ def load_config(root="."):
         mine = yaml.safe_load(read(f)) or {}
         v = mine.get("schema_version", 1)
         if not isinstance(v, int) or v > SCHEMA_VERSION:
-            sys.exit(f"{f}: schema_version {v!r} is newer than this skill knows ({SCHEMA_VERSION}). Update the skill.")
+            print(f"{f}: schema_version {v!r} is newer than this skill knows ({SCHEMA_VERSION}). Update the skill.", file=sys.stderr)
+            sys.exit(2)  # 2, not 1: callers read 1 as "findings"
         cfg = merge(cfg, mine)
     return cfg
 

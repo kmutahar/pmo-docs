@@ -5,7 +5,6 @@ schema_version: 1
 project:
   name: null          # asked by setup
   manager: null       # the project manager, asked by setup
-  week_start: monday
   period_format: YYYY-MM
 
 # Folders, relative to the project root.
@@ -38,7 +37,7 @@ registers:
     view: tasks.md
     prefix: T
     fields: [id, title, team, group, priority, owner, status, due, period, notes, origin]
-    enums: {status: task_status, origin: origin}
+    enums: {status: task_status, priority: priority_order, origin: origin}
     dates: [due]
     closed: [done, dropped]
   priorities:

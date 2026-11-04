@@ -1,4 +1,7 @@
 """Tests for scripts/pmo_common.py. Run from the repo root: python3 -m unittest discover tests"""
+import re
+import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -33,7 +36,7 @@ class Common(unittest.TestCase):
                          "doc_types: {roadmap: null}\n")
         c = pc.load_config(d)
         self.assertEqual(c["project"]["name"], "Acme")
-        self.assertEqual(c["project"]["week_start"], "monday")  # map merged
+        self.assertEqual(c["project"]["period_format"], "YYYY-MM")  # map merged
         self.assertEqual(c["vocab"]["task_status"], ["a", "b"])  # list replaced
         self.assertNotIn("rag", c["vocab"])  # null removes
         self.assertNotIn("roadmap", c["doc_types"])
@@ -76,6 +79,38 @@ class Common(unittest.TestCase):
         self.assertEqual(pc.cell(["a|b", None, 3]), "a\\|b, , 3")
         self.assertEqual(pc.cell("x\ny"), "x y")
         self.assertEqual(pc.to_date("2026-01-02").day, 2)
+
+
+SCRIPTS = Path(__file__).resolve().parents[1] / "skills/pmo-docs/scripts"
+TOOLS = ["docs_audit.py", "overdue.py", "render_views.py", "setup.py", "structure_check.py", "where.py"]
+
+
+class EveryTool(unittest.TestCase):
+    def run_tool(self, name, *args):
+        p = subprocess.run([sys.executable, str(SCRIPTS / name), *args], capture_output=True, text=True, encoding="utf-8")
+        return p.returncode, p.stdout + p.stderr
+
+    def test_every_tool_answers_help(self):
+        for name in TOOLS:
+            code, out = self.run_tool(name, "--help")
+            self.assertEqual(code, 0, name)
+            self.assertIn("usage", out.lower(), name)
+
+    def test_newer_schema_is_refused_and_nothing_is_written(self):
+        d = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, d)
+        (d / "pmo").mkdir()
+        (d / "pmo/config.yaml").write_text("schema_version: 99\n", encoding="utf-8")
+        for name in ["docs_audit.py", "overdue.py", "render_views.py", "structure_check.py"]:
+            code, out = self.run_tool(name, "--project", str(d))
+            self.assertEqual(code, 2, f"{name}: {out}")
+            self.assertIn("schema_version", out, name)
+        self.assertEqual(sorted(p.name for p in (d / "pmo").iterdir()), ["config.yaml"])
+
+    def test_no_tool_stages_or_commits(self):
+        for f in SCRIPTS.glob("*.py"):
+            text = f.read_text(encoding="utf-8")
+            self.assertFalse(re.search(r"""["']git["']|git (add|commit|push)""", text), f.name)
 
 
 if __name__ == "__main__":
