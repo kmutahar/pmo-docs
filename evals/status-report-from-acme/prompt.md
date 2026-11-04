@@ -5,4 +5,4 @@ allowed_tools: [Skill, Read, Write, Edit, Glob, Grep, Bash]
 tags: [draft]
 ---
 
-Draft the March 2026 status report for this project from its registers. Treat 2026-03-15 as today's date.
+Draft the March 2026 status report for this project from its registers. Treat 2026-03-15 as today's date. In your final answer, quote the "Overall" line and every row of the "Blockers and decisions needed" table from the draft.
