@@ -18,8 +18,6 @@ def main(argv=None):
     pc.add_project_arg(ap)
     ap.add_argument("--name", default=None, help="project name")
     ap.add_argument("--manager", default=None, help="project manager name")
-    ap.add_argument("--week-start", choices=["monday", "sunday", "saturday"], default=None,
-                    help="first day of the week (monday, sunday, saturday)")
     ap.add_argument("--priority-order", default=None,
                     help="comma-separated priority order (most urgent first)")
     args = ap.parse_args(argv)
@@ -68,8 +66,6 @@ def main(argv=None):
             "manager": args.manager,
         },
     }
-    if args.week_start is not None:
-        mine["project"]["week_start"] = args.week_start
     if priority_order is not None:
         mine["vocab"] = {"priority_order": priority_order}
 

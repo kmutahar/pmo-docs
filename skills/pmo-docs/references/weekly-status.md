@@ -7,7 +7,7 @@ Run as `weekly-status [--week YYYY-Www]`. Produces a draft `status-report` for o
 ## Steps
 
 1. **Find the week and the paths**
-   With no `--week`, use the current week. Run `python3 ${CLAUDE_SKILL_DIR}/scripts/where.py status-report [YYYY-Www] --week`. The window is the seven days of that ISO week, Monday to Sunday, whatever `project.week_start` says (`SKILL.md`, Documents). If the document exists, follow `references/draft.md` step 2.
+   With no `--week`, use the current week. Run `python3 ${CLAUDE_SKILL_DIR}/scripts/where.py status-report [YYYY-Www] --week`. The window is the seven days of that ISO week, Monday to Sunday (`SKILL.md`, Documents). If the document exists, follow `references/draft.md` step 2.
    Find the previous report in `paths.documents`: the status report of the week before, or the latest one. With none, say "first report, no comparison" and skip deltas.
 
 2. **Validate the registers**

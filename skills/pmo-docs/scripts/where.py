@@ -44,7 +44,7 @@ def main(argv=None):
     if args.period:
         period = args.period
     elif args.week:
-        # shortcut: ISO weeks start on Monday, ignores project.week_start; revisit when a project needs Sunday weeks
+        # shortcut: ISO weeks start on Monday, no per-project week start; add one when a project needs Sunday weeks
         iso = args.as_of.isocalendar()
         period = f"{iso.year}-W{iso.week:02d}"
     else:

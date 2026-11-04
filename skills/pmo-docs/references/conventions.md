@@ -20,7 +20,7 @@ All paths come from the config (`paths`), relative to the project root. Defaults
 
 Run `python3 ${CLAUDE_SKILL_DIR}/scripts/where.py <type> [period] [--week] [--as-of YYYY-MM-DD] [--hashes]`. It prints `key: value` lines: the document path and whether it exists, the template path and whether it is the skill's or the project's, `template_version`, `based_on`, `generated_from`, `stale_days` and, with `--hashes`, `source_hashes`.
 
-The file name comes from the doc type's `name` in the config. Tokens: `{title}` is the type's `title`; `{period}` is the month `YYYY-MM` (or the ISO week `YYYY-Www` with `--week`); `{date}` is the as-of date. With no period, the current month is used. Types named by `{date}` (change request, meeting minutes) need `--as-of` set to the date of the event. The ISO week starts on Monday; `project.week_start` is not applied to week labels yet (`SKILL.md`, Documents).
+The file name comes from the doc type's `name` in the config. Tokens: `{title}` is the type's `title`; `{period}` is the month `YYYY-MM` (or the ISO week `YYYY-Www` with `--week`); `{date}` is the as-of date. With no period, the current month is used. Types named by `{date}` (change request, meeting minutes) need `--as-of` set to the date of the event. The ISO week starts on Monday.
 
 ## Front matter
 
@@ -56,7 +56,7 @@ Run from the project root, or pass `--project DIR`. Every script answers `--help
 
 | Command | What it does | Exit codes |
 |---|---|---|
-| `python3 ${CLAUDE_SKILL_DIR}/scripts/setup.py [--name TEXT] [--manager TEXT] [--week-start DAY] [--priority-order LIST]` | creates the config, house rules, empty registers and documents folder; never overwrites | 0 ok, 1 the new registers failed validation, 2 usage |
+| `python3 ${CLAUDE_SKILL_DIR}/scripts/setup.py [--name TEXT] [--manager TEXT] [--priority-order LIST]` | creates the config, house rules, empty registers and documents folder; never overwrites | 0 ok, 1 the new registers failed validation, 2 usage |
 | `python3 ${CLAUDE_SKILL_DIR}/scripts/where.py <type> [period] [--week] [--as-of DATE] [--hashes]` | paths and settings of one doc type; `--hashes` adds the `source_hashes` line Finish records | 0 ok, 2 usage |
 | `python3 ${CLAUDE_SKILL_DIR}/scripts/render_views.py [--check]` | validates every register and writes the views; with `--check` it writes nothing and also fails when a view on disk is stale | 0 valid and current, 1 validation errors or stale views, 2 usage |
 | `python3 ${CLAUDE_SKILL_DIR}/scripts/structure_check.py [files]` | checks documents against their template (default: every document) | 0 clean (warnings allowed), 1 findings, 2 usage |

@@ -47,10 +47,9 @@ class Setup(unittest.TestCase):
         self.assertEqual(set(mine), {"schema_version", "project"})
         self.assertEqual(mine["project"], {"name": "Demo", "manager": None})  # unknown values stay null
 
-    def test_flags_week_start_and_priority_order(self):
-        tool("setup.py", self.root, "--week-start", "sunday", "--priority-order", "urgent,normal")
+    def test_priority_order_flag(self):
+        tool("setup.py", self.root, "--priority-order", "urgent,normal")
         cfg = pc.load_config(self.root)
-        self.assertEqual(cfg["project"]["week_start"], "sunday")
         self.assertEqual(cfg["vocab"]["priority_order"], ["urgent", "normal"])
 
     def test_never_overwrites(self):
@@ -76,7 +75,7 @@ class Setup(unittest.TestCase):
         self.assertIn("render_views.py --check", out)
 
     def test_bad_flag_values_exit_2(self):
-        self.assertEqual(tool("setup.py", self.root, "--week-start", "someday")[0], 2)
+        self.assertEqual(tool("setup.py", self.root, "--bogus-flag")[0], 2)
         self.assertFalse((self.root / "pmo").exists())
 
     def test_missing_project_folder_exits_2(self):

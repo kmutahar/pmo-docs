@@ -18,7 +18,6 @@ Set up a project's `pmo/` workspace and starter registers.
    Ask the user for initial project details, showing defaults:
    - Project name (default: null)
    - Project manager (default: null)
-   - Week start day (default: monday; choices: monday, sunday, saturday)
    - Priority order (default: high, medium, low)
    Unknown answers stay null and become open questions.
 
@@ -42,7 +41,7 @@ Set up a project's `pmo/` workspace and starter registers.
 
 4. **Run setup script**
    Execute `scripts/setup.py` with the chosen flags:
-   `python3 ${CLAUDE_SKILL_DIR}/scripts/setup.py [--name TEXT] [--manager TEXT] [--week-start DAY] [--priority-order LIST]`
+   `python3 ${CLAUDE_SKILL_DIR}/scripts/setup.py [--name TEXT] [--manager TEXT] [--priority-order LIST]`
 
 5. **Verify and next steps**
    Run `python3 ${CLAUDE_SKILL_DIR}/scripts/render_views.py --check` to confirm registers and views are valid.
