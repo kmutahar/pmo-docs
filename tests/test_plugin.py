@@ -1,6 +1,10 @@
 """Tests for the plugin manifest files. Run from the repo root: python3 -m unittest tests.test_plugin"""
 import json
 import re
+import shutil
+import subprocess
+import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -39,6 +43,33 @@ class Plugin(unittest.TestCase):
         for name in ("plugin.json", "marketplace.json"):
             text = (REPO / ".claude-plugin" / name).read_text(encoding="utf-8")
             self.assertNotRegex(text, r"/home/|@[\w.-]+\.\w+")
+
+
+class Evals(unittest.TestCase):
+    """The eval files are only run by hand (they cost tokens), so check their shape and fixture here."""
+    CASES = ("setup-needs-consent", "status-report-from-acme")
+
+    def test_every_case_has_a_prompt_and_unique_graders(self):
+        sys.path.insert(0, str(REPO / "skills/pmo-docs/scripts"))
+        import pmo_common  # noqa: F401  (puts the vendored PyYAML on the path)
+        import yaml
+        for case in self.CASES:
+            d = REPO / "evals" / case
+            self.assertTrue((d / "prompt.md").read_text(encoding="utf-8").strip(), case)
+            names = set()
+            for g in sorted((d / "graders").glob("*.md")):
+                fm = yaml.safe_load(g.read_text(encoding="utf-8").split("---")[1])
+                self.assertIn(fm["type"], {"regex", "tool_order", "tool_used", "file_exists", "llm", "baseline"}, g.name)
+                names.add(g.stem)
+            self.assertGreaterEqual(len(names), 3, case)
+
+    def test_scaffold_builds_a_valid_acme_without_the_draft(self):
+        tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, tmp)
+        subprocess.run(["bash", str(REPO / "evals/status-report-from-acme/scaffold.sh")], cwd=tmp, check=True)
+        self.assertFalse((tmp / "pmo/documents/2026-03 - Status report.md").exists())
+        p = subprocess.run([sys.executable, str(REPO / "skills/pmo-docs/scripts/render_views.py"), "--check"], cwd=tmp, capture_output=True)
+        self.assertEqual(p.returncode, 0)
 
 
 if __name__ == "__main__":
