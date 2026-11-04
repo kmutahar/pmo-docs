@@ -1,0 +1,32 @@
+# local-only: names that must never enter the repo (used by dev/scrub.sh)
+.scrub-names
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+
+# editors and OS
+.DS_Store
+.idea/
+.vscode/
+
+# agent session state
+.claude/settings.local.json
+.trail/
+graphify-out/
+tmp/
+
+# secrets
+.env
+.env.*
+*.pem
+*.key
+
+# a project's private working data must never live in this repo
+pmo/inbox/
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+/graft/
