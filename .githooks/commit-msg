@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Commit subjects become public changelog lines: block blocked names in the message.
+names="$(git rev-parse --show-toplevel)/.scrub-names"
+[ -s "$names" ] || exit 0
+# git's own "#" comment lines list file names; they never reach the commit, so skip them
+if git stripspace --strip-comments < "$1" | grep -iEf "$names" >/dev/null; then
+  echo "commit-msg: the message contains a blocked name (see .scrub-names)" >&2
+  exit 1
+fi

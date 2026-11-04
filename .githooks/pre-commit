@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Blocks the commit if the repo holds private data. Enable once per clone:
+#   git config core.hooksPath .githooks
+exec "$(git rev-parse --show-toplevel)/dev/scrub.sh"
