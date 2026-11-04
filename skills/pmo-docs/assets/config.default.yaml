@@ -1,0 +1,227 @@
+# Defaults for every project. A project's pmo/config.yaml holds only what differs.
+# Merge rule: maps merge, lists replace, null removes a map entry.
+schema_version: 1
+
+project:
+  name: null          # asked by setup
+  manager: null       # the project manager, asked by setup
+  week_start: monday
+  period_format: YYYY-MM
+
+# Folders, relative to the project root.
+paths:
+  registers: pmo/registers
+  views: pmo/views
+  templates: pmo/templates
+  documents: pmo/documents
+  house_rules: pmo/house-rules.md
+
+# Allowed values for entry fields. An empty list means any value is accepted.
+vocab:
+  task_status: [not-started, in-progress, blocked, done, dropped]
+  risk_status: [open, mitigating, closed, occurred]
+  issue_status: [open, in-progress, resolved, closed]
+  change_status: [proposed, approved, rejected, implemented]
+  decision_status: [proposed, accepted, superseded]
+  action_status: [open, done, dropped]
+  risk_level: [low, medium, high]
+  issue_severity: [low, medium, high, critical]
+  rag: [green, amber, red]
+  origin: []
+  priority_order: [high, medium, low]   # sort order for priorities, first = most urgent
+
+# Registers: file and view name, id prefix, fields, which fields are checked
+# against a vocab, which are dates, and which statuses mean the entry is closed.
+registers:
+  tasks:
+    file: tasks.yaml
+    view: tasks.md
+    prefix: T
+    fields: [id, title, team, group, priority, owner, status, due, period, notes]
+    enums: {status: task_status}
+    dates: [due]
+    closed: [done, dropped]
+  priorities:
+    file: priorities.yaml
+    view: priorities.md
+    prefix: P
+    fields: [id, title, goals, output, depends_on, blocks, owner, acceptance, accepted_by, accepted_on, status, note, due]
+    enums: {status: task_status}
+    dates: [due, accepted_on]
+    closed: [done, dropped]
+  milestones:
+    file: milestones.yaml
+    view: milestones.md
+    prefix: M
+    fields: [id, title, period, due, status, owner, exit_criteria, depends_on]
+    enums: {status: task_status}
+    dates: [due]
+    closed: [done, dropped]
+  risks:
+    file: risks.yaml
+    view: risks.md
+    prefix: R
+    fields: [id, title, description, probability, impact, owner, mitigation, status, origin, raised, closed]
+    enums: {status: risk_status, probability: risk_level, impact: risk_level, origin: origin}
+    dates: [raised, closed]
+    closed: [closed, occurred]
+  issues:
+    file: issues.yaml
+    view: issues.md
+    prefix: I
+    fields: [id, title, description, severity, owner, status, origin, raised, resolved, related_tasks]
+    enums: {status: issue_status, severity: issue_severity, origin: origin}
+    dates: [raised, resolved]
+    closed: [resolved, closed]
+  assumptions:
+    file: assumptions.yaml
+    view: assumptions.md
+    prefix: A
+    fields: [id, text, owner, status, validate_by, origin]
+    enums: {origin: origin}
+    dates: [validate_by]
+  dependencies:
+    file: dependencies.yaml
+    view: dependencies.md
+    prefix: D
+    fields: [id, type, from, to, text, status]
+  decisions:
+    file: decisions.yaml
+    view: decisions.md
+    prefix: DEC
+    fields: [id, title, context, decision, options, consequences, decided_by, date, status, supersedes, related]
+    enums: {status: decision_status}
+    dates: [date]
+    closed: [accepted, superseded]
+  actions:
+    file: actions.yaml
+    view: actions.md
+    prefix: ACT
+    fields: [id, text, owner, due, status, source]
+    enums: {status: action_status}
+    dates: [due]
+    closed: [done, dropped]
+  changes:
+    file: changes.yaml
+    view: changes.md
+    prefix: CR
+    fields: [id, title, requested_by, date, description, impact, status, decided_by, decided_on, related_tasks]
+    enums: {status: change_status}
+    dates: [date, decided_on]
+    closed: [approved, rejected, implemented]
+  meetings:
+    file: meetings.yaml
+    view: meetings.md
+    prefix: MTG
+    fields: [id, title, date, attendees, decisions, actions, minutes_doc]
+    dates: [date]
+  teams:
+    file: teams.yaml
+    view: teams.md
+    prefix: TM
+    fields: [id, order, heading, owners, note, output]
+  capacity:
+    file: capacity.yaml
+    view: capacity.md
+    fields: [period, person, working_days, leave_days, notes]
+  objectives:
+    file: objectives.yaml
+    view: objectives.md
+    prefix: O
+    fields: [id, title, kind, measure, target, due, status, origin]
+    enums: {origin: origin}
+    dates: [due]
+  budget:
+    file: budget.yaml
+    view: budget.md
+    prefix: B
+    fields: [id, item, low, medium, high, note, origin]
+    enums: {origin: origin}
+  roster:
+    file: roster.yaml
+    view: roster.md
+    fields: [slug, name, role]
+
+# Doc types. name is the file name; {period} is the month (YYYY-MM) or the week.
+# generated_from lists every register the template reads (checked for staleness).
+# stale_days: warn when a finished document is older than this many days.
+doc_types:
+  status-report:
+    title: Status report
+    template: status-report.md
+    name: "{period} - {title}.md"
+    generated_from: [tasks, milestones, risks, issues, changes, actions, decisions, teams]
+    stale_days: 30
+  overdue-report:
+    title: Overdue report
+    template: overdue-report.md
+    name: "{period} - {title}.md"
+    generated_from: [tasks, milestones, actions, risks, issues]
+  docs-audit-report:
+    title: Documentation audit
+    template: docs-audit-report.md
+    name: "{period} - {title}.md"
+    generated_from: []
+  project-plan:
+    title: Project plan
+    template: project-plan.md
+    name: "{title}.md"
+    generated_from: [tasks, milestones, priorities, teams, risks, dependencies, objectives]
+    stale_days: 30
+  project-charter:
+    title: Project charter
+    template: project-charter.md
+    name: "{title}.md"
+    generated_from: [objectives, milestones, risks, assumptions, roster]
+    stale_days: 90
+  change-request:
+    title: Change request
+    template: change-request.md
+    name: "{date} - {title}.md"
+    generated_from: [changes]
+  meeting-minutes:
+    title: Meeting minutes
+    template: meeting-minutes.md
+    name: "{date} - {title}.md"
+    generated_from: [meetings, actions, decisions]
+  team-checklist:
+    title: Team checklist
+    template: team-checklist.md
+    name: "{title}.md"
+    generated_from: [tasks, teams, roster]
+    stale_days: 14
+  roadmap:
+    title: Roadmap
+    template: roadmap.md
+    name: "{title}.md"
+    generated_from: [milestones, priorities, objectives]
+    stale_days: 30
+  retrospective:
+    title: Retrospective
+    template: retrospective.md
+    name: "{period} - {title}.md"
+    generated_from: []
+  delivery-report:
+    title: Delivery report
+    template: delivery-report.md
+    name: "{period} - {title}.md"
+    generated_from: [tasks, milestones, priorities, issues, changes, budget]
+    stale_days: 30
+  capacity-plan:
+    title: Capacity plan
+    template: capacity-plan.md
+    name: "{period} - {title}.md"
+    generated_from: [capacity, tasks, roster]
+    stale_days: 30
+  weekly-plan:
+    title: Weekly plan
+    template: weekly-plan.md
+    name: "{period} - {title}.md"
+    generated_from: [tasks, actions, capacity]
+    stale_days: 7
+  decision-log:
+    title: Decision log
+    template: decision-log.md
+    name: "{title}.md"
+    generated_from: [decisions]
+    stale_days: 30
