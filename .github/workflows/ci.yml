@@ -1,0 +1,19 @@
+# Tests and the generic privacy scrub on every push and pull request.
+# The names list (.scrub-names) never leaves the maintainer's machine, so CI checks generic patterns only.
+name: ci
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.10", "3.x"]  # the floor and the newest stable release
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python }}
+      - run: bash dev/scrub.sh
+      - run: python3 -m unittest discover tests
