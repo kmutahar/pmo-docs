@@ -27,8 +27,12 @@ The person who runs the project and is named on its documents.
 _Avoid_: owner, lead, sponsor
 
 **Owner**:
-The person responsible for one entry.
+The person responsible for one entry, named by their roster slug.
 _Avoid_: assignee, responsible
+
+**Roster**:
+The register of the project's people: one entry per person with a slug, name and role.
+_Avoid_: members, people list, team (a team is a work stream)
 
 ## Facts
 
@@ -93,5 +97,5 @@ Step-by-step instructions the agent follows for one kind of request. The skill k
 _Avoid_: reference, guide, procedure, mode
 
 **Recipe**:
-A named request (such as weekly-status) that runs a fixed sequence of playbooks.
+A named request with fixed inputs (such as weekly-status) that has its own playbook and produces a draft. It may edit registers, but never publishes or sends.
 _Avoid_: workflow, command, routine, macro

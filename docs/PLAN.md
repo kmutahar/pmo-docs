@@ -22,11 +22,13 @@ Effort: S = under an hour, M = one session, L = several sessions.
 | Writers | Built for one writer per project (a project manager and their agent) and safe for teams: duplicate ids fail validation, views are deterministic, and the README states the limit. Full team support comes after 1.0. | Most projects have one writer. A team must not be broken, but ids that cannot collide and a shared hook can wait. |
 | v0.1 languages | English only | No RTL, digit or connector-word logic to generalise yet. Translations arrive in v0.3. |
 | v0.1 tools | Core only: `pmo_common`, `render_views`, `structure_check`, `docs_audit`, `overdue`, `where`, `setup` | Little project coupling. Generators and extras wait until they are de-hardcoded. |
-| v0.1 content | Only the templates and registers that a v0.1 playbook or recipe uses and a test covers. Phase B picks them from the source (27 templates, 19 registers). | Each one shipped is a public contract under `schema_version` that needs checks, fixture data and tests, and no real project uses v0.1 before v0.3. The rest arrive with the release that needs them. |
+| v0.1 content | Only the templates and registers that a v0.1 playbook or recipe uses and a test covers. Phase B picked 14 templates and 15 registers plus the roster (section 3, "v0.1 content"). | Each one shipped is a public contract under `schema_version` that needs checks, fixture data and tests, and no real project uses v0.1 before v0.3. The rest arrive with the release that needs them. |
 | Technical templates | Not in v0.1 (lifecycle, API reference, user guide, and similar) | They need per-stack rules (v0.4). |
 | Config | A new generic `config.default.yaml` in the skill, **not a copy** of the source project's | The source config is that project's instance. |
 | Project config | Sparse: `pmo/config.yaml` holds `schema_version` and the project's own answers. Everything else comes from the skill's default. `null` removes a default map entry (for example a doc type the project does not use). | A full copy pins every key, so later defaults never reach the project. |
 | Priorities | Config-driven (`vocab.priority_order`), default P1-P3, no special "DOC" level | The source tools hardcode a documentation pseudo-priority. |
+| Roster | The project's people are a register, `pmo/registers/roster.yaml`, one entry per person (slug, name, role). Owner fields hold roster slugs. (decided 2026-11-04) | One format and one validator for every fact. "Team" already means a work stream. |
+| Dash check | Not in v0.1. A project that wants plain `-` only says so in its house rules. (decided 2026-11-04) | It is the source project's house style, not a generic rule. |
 | Setup | `setup.md` playbook **plus** `scripts/setup.py` | The agent asks for the project name and project manager and runs the script, or the user runs the script directly. |
 | Git hook | None installed in user projects. The agent runs the checks at Finish; `render_views --check` exits 1 when validation fails or views are stale; the README shows how to call it from the user's own hook. No tool or hook in pmo-docs runs `git add`. | A hook must call the scripts by absolute path, but a plugin's path changes on every update, a copied skill sits at a different path on each machine, and `.git/hooks` is not shared with teammates. The source hook also staged views without being asked. |
 | Views | Committed in the user's project. Rendering is deterministic (sorted, no run timestamps). | Stakeholders read them on GitHub, and a merge conflict in a view is fixed by rendering again. |
@@ -95,13 +97,30 @@ The skill keeps playbooks in `references/` because the Agent Skills spec names t
 | `pmo/tools/structure_check.py` | `scripts/structure_check.py` | Per-type rules keyed by heading names become declared checks (see 3.2); self-test on fixtures; add `--help` |
 | `pmo/tools/docs_audit.py` | `scripts/docs_audit.py` | Exit 1 on findings; stale documents by hash (section 1); add `--help` |
 | `pmo/tools/overdue.py` | `scripts/overdue.py` | Statuses and severity order from config; window as a flag; fix the crash when `--as-of` has no value |
-| The templates Phase B picks | `assets/templates/` | `{{project}}` and `{{manager}}` placeholders |
-| The registers Phase B picks, empty | `assets/starter/registers/` | Header comments only |
+| The 14 templates in "v0.1 content" below | `assets/templates/` | `{{project}}` and `{{manager}}` placeholders; `checks:` in front matter (3.2) |
+| The 15 registers in "v0.1 content" below, plus the roster, empty | `assets/starter/registers/` | Header comments only |
 | (new) | `assets/config.default.yaml` | `schema_version: 1` and only the keys v0.1 reads: doc types, vocab, register fields, `paths` |
 | (new) | `scripts/setup.py`, `references/setup.md` | See 3.3 |
 | (new) | `scripts/where.py` | See 3.1, fix 14 |
 | (new) | `scripts/_vendor/yaml/` | PyYAML's pure-Python package, unchanged, with its licence |
 | (new) | `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, `evals/` (repo root) | See section 5, Plugin |
+
+### v0.1 content (picked in Phase B, 2026-11-04)
+
+The wider of the two options considered: the plan and govern playbooks ship whole instead of being trimmed and grown back in v0.2.
+
+| Kind | In v0.1 |
+|---|---|
+| Playbooks | `setup`, `conventions`, `draft`, `finish`, `track`, `plan`, `govern`, `extend` |
+| Recipes | `weekly-status`, `monthly-status`, `month-start`, `overdue-report`, `docs-audit` |
+| Doc types (templates) | `status-report`, `overdue-report`, `docs-audit-report`, `project-plan`, `project-charter`, `change-request`, `meeting-minutes`, `team-checklist`, `roadmap`, `retrospective`, `delivery-report`, `capacity-plan`, `weekly-plan`, `decision-log` |
+| Registers | `tasks`, `priorities`, `milestones`, `risks`, `issues`, `assumptions`, `dependencies`, `decisions`, `actions`, `changes`, `meetings`, `teams`, `capacity`, `objectives`, `budget`, plus `roster` |
+
+- **Period:** there is no `default_period` in config. A recipe's period is the current month (or week) unless `--period` (or `--week`) is given, so `month-start` never edits the project's config.
+- **Budget:** the currency is a config value, not part of the register.
+- **Drafted by the agent:** `decision-log`, `project-plan`, `team-checklist` and `status-report` have generators in the source; in v0.1 the agent fills them from the registers, and the generators arrive in v0.2.
+
+Left for later: `scope-wbs`, `stakeholder-update`, `release-notes`, `client-summary` (v0.2); `defect-gap-report`, `test-acceptance` and the registers `requirements`, `tests`, `environments`, `permissions` (v0.4, with the technical templates); the playbooks `finalize`, `sync`, `intake` (v0.3) and `publish`, `schedule` (v0.2). `work-order` and the domain-specific lifecycle template are dropped; `team-review` stays out unless generalised.
 
 ### Not in v0.1
 
@@ -125,6 +144,18 @@ These bugs and rule conflicts were found in the source and must not be copied ac
 12. **Read less.** Each playbook starts with a `Reads:` line naming exactly the files and sections it needs. `SKILL.md` step 1 is "open the playbook for the request", not "read everything".
 13. **Edit one entry, not the file.** Each entry is one line; tracking finds it with `grep -n 'id: T-014'` and edits that line.
 14. **A `where` tool.** `scripts/where.py <type> [period]` prints the document path, template path, `generated_from` and the winning override. It replaces path rules written in prose and is what makes overrides work.
+
+Found in the Phase B inventory (2026-11-04):
+
+15. **`docs_audit` without `parity_check`.** The source imports `parity_check` and pairs language files; v0.1 drops both (they return in v0.3).
+16. **Missing registers are not errors.** `render_views` assumes `teams`, `priorities`, `milestones` and `tests` exist; a project without one of them must still validate.
+17. **Vocab from config.** Origins, date fields and status names come from `vocab`, not constants in the tools.
+18. **Self-tests use Acme only.** The source self-tests read live registers and contain real roster slugs; v0.1 fixtures are Acme data.
+19. **Doc type from front matter.** A document's type is its front-matter `type`, not a title match in the file name.
+20. **Front-matter `manager`, not `owner`.** The templates' `owner` key holds the project manager, which clashes with Owner (an entry's person). The `scope` key repeats the tier and is dropped.
+21. **Shared template rules live once.** Rules repeated in every template's comments move to `SKILL.md` or `conventions`.
+
+Fix 7's `overdue` crash is already handled in the source; keep a test for it.
 
 ### 3.2 Per-type checks (decided 2026-11-04)
 
@@ -257,7 +288,7 @@ Every release that changes the config or register format bumps `schema_version`,
   publish: { mode: repo, path: documentation, url: null }   # repo | folder | none
   ```
   `repo` copies finished documents and commits in a separate docs repo (the user pushes). `folder` copies them into a folder of the same repo and leaves the commit to the user. `none` keeps the finished documents where they are.
-- **Calendar** (v0.2). `week_start`, period and priority order come from config.
+- **Calendar** (v0.2). `week_start` and priority order come from config; the period is the current one unless a flag names another.
 - **Override drift warning** (v0.2). Overrides record `based_on: <type>@<version>` from v0.1. From v0.2, when the default template moves to a newer `template_version`, `docs_audit` warns.
 - **Generated catalogue** (v0.2). "Generate when" and "regenerate when" live in config per doc type, and `render_views` writes the catalogue and the portable prompt from them.
 - **Optional integrations** (v0.4; graph tools, scheduled refresh, repo sync): documented, off by default.
@@ -372,7 +403,7 @@ Sources:
 ## 10. Checklist
 
 - [ ] Phase A: rename to `pmo-docs` (done), layout, `memory.md`, initial commit reworded (done), CI workflow, scaffold committed
-- [ ] Phase B: engine copied into `tmp/source/`, inventory in `tmp/`, v0.1 content list in this plan
+- [x] Phase B: engine copied into `tmp/source/`, inventory in `tmp/`, v0.1 content list in this plan (2026-11-04)
 - [ ] Phase C: sparse generic config with `schema_version`, vendored PyYAML, config-driven priorities, checks declared (3.2), 3.1 fixes, templates with placeholders, setup, `where`, plugin manifest, trimmed `SKILL.md`, committed in small groups (with approval)
 - [ ] Phase D: tests on `examples/acme`, CI on Python 3.10 and the newest stable, two evals
 - [ ] Phase E: README, Acme walkthrough
@@ -383,6 +414,7 @@ Sources:
 - [ ] v0.5: test on other agents
 - [ ] 1.0: config schema stable, upgrades from every 0.x tested
 - [ ] After 1.0: team support
+- [x] Decided in Phase B (2026-11-04): the wider v0.1 content (section 3), roster as a register, no dash check, recipe definition, no `default_period`
 - [x] Decided: checks live in template front matter; a check naming a missing section fails (3.2, 2026-11-04)
 - [ ] Decide: the source project's path (section 6)
 - [x] Decided: public from the start (section 7)
