@@ -2,7 +2,7 @@
 
 # Actions
 
-| id | text | owner | due | status | source |
-|---|---|---|---|---|---|
-| ACT-1 | Send vendor shortlist | bob | 2026-03-12 | open | MTG-1 |
-| ACT-2 | Book the demo room | alice | 2026-03-08 | done | MTG-1 |
+| id | text | owner | due | status | source | origin |
+|---|---|---|---|---|---|---|
+| ACT-1 | Send vendor shortlist | bob | 2026-03-12 | open | MTG-1 |  |
+| ACT-2 | Book the demo room | alice | 2026-03-08 | done | MTG-1 |  |

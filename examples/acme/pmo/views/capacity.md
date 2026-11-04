@@ -2,7 +2,7 @@
 
 # Capacity
 
-| period | person | working_days | leave_days | notes |
-|---|---|---|---|---|
-| 2026-03 | alice | 20 | 2 |  |
-| 2026-03 | bob | 20 | 0 |  |
+| period | person | working_days | leave_days | notes | origin |
+|---|---|---|---|---|---|
+| 2026-03 | alice | 20 | 2 |  |  |
+| 2026-03 | bob | 20 | 0 |  |  |

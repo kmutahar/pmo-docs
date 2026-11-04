@@ -2,7 +2,7 @@
 
 # Milestones
 
-| id | title | period | due | status | owner | exit_criteria | depends_on |
-|---|---|---|---|---|---|---|---|
-| M-1 | Staging ready | 2026-03 | 2026-03-20 | in-progress | alice | Staging passes smoke tests |  |
-| M-2 | Beta launch | 2026-04 | 2026-04-30 | not-started | bob | Ten users signed in | M-1 |
+| id | title | period | due | status | owner | exit_criteria | depends_on | origin |
+|---|---|---|---|---|---|---|---|---|
+| M-1 | Staging ready | 2026-03 | 2026-03-20 | in-progress | alice | Staging passes smoke tests |  |  |
+| M-2 | Beta launch | 2026-04 | 2026-04-30 | not-started | bob | Ten users signed in | M-1 |  |

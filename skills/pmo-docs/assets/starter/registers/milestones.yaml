@@ -1,4 +1,4 @@
 # milestones: one entry per line, e.g.
-#   - {id: ..., title: ..., period: ..., due: ..., status: ..., owner: ..., exit_criteria: ..., depends_on: ...}
+#   - {id: ..., title: ..., period: ..., due: ..., status: ..., owner: ..., exit_criteria: ..., depends_on: ..., origin: ...}
 # ids look like M-1
 milestones: []

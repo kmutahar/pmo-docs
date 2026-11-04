@@ -37,24 +37,24 @@ registers:
     file: tasks.yaml
     view: tasks.md
     prefix: T
-    fields: [id, title, team, group, priority, owner, status, due, period, notes]
-    enums: {status: task_status}
+    fields: [id, title, team, group, priority, owner, status, due, period, notes, origin]
+    enums: {status: task_status, origin: origin}
     dates: [due]
     closed: [done, dropped]
   priorities:
     file: priorities.yaml
     view: priorities.md
     prefix: P
-    fields: [id, title, goals, output, depends_on, blocks, owner, acceptance, accepted_by, accepted_on, status, note, due]
-    enums: {status: task_status}
+    fields: [id, title, goals, output, depends_on, blocks, owner, acceptance, accepted_by, accepted_on, status, note, due, origin]
+    enums: {status: task_status, origin: origin}
     dates: [due, accepted_on]
     closed: [done, dropped]
   milestones:
     file: milestones.yaml
     view: milestones.md
     prefix: M
-    fields: [id, title, period, due, status, owner, exit_criteria, depends_on]
-    enums: {status: task_status}
+    fields: [id, title, period, due, status, owner, exit_criteria, depends_on, origin]
+    enums: {status: task_status, origin: origin}
     dates: [due]
     closed: [done, dropped]
   risks:
@@ -84,46 +84,50 @@ registers:
     file: dependencies.yaml
     view: dependencies.md
     prefix: D
-    fields: [id, type, from, to, text, status]
+    fields: [id, type, from, to, text, status, origin]
+    enums: {origin: origin}
   decisions:
     file: decisions.yaml
     view: decisions.md
     prefix: DEC
-    fields: [id, title, context, decision, options, consequences, decided_by, date, status, supersedes, related]
-    enums: {status: decision_status}
+    fields: [id, title, context, decision, options, consequences, decided_by, date, status, supersedes, related, origin]
+    enums: {status: decision_status, origin: origin}
     dates: [date]
     closed: [accepted, superseded]
   actions:
     file: actions.yaml
     view: actions.md
     prefix: ACT
-    fields: [id, text, owner, due, status, source]
-    enums: {status: action_status}
+    fields: [id, text, owner, due, status, source, origin]
+    enums: {status: action_status, origin: origin}
     dates: [due]
     closed: [done, dropped]
   changes:
     file: changes.yaml
     view: changes.md
     prefix: CR
-    fields: [id, title, requested_by, date, description, impact, status, decided_by, decided_on, related_tasks]
-    enums: {status: change_status}
+    fields: [id, title, requested_by, date, description, impact, status, decided_by, decided_on, related_tasks, origin]
+    enums: {status: change_status, origin: origin}
     dates: [date, decided_on]
     closed: [approved, rejected, implemented]
   meetings:
     file: meetings.yaml
     view: meetings.md
     prefix: MTG
-    fields: [id, title, date, attendees, decisions, actions, minutes_doc]
+    fields: [id, title, date, attendees, decisions, actions, minutes_doc, origin]
+    enums: {origin: origin}
     dates: [date]
   teams:
     file: teams.yaml
     view: teams.md
     prefix: TM
-    fields: [id, order, heading, owners, note, output]
+    fields: [id, order, heading, owners, note, output, origin]
+    enums: {origin: origin}
   capacity:
     file: capacity.yaml
     view: capacity.md
-    fields: [period, person, working_days, leave_days, notes]
+    fields: [period, person, working_days, leave_days, notes, origin]
+    enums: {origin: origin}
   objectives:
     file: objectives.yaml
     view: objectives.md
@@ -140,7 +144,8 @@ registers:
   roster:
     file: roster.yaml
     view: roster.md
-    fields: [slug, name, role]
+    fields: [slug, name, role, origin]
+    enums: {origin: origin}
 
 # Doc types. name is the file name; {period} is the month (YYYY-MM) or the week.
 # generated_from lists every register the template reads (checked for staleness).

@@ -2,7 +2,7 @@
 
 # Priorities
 
-| id | title | goals | output | depends_on | blocks | owner | acceptance | accepted_by | accepted_on | status | note | due |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| P-1 | Launch portal beta | O-1 | Beta site |  |  | alice | Ten users sign in | sam |  | in-progress |  | 2026-04-30 |
-| P-2 | Publish user guide | O-2 | Guide | P-1 |  | bob | Guide reviewed | sam | 2026-03-01 | done |  | 2026-03-01 |
+| id | title | goals | output | depends_on | blocks | owner | acceptance | accepted_by | accepted_on | status | note | due | origin |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| P-1 | Launch portal beta | O-1 | Beta site |  |  | alice | Ten users sign in | sam |  | in-progress |  | 2026-04-30 |  |
+| P-2 | Publish user guide | O-2 | Guide | P-1 |  | bob | Guide reviewed | sam | 2026-03-01 | done |  | 2026-03-01 |  |

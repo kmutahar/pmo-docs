@@ -75,6 +75,17 @@ class Where(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertIn("status-report", err)
 
+    def test_hashes_option(self):
+        import hashlib
+        code, out, _ = run(self.root, "overdue-report", "--hashes")
+        self.assertEqual(code, 0)
+        h = hashlib.sha256((self.root / "pmo/registers/tasks.yaml").read_bytes()).hexdigest()[:8]
+        self.assertIn(f'source_hashes: {{tasks: "{h}", ', out)
+        (self.root / "pmo/registers/issues.yaml").unlink()
+        self.assertIn('issues: "none"', run(self.root, "overdue-report", "--hashes")[1])
+        self.assertNotIn("source_hashes", run(self.root, "docs-audit-report", "--hashes")[1])
+        self.assertNotIn("source_hashes", run(self.root, "overdue-report")[1])
+
     def test_help(self):
         self.assertEqual(run(self.root, "--help")[0], 0)
 

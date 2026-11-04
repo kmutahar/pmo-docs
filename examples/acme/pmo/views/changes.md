@@ -2,7 +2,7 @@
 
 # Changes
 
-| id | title | requested_by | date | description | impact | status | decided_by | decided_on | related_tasks |
-|---|---|---|---|---|---|---|---|---|---|
-| CR-1 | Add dark mode | bob | 2026-03-06 | Users asked for a dark theme | Two more days | proposed |  |  | T-2 |
-| CR-2 | Drop the export page | sam | 2026-02-20 | Export is not needed for beta | Saves three days | approved | sam | 2026-02-22 |  |
+| id | title | requested_by | date | description | impact | status | decided_by | decided_on | related_tasks | origin |
+|---|---|---|---|---|---|---|---|---|---|---|
+| CR-1 | Add dark mode | bob | 2026-03-06 | Users asked for a dark theme | Two more days | proposed |  |  | T-2 |  |
+| CR-2 | Drop the export page | sam | 2026-02-20 | Export is not needed for beta | Saves three days | approved | sam | 2026-02-22 |  |  |

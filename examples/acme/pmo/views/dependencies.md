@@ -2,7 +2,7 @@
 
 # Dependencies
 
-| id | type | from | to | text | status |
-|---|---|---|---|---|---|
-| D-1 | internal | T-2 | T-1 | Login page needs staging | open |
-| D-2 | external | T-4 | vendor | Contract terms from vendor | open |
+| id | type | from | to | text | status | origin |
+|---|---|---|---|---|---|---|
+| D-1 | internal | T-2 | T-1 | Login page needs staging | open |  |
+| D-2 | external | T-4 | vendor | Contract terms from vendor | open |  |

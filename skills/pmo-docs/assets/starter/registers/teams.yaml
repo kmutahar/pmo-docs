@@ -1,4 +1,4 @@
 # teams: one entry per line, e.g.
-#   - {id: ..., order: ..., heading: ..., owners: ..., note: ..., output: ...}
+#   - {id: ..., order: ..., heading: ..., owners: ..., note: ..., output: ..., origin: ...}
 # ids look like TM-1
 teams: []

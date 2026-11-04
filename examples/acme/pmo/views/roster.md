@@ -2,8 +2,8 @@
 
 # Roster
 
-| slug | name | role |
-|---|---|---|
-| sam | Sam Example | Project manager |
-| alice | Alice Example | Platform lead |
-| bob | Bob Example | Web lead |
+| slug | name | role | origin |
+|---|---|---|---|
+| sam | Sam Example | Project manager |  |
+| alice | Alice Example | Platform lead |  |
+| bob | Bob Example | Web lead |  |

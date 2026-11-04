@@ -2,7 +2,7 @@
 
 # Teams
 
-| id | order | heading | owners | note | output |
-|---|---|---|---|---|---|
-| TM-1 | 1 | Platform | alice | Servers and API | Staging and API |
-| TM-2 | 2 | Web | bob | Pages and design | Login and home pages |
+| id | order | heading | owners | note | output | origin |
+|---|---|---|---|---|---|---|
+| TM-1 | 1 | Platform | alice | Servers and API | Staging and API |  |
+| TM-2 | 2 | Web | bob | Pages and design | Login and home pages |  |

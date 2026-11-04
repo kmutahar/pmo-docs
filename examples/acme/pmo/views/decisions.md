@@ -2,7 +2,7 @@
 
 # Decisions
 
-| id | title | context | decision | options | consequences | decided_by | date | status | supersedes | related |
-|---|---|---|---|---|---|---|---|---|---|---|
-| DEC-1 | Use weekly releases | Team wants steady delivery | Release every Thursday | weekly, monthly | Smaller changes | sam | 2026-02-12 | accepted |  |  |
-| DEC-2 | Host on shared cloud | Need cheap hosting | Use the shared cloud account | shared, own | Lower cost | sam | 2026-03-09 | proposed |  | DEC-1 |
+| id | title | context | decision | options | consequences | decided_by | date | status | supersedes | related | origin |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| DEC-1 | Use weekly releases | Team wants steady delivery | Release every Thursday | weekly, monthly | Smaller changes | sam | 2026-02-12 | accepted |  |  |  |
+| DEC-2 | Host on shared cloud | Need cheap hosting | Use the shared cloud account | shared, own | Lower cost | sam | 2026-03-09 | proposed |  | DEC-1 |  |

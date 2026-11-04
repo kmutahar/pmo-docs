@@ -40,6 +40,23 @@ class RenderViews(unittest.TestCase):
         self.assertLess(text.index("| medium |"), text.index("| low |"))
         self.assertTrue((self.views / "risks.md").exists())
 
+    def test_origin_is_accepted_on_every_register(self):
+        entries = {
+            "tasks": "{id: T-90, title: x, status: not-started, origin: proposed}",
+            "actions": "{id: ACT-90, text: x, status: open, origin: proposed}",
+            "decisions": "{id: DEC-90, title: x, status: proposed, origin: proposed}",
+            "changes": "{id: CR-90, title: x, status: proposed, origin: proposed}",
+            "meetings": "{id: MTG-90, title: x, origin: proposed}",
+            "milestones": "{id: M-90, title: x, status: not-started, origin: proposed}",
+            "dependencies": "{id: D-90, text: x, origin: proposed}",
+            "teams": "{id: TM-90, heading: x, origin: proposed}",
+            "priorities": "{id: P-90, title: x, status: not-started, origin: proposed}",
+        }
+        for name, line in entries.items():
+            self.append(name, "  - " + line)
+        code, out = run(self.root)
+        self.assertEqual(code, 0, out)
+
     def test_missing_register_is_not_an_error(self):
         (self.reg / "teams.yaml").unlink()
         (self.reg / "priorities.yaml").unlink()

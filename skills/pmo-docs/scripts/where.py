@@ -2,7 +2,7 @@
 """Print where a document, its template and its inputs live.
 
 Usage:
-    python3 where.py <type> [period] [--week] [--as-of YYYY-MM-DD] [--project ROOT]
+    python3 where.py <type> [period] [--week] [--as-of YYYY-MM-DD] [--hashes] [--project ROOT]
 """
 import argparse
 import datetime
@@ -14,6 +14,7 @@ if sys.version_info < (3, 10):
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import pmo_common as pc  # noqa: E402
+from docs_audit import register_hash  # noqa: E402
 
 
 def main(argv=None):
@@ -24,6 +25,8 @@ def main(argv=None):
     ap.add_argument("--week", action="store_true", help="use ISO week as period (YYYY-Www)")
     ap.add_argument("--as-of", type=datetime.date.fromisoformat, default=datetime.date.today(),
                     metavar="YYYY-MM-DD", help="date to evaluate period against (default: today)")
+    ap.add_argument("--hashes", action="store_true",
+                    help="also print source_hashes: the Finish value for the type's generated_from registers")
     args = ap.parse_args(argv)
 
     if not Path(args.project).is_dir():
@@ -84,6 +87,9 @@ def main(argv=None):
         ("generated_from", generated_from),
         ("stale_days", stale_days),
     ]
+    if args.hashes and info.get("generated_from"):
+        pairs = ", ".join(f'{r}: "{register_hash(args.project, cfg, r)}"' for r in info["generated_from"])
+        fields.append(("source_hashes", "{" + pairs + "}"))
     for k, v in fields:
         print(f"{k}: {v}")
     return 0
