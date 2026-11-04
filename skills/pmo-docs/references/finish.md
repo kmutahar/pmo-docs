@@ -1,0 +1,31 @@
+Reads: the draft, pmo/config.yaml (doc_types.<type>.generated_from), `where.py` output, the registers named in `generated_from` (only to see when they last changed).
+
+# Finish
+
+Turn a draft the user has approved into a finished document. The Finish steps are defined in `SKILL.md`; this playbook decides when to run them.
+
+## Steps
+
+1. **Find the draft**
+   Use the document the user named. If none is named, list the documents under `paths.documents` with `status: draft` and ask which. Finish only the ones named ("all" means every draft).
+   A document that is already finished: say so and stop, unless `docs_audit.py` reports it stale, in which case offer a new draft (`references/draft.md`).
+
+2. **Check the registers have not moved**
+   For each register in `generated_from`, find when it last changed: `git log -1 --format=%cs -- <register file>`, or the file's modified date when it is not tracked. If it is newer than the draft's `last_updated`, tell the user what changed and ask whether to refresh the draft first. Finish records the registers as they are now. Never refresh over the user's edits.
+
+3. **Look at the open questions**
+   If the draft still has open questions, list them and ask whether to finish anyway. They stay in the document.
+
+4. **Finish**
+   Do the Finish steps in `SKILL.md`, in order, on the one document.
+
+5. **If a check fails**
+   Fix what is mechanical (a leftover comment, a placeholder, a heading's spelling). A failure that needs a decision or a fact goes back to the user. Do not set `status: finished` until `structure_check.py` reports no errors.
+
+6. **Reply**
+   Give the path, the result of the checks (warnings included), the registers whose hashes were recorded, and that the user commits it when they choose.
+
+## Do not
+
+- Publish, send or commit.
+- Regenerate content the user wrote.

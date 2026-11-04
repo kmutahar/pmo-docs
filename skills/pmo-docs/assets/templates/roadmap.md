@@ -18,7 +18,7 @@ checks:
 # Roadmap - {{project}}
 
 ## Now ({{period}})
-<!-- One row per priority of the period. -->
+<!-- One row per goal (an entry of the priorities register) of the period. -->
 | ID | Item | Owner | Target | Status |
 |---|---|---|---|---|
 | {{id}} | {{title}} | {{lead}} | {{due}} | {{status}} |

@@ -16,7 +16,7 @@ last_updated: "{{date}}"
 <!-- Why the project exists, in two or three sentences. -->
 
 ## Objectives and success measures
-<!-- Each objective is measurable and names the priority it serves. Priority is not an objectives field: take the id of the priority it serves from the priorities register, or write "not set". -->
+<!-- Each objective is measurable and names the goal it serves. Goal is not an objectives field: take the id of the goal from the priorities register, or write "not set". -->
 | Objective | Priority | Measure of success | Target date |
 |---|---|---|---|
 | {{title}} | {{priority}} | {{measure}} | {{due}} |

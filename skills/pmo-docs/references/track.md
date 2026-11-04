@@ -1,0 +1,56 @@
+Reads: pmo/config.yaml (registers, vocab), the register being changed, `roster.yaml`.
+
+# Track
+
+Add, change or close entries in the registers. Rules on status, consent and proposed entries are in `SKILL.md` (Safety rules, Working rules); formats and ids are in `references/conventions.md`. Use only the fields the register lists in the config.
+
+## Steps
+
+1. **Pick the register and the operation**
+   Match the request to a row of the table below. If it names no register, or fits two, ask.
+
+2. **Find the entry**
+   For an existing entry run `grep -nE 'id: T-014[,}]' <register file>`. A register without ids is found by its keys (`grep -n 'slug: ana' ...`, or `person` and `period` for capacity). Read that one line.
+
+3. **Check for a scope change**
+   Moving a date, owner or priority of committed work, or adding or dropping a goal, is a scope change: go to `references/govern.md` (change request) first, unless the user says it is the agreed new plan. Then apply it and log a decision there.
+
+4. **Edit one line**
+   Edit that line only (new entries go at the end of the list). A new id is the highest number for the prefix plus one. Check that an owner is in the roster and that every value is in the vocabulary. Ask for a missing owner, date or priority; leave it `null` until answered.
+
+5. **Validate**
+   Run `python3 ${CLAUDE_SKILL_DIR}/scripts/render_views.py` and fix what it reports before going on.
+
+6. **List stale documents**
+   Run `python3 ${CLAUDE_SKILL_DIR}/scripts/docs_audit.py`. Name the finished documents it reports as stale and offer to redraft them (`references/draft.md`). Redraft nothing unasked.
+
+7. **Reply**
+   List the entries changed as id, field, old value, new value. Then the stale documents and the one next step.
+
+## Operations
+
+| User says | You do |
+|---|---|
+| "T-014 is done", "in progress", "blocked", "dropped" | Set `status` on that line. `done` follows the definition of done in `SKILL.md`. For `blocked`, put the reason in `notes` and ask who can unblock it. Evidence from git or a checklist only suggests a change: say what it is and wait for a yes. |
+| "add a task" | New `T-` entry with `status: not-started`. Ask for any of title, team, group, priority, owner, period and due that is missing. |
+| "add a goal, milestone, objective, budget item" | New `P-` (goal), `M-`, `O-` or `B-` entry. A new goal, or a date or owner change on an existing milestone, is a scope change (step 3). A task's priority is a level, not a goal (`SKILL.md`, Working rules). |
+| "add a team", "change a team's owners" | One `TM-` entry per team in `teams`: `order`, `heading`, `owners`. Owners are roster slugs. |
+| "add capacity", "leave for ana" | One entry per person and period in `capacity`; no id. Unknown days stay `null`. |
+| "add a person", "change a role" | One entry per person in the roster: `slug`, `name`, `role`. A slug in use is never renamed. |
+| "we have a risk, issue, assumption, dependency" | New `R-`, `I-`, `A-` or `D-` entry. Risks need probability, impact, owner and mitigation; issues need severity and owner. Set `raised` to the date given. |
+| "close R-002", "resolve I-001" | Set the status and the register's closing date (`closed` for risks, `resolved` for issues). Keep the entry, never delete it. |
+| "action: ana does X by DATE" | New `ACT-` entry with owner and due. Ask if either is missing. |
+| "we decided ...", "we had a meeting ..." | `references/govern.md` (decision log, meeting minutes). |
+| a pasted message or list with tasks | See "Pasted lists" below. |
+
+## Pasted lists
+
+1. Read the text and list every task, risk, action or decision it contains.
+2. Show a table first: one row per proposed entry (register, title, owner, due, what the text said). Write inferred entries with `origin: proposed` (`SKILL.md`, Safety rules).
+3. Write only the rows the user confirms, then set `origin: stated` on those.
+
+## Do not
+
+- Delete or renumber an entry, or reuse an id (`SKILL.md`, Working rules).
+- Change a status from git history alone.
+- Put long text in a register; it belongs in a document, referenced by id.

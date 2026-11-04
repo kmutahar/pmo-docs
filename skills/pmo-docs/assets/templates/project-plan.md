@@ -22,7 +22,7 @@ last_updated: "{{date}}"
 | {{role}} | {{name}} |
 
 ## Priorities
-<!-- One subsection per priority, in register order. -->
+<!-- One subsection per goal (an entry of the priorities register), in register order. Tasks are not linked to goals. -->
 
 ### {{id}} - {{title}}
 - {{goal}}

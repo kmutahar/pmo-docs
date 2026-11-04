@@ -13,7 +13,7 @@ A user's repository that uses the skill and keeps its own settings, registers an
 _Avoid_: workspace, instance, client
 
 **Override**:
-A project's own copy of a template or playbook that replaces the skill's default as a whole.
+A project's own copy of a template that replaces the skill's default as a whole.
 _Avoid_: customisation, patch, fork
 
 **House rules**:
@@ -40,12 +40,16 @@ _Avoid_: members, people list, team (a team is a work stream)
 A file holding every entry of one kind (tasks, risks, issues, decisions, ...). Registers are the only source of facts.
 _Avoid_: tracker, log, list, database
 
+**Goal**:
+An optional entry of the `priorities` register: an output with acceptance criteria. Tasks are not linked to goals. Not the same as a task's priority, which is a level (high, medium, low) from the vocabulary.
+_Avoid_: priority (for a goal)
+
 **Entry**:
 One item in a register, with its own id (for example T-014).
 _Avoid_: row, record, item, line
 
 **Vocabulary**:
-The allowed values for an entry's fields, such as statuses, priorities and severities.
+The allowed values for an entry's fields, such as statuses, priority levels and severities.
 _Avoid_: enum, allowed values, lookup
 
 **Validation**:

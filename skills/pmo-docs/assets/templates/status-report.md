@@ -22,7 +22,7 @@ last_updated: "{{date}}"
 {{3 sentences at most: what moved, what did not, what is next}}
 
 ## Progress by priority
-<!-- one row per priority value used by the tasks -->
+<!-- one row per priority level used by the tasks (a level of vocab.priority_order, not a goal) -->
 | Priority | Done / Total | In progress | Blocked | RAG | Comment |
 |---|---|---|---|---|---|
 | {{priority}} | {{done}} / {{total}} | {{n}} | {{n}} | {{RAG}} | {{comment}} |
