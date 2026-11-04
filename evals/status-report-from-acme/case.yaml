@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: status-report-from-acme
+description: Draft the March 2026 status report from the Acme registers; the draft must exist, be checked by structure_check.py, and be written without any git write.
+context:
+  scaffold_script: scaffold.sh
