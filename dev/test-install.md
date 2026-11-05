@@ -1,10 +1,12 @@
 # Test the README install commands in a throwaway session
 
-A maintainer checklist, not shipped as part of the skill's behaviour. It checks that a stranger can follow the README's **Install** section: add the marketplace, install the plugin, and get a working skill. Nothing here touches your real Claude Code setup if you follow Part 1.
+A maintainer checklist, not shipped to users. It checks that a stranger can follow the README's **Install** section against the **live** GitHub repo and release: add the marketplace, install the plugin (latest and pinned to a tag), get a working skill, and install from the release zip. Nothing here touches your real Claude Code setup if you follow Part 1. Run it after every release, and after any change to the manifests or the layout.
 
-All parts were run and verified on 2026-11-05 (Claude Code 2.1.318, Linux), the live session (steps 11 to 13) by the maintainer: the skill fired from the installed plugin, asked for name, manager and priority order, wrote `pmo/` only after the yes, added a task, and rendered the views.
+History: Parts 1 to 3 were first run on 2026-11-05 against a local copy of the marketplace (Claude Code 2.1.318, Linux). Parts 4 and 5 and the checks against the pushed `v0.1.0` are written for the first live run, which has not been done yet: record its result in `memory.md` when it is.
 
-You need: Claude Code (`claude --version` prints a version), `git`, `python3` 3.10 or newer, and an internet connection (the install pulls the repo from GitHub). Time: about 15 minutes.
+You need: Claude Code (`claude --version` prints a version), `git`, `python3` 3.10 or newer, `gh` (for the zip, Part 4) and an internet connection (the install pulls the repo from GitHub). Time: about 20 minutes.
+
+Set `V` to the version under test (without the `v`) and use it in the steps below, for example `export V=0.1.0`. It must equal `version` in `skills/pmo-docs/.claude-plugin/plugin.json` at the tag.
 
 Run the check against the **pushed** repo on GitHub, because that is what a user installs. Unpushed changes are not tested.
 
@@ -16,7 +18,7 @@ git status -sb          # the first line must read "## main...origin/main" with 
 
 ## How the output is captured (so you can share it)
 
-Every command below is written as `... 2>&1 | tee -a "$LOG/transcript.txt"`. That prints the output on screen **and** appends it to one transcript file. The `claude --debug-file "$LOG/NAME.log"` form (the flag goes before `plugin`) also writes Claude Code's detailed debug log for that one command. At the end you share the folder `$LOG` (Part 4, step 17).
+Every command below is written as `... 2>&1 | tee -a "$LOG/transcript.txt"`. That prints the output on screen **and** appends it to one transcript file. The `claude --debug-file "$LOG/NAME.log"` form (the flag goes before `plugin`) also writes Claude Code's detailed debug log for that one command. At the end you share the folder `$LOG` (Part 5, step 20).
 
 The commands already print each stage on their own (cloning, validating, installing). For machine-readable output add `--json` to `claude plugin list`, `install`, `update` or `uninstall`.
 
@@ -58,10 +60,11 @@ The README gives two slash commands for inside a Claude Code session. The comman
    ```
    Expected, in order: `Adding marketplace…`, `Cloning via SSH: ...` (the SSH address of the repo on GitHub), `Clone complete, validating marketplace…`, `✔ Successfully added marketplace: pmo-docs`.
 
-   Note: the short form `kmutahar/pmo-docs` clones over **SSH**. A reader with no GitHub SSH key may fail here with a permission or host-key error. If so, give the full HTTPS address instead, and report that the README should say so:
+   The short form `kmutahar/pmo-docs` clones over **SSH**, so it needs a GitHub SSH key. The README gives the HTTPS address for everyone else; test that form too, in a second throwaway home, or after `claude plugin marketplace remove pmo-docs`:
    ```
    claude plugin marketplace add https://github.com/kmutahar/pmo-docs.git 2>&1 | tee -a "$LOG/transcript.txt"
    ```
+   To test a pinned version (the form the plan documents), add the marketplace as `kmutahar/pmo-docs#v$V` instead.
 
 5. Install the plugin. Project scope keeps it inside the scratch folder:
    ```
@@ -76,7 +79,7 @@ The README gives two slash commands for inside a Claude Code session. The comman
    claude plugin details pmo-docs 2>&1 | tee -a "$LOG/transcript.txt"
    cat "$TRY/project/.claude/settings.json" 2>&1 | tee -a "$LOG/transcript.txt"
    ```
-   Expected: `pmo-docs@pmo-docs`, `Scope: project`, `Status: ✔ enabled`; the version reads `0.0.0` until the first release, then it must equal the version in `skills/pmo-docs/.claude-plugin/plugin.json`. `details` shows `Skills (1)  pmo-docs`, no agents, hooks or MCP servers, and about 160 tokens always on, about 3.2k when the skill is used.
+   Expected: `pmo-docs@pmo-docs`, `Scope: project`, `Status: ✔ enabled`, and the version equals `$V` (the version in `skills/pmo-docs/.claude-plugin/plugin.json` at the tag). A version of `0.0.0` means the install picked up an unreleased commit. `details` shows `Skills (1)  pmo-docs`, no agents, hooks or MCP servers, and about 160 tokens always on, about 3.2k when the skill is used.
 
 7. In a Claude Code session the same two steps are the slash commands from the README. Optional, needs a login (Part 3, step 11):
    ```
@@ -88,11 +91,10 @@ The README gives two slash commands for inside a Claude Code session. The comman
 
 8. Find the installed copy and list it:
    ```
-   SKILLDIR="$CLAUDE_CONFIG_DIR/plugins/cache/pmo-docs/pmo-docs/0.0.0/skills/pmo-docs"
-   ls "$SKILLDIR" "$SKILLDIR/scripts" 2>&1 | tee -a "$LOG/transcript.txt"
+   SKILLDIR=$(ls -d "$CLAUDE_CONFIG_DIR"/plugins/cache/pmo-docs/pmo-docs/*/ | head -1)
+   echo "$SKILLDIR"; ls "$SKILLDIR" "$SKILLDIR/scripts" 2>&1 | tee -a "$LOG/transcript.txt"
    ```
-   Expected: `SKILL.md`, `assets`, `references`, `scripts`; scripts `setup.py`, `render_views.py`, `where.py`, `structure_check.py`, `docs_audit.py`, `overdue.py`, `pmo_common.py` and `_vendor`.
-   (The folder name `0.0.0` is the installed version; change it after a release.)
+   Expected: the folder name is the version `$V`, and it holds only the skill: `SKILL.md`, `LICENSE`, `assets`, `references`, `scripts` and `.claude-plugin`. **No** `dev/`, `tests/`, `docs/`, `evals/` or `examples/` (the layout fix of 2026-11-05; their presence means `source` in the marketplace entry is wrong). Scripts: `setup.py`, `render_views.py`, `where.py`, `structure_check.py`, `docs_audit.py`, `overdue.py`, `pmo_common.py` and `_vendor`.
 
 9. Run the scripts from the install, with the system Python and nothing installed with pip. This is the check that the vendored PyYAML works:
    ```
@@ -103,13 +105,13 @@ The README gives two slash commands for inside a Claude Code session. The comman
    ```
    Expected: `created: pmo/...` lines, then `registers valid; wrote 16 views to pmo/views`, and `--check` exits 0. An `ImportError` for `yaml` is a release blocker.
 
-10. Update path (the README mentions it). Nothing newer exists before a release:
+10. Update path (the README mentions it). Nothing newer exists right after a release:
     ```
     claude --debug-file "$LOG/10-update.log" plugin update pmo-docs@pmo-docs --scope project 2>&1 | tee -a "$LOG/transcript.txt"
     ```
-    Expected: `✔ pmo-docs is already at the latest version (0.0.0).`
+    Expected: `✔ pmo-docs is already at the latest version ($V).`
 
-11. **Live session (not yet run; needs a login).** A fresh home has no login, so this uses your account and a little usage. Start Claude Code in the scratch project and sign in with `/login` if asked:
+11. **Live session (needs a login).** A fresh home has no login, so this uses your account and a little usage. Start Claude Code in the scratch project and sign in with `/login` if asked:
     ```
     cd "$TRY/project" && rm -rf pmo     # start from an empty project again
     claude --debug-file "$LOG/11-session.log"
@@ -123,9 +125,34 @@ The README gives two slash commands for inside a Claude Code session. The comman
 
 13. Ask: `add a task: set up staging, high priority, due 2026-03-10`, then `render the views`. Expected: `pmo/registers/tasks.yaml` holds the task and `pmo/views/tasks.md` shows it. Leave the session with `/exit`.
 
-## Part 4: clean up and share
+## Part 4: the release zip (other agents)
 
-14. Remove the plugin and the marketplace (the folder removal does it anyway):
+The README says other agents can take the zip from the GitHub release. This needs no Claude Code and no login beyond `gh`.
+
+14. Download the asset the release workflow built and look inside:
+    ```
+    gh release download "v$V" --repo kmutahar/pmo-docs --pattern "pmo-docs-$V.zip" --dir "$TRY/zip" 2>&1 | tee -a "$LOG/transcript.txt"
+    unzip -q "$TRY/zip/pmo-docs-$V.zip" -d "$TRY/zip/unpacked" && ls "$TRY/zip/unpacked/pmo-docs" 2>&1 | tee -a "$LOG/transcript.txt"
+    ```
+    Expected: one top folder `pmo-docs/` holding `SKILL.md`, `LICENSE`, `assets`, `references`, `scripts` (the same files as step 8) and 76 files in all (`git archive --prefix=pmo-docs/ HEAD:skills/pmo-docs | tar -t | grep -vc "/$"` at the tag). The release notes on the release page must match the `CHANGELOG.md` section for `v$V`.
+
+15. Run the scripts from the unzipped copy with the system Python:
+    ```
+    mkdir -p "$TRY/zip/project" && cd "$TRY/zip/project"
+    python3 "$TRY/zip/unpacked/pmo-docs/scripts/setup.py" --name Demo --manager "Pat Example" 2>&1 | tee -a "$LOG/transcript.txt"
+    python3 "$TRY/zip/unpacked/pmo-docs/scripts/render_views.py" --check 2>&1 | tee -a "$LOG/transcript.txt"
+    cd "$TRY/project"
+    ```
+    Expected: the same output as step 9, and `--check` exits 0. `SKILL.md` in the zip carries `metadata.version` equal to `$V`:
+    ```
+    grep -n "version" "$TRY/zip/unpacked/pmo-docs/SKILL.md" | head -3
+    ```
+
+16. Check the GitHub side: `gh run list --repo kmutahar/pmo-docs --limit 5` shows the `ci` and `release` runs for the tag as `success`, and `gh release view "v$V" --repo kmutahar/pmo-docs` shows the release as published (not a draft) with the zip asset.
+
+## Part 5: clean up and share
+
+17. Remove the plugin and the marketplace (the folder removal does it anyway):
     ```
     claude plugin uninstall pmo-docs@pmo-docs --scope project 2>&1 | tee -a "$LOG/transcript.txt"
     claude plugin marketplace remove pmo-docs 2>&1 | tee -a "$LOG/transcript.txt"
@@ -133,29 +160,27 @@ The README gives two slash commands for inside a Claude Code session. The comman
     ```
     Expected: `✔ Successfully uninstalled plugin`, `✔ Successfully removed marketplace`, `No plugins installed.`
 
-15. Look through `$LOG/transcript.txt` once before sharing. The logs contain your machine's temp paths and your GitHub address, nothing secret, but read them anyway.
+18. Look through `$LOG/transcript.txt` once before sharing. The logs contain your machine's temp paths and your GitHub address, nothing secret, but read them anyway.
 
-16. Make one file to share:
+19. Make one file to share:
     ```
     tar -czf ~/pmo-install-check-logs.tgz -C "$TRY" logs
     ls -l ~/pmo-install-check-logs.tgz
     ```
 
-17. Delete the throwaway folder and unset the variables:
+20. Delete the throwaway folder and unset the variables:
     ```
     cd ~
     rm -rf "$TRY"
-    unset TRY LOG CLAUDE_CONFIG_DIR SKILLDIR
+    unset TRY LOG CLAUDE_CONFIG_DIR SKILLDIR V
     ```
     Check that your real setup is untouched: in a normal terminal `claude plugin list` shows your usual plugins.
 
-## What the 2026-11-05 run found
+## What earlier runs found (all fixed)
 
-- Add, install, details, scripts from the install, update, uninstall: all pass. `CLAUDE_CONFIG_DIR` does isolate the install.
-- Live session: the skill loaded (`Loaded 1 skills from plugin pmo-docs`), asked its questions and wrote nothing before the yes, then `setup.py` ran from the installed copy. Adding a task flagged that a 2026-03-10 due date is already past and left owner, team, group and period as `null` instead of guessing. The debug log holds only three harmless errors (Datadog flush, a lock held by another process, a terminal escape code).
-- Version is `0.0.0` until the first release.
-- The short form `kmutahar/pmo-docs` clones over SSH. Strangers without an SSH key may need the HTTPS address (step 4). Decision for the maintainer: say so in the README, or leave it.
-- The installed plugin folder holds the **whole repo** (`dev/`, `tests/`, `evals/`, `docs/`, root `CLAUDE.md`), because the marketplace entry has `"source": "./"`. Only `skills/pmo-docs/` is the skill. It is harmless (nothing there is on a PATH, `dev/` has no `bin/`), but `AGENTS.md` says `dev/` is "not shipped", which is not true for the install cache. Decision for the maintainer: leave it, or move the plugin into a subfolder later.
+- 2026-11-05, local marketplace: add, install, details, scripts from the install, update, uninstall and the live session all passed (the skill loaded, asked its questions, wrote nothing before the yes, left unknown values as `null`).
+- The short form `kmutahar/pmo-docs` clones over SSH: the README now also gives the HTTPS address (`a7de053`).
+- The installed plugin held the whole repo because the marketplace entry had `"source": "./"`: fixed by rooting the plugin at `skills/pmo-docs/` (`4aa04eb`). Step 8 now checks that only the skill is installed.
 - The README gives no `--scope`; the default is user scope.
 
 ## If a step fails
@@ -165,6 +190,8 @@ The README gives two slash commands for inside a Claude Code session. The comman
 | Step 4: repo not found, permission denied or host key error | no GitHub SSH key, or the repo is not public | use the HTTPS address; README |
 | Step 4: manifest invalid | `marketplace.json` wrong | `.claude-plugin/marketplace.json`, run `claude plugin validate .` |
 | Step 5: plugin not found in marketplace | name mismatch between marketplace and plugin | the `name` fields in both manifests |
+| Step 8: `dev/`, `tests/` or `docs/` in the install | `source` in the marketplace entry points above the skill folder | `.claude-plugin/marketplace.json`, `source: ./skills/pmo-docs` |
+| Step 14: asset missing or the release is a draft | the release workflow failed, or the changelog section for the tag is missing | `.github/workflows/release.yml`, `gh run view` |
 | Step 6: no skill in `details` | `skills/pmo-docs/SKILL.md` front matter invalid | `claude plugin validate .` |
 | Step 9: `ImportError` for `yaml` | vendored PyYAML path broken | `skills/pmo-docs/scripts/_vendor/` |
 | Step 11: the skill does not fire | `description` does not match the request, or a restart is missing | `SKILL.md` description |
@@ -172,4 +199,4 @@ The README gives two slash commands for inside a Claude Code session. The comman
 
 Then send `~/pmo-install-check-logs.tgz` (or paste the failing step's output) to the agent, which fixes the README, the manifests or the skill and records the result in `memory.md` and `docs/PLAN.md`.
 
-Not covered here: other agents (copying `skills/pmo-docs/` into their skills folder), Windows, and macOS. Those stay "untested" in the README.
+Not covered here: running the skill inside other agents (Part 4 only checks that the zip works), Windows, and macOS. Those stay "untested" in the README.
