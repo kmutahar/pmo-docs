@@ -49,7 +49,7 @@ One item in a register, with its own id (for example T-014).
 _Avoid_: row, record, item, line
 
 **Origin**:
-The field on every entry that says where it came from: `stated` (the user said it) or `proposed` (the agent inferred it and the user has not confirmed it).
+An optional field on every entry that says where it came from: `stated` (the user said it) or `proposed` (the agent inferred it and the user has not confirmed it).
 _Avoid_: source, provenance
 
 **Vocabulary**:
