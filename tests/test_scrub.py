@@ -53,7 +53,7 @@ class ScrubTest(unittest.TestCase):
 
     def test_generic_patterns_fail(self):
         # built in pieces so this file does not trip the real repo's scrub
-        for text in ("see /ho" "me/someone/x\n", "mail a.b" "@example.org\n", "call +" "966 55 123 4567\n"):
+        for text in ("see /ho" "me/someone/x\n", "mail a.b" "@example.org\n", "call +" "1 555 010 0199\n"):
             self.write("a.md", text)
             self.assertEqual(self.scrub().returncode, 1, text)
 
