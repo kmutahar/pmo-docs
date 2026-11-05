@@ -37,7 +37,13 @@ Claude Code, as a plugin:
 /plugin install pmo-docs@pmo-docs
 ```
 
-The marketplace and the plugin are both named `pmo-docs` (see `.claude-plugin/`).
+The marketplace and the plugin are both named `pmo-docs` (see `.claude-plugin/` and `skills/pmo-docs/.claude-plugin/`). Installing copies only the skill folder.
+
+The short form `kmutahar/pmo-docs` clones over SSH. If you have no SSH key on GitHub, add the marketplace with the web address instead:
+
+```
+/plugin marketplace add https://github.com/kmutahar/pmo-docs.git
+```
 
 Other agents: copy the folder `skills/pmo-docs/` into the agent's skills folder. It works alone; nothing else in this repo is needed.
 
