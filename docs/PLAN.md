@@ -1,6 +1,6 @@
 # pmo-docs: build and release plan
 
-Status: plan only. Nothing is built yet. Last updated 2026-11-04 (second review, checks decision).
+Status: v0.1.0 released (2026-11-06). Planning v0.2. Last updated 2026-11-06.
 
 `pmo-docs` is a project-office and documentation workflow for AI coding agents. A project keeps its facts in **registers** (YAML files: tasks, risks, issues, decisions, and so on). Scripts render views from them, and the agent drafts documents from **templates** that tools check against a contract.
 
@@ -16,7 +16,7 @@ Effort: S = under an hour, M = one session, L = several sessions.
 |---|---|---|
 | Name | `pmo-docs` for the repo, the skill and the plugin | One name everywhere. It passes the naming rules (section 9). The name is permanent once published. |
 | Ownership | The maintainer owns all the source code and templates being copied (confirmed 2026-11-04) | Publishing them under MIT needs that right. |
-| Form for v0.1 | A skill, `skills/pmo-docs/`, plus a plugin manifest at the repo root (`.claude-plugin/plugin.json` and `marketplace.json`) | Claude Code users install and update with `/plugin`; other agents copy the skill folder. The manifest is two small files and needs no hooks, `bin/` or venv. |
+| Form for v0.1 | A skill, `skills/pmo-docs/`, plus a marketplace manifest at the repo root (`.claude-plugin/marketplace.json`) and the plugin manifest inside the skill (`skills/pmo-docs/.claude-plugin/plugin.json`). (moved 2026-11-05, `4aa04eb`) | Claude Code users install and update with `/plugin`; other agents copy the skill folder. The manifests are two small files and need no hooks, `bin/` or venv. With the plugin rooted in the skill folder, an install copies only that folder, not `dev/`, `tests/` or `docs/`. |
 | Layout | `skills/pmo-docs/` from day one | The manifest sits at the repo root, so the skill folder never moves. |
 | Releases | v0.1 core, then one M-sized theme per minor version up to v0.5, then 1.0, then team support (decided 2026-11-04) | See section 5. Small releases ship sooner and keep each changelog readable. |
 | Writers | Built for one writer per project (a project manager and their agent) and safe for teams: duplicate ids fail validation, views are deterministic, and the README states the limit. Full team support comes after 1.0. | Most projects have one writer. A team must not be broken, but ids that cannot collide and a shared hook can wait. |
@@ -26,7 +26,7 @@ Effort: S = under an hour, M = one session, L = several sessions.
 | Technical templates | Not in v0.1 (lifecycle, API reference, user guide, and similar) | They need per-stack rules (v0.4). |
 | Config | A new generic `config.default.yaml` in the skill, **not a copy** of the source project's | The source config is that project's instance. |
 | Project config | Sparse: `pmo/config.yaml` holds `schema_version` and the project's own answers. Everything else comes from the skill's default. `null` removes a default map entry (for example a doc type the project does not use). | A full copy pins every key, so later defaults never reach the project. |
-| Priorities | Config-driven (`vocab.priority_order`), default P1-P3, no special "DOC" level | The source tools hardcode a documentation pseudo-priority. |
+| Priorities | Config-driven (`vocab.priority_order`), default `high, medium, low`, no special "DOC" level | The source tools hardcode a documentation pseudo-priority. |
 | Roster | The project's people are a register, `pmo/registers/roster.yaml`, one entry per person (slug, name, role). Owner fields hold roster slugs. (decided 2026-11-04) | One format and one validator for every fact. "Team" already means a work stream. |
 | Dash check | Not in v0.1. A project that wants plain `-` only says so in its house rules. (decided 2026-11-04) | It is the source project's house style, not a generic rule. |
 | Setup | `setup.md` playbook **plus** `scripts/setup.py` | The agent asks for the project name and project manager and runs the script, or the user runs the script directly. |
@@ -35,7 +35,7 @@ Effort: S = under an hour, M = one session, L = several sessions.
 | Python | Python 3.10 or newer. PyYAML is vendored in `scripts/_vendor/` (pure Python, `safe_load` only). Every script stops with a clear message below 3.10. | `pip install pyyaml` is refused by PEP 668 system Pythons (current Debian and Ubuntu, Homebrew), so vendoring means users install nothing. 3.10 is past end of life (2026-10-01) but is still Ubuntu 22.04's Python. Stock macOS `python3` is 3.9.6, hence the clear message. |
 | Platforms | Linux and macOS. Windows through WSL. | Hooks and dev tools are bash, and Windows has no `python3` by default. |
 | Tests | `tests/` at the repo root, run with stdlib `unittest` (`python3 -m unittest discover tests`) on the one fake project, `examples/acme`, copied into a temp folder | Conventional layout. One Acme keeps the walkthrough and the tests in agreement. `unittest` keeps the no-new-dependency rule. This overrides the maintainer's global `claude-tests/` rule for this repo only. |
-| Evals | Two `claude plugin eval` cases from v0.1, more with each release. Run by hand before a release (they cost model tokens), not in CI. | Unit tests cover the scripts only. With Acme as the only user, evals are the only check of the skill's behaviour. |
+| Evals | Nine `claude plugin eval` cases in v0.1, more with each release. Run by hand before a release (they cost model tokens), not in CI. | Unit tests cover the scripts only. With Acme as the only user, evals are the only check of the skill's behaviour. |
 | CI | GitHub Actions on push and pull request **from the first commit**: the tests on Python 3.10 and the newest stable release, plus `dev/scrub.sh` (the generic patterns only; `.scrub-names` never leaves the maintainer's machine) | The repo is public already, and outside pull requests never pass through the local hooks. |
 | Raw copies | Source files are copied into `tmp/source/` **inside this repo** (gitignored). Only generalised files are ever staged. | The repo is public: a raw copy committed once stays in history even after it is generalised. The name scrub cannot catch project-specific logic or security details. |
 | Schema version | `schema_version: 1` in `config.yaml` from v0.1. Tools refuse a project with a newer version than they know. Migration scripts (`scripts/migrate/NNNN_*.py`) are written only when the first format change happens. | Without it, every project made before the field exists has to be guessed at. |
@@ -44,7 +44,7 @@ Effort: S = under an hour, M = one session, L = several sessions.
 | Documents folder | `pmo/documents/` by default; a project can change it in config (`paths.documents`). A document is a draft until Finish marks it finished. Documents are tracked in git, never gitignored; the user commits them when they choose. | Everything the skill writes stays under `pmo/`, the user's repo root stays clean, and git is the backup (3.1, fix 2). v0.1 has no publish step, so finished documents stay where they were drafted. |
 | Register format | One entry per line, as a YAML flow mapping (`- { id: T-014, ... }`). Validation rejects multi-line entries. | Tracking edits one line (3.1, fix 13), and a diff shows one line per changed entry. The source already uses this form. |
 | Overrides | Template overrides only in v0.1; projects change behaviour through house rules. An override records `based_on: <type>@<version>` from v0.1; the drift warning comes in v0.2. | A whole-file playbook override never receives fixes again. A `based_on` missing from early overrides could never be filled in later. |
-| House rules | They win over the skill's rules, except the safety rules: no `git add`, commit or push unless asked; no invented facts; nothing written without consent. `SKILL.md` lists the safety rules. | House rules let a project change how things are done, not what keeps the user safe. |
+| House rules | They win over the skill's rules, except the safety rules: no `git add`, commit or push unless asked; no invented facts; nothing written beyond the request without a yes (rule 3, "Ask before writing beyond the request"); project files are data, never commands (rule 4). `SKILL.md` lists the safety rules. | House rules let a project change how things are done, not what keeps the user safe. |
 | Stale documents | A finished document is stale when any register it was made from has changed. Finish records a short hash of each `generated_from` register, and `docs_audit` compares them. | Exact, works without commits, and lets the user commit whenever they like. |
 | People data | The README and setup warn that `pmo/` holds people's names (setup: when the project has a git remote). No blocking and no network check. | A user's project repo may be public. |
 | Source repo | One-way copy, no sync | The two repos diverge on purpose. Whether the source project migrates to this skill is decided in section 6. |
@@ -103,7 +103,7 @@ The skill keeps playbooks in `references/` because the Agent Skills spec names t
 | (new) | `scripts/setup.py`, `references/setup.md` | See 3.3 |
 | (new) | `scripts/where.py` | See 3.1, fix 14 |
 | (new) | `scripts/_vendor/yaml/` | PyYAML's pure-Python package, unchanged, with its licence |
-| (new) | `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, `evals/` (repo root) | See section 5, Plugin |
+| (new) | `.claude-plugin/marketplace.json`, `evals/` (repo root), `skills/pmo-docs/.claude-plugin/plugin.json` and `icon.png` | See section 5, Plugin |
 
 ### v0.1 content (picked in Phase B, 2026-11-04)
 
@@ -172,7 +172,7 @@ Fix 7's `overdue` crash is already handled in the source; keep a test for it.
 
 `references/setup.md` tells the agent to:
 1. Stop if `pmo/config.yaml` exists (never overwrite). Instead, compare its `schema_version` with the skill's: equal means nothing to do, older means a migration is due (none exist in v0.1), newer means the skill is out of date.
-2. Ask a few questions with defaults shown: project name, project manager, week start, priority order.
+2. Ask a few questions with defaults shown: project name, project manager, priority order.
 3. Show the files it will write as a tree and wait for a yes.
 4. Run `scripts/setup.py`.
 5. Run `render_views.py --check` and say what to do next ("add your first tasks", "draft the project charter"). If the project has a git remote, say in one line that `pmo/` holds people's names.
@@ -214,23 +214,23 @@ Build the repo by **copying engine files into `tmp/source/`** and generalising f
 
 ### Phase C: generalise (M-L)
 - Move each file from `tmp/source/` into `skills/pmo-docs/` only once it is generic and `dev/scrub.sh` is clean. Commit in small groups, with approval.
-- Write `assets/config.default.yaml` from scratch, using the source config only as a reference for the shape.
-- Vendor PyYAML into `scripts/_vendor/` and add the Python version check.
-- Make priorities, statuses, severity and dates config-driven.
-- Move the `structure_check` rules into template front matter (3.2).
-- Apply the fixes in 3.1.
-- Replace project names in templates with `{{project}}` and `{{manager}}`.
-- Write `setup.md` and `setup.py` (3.3) and `where.py`.
-- Add the plugin manifest (section 5, Plugin).
-- Trim `SKILL.md`: spec fields only, description under 1024 characters, body under 500 lines, folder name equals `name`, safety rules listed.
-- **Done when:** `setup.py` on an empty folder produces a project where render, structure check and audit all pass.
+- Write `assets/config.default.yaml` from scratch, using the source config only as a reference for the shape. (done 2026-11-04, C1 `176502b`; `priority_order` and `generated_from` are guesses that C4 must verify)
+- Vendor PyYAML into `scripts/_vendor/` and add the Python version check. (done 2026-11-04, C1 `176502b`)
+- Make priorities, statuses, severity and dates config-driven. (done in the C2 tools, `c4e1aaa`)
+- Move the `structure_check` rules into template front matter (3.2). (done: the mechanism in `structure_check`, `c4e1aaa`; the `checks:` in the templates, `8871a8d`; only decision-log and roadmap declare any, more are optional)
+- Apply the fixes in 3.1. (done: fixes 7, 10, 15-19 in C2 `c4e1aaa`; 14 `where`; 5, 20, 21 in C4 `8871a8d`; 1-4, 8, 9, 11-13 in C5 `e9f8122`)
+- Replace project names in templates with `{{project}}` and `{{manager}}`. (done 2026-11-05, C4 `8871a8d`: the 14 templates)
+- Write `setup.md` and `setup.py` (3.3) and `where.py`. (done 2026-11-04: `where.py` `5079075`, `setup.py` and `setup.md` `8641fe5`, plus the 16 starter registers)
+- Add the plugin manifest (section 5, Plugin). (done 2026-11-04, C6 `84ebad5`; moved into the skill folder 2026-11-05, `4aa04eb`)
+- Trim `SKILL.md`: spec fields only, description under 1024 characters, body under 500 lines, folder name equals `name`, safety rules listed. (done 2026-11-05, C5 `e9f8122` and `6bf4f41`: `SKILL.md` plus 13 playbooks)
+- **Done when:** `setup.py` on an empty folder produces a project where render, structure check and audit all pass. (met 2026-11-05: `tests/test_e2e_setup.py`)
 
 ### Phase D: tests (M)
 - `tests/` runs only on `examples/acme`, copied into a temp folder. Nothing writes outside a temp folder, and there is no network and no real data.
-- Self-tests of `render_views` and `structure_check` use Acme, not live data.
+- Self-tests of `render_views` and `structure_check` use Acme, not live data. (done with the tools, `c4e1aaa`)
 - Cover: setup on an empty folder writes nothing before consent and never overwrites; the priority order is read from config; `docs_audit` exits 1 on findings and reports a stale document after a register changes; every tool answers `--help`; a project with a newer `schema_version` is refused; duplicate ids and multi-line entries fail validation; rendering twice gives identical views; no tool runs `git add`.
-- Write the two evals: setup writes nothing before the user says yes; drafting a document from the Acme registers passes its checks.
-- **Done when:** everything passes in CI on Python 3.10 and the newest stable release with nothing installed beyond Python, and both evals pass.
+- Write the evals in `evals/`: nine cases, one per safety or working rule (setup needs consent, status report from Acme, done needs QA, empty values not invented, no unasked git writes, ask don't guess, no overwrite of hand edits, ids and bulk edits, plan flags missing due dates). All nine pass with the plugin on Sonnet (re-run 2026-11-06 after the last `SKILL.md` edits, one sample each, about $1 a full run; three cases failed once and passed on re-run, so results are noisy); Haiku fails five. Learned: an `llm` grader sees only a file's path, not its text, so graders judge the final answer; `max: 0` needs `min: 0`; Bash is blocked in the eval sandbox (see Phase F), so graders must not depend on it. "Ask, do not guess" in `SKILL.md` was tightened after `ask-dont-guess` showed a real gap.
+- **Done when:** everything passes in CI on Python 3.10 and the newest stable release, and all nine evals pass. (Not yet checked: a CI run with no system PyYAML, to prove nothing beyond Python is needed.)
 
 ### Phase E: docs (S-M)
 - README: what it is; install (`/plugin marketplace add` and `/plugin install`, or copy `skills/pmo-docs/` into the agent's skills folder); Linux and macOS (Windows through WSL); Python 3.10+ with nothing to pip install; quick start; what it reads and writes; that it sends nothing and never pushes; the one-writer limit; that `pmo/` holds people's names; how to call `render_views --check` from a git hook; that later turns may ask for permission (3.1, fix 8); and the "Claude Code verified, other agents untested" note.
@@ -238,18 +238,21 @@ Build the repo by **copying engine files into `tmp/source/`** and generalising f
 - **Done when:** a new user can follow the README from nothing to a first rendered view.
 
 ### Phase F: release v0.1 (S-M)
-- Write `dev/release`, a shortcut modelled on the release script of the maintainer's `jekyll-theme-resume` repo. Usage: `dev/release [--bump] [version]`.
+- Write `dev/release`, a shortcut modelled on the release script of the maintainer's `jekyll-theme-resume` repo. Usage: `dev/release [--bump] [--allow-dirty] [--dry-run] [version]`.
   1. Refuse to run with uncommitted changes, unless `--allow-dirty`.
-  2. Run `dev/scrub.sh`, the tests and `claude plugin validate . --strict`. Stop on any failure.
+  2. Run `dev/scrub.sh`, the tests, `claude plugin validate .` (the marketplace) and `claude plugin validate skills/pmo-docs` (the plugin). Stop on any failure or non-zero exit; print any warnings (none since 2026-11-05).
   3. Pick the version: the argument, or `git-cliff --bumped-version` with `--bump`.
-  4. Write the version into `SKILL.md` (`metadata.version`) and `.claude-plugin/plugin.json`.
+  4. Write the version into `SKILL.md` (`metadata.version`) and `skills/pmo-docs/.claude-plugin/plugin.json`.
   5. Run `git-cliff -o CHANGELOG.md --tag vX.Y.Z` and print the new release notes. The same text for a GitHub release comes from `git-cliff --latest --strip header`.
   6. Ask for confirmation, default **No**. There is no `-y` flag, because commits and pushes need the maintainer's approval.
   7. Commit `chore(release): vX.Y.Z`, create an annotated tag, and push the branch and tag.
 - Changelog config is `cliff.toml`: Keep a Changelog groups mapped from conventional prefixes, internal commit types left out, commit-hash links, compare-link footer, 0.x-safe version bumps (a breaking change bumps the minor). No GitHub API calls. Because the repo is public, every commit subject becomes a public changelog line, and `dev/scrub.sh` checks subjects for blocked names.
 - It lives in `dev/`, not `bin/`: a plugin's `bin/` is put on the Bash tool's PATH, so a maintainer script there would ship to every user.
-- Run the evals by hand and scan the finished skill with SkillSpector (NVIDIA's open-source static scanner for agent skills; needs Python 3.12+; use the static scan, since its LLM mode was reported not to work with the Anthropic API). Then run `dev/release 0.1.0`. This release commits `CHANGELOG.md` for the first time.
-- The repo is public from the start (section 7), so the release adds the tag and the GitHub release only.
+- Run the evals by hand and scan the finished skill with SkillSpector (NVIDIA's open-source scanner for agent skills; needs Python 3.12+). Scanned on a clean copy of the tracked files, both static (`--no-llm`) and with LLM analyzers through `SKILLSPECTOR_PROVIDER=claude_cli`, with `--baseline dev/skillspector-baseline.yaml` (SAFE, 0 issues, 9 suppressed). Released v0.1.0 via `dev/release 0.1.0` on 2026-11-06, creating git tag `v0.1.0` and committing `CHANGELOG.md` for the first time.
+- Pre-release check (2026-11-05): privacy, code and docs reviews (reports in the untracked `tmp/release-*.md`). Fixed: config paths are confined to the project (absolute, `..`, symlinks out and `.git` exit 2), `dev/release` undo hint and test env, `setup.py` exits 2 on a newer `schema_version`, `where.py` accepts only `YYYY-MM` or `YYYY-Www`, Priority renamed Goal in the plan, charter and delivery-report templates (`template_version` unchanged, nothing released), README status, walkthrough definition of done. SkillSpector static and LLM scans: SAFE, 0 issues, 9 suppressed. Run the evals with `dev/run-evals [--case <name>] [--keep-temp] [--max-cost-usd N]` (it builds a throwaway plugin copy with `evals/` and `examples/`, because the plugin root is `skills/pmo-docs`; one `--case` per command); every case is a real agent run with an LLM judge, so it uses Claude usage.
+- Install check (2026-11-05, `dev/test-install.md`): in a throwaway `CLAUDE_CONFIG_DIR`, marketplace add, install, details, update, uninstall and the scripts from the installed copy all pass with no pip. The live session (skill fires, asks before writing, adds a task, renders views) also passed, run by the maintainer. Findings, both fixed and committed 2026-11-05: the short `kmutahar/pmo-docs` form clones over SSH, so the README now gives the HTTPS address for strangers without an SSH key (`a7de053`); the install held the whole repo because `source` was `./`: fixed (`4aa04eb`) by moving the plugin manifest to `skills/pmo-docs/.claude-plugin/plugin.json` (with `"skills": ["./"]`) and pointing the marketplace entry at `./skills/pmo-docs`, so only the skill folder installs (tested with a local marketplace; `dev/release`, tests, AGENTS.md updated); the README names no install scope. The icon warning is fixed with `skills/pmo-docs/.claude-plugin/icon.png` (first a placeholder from `dev/make_icon.py`, `d42c7b9`; replaced by the 1024px render of `dev/icon.svg`, `e5dbc49`); both `claude plugin validate .` and `claude plugin validate skills/pmo-docs` now pass with no warnings, and the root `CLAUDE.md` warning is gone because the root is no longer a plugin.
+- Eval sandbox problem (open, not blocking the release): every Bash call in an eval run fails with `apply-seccomp: write /proc/self/setgroups ... Permission denied`, also in the maintainer's terminal, so evals never exercise the scripts. Tried: granting Bash with `--allow-tools` (no effect); `bwrap` works in a normal shell; setting `kernel.apparmor_restrict_unprivileged_userns=0` (no effect). To try: an AppArmor profile for the `claude` binary or bwrap, other sandbox settings, running the evals in CI or a container, the `claude plugin eval` docs. Until then graders must not depend on Bash and prompts name their output files. Without Bash the agent cannot run `where.py`, so `SKILL.md` names the templates folder as a fallback (`assets/templates/<type>.md`) and says to report that the checks were not run.
+- The repo is public from the start (section 7), so the release adds the tag and the GitHub release only. `.github/workflows/release.yml` builds the skill zip (`git archive` of `skills/pmo-docs` at the tag) and publishes the GitHub release when a `v*` tag is pushed, using this version's section of `CHANGELOG.md` as the notes (it fails if the section is missing). Its first run is the `v0.1.0` tag; it was not tested before.
 
 ---
 
@@ -274,9 +277,9 @@ Every release that changes the config or register format bumps `schema_version`,
   ```yaml
   languages:
     draft: en
-    translations: [ar]       # [] = English only
+    translations: [xx]       # [] = English only
     en: { label: EN, dir: ltr }
-    ar: { label: AR, dir: rtl, digits: arabic-indic, glossary: pmo/data/glossary-ar.md }
+    xx: { label: XX, dir: rtl, glossary: pmo/data/glossary-xx.md }   # dir: rtl for right-to-left languages
   ```
   A doc type's languages default to the draft plus the translations. A per-type flag `translate: in-period | after-close` says when translation happens. Finish loops over the translations and reads that flag. `parity_check` reads each language's digits and connector words from config. Translation glossaries are split into an approved file and a proposed file; Finish reads the first and only appends to the second.
 - **Generators** (v0.2). One `scripts/generate.py` with a subcommand per document type and `--period` and `--week` flags. Each doc type may name a `generator:` in config; the draft playbook runs it and the agent edits only the prose. Shared helpers come from `pmo_common` (one roster parser, one table writer that escapes `|`, one RAG function used by the playbook, the script and the prompt). The weekly snapshot is written by the script, not by hand.
@@ -288,19 +291,21 @@ Every release that changes the config or register format bumps `schema_version`,
   publish: { mode: repo, path: documentation, url: null }   # repo | folder | none
   ```
   `repo` copies finished documents and commits in a separate docs repo (the user pushes). `folder` copies them into a folder of the same repo and leaves the commit to the user. `none` keeps the finished documents where they are.
-- **Calendar** (v0.2). `week_start` and priority order come from config; the period is the current one unless a flag names another.
+- **Calendar** (v0.2). `week_start` (dropped from v0.1: weeks are ISO Monday to Sunday until a project needs another start day) and priority order come from config; the period is the current one unless a flag names another.
 - **Override drift warning** (v0.2). Overrides record `based_on: <type>@<version>` from v0.1. From v0.2, when the default template moves to a newer `template_version`, `docs_audit` warns.
 - **Generated catalogue** (v0.2). "Generate when" and "regenerate when" live in config per doc type, and `render_views` writes the catalogue and the portable prompt from them.
 - **Optional integrations** (v0.4; graph tools, scheduled refresh, repo sync): documented, off by default.
+- **Vendored PyYAML** (v0.2): cut `FullConstructor`, `UnsafeConstructor`, `Constructor` and the loaders and functions that use them (`FullLoader`, `UnsafeLoader`, `Loader`, `load`, `full_load`, `unsafe_load`), so only the safe path exists; this removes 4 of the 9 SkillSpector suppressions (the 3 in `FullConstructor` and SDI-2). Note the cut in `_vendor/VERSION` and redo it on each PyYAML update.
 - **Other tools** (v0.2): the cheatsheet, the portable prompt generator, `sync_repos` (optional).
 - **Extras that stay out unless generalised:** spreadsheet review tools, work-order and PDF tools. Decide per tool when v0.2 starts.
 
 ### Plugin (manifest from v0.1)
 
-- **Files**, added at the repo root (the skill folder does not move):
+- **Files** (the plugin root is the skill folder since 2026-11-05, so the v0.2 `init` and `publish` skills must live where that plugin can reach them; decide the path when v0.2 starts):
   ```
-  .claude-plugin/plugin.json       v0.1  name, version, description, author, license, homepage, repository
-  .claude-plugin/marketplace.json  v0.1  one entry: this plugin, source "./"
+  .claude-plugin/marketplace.json                  v0.1  one entry: this plugin, source "./skills/pmo-docs"
+  skills/pmo-docs/.claude-plugin/plugin.json       v0.1  name, version, description, author, license, homepage, repository, skills ["./"]
+  skills/pmo-docs/.claude-plugin/icon.png          v0.1  1024x1024, rendered from the vector master dev/icon.svg (brief: dev/icon-brief.md)
   evals/                           v0.1  `claude plugin eval` cases
   skills/init/SKILL.md             v0.2  disable-model-invocation: true, follows references/setup.md
   skills/publish/SKILL.md          v0.2  disable-model-invocation: true, follows references/publish.md
@@ -312,9 +317,9 @@ Every release that changes the config or register format bumps `schema_version`,
 - **Evals:**
   1. (v0.1) Setup in an empty folder writes nothing before the user says yes.
   2. (v0.1) Drafting a document from the Acme registers passes its checks.
-  3. (later) "T-001 is done" asks for the definition of done when QA is needed.
+  3. (v0.1, written 2026-11-05) Seven more, one per safety or working rule: `done-needs-qa`, `empty-values-not-invented`, `no-unasked-git-writes`, `ask-dont-guess`, `no-overwrite-hand-edits`, `ids-and-bulk-edits`, `plan-missing-due-dates`.
   4. (v0.2) The model refuses to publish on its own.
-- **Done when (v0.1):** `claude plugin validate . --strict` passes and `claude --plugin-dir .` drafts a document in `examples/acme`.
+- **Done when (v0.1):** `claude plugin validate .` and `claude plugin validate skills/pmo-docs` exit 0 and `claude --plugin-dir skills/pmo-docs` drafts a document in `examples/acme`.
 - **Install, for users:**
   ```
   /plugin marketplace add <owner>/pmo-docs
@@ -348,21 +353,21 @@ Decide after v0.3. Until then there is no sync (section 1).
 The repo is public, so every commit, message and file is visible. Rules that keep it safe:
 
 - **Commit gate on every clone:** `git config core.hooksPath .githooks`. The pre-commit hook runs `dev/scrub.sh`; the commit-msg hook blocks blocked names in subjects. Never bypass with `--no-verify`.
-- **`.scrub-names` is complete before Phase B:** roster slugs, full names (also in other scripts, such as Arabic), sub-project ids and project names. The file stays untracked; without it the scrub fails (except in CI).
+- **`.scrub-names` is complete before Phase B:** roster slugs, full names (also in other alphabets or scripts), sub-project ids and project names. The file stays untracked; without it the scrub fails (except in CI).
 - **Raw copies never get staged.** They live in the gitignored `tmp/source/`; files move into the skill one at a time once generic, and the scrub runs before each commit.
 - **If a leak is committed anyway:** treat the data as exposed. Rotate any credential, and rewrite history only with the maintainer's approval. Deleting the file in a later commit does not remove it from history.
 
 Release checklist (v0.1):
 
-- [ ] `dev/scrub.sh` clean, including the local-only name list (3.4)
-- [ ] `claude plugin validate . --strict` passes
-- [ ] Both evals pass
-- [ ] SkillSpector scan has no findings
-- [ ] `LICENSE` (MIT) present and `license` set in `plugin.json`
-- [ ] README states what is read and written, that nothing is sent, that nothing is pushed, and that `pmo/` holds people's names
-- [ ] Tests pass on a clean machine
-- [ ] Git history reviewed for private data (`git log -p` through the scrub patterns)
-- [ ] The maintainer approves
+- [x] `dev/scrub.sh` clean, including the local-only name list (3.4) (2026-11-05; re-run by `dev/release`)
+- [x] `claude plugin validate .` and `claude plugin validate skills/pmo-docs` exit 0 (2026-11-05, no warnings)
+- [x] All nine evals pass (2026-11-06, Sonnet, one sample each, run with `dev/run-evals`)
+- [x] SkillSpector scan has no findings (2026-11-06, static and Sonnet LLM: SAFE, 0 findings, 9 suppressed with reasons in `dev/skillspector-baseline.yaml`; run it on a clean copy, `skillspector scan skills/pmo-docs --no-llm --baseline dev/skillspector-baseline.yaml`)
+- [x] `LICENSE` (MIT) present and `license` set in `plugin.json`
+- [x] README states what is read and written, that nothing is sent, that nothing is pushed, and that `pmo/` holds people's names (verified in README.md)
+- [x] Tests pass on a clean machine (verified in CI on GitHub Actions, Python 3.10 and 3.x)
+- [x] Git history reviewed for private data (`git log -p` through the scrub patterns) (verified in `tmp/release-leak-report.md`)
+- [x] The maintainer approves (approved and released v0.1.0 on 2026-11-06)
 
 ---
 
@@ -402,12 +407,12 @@ Sources:
 
 ## 10. Checklist
 
-- [ ] Phase A: rename to `pmo-docs` (done), layout, `memory.md`, initial commit reworded (done), CI workflow, scaffold committed
+- [x] Phase A: rename to `pmo-docs` (done), layout, `memory.md`, initial commit reworded (done), CI workflow, scaffold committed
 - [x] Phase B: engine copied into `tmp/source/`, inventory in `tmp/`, v0.1 content list in this plan (2026-11-04)
-- [ ] Phase C: sparse generic config with `schema_version`, vendored PyYAML, config-driven priorities, checks declared (3.2), 3.1 fixes, templates with placeholders, setup, `where`, plugin manifest, trimmed `SKILL.md`, committed in small groups (with approval)
-- [ ] Phase D: tests on `examples/acme`, CI on Python 3.10 and the newest stable, two evals
-- [ ] Phase E: README, Acme walkthrough
-- [ ] Phase F: `dev/release` script, plugin validate, evals, SkillSpector scan, release `v0.1.0`
+- [x] Phase C (done 2026-11-05: C1-C6; last commits `8871a8d` templates, `e9f8122` and `6bf4f41` playbooks and `SKILL.md`): sparse generic config with `schema_version`, vendored PyYAML, config-driven priorities, checks declared (3.2), 3.1 fixes, templates with placeholders, setup, `where`, plugin manifest, trimmed `SKILL.md`, committed in small groups (with approval)
+- [x] Phase D (2026-11-05, `e749c93` `734237d` `b3209ba`): tests on `examples/acme`, CI on Python 3.10 and the newest stable, nine evals (all pass, see Phase D)
+- [x] Phase E: README, Acme walkthrough (2026-11-05, `a4b3765`; plugin install commands checked 2026-11-05 with `dev/test-install.md` (all steps pass, including a live session); the walkthrough's agent prompts not run)
+- [x] Phase F: `dev/release` script (written and reviewed 2026-11-05; trial release in a temp clone worked), plugin validate (marketplace and plugin both pass with no warnings), pre-release reviews and fixes (done 2026-11-05, 139 tests), SkillSpector static and LLM scans (SAFE 2026-11-06), evals (9 written, all pass on Sonnet 2026-11-06; Bash blocked in the eval sandbox, open), README install commands (verified 2026-11-05 in `dev/test-install.md`, including a live session; the SSH-clone note and the whole-repo install fixed and committed 2026-11-05, `d42c7b9`..`56d1de4`), commit in chunks (done 2026-11-05), release `v0.1.0` (tag `v0.1.0`, 2026-11-06)
 - [ ] v0.2: generators, calendar, publish modes with the `init` and `publish` commands, override drift warning, catalogue
 - [ ] v0.3: languages, `parity_check`, intake
 - [ ] v0.4: stacks, playbook overrides, technical and domain templates
@@ -417,6 +422,7 @@ Sources:
 - [x] Decided in Phase B (2026-11-04): the wider v0.1 content (section 3), roster as a register, no dash check, recipe definition, no `default_period`
 - [x] Decided: checks live in template front matter; a check naming a missing section fails (3.2, 2026-11-04)
 - [ ] Decide: the source project's path (section 6)
+- [x] Decided in Phase C (2026-11-05): a task's `priority` is a level only and the `priorities` register is optional goals with no task link; `origin` is an optional field on every register (the inferred-entry marker); recipes stop at the draft and Finish happens when the user says ready; `week_start` and `--week-start` dropped from v0.1 (ISO Monday weeks; back in v0.2 Calendar); a newer `schema_version` exits 2
 - [x] Decided: public from the start (section 7)
 - [x] Decided: roadmap, schema version, tests and CI, raw-copy workspace, changelog rules, glossary, documents folder (sections 1 and 3.3, 2026-11-04)
 - [x] Decided in the second review (2026-11-04): ownership, plugin manifest in v0.1, vendored PyYAML, Python 3.10 with a clear message, Linux and macOS, one writer and team-safe, no user-project hook, committed views, sparse config, v0.1 content rule, one-line entries, template-only overrides with `based_on`, house-rule precedence, stale by hash, `pmo/documents/`, evals in v0.1, CI from the first commit, v0.4 dissolved (section 1)

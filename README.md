@@ -2,7 +2,7 @@
 
 A project office kept in plain files and run by your AI coding agent. A project keeps its facts in YAML **registers** (tasks, risks, issues, decisions, ...). Scripts render **views** from them, and the agent drafts **documents** (status reports, plans, charters, ...) from **templates** whose checks a script verifies.
 
-> **Status: v0.1, the core skill.** Registers, views, documents, checks and recipes work today. The plan, decisions and later versions are in [`docs/PLAN.md`](docs/PLAN.md).
+> **Status: v0.1.0 released.** Registers, views, documents, checks and recipes work today. Release history is in [`CHANGELOG.md`](CHANGELOG.md); the plan, decisions and later versions are in [`docs/PLAN.md`](docs/PLAN.md).
 
 ## How it works
 
@@ -104,7 +104,7 @@ The skill installs no hook. If you want one, call `render_views.py --check` from
 
 | Version | Theme |
 |---|---|
-| v0.1 | Core skill: registers, views, templates and checks, setup, plugin manifest |
+| v0.1 | Core skill: registers, views, templates and checks, setup, plugin manifest (released) |
 | v0.2 | Generators, calendar, publishing, `init` and `publish` commands |
 | v0.3 | Languages and translation, intake from chat exports |
 | v0.4 | Stacks and technical templates |
