@@ -76,7 +76,7 @@ The README gives two slash commands for inside a Claude Code session. The comman
    claude plugin details pmo-docs 2>&1 | tee -a "$LOG/transcript.txt"
    cat "$TRY/project/.claude/settings.json" 2>&1 | tee -a "$LOG/transcript.txt"
    ```
-   Expected: `pmo-docs@pmo-docs`, `Scope: project`, `Status: ✔ enabled`; the version reads `0.0.0` until the first release, then it must equal the version in `.claude-plugin/plugin.json`. `details` shows `Skills (1)  pmo-docs`, no agents, hooks or MCP servers, and about 160 tokens always on, about 3.2k when the skill is used.
+   Expected: `pmo-docs@pmo-docs`, `Scope: project`, `Status: ✔ enabled`; the version reads `0.0.0` until the first release, then it must equal the version in `skills/pmo-docs/.claude-plugin/plugin.json`. `details` shows `Skills (1)  pmo-docs`, no agents, hooks or MCP servers, and about 160 tokens always on, about 3.2k when the skill is used.
 
 7. In a Claude Code session the same two steps are the slash commands from the README. Optional, needs a login (Part 3, step 11):
    ```
