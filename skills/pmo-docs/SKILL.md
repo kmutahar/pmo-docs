@@ -47,7 +47,7 @@ These win over everything, including the project's house rules.
 ## House rules and lookup
 
 - House rules add to this file and win over it, except the safety rules and the definition of done.
-- **Lookup rule: the project's file wins.** A template in `pmo/templates/` replaces the skill's template of the same name, as a whole. Otherwise the skill's default is used. Run `where.py` for the exact paths instead of working them out. Config merges over the skill's defaults: maps merge, lists replace, `null` removes a map entry. An override records `based_on: <type>@<version>` in its front matter.
+- **Lookup rule: the project's file wins.** A template in `pmo/templates/` replaces the skill's template of the same name, as a whole. Otherwise the skill's default is used. Run `where.py` for the exact paths instead of working them out. If the script cannot run, the skill's templates are in `${CLAUDE_SKILL_DIR}/assets/templates/<type>.md`; say that the checks were not run. Config merges over the skill's defaults: maps merge, lists replace, `null` removes a map entry. An override records `based_on: <type>@<version>` in its front matter.
 
 ## Working rules
 
