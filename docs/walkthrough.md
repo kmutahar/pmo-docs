@@ -194,7 +194,7 @@ None
 In Claude Code, with the plugin installed, open a copy of Acme as a project and ask:
 
 - "weekly-status" or "monthly-status": a draft report from the registers.
-- "mark T-1 done": the agent changes that one line, asks whether the work was tested (the definition of done), then renders the views.
+- "mark T-1 done": the agent first asks for QA or test evidence (the definition of done) and changes nothing until you answer. Then it changes that one line and renders the views.
 - "finish the status report": Finish records the template version and the hashes, removes the template's comments and checks, and marks the document finished.
 
 The agent never commits or pushes unless you ask. When you want a check before every commit, see "Check the registers in your own git hook" in the [README](../README.md).

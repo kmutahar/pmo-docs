@@ -2,7 +2,7 @@ Reads: pmo/config.yaml (if present).
 
 # Setup
 
-Set up a project's `pmo/` workspace and starter registers.
+Set up a project's `pmo/` folder and starter registers.
 
 ## Steps
 
@@ -11,7 +11,7 @@ Set up a project's `pmo/` workspace and starter registers.
    Compare its `schema_version` with the skill's current version (1):
    - Equal: project is current; nothing to do.
    - Older: a migration is due (none exist yet).
-   - Newer: the skill is out of date; update the skill.
+   - Newer: the skill is out of date; update the skill (`setup.py` exits 2).
    Stop after reporting the status.
 
 2. **Gather configuration**
@@ -29,6 +29,7 @@ Set up a project's `pmo/` workspace and starter registers.
    ├── house-rules.md
    ├── documents/
    │   └── .gitkeep
+   ├── views/             one rendered .md per register
    └── registers/
        ├── actions.yaml       ├── assumptions.yaml   ├── budget.yaml
        ├── capacity.yaml      ├── changes.yaml       ├── decisions.yaml

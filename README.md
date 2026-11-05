@@ -2,7 +2,7 @@
 
 A project office kept in plain files and run by your AI coding agent. A project keeps its facts in YAML **registers** (tasks, risks, issues, decisions, ...). Scripts render **views** from them, and the agent drafts **documents** (status reports, plans, charters, ...) from **templates** whose checks a script verifies.
 
-> **Status: under construction. Nothing is released yet.** This README describes what v0.1 will do. The build plan, decisions and checklist are in [`docs/PLAN.md`](docs/PLAN.md).
+> **Status: v0.1, the core skill.** Registers, views, documents, checks and recipes work today. The plan, decisions and later versions are in [`docs/PLAN.md`](docs/PLAN.md).
 
 ## How it works
 
@@ -69,7 +69,7 @@ python3 "$SKILL/scripts/render_views.py" --check
 
 `setup.py` never overwrites a file. `render_views.py` prints `registers valid; wrote 16 views to pmo/views`, or the errors it found (and exits 1). `--check` writes nothing and exits 1 when the registers are invalid or a view is stale. Every script answers `--help`.
 
-Next, ask for a document ("draft the project charter", "weekly-status"). A worked example with a finished project is in [`docs/walkthrough.md`](docs/walkthrough.md).
+Next, ask for a document ("draft the project charter", "weekly-status"). A worked example with a small example project is in [`docs/walkthrough.md`](docs/walkthrough.md).
 
 ## What it reads and writes
 

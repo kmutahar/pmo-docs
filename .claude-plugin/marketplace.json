@@ -3,6 +3,9 @@
   "owner": {
     "name": "kmutahar"
   },
+  "metadata": {
+    "description": "A project office in plain files, run by your AI coding agent: registers, views, documents and checks."
+  },
   "plugins": [
     {
       "name": "pmo-docs",

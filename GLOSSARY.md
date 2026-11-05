@@ -48,6 +48,10 @@ _Avoid_: priority (for a goal)
 One item in a register, with its own id (for example T-014).
 _Avoid_: row, record, item, line
 
+**Origin**:
+The field on every entry that says where it came from: `stated` (the user said it) or `proposed` (the agent inferred it and the user has not confirmed it).
+_Avoid_: source, provenance
+
 **Vocabulary**:
 The allowed values for an entry's fields, such as statuses, priority levels and severities.
 _Avoid_: enum, allowed values, lookup
@@ -73,6 +77,14 @@ _Avoid_: form, skeleton, boilerplate
 **Check**:
 A rule a draft must meet, declared in the front matter of its doc type's template. A check that names a missing section fails.
 _Avoid_: lint, test
+
+**Open questions**:
+The section of a document (`## Open questions`) that lists every value that is missing or unconfirmed, such as `not set` or `not provided`.
+_Avoid_: TODOs, gaps, unknowns
+
+**RAG**:
+Red, amber or green: a status rating in a report. The document states the rule used.
+_Avoid_: traffic light, health
 
 **Period**:
 The span of time a document covers, such as a week or a month.

@@ -41,7 +41,7 @@ Every document starts with YAML front matter.
 
 ## Registers
 
-- A register file holds a single list named after it. Each entry is one line, a YAML flow mapping: `- { id: T-014, title: ..., owner: ana, status: in-progress, due: YYYY-MM-DD }`. A multi-line entry fails validation.
+- A register file holds a single list named after it. Each entry is one line, a YAML flow mapping: `- { id: T-014, title: ..., owner: alice, status: in-progress, due: YYYY-MM-DD }`. A multi-line entry fails validation.
 - Ids are the register's prefix and a number (`T-001`, `R-001`, `I-001`, `A-001`, `D-001`, `DEC-001`, `ACT-001`, `CR-001`, `MTG-001`, `M-001`, `P-001`, `O-001`, `B-001`, `TM-001`). The prefixes are in the config under `registers.<name>.prefix`. A new id is the highest existing number for the prefix plus one. The roster and capacity have no id.
 - Owners are roster slugs. The roster register has one entry per person: `slug`, `name`, `role`.
 - Statuses, severities, levels and similar values must come from the config's `vocab`. An empty vocab list accepts any value. `vocab.priority_order` lists the task priority levels, most urgent first.
@@ -56,9 +56,9 @@ Run from the project root, or pass `--project DIR`. Every script answers `--help
 
 | Command | What it does | Exit codes |
 |---|---|---|
-| `python3 ${CLAUDE_SKILL_DIR}/scripts/setup.py [--name TEXT] [--manager TEXT] [--priority-order LIST]` | creates the config, house rules, empty registers and documents folder; never overwrites | 0 ok, 1 the new registers failed validation, 2 usage |
+| `python3 ${CLAUDE_SKILL_DIR}/scripts/setup.py [--name TEXT] [--manager TEXT] [--priority-order LIST]` | creates the config, house rules, empty registers and documents folder; never overwrites | 0 ok, 1 the new registers failed validation, 2 usage or a `schema_version` newer than the skill |
 | `python3 ${CLAUDE_SKILL_DIR}/scripts/where.py <type> [period] [--week] [--as-of DATE] [--hashes]` | paths and settings of one doc type; `--hashes` adds the `source_hashes` line Finish records | 0 ok, 2 usage |
-| `python3 ${CLAUDE_SKILL_DIR}/scripts/render_views.py [--check]` | validates every register and writes the views; with `--check` it writes nothing and also fails when a view on disk is stale | 0 valid and current, 1 validation errors or stale views, 2 usage |
+| `python3 ${CLAUDE_SKILL_DIR}/scripts/render_views.py [--check]` | validates every register and writes the views; with `--check` it writes nothing and also fails when a view on disk is stale | 0 valid and current, 1 validation errors or stale views, 2 usage or a `schema_version` newer than the skill |
 | `python3 ${CLAUDE_SKILL_DIR}/scripts/structure_check.py [files]` | checks documents against their template (default: every document) | 0 clean (warnings allowed), 1 findings, 2 usage |
 | `python3 ${CLAUDE_SKILL_DIR}/scripts/docs_audit.py [--as-of DATE]` | front matter, stale, old and broken-link checks | 0 clean, 1 findings, 2 usage |
 | `python3 ${CLAUDE_SKILL_DIR}/scripts/overdue.py [--as-of DATE] [--days N]` | overdue tasks, actions and milestones, open risks and issues | 0 ok, 2 usage |

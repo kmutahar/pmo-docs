@@ -16,7 +16,7 @@ Read-only commands, for evidence and for the state of the project:
 - `git log --since=<date> --until=<date> --no-merges --pretty=format:'%h|%ad|%an|%s' --date=short`
 - `git log -1 --format=%cs -- <path>` and `git log -1 --oneline`
 - `git diff --stat <a>..<b>` and `git show --stat <sha>`
-- `git rev-parse HEAD`, `git tag`
+- `git rev-parse HEAD`, `git tag --list`
 
 Reports that use history say "local history as of <date>": the remote may be ahead. Git history alone never changes a status (`SKILL.md`, Working rules).
 

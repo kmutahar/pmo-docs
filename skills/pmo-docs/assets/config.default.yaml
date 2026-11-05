@@ -15,7 +15,7 @@ paths:
   documents: pmo/documents
   house_rules: pmo/house-rules.md
 
-# Allowed values for entry fields. An empty list means any value is accepted.
+# Vocabulary: the values each entry field may take. An empty list means any value is accepted.
 vocab:
   task_status: [not-started, in-progress, blocked, done, dropped]
   risk_status: [open, mitigating, closed, occurred]
