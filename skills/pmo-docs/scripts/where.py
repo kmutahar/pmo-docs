@@ -43,7 +43,7 @@ def main(argv=None):
     pattern = info.get("name", "{title}.md")
 
     if args.period:
-        if not re.fullmatch(r"[0-9]{4}-([0-9]{2}|W[0-9]{2})", args.period):
+        if not re.fullmatch(r"[0-9]{4}-(0[1-9]|1[0-2]|W(0[1-9]|[1-4][0-9]|5[0-3]))", args.period):
             ap.error(f"invalid period {args.period!r}; use YYYY-MM or YYYY-Www")
         period = args.period
     elif args.week:
