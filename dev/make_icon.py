@@ -1,5 +1,5 @@
 """Draw the plugin icon (a clipboard with a checklist) with Pillow. Maintainer tool, not shipped, not needed to use the skill.
-Run once: python3 dev/make_icon.py   (writes skills/pmo-docs/.claude-plugin/icon.png, 512x512)"""
+Run once: python3 dev/make_icon.py   (writes a 512x512 placeholder to skills/pmo-docs/.claude-plugin/icon.png; the shipped 1024x1024 icon comes from dev/icon.svg, so do not run this over it)"""
 from pathlib import Path
 from PIL import Image, ImageDraw
 
