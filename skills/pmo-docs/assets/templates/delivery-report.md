@@ -21,7 +21,7 @@ last_updated: "{{date}}"
 
 ## Deliverables
 <!-- One row per goal (an entry of the priorities register); delivered is yes, partly or no; acceptance met is yes, no or not verified; evidence is concrete or "none yet". -->
-| Priority | Output | Owner | Delivered | Acceptance met | Evidence |
+| Goal | Output | Owner | Delivered | Acceptance met | Evidence |
 |---|---|---|---|---|---|
 | {{id}} | {{output}} | {{lead}} | {{delivered}} | {{acceptance_met}} | {{evidence}} |
 

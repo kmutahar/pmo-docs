@@ -21,7 +21,7 @@ last_updated: "{{date}}"
 |---|---|
 | {{role}} | {{name}} |
 
-## Priorities
+## Goals
 <!-- One subsection per goal (an entry of the priorities register), in register order. Tasks are not linked to goals. -->
 
 ### {{id}} - {{title}}
@@ -43,7 +43,7 @@ last_updated: "{{date}}"
 **Output:** {{team output}}
 
 ## Dependencies and sequencing
-| Priority | Depends on | Blocks |
+| Goal | Depends on | Blocks |
 |---|---|---|
 | {{id}} | {{depends_on}} | {{blocks}} |
 

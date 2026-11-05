@@ -17,9 +17,9 @@ last_updated: "{{date}}"
 
 ## Objectives and success measures
 <!-- Each objective is measurable and names the goal it serves. Goal is not an objectives field: take the id of the goal from the priorities register, or write "not set". -->
-| Objective | Priority | Measure of success | Target date |
+| Objective | Goal | Measure of success | Target date |
 |---|---|---|---|
-| {{title}} | {{priority}} | {{measure}} | {{due}} |
+| {{title}} | {{goal}} | {{measure}} | {{due}} |
 
 ## Scope
 ### In scope
@@ -28,7 +28,7 @@ last_updated: "{{date}}"
 - {{item}}
 
 ## Deliverables
-| Deliverable | Owner | Priority |
+| Deliverable | Owner | Goal |
 |---|---|---|
 | {{title}} | {{lead}} | {{id}} |
 
