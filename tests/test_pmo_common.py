@@ -31,6 +31,66 @@ class Common(unittest.TestCase):
             for v in r.get("enums", {}).values():
                 self.assertIn(v, c["vocab"])
 
+    def test_paths_that_leave_the_project_exit_2(self):
+        for cfg in ("registers: {tasks: {view: ../x.md}}\n", "registers: {tasks: {file: ../x.yaml}}\n",
+                    "paths: {views: /abs}\n", "paths: {documents: ../../docs}\n"):
+            d = self.project("schema_version: 1\n" + cfg, "tasks: []\n")
+            with self.assertRaises(SystemExit) as cm:
+                pc.load_config(d)
+            self.assertEqual(cm.exception.code, 2, cfg)
+
+    def test_render_views_touches_nothing_outside_the_project(self):
+        d = self.project("schema_version: 1\nregisters: {tasks: {view: ../victim.md}}\n", "tasks: []\n")
+        victim = d.parent / "victim.md"
+        victim.write_text("keep", encoding="utf-8")
+        for _ in range(2):
+            p = subprocess.run([sys.executable, str(pc.SKILL / "scripts/render_views.py"), "--project", str(d)],
+                               capture_output=True, text=True, encoding="utf-8")
+            self.assertEqual(p.returncode, 2, p.stderr)
+        self.assertEqual(victim.read_text(encoding="utf-8"), "keep")
+        victim.unlink()
+
+    def render(self, d):
+        return subprocess.run([sys.executable, str(pc.SKILL / "scripts/render_views.py"), "--project", str(d)],
+                              capture_output=True, text=True, encoding="utf-8")
+
+    def test_symlinks_out_of_the_project_exit_2(self):
+        outside = Path(tempfile.mkdtemp())
+        (outside / "tasks.md").write_text("keep", encoding="utf-8")
+        d = self.project("schema_version: 1\n", "tasks: []\n")
+        (d / "pmo/views").symlink_to(outside, target_is_directory=True)  # a whole folder
+        p = self.render(d)
+        self.assertEqual(p.returncode, 2, p.stderr)
+        self.assertIn("inside the project", p.stderr)
+        self.assertEqual((outside / "tasks.md").read_text(encoding="utf-8"), "keep")
+        (d / "pmo/views").unlink()
+        (d / "pmo/views").mkdir()
+        (d / "pmo/views/tasks.md").symlink_to(outside / "tasks.md")  # a single view file
+        p = self.render(d)
+        self.assertEqual(p.returncode, 2, p.stderr)
+        self.assertEqual((outside / "tasks.md").read_text(encoding="utf-8"), "keep")
+
+    def test_paths_into_dot_git_exit_2(self):
+        d = self.project("schema_version: 1\npaths: {views: .git}\nregisters: {tasks: {view: config}}\n", "tasks: []\n")
+        (d / ".git").mkdir()
+        (d / ".git/config").write_text("keep", encoding="utf-8")
+        p = self.render(d)
+        self.assertEqual(p.returncode, 2, p.stderr)
+        self.assertEqual((d / ".git/config").read_text(encoding="utf-8"), "keep")
+
+    def test_dot_dot_view_exits_2(self):
+        d = self.project("schema_version: 1\nregisters: {tasks: {file: tasks.yaml, view: '..'}}\n", "tasks: []\n")
+        p = self.render(d)
+        self.assertEqual(p.returncode, 2, p.stderr)
+        self.assertNotIn("Traceback", p.stderr)
+
+    def test_register_that_is_not_a_map_is_reported_without_a_traceback(self):
+        d = self.project("schema_version: 1\nregisters: {tasks: 5}\n", "tasks: []\n")
+        p = self.render(d)
+        self.assertEqual(p.returncode, 2, p.stderr)
+        self.assertNotIn("Traceback", p.stderr)
+        self.assertIn("register `tasks` needs `file`", p.stdout)
+
     def test_merge_rules(self):
         d = self.project("schema_version: 1\nproject: {name: Acme}\nvocab: {task_status: [a, b], rag: null}\n"
                          "doc_types: {roadmap: null}\n")

@@ -6,6 +6,7 @@ Usage:
 """
 import argparse
 import datetime
+import re
 import sys
 from pathlib import Path
 
@@ -42,6 +43,8 @@ def main(argv=None):
     pattern = info.get("name", "{title}.md")
 
     if args.period:
+        if not re.fullmatch(r"[0-9]{4}-([0-9]{2}|W[0-9]{2})", args.period):
+            ap.error(f"invalid period {args.period!r}; use YYYY-MM or YYYY-Www")
         period = args.period
     elif args.week:
         # shortcut: ISO weeks start on Monday, no per-project week start; add one when a project needs Sunday weeks

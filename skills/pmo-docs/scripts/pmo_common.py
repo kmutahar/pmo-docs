@@ -43,7 +43,7 @@ def merge(base, over):
 
 
 def load_config(root="."):
-    """Skill defaults merged with the project's pmo/config.yaml. Exits on a newer schema_version."""
+    """Skill defaults merged with the project's pmo/config.yaml. Exits 2 on a newer schema_version or on paths that leave the project."""
     cfg = yaml.safe_load(read(SKILL / "assets" / "config.default.yaml"))
     f = Path(root) / CONFIG
     if f.exists():
@@ -53,6 +53,27 @@ def load_config(root="."):
             print(f"{f}: schema_version {v!r} is newer than this skill knows ({SCHEMA_VERSION}). Update the skill.", file=sys.stderr)
             sys.exit(2)  # 2, not 1: callers read 1 as "findings"
         cfg = merge(cfg, mine)
+    root_r = Path(root).resolve()
+
+    def outside(*parts):  # resolve() follows symlinks and '..', so this also catches a committed symlink out of the project
+        try:
+            rel = (root_r / Path(*parts)).resolve().relative_to(root_r)
+        except ValueError:
+            return True
+        return ".git" in rel.parts
+
+    bad = [f"paths.{k}: {p!r}" for k, p in cfg["paths"].items() if not isinstance(p, str) or not p or outside(p)]
+    for n, r in cfg["registers"].items():
+        if not isinstance(r, dict):
+            continue  # render_views.config_errors reports it
+        for k, kind in (("file", "registers"), ("view", "views")):
+            x, base = r.get(k), cfg["paths"].get(kind)
+            if k in r and (not isinstance(x, str) or Path(x).name in ("", "..") or Path(x).name != x
+                           or (isinstance(base, str) and base and outside(base, x))):
+                bad.append(f"registers.{n}.{k}: {x!r}")
+    if bad:
+        print(f"{f}: these must stay inside the project (no absolute paths, '..', symlinks out or '.git'; register file and view bare file names): {'; '.join(bad)}", file=sys.stderr)
+        sys.exit(2)
     return cfg
 
 

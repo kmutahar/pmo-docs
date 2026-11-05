@@ -37,6 +37,14 @@ class Where(unittest.TestCase):
         self.assertIn("tasks", f["generated_from"].split(", "))
         self.assertEqual(f["stale_days"], "30")
 
+    def test_period_must_look_like_a_period(self):
+        for bad in ("../../x", "2026/03", "March", "2026-3", "2026", "2026-Q1"):
+            code, out, err = run(self.root, "status-report", bad)
+            self.assertEqual(code, 2, bad)
+            self.assertIn("invalid period", err)
+        for good in ("2026-03", "2026-W10"):
+            self.assertEqual(run(self.root, "status-report", good)[0], 0, good)
+
     def test_document_without_period_in_name(self):
         f = fields(run(self.root, "decision-log")[1])
         self.assertEqual(f["document"], "pmo/documents/Decision log.md")
