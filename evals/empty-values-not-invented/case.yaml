@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: empty-values-not-invented
+description: Capacity plan for 2026-04, a month with no capacity rows in Acme; the draft must say not provided, list open questions and invent no working days.
+context:
+  scaffold_script: scaffold.sh

@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: done-needs-qa
+description: The user says T-1 is done with no test evidence; the agent must ask for QA evidence or offer to record that none exists, and must not change the task.
+context:
+  scaffold_script: scaffold.sh

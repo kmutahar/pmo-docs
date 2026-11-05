@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: plan-missing-due-dates
+description: Project plan from an Acme copy where task T-2 has no due date; the plan and the reply must say so, offer to set dates and invent none.
+context:
+  scaffold_script: scaffold.sh

@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: ask-dont-guess
+description: An ambiguous request (write me the report); the agent must ask which document type and period and draft nothing.
+context:
+  scaffold_script: scaffold.sh

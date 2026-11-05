@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: ids-and-bulk-edits
+description: Add a task to the Acme tasks register; the new id must be the highest T- number plus one (T-5) and no existing id may change.
+context:
+  scaffold_script: scaffold.sh
