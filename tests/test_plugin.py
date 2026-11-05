@@ -25,6 +25,13 @@ class Plugin(unittest.TestCase):
             self.assertTrue(p.get(key), key)
         self.assertLessEqual(len(p["description"]), 300)
 
+    def test_skill_and_plugin_versions_agree(self):
+        sys.path.insert(0, str(REPO / "skills/pmo-docs/scripts/_vendor"))
+        import yaml
+        text = (REPO / "skills/pmo-docs/SKILL.md").read_text(encoding="utf-8")
+        fm = yaml.safe_load(re.match(r"---\n(.*?)\n---\n", text, re.S).group(1))
+        self.assertEqual(str(fm["metadata"]["version"]), load("plugin.json")["version"])
+
     def test_marketplace_json(self):
         m = load("marketplace.json")
         self.assertEqual(m["name"], "pmo-docs")
@@ -47,14 +54,18 @@ class Plugin(unittest.TestCase):
 
 class Evals(unittest.TestCase):
     """The eval files are only run by hand (they cost tokens), so check their shape and fixture here."""
-    CASES = ("setup-needs-consent", "status-report-from-acme")
-
     def test_every_case_has_a_prompt_and_unique_graders(self):
         sys.path.insert(0, str(REPO / "skills/pmo-docs/scripts"))
         import pmo_common  # noqa: F401  (puts the vendored PyYAML on the path)
         import yaml
-        for case in self.CASES:
-            d = REPO / "evals" / case
+        prompts = sorted((REPO / "evals").glob("*/prompt.md"))
+        self.assertGreaterEqual(len(prompts), 2)
+        for prompt in prompts:
+            d = prompt.parent
+            case = d.name
+            if (d / "case.yaml").exists():  # setup-needs-consent has none
+                self.assertTrue((d / "scaffold.sh").exists(), case)
+                self.assertEqual(yaml.safe_load((d / "case.yaml").read_text(encoding="utf-8"))["name"], case)
             self.assertTrue((d / "prompt.md").read_text(encoding="utf-8").strip(), case)
             names = set()
             for g in sorted((d / "graders").glob("*.md")):
@@ -63,11 +74,17 @@ class Evals(unittest.TestCase):
                 names.add(g.stem)
             self.assertGreaterEqual(len(names), 3, case)
 
-    def test_scaffold_builds_a_valid_acme_without_the_draft(self):
+    def test_every_scaffold_builds_a_valid_acme(self):
+        for scaffold in sorted((REPO / "evals").glob("*/scaffold.sh")):
+            with self.subTest(scaffold.parent.name):
+                self.check_scaffold(scaffold)
+
+    def check_scaffold(self, scaffold):
         tmp = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, tmp)
-        subprocess.run(["bash", str(REPO / "evals/status-report-from-acme/scaffold.sh")], cwd=tmp, check=True)
-        self.assertFalse((tmp / "pmo/documents/2026-03 - Status report.md").exists())
+        subprocess.run(["bash", str(scaffold)], cwd=tmp, check=True)
+        if scaffold.parent.name == "status-report-from-acme":
+            self.assertFalse((tmp / "pmo/documents/2026-03 - Status report.md").exists())
         p = subprocess.run([sys.executable, str(REPO / "skills/pmo-docs/scripts/render_views.py"), "--check"], cwd=tmp, capture_output=True)
         self.assertEqual(p.returncode, 0)
 

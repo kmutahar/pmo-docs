@@ -70,6 +70,19 @@ class Setup(unittest.TestCase):
         self.assertEqual(tool("setup.py", self.root)[0], 0)
         self.assertIn("Mine", reg.read_text(encoding="utf-8"))
 
+    def test_newer_schema_version_in_check_mode_exits_2(self):
+        (self.root / "pmo").mkdir()
+        (self.root / "pmo/config.yaml").write_text("schema_version: 99\n", encoding="utf-8")
+        code, out, err = tool("setup.py", self.root)
+        self.assertEqual(code, 2, out + err)
+
+    def test_failing_view_render_exits_1_with_errors(self):
+        (self.root / "pmo/registers").mkdir(parents=True)
+        (self.root / "pmo/registers/tasks.yaml").write_text("tasks:\n  - {id: T-1, title: x, bogus_field: 1}\n", encoding="utf-8")
+        code, out, _ = tool("setup.py", self.root)
+        self.assertEqual(code, 1)
+        self.assertIn("ERROR", out)
+
     def test_prints_hook_line(self):
         out = tool("setup.py", self.root)[1]
         self.assertIn("render_views.py --check", out)

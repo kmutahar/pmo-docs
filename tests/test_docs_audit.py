@@ -91,6 +91,12 @@ class Audit(unittest.TestCase):
         self.assertIn("`missing.md`", out)
         self.assertNotIn("Decision%20log.md`", out)
 
+    def test_multibyte_link_is_decoded(self):
+        (self.docs / "\u2713 done.md").write_text("---\ntype: decision-log\n---\nx\n", encoding="utf-8")
+        (self.docs / "Decision log.md").write_text("---\ntype: decision-log\n---\n[x](%E2%9C%93%20done.md)\n", encoding="utf-8")
+        code, out = self.run_audit()
+        self.assertNotIn("%E2%9C%93", out)
+
     def test_missing_registers_and_documents_folder(self):
         shutil.rmtree(self.p / "pmo/registers")
         self.assertEqual(da.register_hash(self.p, pc.load_config(self.p), "tasks"), "none")

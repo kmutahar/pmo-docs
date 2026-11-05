@@ -1,0 +1,20 @@
+# SkillSpector baseline: findings reviewed and accepted on 2026-11-05.
+# Run: skillspector scan skills/pmo-docs --no-llm --baseline dev/skillspector-baseline.yaml
+# Scan a clean copy (git archive HEAD skills/pmo-docs), not a working tree with __pycache__.
+version: 2
+rules:
+  - id: "LP1"
+    path: "*scripts/docs_audit.py"
+    reason: "Reads the project's documents to audit them; reading files is the job, and allowed-tools must not be widened to silence it"
+  - id: "LP1"
+    path: "*scripts/pmo_common.py"
+    reason: "Writes registers and views inside the configured paths, after the user agrees; writing files is the job"
+  - id: "AST3"
+    path: "*scripts/_vendor/yaml/*"
+    reason: "Vendored PyYAML. __import__ is in the unsafe python/object constructor, which is never reached: only safe_load is used"
+  - id: "AST7"
+    path: "*scripts/_vendor/yaml/*"
+    reason: "Vendored PyYAML. getattr in event/token/constructor helpers; not user-controlled"
+  - id: "EA3"
+    path: "*scripts/_vendor/PyYAML-LICENSE"
+    reason: "False positive: the phrase 'NOT LIMITED TO' is licence text"

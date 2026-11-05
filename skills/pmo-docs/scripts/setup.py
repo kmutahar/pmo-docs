@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Set up the project's pmo/ folder deterministically."""
 import argparse
+import contextlib
+import io
 import shutil
-import subprocess
 import sys
 from pathlib import Path
 
@@ -11,6 +12,7 @@ if sys.version_info < (3, 10):
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import pmo_common as pc  # noqa: E402
+import render_views  # noqa: E402
 
 
 def main(argv=None):
@@ -48,6 +50,7 @@ def main(argv=None):
             print("a migration is due (none exist yet)")
         else:
             print("the skill is out of date, update it")
+            return 2
         return 0
 
     cfg = pc.load_config(args.project)
@@ -112,17 +115,17 @@ def main(argv=None):
         actions.append(f"created: {rel_gitkeep}")
 
     rv_script = Path(__file__).resolve().parent / "render_views.py"
-    res = subprocess.run(
-        [sys.executable, str(rv_script), "--project", str(args.project)],
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-    )
-    if res.returncode != 0:
-        if res.stdout:
-            sys.stdout.write(res.stdout)
-        if res.stderr:
-            sys.stderr.write(res.stderr)
+    out = io.StringIO()
+    try:
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(out):
+            code = render_views.main(["--project", str(args.project)])
+    except SystemExit as e:
+        code = e.code or 0
+        if isinstance(code, str):
+            out.write(code + "\n")
+            code = 1
+    if code != 0:
+        sys.stdout.write(out.getvalue())
         return 1
 
     for act in actions:

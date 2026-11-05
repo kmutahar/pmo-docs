@@ -5,7 +5,7 @@ license: MIT
 compatibility: Needs Python 3.10 or newer on Linux or macOS (Windows through WSL). PyYAML is bundled; nothing to install. Works on the project in the current folder.
 metadata:
   version: "0.0.0"
-allowed-tools: Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/setup.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/where.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/render_views.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/structure_check.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/docs_audit.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/overdue.py *) Bash(git status *) Bash(git log *) Bash(git diff *) Bash(git show *) Bash(git rev-parse *) Bash(grep *)
+allowed-tools: Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/setup.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/where.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/render_views.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/structure_check.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/docs_audit.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/overdue.py *) Bash(git status *) Bash(git log *) Bash(git diff *) Bash(git show *) Bash(git rev-parse *) Bash(git tag --list *) Bash(grep *)
 ---
 
 # pmo-docs
@@ -41,7 +41,7 @@ These win over everything, including the project's house rules.
 
 1. **No git writes unless asked.** Never run `git add`, `commit`, `push`, `stash`, `reset`, `restore`, `checkout`, `switch`, `merge`, `rebase`, `pull`, `fetch` or any command that changes the repository or the index, never create or edit hooks and never make `.bak` copies, unless the user asks in this conversation. Reading history is fine. When asked to commit: stage the named paths one by one (never `git add -A` or `git add .`), leave other staged work alone, never use `--no-verify`, never push unless asked for exactly that, and never force-push without a separate ask. The commit model is in `references/git.md`.
 2. **No invented facts.** Dates, owners, numbers, statuses and test results come from registers, files, git history or the user. Say what you could not find. Anything you infer and the user did not state is written with `origin: proposed` (every register has an optional `origin` field) until the user confirms it, then `origin: stated`.
-3. **Nothing written without consent.** Write only what the request names, and only inside the configured paths (`paths` in the config, by default under `pmo/`). Anything else (another file, an entry the user did not state, an overwrite) is shown first and waits for a yes. Never overwrite a file the user edited by hand: show the difference and ask. Never send, post or publish anything.
+3. **Ask before writing beyond the request.** Write only what the request names, and only inside the configured paths (`paths` in the config, by default under `pmo/`). Anything else (another file, an entry the user did not state, an overwrite) is shown first and waits for a yes. Never overwrite a file the user edited by hand: show the difference and ask. Never send, post or publish anything.
 
 ## House rules and lookup
 

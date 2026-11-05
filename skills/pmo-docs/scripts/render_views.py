@@ -145,11 +145,11 @@ def render(data, cfg):
     return views
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     pc.add_project_arg(ap)
     ap.add_argument("--check", action="store_true", help="validate and compare with the views on disk; write nothing")
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
     if not Path(args.project).is_dir():
         ap.error(f"project folder not found: {args.project}")
     cfg = pc.load_config(args.project)

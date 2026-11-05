@@ -27,10 +27,16 @@ import hashlib
 import re
 import sys
 from pathlib import Path
-from urllib.parse import unquote
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+
 import pmo_common as pc  # noqa: E402
+
+
+def _unquote(s):
+    """Decode %XX escapes in a link target (UTF-8)."""
+    return re.sub(r"(?:%[0-9A-Fa-f]{2})+", lambda m: bytes.fromhex(m[0].replace("%", "")).decode("utf-8", "replace"), s)
+
 
 CHECKS = ("front matter", "stale", "old", "broken links")
 
@@ -80,7 +86,7 @@ def audit_file(root, cfg, path, base, today):
         if stamp and t.get("stale_days") and (today - stamp).days > t["stale_days"]:
             out.append(("old", f"`{rel}` - {(today - stamp).days} days old (limit {t['stale_days']})"))
     for target in re.findall(r"\]\((?!https?://|#|mailto:)([^)\s]+)\)", text):
-        if not (path.parent / unquote(target.split("#")[0])).exists():
+        if not (path.parent / _unquote(target.split("#")[0])).exists():
             out.append(("broken links", f"`{rel}` -> `{target}`"))
     return out
 
