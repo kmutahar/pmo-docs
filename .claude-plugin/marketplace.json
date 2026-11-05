@@ -9,7 +9,7 @@
   "plugins": [
     {
       "name": "pmo-docs",
-      "source": "./",
+      "source": "./skills/pmo-docs",
       "description": "A project-office and documentation workflow packaged as an Agent Skill: registers, generated views, document templates and checks."
     }
   ]

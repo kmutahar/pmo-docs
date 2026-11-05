@@ -15,7 +15,7 @@ class ReleaseTest(unittest.TestCase):
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, self.tmp)
-        for rel in ("dev/release", "skills/pmo-docs/SKILL.md", ".claude-plugin/plugin.json"):
+        for rel in ("dev/release", "skills/pmo-docs/SKILL.md", "skills/pmo-docs/.claude-plugin/plugin.json"):
             (self.tmp / rel).parent.mkdir(parents=True, exist_ok=True)
             shutil.copy(ROOT / rel, self.tmp / rel)
         self.git("init", "-q", "-b", "main")
@@ -69,7 +69,7 @@ class ReleaseTest(unittest.TestCase):
         self.assertEqual(self.release("--dry-run", "--allow-dirty", "v9.9.9").returncode, 0)
 
     def test_dirty_version_file_refused_even_with_allow_dirty(self):
-        with open(self.tmp / ".claude-plugin/plugin.json", "a", encoding="utf-8") as f:
+        with open(self.tmp / "skills/pmo-docs/.claude-plugin/plugin.json", "a", encoding="utf-8") as f:
             f.write("\n")
         self.assertEqual(self.release("--dry-run", "--allow-dirty", "9.9.9").returncode, 1)
 
@@ -124,7 +124,7 @@ class ReleaseTest(unittest.TestCase):
         # the version writer changed both files and nothing else in them
         skill = (self.tmp / "skills/pmo-docs/SKILL.md").read_text(encoding="utf-8")
         self.assertIn('metadata:\n  version: "9.9.9"\n', skill)
-        self.assertEqual(json.loads((self.tmp / ".claude-plugin/plugin.json").read_text(encoding="utf-8"))["version"], "9.9.9")
+        self.assertEqual(json.loads((self.tmp / "skills/pmo-docs/.claude-plugin/plugin.json").read_text(encoding="utf-8"))["version"], "9.9.9")
         self.assertEqual((self.tmp / "CHANGELOG.md").read_text(encoding="utf-8"), "# Changelog\n")
         diff = self.git("diff", "--numstat").stdout.split()
         self.assertEqual(diff[0::3], ["1", "1"], diff)  # one line added in each file
@@ -143,7 +143,7 @@ class ReleaseTest(unittest.TestCase):
         (Path(env["PATH"].split(os.pathsep)[0]) / "claude").write_text("#!/bin/sh\nexit 3\n", encoding="utf-8")
         r = self.release("9.9.9", **env)
         self.assertEqual(r.returncode, 1)
-        self.assertIn("plugin validation failed", r.stderr)
+        self.assertIn("validation failed", r.stderr)
         self.assertFalse((self.tmp / "CHANGELOG.md").exists())
 
 

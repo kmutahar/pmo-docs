@@ -16,7 +16,7 @@ Cut a release: check, bump the version, regenerate CHANGELOG.md, commit, tag, pu
 
 Steps: dirty check, version and tag check, dev/scrub.sh + tests +
 `claude plugin validate .` (warnings are printed, only a failure stops), write the version into SKILL.md
-(metadata.version) and .claude-plugin/plugin.json, `git-cliff -o CHANGELOG.md`,
+(metadata.version) and skills/pmo-docs/.claude-plugin/plugin.json, `git-cliff -o CHANGELOG.md`,
 then confirmation 1 (default No) to commit + tag, confirmation 2 (default No)
 to push. There is no -y flag: commits and pushes need the maintainer's approval.
 EOF
@@ -56,7 +56,7 @@ if [ "$dry" = 0 ]; then
 fi
 
 branch=$(git symbolic-ref --short -q HEAD) || die "detached HEAD, check out a branch first"
-files=(skills/pmo-docs/SKILL.md .claude-plugin/plugin.json)
+files=(skills/pmo-docs/SKILL.md skills/pmo-docs/.claude-plugin/plugin.json)
 commit_paths=(CHANGELOG.md "${files[@]}")
 memory_staged=0
 git ls-files --error-unmatch memory.md >/dev/null 2>&1 && memory_staged=1
@@ -92,7 +92,7 @@ else
   echo "== dev/scrub.sh"; bash dev/scrub.sh || die "scrub failed"
   echo "== tests"; python3 -m unittest discover tests || die "tests failed"
   if command -v claude >/dev/null; then
-    echo "== claude plugin validate"; claude plugin validate . || die "plugin validation failed"
+    echo "== claude plugin validate"; claude plugin validate . || die "marketplace validation failed"; claude plugin validate skills/pmo-docs || die "plugin validation failed"
   else
     die "the claude CLI is not installed (needed for 'claude plugin validate')"
   fi
@@ -132,7 +132,7 @@ def plugin(text):
         fail(f'plugin.json: expected one "version" key, found {n}')
     return new
 
-for path, fn in (("skills/pmo-docs/SKILL.md", skill), (".claude-plugin/plugin.json", plugin)):
+for path, fn in (("skills/pmo-docs/SKILL.md", skill), ("skills/pmo-docs/.claude-plugin/plugin.json", plugin)):
     with open(path, encoding="utf-8", newline="") as f:
         old = f.read()
     new = fn(old)

@@ -11,8 +11,11 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 
 
+PATHS = {"plugin.json": REPO / "skills/pmo-docs/.claude-plugin/plugin.json", "marketplace.json": REPO / ".claude-plugin/marketplace.json"}
+
+
 def load(name):
-    return json.loads((REPO / ".claude-plugin" / name).read_text(encoding="utf-8"))
+    return json.loads(PATHS[name].read_text(encoding="utf-8"))
 
 
 class Plugin(unittest.TestCase):
@@ -38,9 +41,21 @@ class Plugin(unittest.TestCase):
         self.assertEqual(len(m["plugins"]), 1)
         entry = m["plugins"][0]
         self.assertEqual(entry["name"], "pmo-docs")
-        self.assertEqual(entry["source"], "./")
+        self.assertEqual(entry["source"], "./skills/pmo-docs")  # only the skill folder is installed, not dev/ or tests/
         self.assertNotIn("version", entry)  # the version lives only in plugin.json
         self.assertTrue(m.get("owner", {}).get("name"))
+
+    def test_plugin_json_points_at_the_skill_folder(self):
+        self.assertEqual(load("plugin.json")["skills"], ["./"])
+
+    def test_icon_is_a_square_png_in_the_size_range(self):
+        import struct
+        data = (REPO / "skills/pmo-docs/.claude-plugin/icon.png").read_bytes()
+        self.assertEqual(data[:8], b"\x89PNG\r\n\x1a\n")
+        w, h = struct.unpack(">II", data[16:24])  # IHDR width and height
+        self.assertEqual(w, h)
+        self.assertTrue(512 <= w <= 2048, w)
+        self.assertLess(len(data), 2 * 1024 * 1024)
 
     def test_no_forbidden_folders(self):
         for name in ("hooks", "bin", "requirements.txt"):
@@ -48,7 +63,7 @@ class Plugin(unittest.TestCase):
 
     def test_no_private_paths_in_manifests(self):
         for name in ("plugin.json", "marketplace.json"):
-            text = (REPO / ".claude-plugin" / name).read_text(encoding="utf-8")
+            text = PATHS[name].read_text(encoding="utf-8")
             self.assertNotRegex(text, r"/home/|@[\w.-]+\.\w+")
 
 
