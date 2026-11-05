@@ -28,7 +28,7 @@ skills/pmo-docs/.claude-plugin/  plugin manifest (name, version, skills)
 examples/acme/     the fake project used by tests and the walkthrough
 tests/             tests
 evals/             plugin eval cases
-dev/               maintainer tools, not shipped: scrub.sh, release, make_icon.py, test-install.md, skillspector-baseline.yaml
+dev/               maintainer tools, not shipped: scrub.sh, release, run-evals, make_icon.py, test-install.md, skillspector-baseline.yaml
 .githooks/         commit gate (pre-commit, commit-msg)
 .github/           CI workflows
 docs/PLAN.md       the plan
