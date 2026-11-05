@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Maintainer tool: run the plugin evals. Not shipped to users (dev/, not bin/).
+# The plugin root is skills/pmo-docs, but `claude plugin eval` needs evals/ inside the plugin and the
+# cases copy examples/acme, so this builds a throwaway copy: the skill folder plus evals/ and examples/.
+# Usage: dev/run-evals [extra claude plugin eval options, e.g. --case ask-dont-guess --keep-temp]
+# Every case is a real agent run (about $1 for all nine on Sonnet), so it uses Claude usage.
+set -euo pipefail
+if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then sed -n 2,6p "$0" | sed 's/^# \{0,1\}//'; exit 0; fi
+repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+work="$(mktemp -d)"
+trap 'rm -rf "$work"' EXIT
+cp -R "$repo/skills/pmo-docs/." "$work/"
+find "$work" -name __pycache__ -type d -prune -exec rm -rf {} +
+mkdir -p "$work/examples"
+cp -R "$repo/evals" "$work/evals" && rm -rf "$work/evals/results"
+cp -R "$repo/examples/acme" "$work/examples/acme"
+cd "$work"
+claude plugin eval . --scaffold --allow-tools Bash,Write,Edit --runs 1 --ablation none --no-publish --model sonnet --trust-plugin "$@"
