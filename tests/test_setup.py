@@ -4,6 +4,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
@@ -82,6 +83,14 @@ class Setup(unittest.TestCase):
         code, out, _ = tool("setup.py", self.root)
         self.assertEqual(code, 1)
         self.assertIn("ERROR", out)
+
+    def test_string_exit_from_render_views_is_reported(self):
+        import io, contextlib, setup, render_views
+        out = io.StringIO()
+        with mock.patch.object(render_views, "main", side_effect=SystemExit("boom")), contextlib.redirect_stdout(out):
+            code = setup.main(["--project", str(self.root)])
+        self.assertEqual(code, 1)
+        self.assertIn("boom", out.getvalue())
 
     def test_prints_hook_line(self):
         out = tool("setup.py", self.root)[1]

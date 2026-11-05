@@ -93,9 +93,10 @@ class Audit(unittest.TestCase):
 
     def test_multibyte_link_is_decoded(self):
         (self.docs / "\u2713 done.md").write_text("---\ntype: decision-log\n---\nx\n", encoding="utf-8")
-        (self.docs / "Decision log.md").write_text("---\ntype: decision-log\n---\n[x](%E2%9C%93%20done.md)\n", encoding="utf-8")
+        (self.docs / "Decision log.md").write_text("---\ntype: decision-log\n---\n[x](%E2%9C%93%20done.md) [y](missing.md)\n", encoding="utf-8")
         code, out = self.run_audit()
         self.assertNotIn("%E2%9C%93", out)
+        self.assertIn("`missing.md`", out)  # proves link checks ran
 
     def test_missing_registers_and_documents_folder(self):
         shutil.rmtree(self.p / "pmo/registers")

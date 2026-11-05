@@ -20,7 +20,7 @@ class Plugin(unittest.TestCase):
         p = load("plugin.json")
         self.assertEqual(p["name"], "pmo-docs")
         self.assertEqual(p["license"], "MIT")
-        self.assertRegex(p["version"], r"^\d+\.\d+\.\d+$")
+        self.assertRegex(p["version"], r"^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$")
         for key in ("description", "author", "homepage", "repository"):
             self.assertTrue(p.get(key), key)
         self.assertLessEqual(len(p["description"]), 300)

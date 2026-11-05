@@ -47,7 +47,7 @@ class ReleaseTest(unittest.TestCase):
         self.assertEqual(self.release().returncode, 1)
 
     def test_bad_version_rejected(self):
-        for v in ("1.2", "x.y.z", "1.2.3.4", "vv1.2.3", "1.2.3-rc.1"):
+        for v in ("1.2", "x.y.z", "1.2.3.4", "vv1.2.3", "1.2.3-rc.1", "01.2.3"):
             r = self.release("--dry-run", v)
             self.assertEqual(r.returncode, 1, v)
             self.assertIn("not a semantic version", r.stderr)
@@ -129,6 +129,14 @@ class ReleaseTest(unittest.TestCase):
         diff = self.git("diff", "--numstat").stdout.split()
         self.assertEqual(diff[0::3], ["1", "1"], diff)  # one line added in each file
         self.assertEqual(diff[1::3], ["1", "1"], diff)
+
+    def test_changelog_links_without_owner_repo_stop_the_release(self):
+        env = self.stub_non_dry()
+        (Path(env["PATH"].split(os.pathsep)[0]) / "git-cliff").write_text(
+            '#!/bin/sh\nif [ "$1" = "-o" ]; then echo "https://github.com///commit/x" > "$2"; else echo notes; fi\n', encoding="utf-8")
+        r = self.release("9.9.9", **env)
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("no owner/repo", r.stderr)
 
     def test_failing_validate_stops_the_release(self):
         env = self.stub_non_dry()

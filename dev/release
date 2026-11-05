@@ -44,7 +44,7 @@ python3 -c 'import sys; sys.exit(sys.version_info < (3, 10))' || die "needs pyth
 cd "$(dirname "$0")/.."
 git rev-parse --git-dir >/dev/null 2>&1 || die "not a git repository"
 
-semver='^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$'  # no pre-releases: tests/test_plugin.py expects the same
+semver='^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$'  # no pre-releases: tests/test_plugin.py checks the same
 if [ -n "$arg" ]; then
   version=${arg#v}
   [[ $version =~ $semver ]] || die "not a semantic version: $arg (use X.Y.Z)"
