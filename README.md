@@ -45,7 +45,7 @@ The short form `kmutahar/pmo-docs` clones over SSH. If you have no SSH key on Gi
 /plugin marketplace add https://github.com/kmutahar/pmo-docs.git
 ```
 
-Other agents: copy the folder `skills/pmo-docs/` into the agent's skills folder. It works alone; nothing else in this repo is needed.
+Other agents: copy the folder `skills/pmo-docs/` into the agent's skills folder, or download `pmo-docs-<version>.zip` from the [GitHub release](https://github.com/kmutahar/pmo-docs/releases) and unzip it there. It works alone; nothing else in this repo is needed.
 
 Claude Code is the only agent verified. Other agents are untested.
 
@@ -105,15 +105,16 @@ The skill installs no hook. If you want one, call `render_views.py --check` from
 | Version | Theme |
 |---|---|
 | v0.1 | Core skill: registers, views, templates and checks, setup, plugin manifest (released) |
-| v0.2 | Generators, calendar, publishing, `init` and `publish` commands |
+| v0.2 | Generators, calendar, publishing with `init` and `publish` commands, override drift warnings |
 | v0.3 | Languages and translation, intake from chat exports |
 | v0.4 | Stacks and technical templates |
 | v0.5 | Tested on other agents |
 | 1.0 | Stable config format, tested upgrades from every 0.x release |
+| After 1.0 | Team support: ids that cannot collide, a hook shared through the repo |
 
 ## Contributing
 
-Run the tests with `python3 -m unittest discover tests`. CI runs them and a privacy scrub on every push and pull request.
+Run the tests with `python3 -m unittest discover tests`. CI runs them and a privacy scrub on every push and pull request. The rules for working on this repo, and the maintainer's procedures (evals, security scan, releases), are in [`AGENTS.md`](AGENTS.md).
 
 ## Licence
 
