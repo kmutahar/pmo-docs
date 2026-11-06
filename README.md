@@ -97,7 +97,7 @@ The skill installs no hook. If you want one, call `render_views.py --check` from
 
 ## Limits
 
-- Built for one writer per project: one person, or one agent session, edits the registers at a time. Teams can use it: duplicate ids are caught and views render again cleanly after a merge. Full team support comes after 1.0.
+- Built for one writer per project: one person, or one agent session, edits the registers at a time. Teams can use it: duplicate ids are caught and views render again cleanly after a merge. A command that fixes duplicate ids comes in 1.0; documents edited by several writers come after 1.0.
 - English only until v0.3.
 
 ## Roadmap
@@ -105,17 +105,17 @@ The skill installs no hook. If you want one, call `render_views.py --check` from
 | Version | Theme |
 |---|---|
 | v0.1 | Core skill: registers, views, templates and checks, setup, plugin manifest (released) |
-| v0.2 | Generators, calendar, publishing with `init` and `publish` commands, override drift warnings |
+| v0.2 | Generators, calendar, publishing with `init` and `publish` commands, playbook overrides and drift warnings, a catalogue of doc types |
 | v0.3 | Languages and translation, intake from chat exports |
-| v0.4 | Stacks and technical templates |
-| v0.5 | Tested on other agents |
-| 1.0 | Stable config format, tested upgrades from every 0.x release |
-| After 1.0 | Team support: ids that cannot collide, a hook shared through the repo |
+| v0.4 | Stacks, technical and domain templates, and their registers |
+| v0.5 | Other agents and unattended runs: a launcher, schedules, a shared hook |
+| 1.0 | Stable formats, a command that fixes duplicate ids, a test that a v0.1 project still works |
+| After 1.0 | Documents edited by several writers |
 
 ## Contributing
 
-Run the tests with `python3 -m unittest discover tests`. CI runs them and a privacy scrub on every push and pull request. The rules for working on this repo, and the maintainer's procedures (evals, security scan, releases), are in [`AGENTS.md`](AGENTS.md).
+Run the tests with `python3 -m unittest discover tests`. CI runs them and a privacy scrub on every push and pull request. The local commit gate (`.githooks/`) also needs a list of names that only the maintainer has, so contributors leave it off and rely on CI. The rules for working on this repo, and the maintainer's procedures (evals, security scan, releases), are in [`AGENTS.md`](AGENTS.md).
 
 ## Licence
 
-[MIT](LICENSE)
+[MIT](LICENSE). Also: [privacy policy](PRIVACY.md) and [terms](TERMS.md).

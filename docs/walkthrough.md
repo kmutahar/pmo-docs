@@ -1,6 +1,6 @@
 # Walkthrough: the Acme project
 
-`examples/acme` is a small made-up project, "Acme Portal", with a project manager and two people. The tests use the same files. This page runs the skill's scripts on a copy of it, so you can see what each one does before you use it on a real project. The date for Acme is 2026-03-15.
+`examples/acme` is a small made-up project, "Acme Portal", with a project manager and two team leads. The tests use the same files. This page runs the skill's scripts on a copy of it, so you can see what each one does before you use it on a real project. The date for Acme is 2026-03-15.
 
 Every command and output below was run on a fresh copy. Work on a copy, not in the repo:
 
@@ -39,7 +39,7 @@ A task is one line. Its `owner` is a roster slug:
 ## 1. Validate the registers and compare the views
 
 ```
-$ python3 $SKILL/scripts/render_views.py --check
+$ python3 "$SKILL/scripts/render_views.py" --check
 registers valid, views current
 [exit 0]
 ```
@@ -51,7 +51,7 @@ registers valid, views current
 Mark the login page design (`T-2`) done by editing its line in `pmo/registers/tasks.yaml`: change `status: not-started` to `status: done`. The view still shows the old state, so the check fails:
 
 ```
-$ python3 $SKILL/scripts/render_views.py --check
+$ python3 "$SKILL/scripts/render_views.py" --check
 ERROR stale view: pmo/views/tasks.md
 [exit 1]
 ```
@@ -59,11 +59,11 @@ ERROR stale view: pmo/views/tasks.md
 Render the views again. Views are never edited by hand:
 
 ```
-$ python3 $SKILL/scripts/render_views.py
+$ python3 "$SKILL/scripts/render_views.py"
 registers valid; wrote 16 views to pmo/views
 [exit 0]
 
-$ python3 $SKILL/scripts/render_views.py --check
+$ python3 "$SKILL/scripts/render_views.py" --check
 registers valid, views current
 [exit 0]
 ```
@@ -71,7 +71,7 @@ registers valid, views current
 A value that is not in the vocabulary is reported instead. With `status: bogus` on that line:
 
 ```
-$ python3 $SKILL/scripts/render_views.py --check
+$ python3 "$SKILL/scripts/render_views.py" --check
 ERROR tasks T-2: status 'bogus' not in ['not-started', 'in-progress', 'blocked', 'done', 'dropped']
 [exit 1]
 ```
@@ -94,7 +94,7 @@ A view is plain Markdown. This is `pmo/views/risks.md`:
 ## 3. What is overdue
 
 ```
-$ python3 $SKILL/scripts/overdue.py --as-of 2026-03-15
+$ python3 "$SKILL/scripts/overdue.py" --as-of 2026-03-15
 # Overdue - as of 2026-03-15
 
 Overdue tasks: 1, open actions past due: 1, milestones due within 14 days or overdue: 1, open issues: 3, open risks: 1
@@ -121,7 +121,7 @@ The output continues with the milestones, open issues by severity and open risks
 `where.py` answers "which file, which template, which registers" so nobody works the paths out by hand:
 
 ```
-$ python3 $SKILL/scripts/where.py status-report 2026-03 --hashes
+$ python3 "$SKILL/scripts/where.py" status-report 2026-03 --hashes
 type: status-report
 title: Status report
 document: pmo/documents/2026-03 - Status report.md
@@ -142,7 +142,7 @@ The `template` line shows the full path on your machine; it is shortened here. `
 ## 5. Check the documents
 
 ```
-$ python3 $SKILL/scripts/structure_check.py
+$ python3 "$SKILL/scripts/structure_check.py"
 ok    pmo/documents/2026-03 - Status report.md
 ok    pmo/documents/Decision log.md
 
@@ -153,7 +153,7 @@ ok    pmo/documents/Decision log.md
 The check compares each document with its template: the headings, the tables and the checks the template declares. Rename a heading in the status report (`## Summary` to `## Overview`) and it fails:
 
 ```
-$ python3 $SKILL/scripts/structure_check.py "pmo/documents/2026-03 - Status report.md"
+$ python3 "$SKILL/scripts/structure_check.py" "pmo/documents/2026-03 - Status report.md"
 ERROR pmo/documents/2026-03 - Status report.md: heading `## Summary` is missing
 warn  pmo/documents/2026-03 - Status report.md: extra sections: Overview
 
@@ -164,7 +164,7 @@ warn  pmo/documents/2026-03 - Status report.md: extra sections: Overview
 Both Acme documents are drafts. `docs_audit.py` looks for stale, old and broken documents and exits 1 when it finds any:
 
 ```
-$ python3 $SKILL/scripts/docs_audit.py --as-of 2026-03-15
+$ python3 "$SKILL/scripts/docs_audit.py" --as-of 2026-03-15
 # Docs audit - 2026-03-15
 
 Scanned 2 Markdown files.
