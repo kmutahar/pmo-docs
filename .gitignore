@@ -15,7 +15,6 @@ venv/
 
 # agent session state
 .claude/settings.local.json
-.trail/
 graphify-out/
 tmp/
 
