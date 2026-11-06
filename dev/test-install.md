@@ -79,7 +79,7 @@ The README gives two slash commands for inside a Claude Code session. The comman
    claude plugin details pmo-docs 2>&1 | tee -a "$LOG/transcript.txt"
    cat "$TRY/project/.claude/settings.json" 2>&1 | tee -a "$LOG/transcript.txt"
    ```
-   Expected: `pmo-docs@pmo-docs`, `Scope: project`, `Status: ✔ enabled`, and the version equals `$V` (the version in `skills/pmo-docs/.claude-plugin/plugin.json` at the tag). A version of `0.0.0` means the install picked up an unreleased commit. `details` shows `Skills (1)  pmo-docs`, no agents, hooks or MCP servers, and about 160 tokens always on, about 3.2k when the skill is used.
+   Expected: `pmo-docs@pmo-docs`, `Scope: project`, `Status: ✔ enabled`, and the version equals `$V` (the version in `skills/pmo-docs/.claude-plugin/plugin.json` at the tag). A version of `0.0.0` means the install picked up an unreleased commit. `details` lists the skill `pmo-docs` plus one entry per folder under `skills/pmo-docs/skills/` (compare with `ls skills/pmo-docs/skills` in the clone), and no agents, hooks or MCP servers. Token costs are estimates: note them, do not compare them.
 
 7. In a Claude Code session the same two steps are the slash commands from the README. Optional, needs a login (Part 3, step 11):
    ```
@@ -94,7 +94,7 @@ The README gives two slash commands for inside a Claude Code session. The comman
    SKILLDIR=$(ls -d "$CLAUDE_CONFIG_DIR"/plugins/cache/pmo-docs/pmo-docs/*/ | head -1)
    echo "$SKILLDIR"; ls "$SKILLDIR" "$SKILLDIR/scripts" 2>&1 | tee -a "$LOG/transcript.txt"
    ```
-   Expected: the folder name is the version `$V`, and it holds only the skill: `SKILL.md`, `LICENSE`, `assets`, `references`, `scripts` and `.claude-plugin`. **No** `dev/`, `tests/`, `docs/`, `evals/` or `examples/` (the layout fix of 2026-11-05; their presence means `source` in the marketplace entry is wrong). Scripts: `setup.py`, `render_views.py`, `where.py`, `structure_check.py`, `docs_audit.py`, `overdue.py`, `pmo_common.py` and `_vendor`.
+   Expected: the folder name is the version `$V`, and it holds only what is in `skills/pmo-docs/` in the clone (compare with `ls -A skills/pmo-docs`). **No** `dev/`, `tests/`, `docs/`, `evals/` or `examples/` (the layout fix of 2026-11-05; their presence means `source` in the marketplace entry is wrong). The scripts match `ls skills/pmo-docs/scripts`; a `__pycache__` appears only when the marketplace is a local folder, never from GitHub or the zip.
 
 9. Run the scripts from the install, with the system Python and nothing installed with pip. This is the check that the vendored PyYAML works:
    ```
@@ -103,7 +103,7 @@ The README gives two slash commands for inside a Claude Code session. The comman
    python3 "$SKILLDIR/scripts/render_views.py" 2>&1 | tee -a "$LOG/transcript.txt"
    python3 "$SKILLDIR/scripts/render_views.py" --check 2>&1 | tee -a "$LOG/transcript.txt"
    ```
-   Expected: `created: pmo/...` lines, then `registers valid; wrote 16 views to pmo/views`, and `--check` exits 0. An `ImportError` for `yaml` is a release blocker.
+   Expected: `created: pmo/...` lines, then `registers valid; wrote N views to pmo/views`, where N is the number of files in `pmo/registers` plus one (the catalogue), and `--check` exits 0. An `ImportError` for `yaml` is a release blocker.
 
 10. Update path (the README mentions it). Nothing newer exists right after a release:
     ```
@@ -134,7 +134,7 @@ The README says other agents can take the zip from the GitHub release. This need
     gh release download "v$V" --repo kmutahar/pmo-docs --pattern "pmo-docs-$V.zip" --dir "$TRY/zip" 2>&1 | tee -a "$LOG/transcript.txt"
     unzip -q "$TRY/zip/pmo-docs-$V.zip" -d "$TRY/zip/unpacked" && ls "$TRY/zip/unpacked/pmo-docs" 2>&1 | tee -a "$LOG/transcript.txt"
     ```
-    Expected: one top folder `pmo-docs/` holding `SKILL.md`, `LICENSE`, `assets`, `references`, `scripts` (the same files as step 8) and 76 files in all (`git archive --prefix=pmo-docs/ HEAD:skills/pmo-docs | tar -t | grep -vc "/$"` at the tag). The release notes on the release page must match the `CHANGELOG.md` section for `v$V`.
+    Expected: one top folder `pmo-docs/` holding the same files as step 8. The file count (`unzip -Z1 "$TRY/zip/pmo-docs-$V.zip" | grep -vc '/$'`) equals `git archive --prefix=pmo-docs/ "v$V:skills/pmo-docs" | tar -t | grep -vc '/$'` run in the clone. The release notes on the release page must match the `CHANGELOG.md` section for `v$V`.
 
 15. Run the scripts from the unzipped copy with the system Python:
     ```
