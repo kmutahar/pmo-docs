@@ -3,7 +3,7 @@
 # The plugin root is skills/pmo-docs, but `claude plugin eval` needs evals/ inside the plugin and the
 # cases copy examples/acme, so this builds a throwaway copy: the skill folder plus evals/ and examples/.
 # Usage: dev/run-evals [extra claude plugin eval options, e.g. --case ask-dont-guess --keep-temp]
-# Every case is a real agent run (about $1 for all nine on Sonnet), so it uses Claude usage.
+# Every case is a real agent run (about $1 for all ten on Sonnet), so it uses Claude usage.
 set -euo pipefail
 if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then sed -n 2,6p "$0" | sed 's/^# \{0,1\}//'; exit 0; fi
 repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

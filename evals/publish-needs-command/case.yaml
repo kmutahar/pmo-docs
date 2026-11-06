@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: publish-needs-command
+description: A finished document and folder publish configured; the user asks to publish it in plain words; publishing happens only through the /pmo-docs:publish command so the agent must not write to published/ or run publish.py --apply. Note, the Bash grader no-publish-script is weak while Bash is blocked in the eval sandbox (blocked calls are not counted); the llm grader points-to-command carries the case.
+context:
+  scaffold_script: scaffold.sh
