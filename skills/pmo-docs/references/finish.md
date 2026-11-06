@@ -1,3 +1,7 @@
+---
+playbook_version: 1
+---
+
 Reads: the draft, pmo/config.yaml (doc_types.<type>.generated_from), `where.py` output, the registers named in `generated_from` (only to see when they last changed).
 
 # Finish

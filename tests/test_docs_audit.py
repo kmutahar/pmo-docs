@@ -138,6 +138,74 @@ class Audit(unittest.TestCase):
             da.main(["--help"])
         self.assertEqual(e.exception.code, 0)
 
+    def test_template_drift(self):
+        tpl_dir = self.p / "pmo/templates"
+        tpl_dir.mkdir(parents=True, exist_ok=True)
+        tpl = tpl_dir / "decision-log.md"
+
+        # Up-to-date override: based_on: decision-log@1 -> no drift finding
+        tpl.write_text("---\ntype: decision-log\nbased_on: decision-log@1\n---\n# Decision log\n", encoding="utf-8")
+        code, out = self.run_audit()
+        self.assertEqual(code, 0, out)
+        self.assertIn("## Override drift (0)", out)
+
+        # Older version: based_on: decision-log@0 -> finding, exit 1
+        tpl.write_text("---\ntype: decision-log\nbased_on: decision-log@0\n---\n# Decision log\n", encoding="utf-8")
+        code, out = self.run_audit()
+        self.assertEqual(code, 1)
+        self.assertIn("the default template moved from v0 to v1", out)
+
+        # No based_on -> finding, exit 1
+        tpl.write_text("---\ntype: decision-log\n---\n# Decision log\n", encoding="utf-8")
+        code, out = self.run_audit()
+        self.assertEqual(code, 1)
+        self.assertIn("no based_on; add based_on: decision-log@1", out)
+
+        # based_on: roadmap@1 in decision-log.md -> finding, exit 1
+        tpl.write_text("---\ntype: decision-log\nbased_on: roadmap@1\n---\n# Decision log\n", encoding="utf-8")
+        code, out = self.run_audit()
+        self.assertEqual(code, 1)
+        self.assertIn("based_on names roadmap, the default is decision-log", out)
+
+        # Project-only template custom.md -> no finding
+        tpl.unlink()
+        (tpl_dir / "custom.md").write_text("---\ntype: custom\n---\n# Custom\n", encoding="utf-8")
+        code, out = self.run_audit()
+        self.assertEqual(code, 0, out)
+        self.assertIn("## Override drift (0)", out)
+
+    def test_playbook_drift(self):
+        pb_dir = self.p / "pmo/playbooks"
+        pb_dir.mkdir(parents=True, exist_ok=True)
+        pb = pb_dir / "draft.md"
+
+        # based_on: draft@1 -> no finding
+        pb.write_text("---\nplaybook_version: 1\nbased_on: draft@1\n---\nReads: ...\n", encoding="utf-8")
+        code, out = self.run_audit()
+        self.assertEqual(code, 0, out)
+        self.assertIn("## Override drift (0)", out)
+
+        # draft@0 -> finding
+        pb.write_text("---\nplaybook_version: 1\nbased_on: draft@0\n---\nReads: ...\n", encoding="utf-8")
+        code, out = self.run_audit()
+        self.assertEqual(code, 1)
+        self.assertIn("the default playbook moved from v0 to v1", out)
+
+        # no based_on -> finding
+        pb.write_text("---\nplaybook_version: 1\n---\nReads: ...\n", encoding="utf-8")
+        code, out = self.run_audit()
+        self.assertEqual(code, 1)
+        self.assertIn("no based_on; add based_on: draft@1", out)
+
+        # pmo/playbooks/stacks/mystack.md with no default -> no finding
+        pb.unlink()
+        stacks_dir = pb_dir / "stacks"
+        stacks_dir.mkdir(parents=True, exist_ok=True)
+        (stacks_dir / "mystack.md").write_text("---\nplaybook_version: 1\n---\nReads: ...\n", encoding="utf-8")
+        code, out = self.run_audit()
+        self.assertEqual(code, 0, out)
+        self.assertIn("## Override drift (0)", out)
+
 
 if __name__ == "__main__":
     unittest.main()

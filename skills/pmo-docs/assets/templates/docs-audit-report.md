@@ -4,7 +4,7 @@ type: docs-audit-report
 project: "{{project}}"
 manager: "{{manager}}"
 period: "{{period}}"
-template_version: 1
+template_version: 2
 status: draft
 last_updated: "{{date}}"
 ---
@@ -26,6 +26,7 @@ last_updated: "{{date}}"
 | Stale | |
 | Old | |
 | Broken links | |
+| Override drift | |
 | Structure vs template | |
 | Document vs register | |
 | Drift vs code | |

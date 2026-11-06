@@ -1,3 +1,7 @@
+---
+playbook_version: 1
+---
+
 Reads: pmo/config.yaml (registers, vocab), `changes`, `decisions`, `actions`, `meetings`, `where.py` output for the document being drafted.
 
 # Govern

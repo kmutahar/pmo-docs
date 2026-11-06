@@ -1,3 +1,7 @@
+---
+playbook_version: 1
+---
+
 Reads: pmo/config.yaml (doc_types), pmo/house-rules.md, `where.py` output, the doc type's template, the registers named in its `generated_from`.
 
 # Draft

@@ -1,3 +1,7 @@
+---
+playbook_version: 1
+---
+
 Reads: pmo/config.yaml, pmo/house-rules.md, the skill's `assets/config.default.yaml` and `assets/templates/` (as models).
 
 # Extend

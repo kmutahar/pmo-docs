@@ -1,3 +1,7 @@
+---
+playbook_version: 1
+---
+
 Reads: nothing else; this is the whole commit model.
 
 # Git

@@ -114,6 +114,37 @@ class Where(unittest.TestCase):
         self.assertEqual(f["template_exists"], "yes")
         self.assertEqual(f["template_version"], "3")
         self.assertEqual(f["based_on"], "status-report@2")
+        self.assertEqual(f["drift"], "yes")
+
+    def test_drift_state(self):
+        # 1. drift: n/a when template is skill's own
+        code, out, _ = run(self.root, "decision-log")
+        self.assertEqual(code, 0)
+        self.assertEqual(fields(out)["drift"], "n/a")
+
+        # 2. drift: no for up-to-date override
+        tpl = self.root / "pmo/templates/decision-log.md"
+        tpl.parent.mkdir(parents=True, exist_ok=True)
+        tpl.write_text("---\ntype: decision-log\ntemplate_version: 1\nbased_on: decision-log@1\n---\n# x\n", encoding="utf-8")
+        code, out, _ = run(self.root, "decision-log")
+        self.assertEqual(code, 0)
+        self.assertEqual(fields(out)["drift"], "no")
+
+        # 3. drift: yes for outdated override
+        tpl.write_text("---\ntype: decision-log\ntemplate_version: 1\nbased_on: decision-log@0\n---\n# x\n", encoding="utf-8")
+        code, out, _ = run(self.root, "decision-log")
+        self.assertEqual(code, 0)
+        self.assertEqual(fields(out)["drift"], "yes")
+
+        # 4. drift: n/a for project template with no default
+        cfg_file = self.root / "pmo/config.yaml"
+        cfg_text = cfg_file.read_text(encoding="utf-8")
+        cfg_file.write_text(cfg_text + "\ndoc_types:\n  custom:\n    title: Custom\n    template: custom.md\n    name: '{title}.md'\n", encoding="utf-8")
+        cust_tpl = self.root / "pmo/templates/custom.md"
+        cust_tpl.write_text("---\ntype: custom\n---\n# Custom\n", encoding="utf-8")
+        code, out, _ = run(self.root, "custom")
+        self.assertEqual(code, 0)
+        self.assertEqual(fields(out)["drift"], "n/a")
 
     def test_unknown_type_exits_2_and_lists_types(self):
         code, _, err = run(self.root, "no-such-type")

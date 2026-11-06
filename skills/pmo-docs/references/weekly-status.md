@@ -1,3 +1,7 @@
+---
+playbook_version: 1
+---
+
 Reads: pmo/config.yaml (doc_types.status-report), pmo/house-rules.md, `where.py` output, registers `tasks`, `milestones`, `risks`, `issues`, `changes`, `actions`, `decisions`, `teams`; the previous status report.
 
 # Recipe: weekly-status

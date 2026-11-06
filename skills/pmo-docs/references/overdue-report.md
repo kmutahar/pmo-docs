@@ -1,3 +1,7 @@
+---
+playbook_version: 1
+---
+
 Reads: pmo/config.yaml (doc_types.overdue-report), `where.py` output, `overdue.py` output, registers `tasks`, `milestones`, `actions`, `risks`, `issues`.
 
 # Recipe: overdue-report

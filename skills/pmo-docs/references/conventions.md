@@ -1,3 +1,7 @@
+---
+playbook_version: 1
+---
+
 Reads: pmo/config.yaml (paths, registers, doc_types).
 
 # Conventions

@@ -1,3 +1,7 @@
+---
+playbook_version: 1
+---
+
 Reads: pmo/config.yaml (doc_types), `where.py` output, and the registers named in the doc type's `generated_from`.
 
 # Plan

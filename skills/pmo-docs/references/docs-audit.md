@@ -1,3 +1,7 @@
+---
+playbook_version: 1
+---
+
 Reads: pmo/config.yaml (paths, doc_types), `where.py` output, the audit scripts' output, and the documents and registers a check compares.
 
 # Recipe: docs-audit

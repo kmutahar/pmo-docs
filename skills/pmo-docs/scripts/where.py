@@ -15,7 +15,7 @@ if sys.version_info < (3, 10):
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import pmo_common as pc  # noqa: E402
-from docs_audit import register_hash  # noqa: E402
+from docs_audit import drift_state, register_hash  # noqa: E402
 
 
 def main(argv=None):
@@ -73,6 +73,7 @@ def main(argv=None):
 
     tpl_version = str(fm.get("template_version")) if fm.get("template_version") is not None else "none"
     based_on = str(fm.get("based_on")) if fm.get("based_on") is not None else "none"
+    drift = drift_state(args.project, cfg, tpl_path, tpl_source)
     generated_from = ", ".join(info.get("generated_from") or [])
     stale_days = str(info["stale_days"]) if info.get("stale_days") is not None else "none"
     if "{period}" in pattern:
@@ -94,6 +95,7 @@ def main(argv=None):
         ("template_exists", tpl_exists),
         ("template_version", tpl_version),
         ("based_on", based_on),
+        ("drift", drift),
         ("generated_from", generated_from),
         ("stale_days", stale_days),
         ("window", window),

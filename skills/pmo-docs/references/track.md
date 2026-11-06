@@ -1,3 +1,7 @@
+---
+playbook_version: 1
+---
+
 Reads: pmo/config.yaml (registers, vocab), the register being changed, `roster.yaml`.
 
 # Track

@@ -38,7 +38,7 @@ def _unquote(s):
     return re.sub(r"(?:%[0-9A-Fa-f]{2})+", lambda m: bytes.fromhex(m[0].replace("%", "")).decode("utf-8", "replace"), s)
 
 
-CHECKS = ("front matter", "stale", "old", "broken links")
+CHECKS = ("front matter", "stale", "old", "broken links", "override drift")
 
 
 def register_hash(root, cfg, name):
@@ -91,6 +91,94 @@ def audit_file(root, cfg, path, base, today):
     return out
 
 
+def _drift(rel_str: str, own_fm: dict | None, default_fm: dict | None, version_key: str, expected_name: str, kind: str) -> str | None:
+    own_fm = own_fm or {}
+    default_fm = default_fm or {}
+    default_ver = default_fm.get(version_key)
+    if not isinstance(default_ver, int):
+        default_ver = 1
+
+    raw_based_on = own_fm.get("based_on")
+    if raw_based_on is None or raw_based_on == "":
+        return f"`{rel_str}` - no based_on; add based_on: {expected_name}@{default_ver} after comparing with the default"
+
+    val_str = str(raw_based_on).strip()
+    m = re.match(r"^([^@]+)@(\d+)$", val_str)
+    if not m:
+        return f"`{rel_str}` - based_on {val_str} is not <type>@<number>"
+
+    name, ver_str = m.group(1).strip(), m.group(2)
+    if name != expected_name:
+        return f"`{rel_str}` - based_on names {name}, the default is {expected_name}"
+
+    own_ver = int(ver_str)
+    if own_ver < default_ver:
+        return f"`{rel_str}` - the default {kind} moved from v{own_ver} to v{default_ver}; compare them, then raise based_on"
+    if own_ver > default_ver:
+        return f"`{rel_str}` - based_on v{own_ver} is newer than the default (v{default_ver})"
+
+    return None
+
+
+def template_drift(root, cfg) -> list[str]:
+    """One message per project template in paths.templates whose default (same file name in the skill's
+    assets/templates) exists and whose based_on is missing, malformed, names another type, or has a version
+    below the default's template_version. A project template with no default is skipped."""
+    base = Path(root) / cfg["paths"]["templates"]
+    if not base.exists():
+        return []
+    out = []
+    for p in sorted(base.rglob("*.md")):
+        rel = p.relative_to(base)
+        default_file = pc.SKILL / "assets" / "templates" / rel.name
+        if not default_file.exists():
+            continue
+        own_fm = pc.split_front_matter(pc.read(p))[0]
+        def_fm = pc.split_front_matter(pc.read(default_file))[0]
+        expected_type = (def_fm or {}).get("type") or rel.stem
+        msg = _drift(str(rel), own_fm, def_fm, "template_version", expected_type, "template")
+        if msg:
+            out.append(msg)
+    return out
+
+
+def playbook_drift(root, cfg) -> list[str]:
+    """One message per project playbook in paths.playbooks whose default exists in references and has drift."""
+    playbooks_path = cfg["paths"].get("playbooks")
+    if not playbooks_path:
+        return []
+    base = Path(root) / playbooks_path
+    if not base.exists():
+        return []
+    out = []
+    for p in sorted(base.rglob("*.md")):
+        rel = p.relative_to(base)
+        default_file = pc.SKILL / "references" / rel
+        if not default_file.exists():
+            continue
+        own_fm = pc.split_front_matter(pc.read(p))[0]
+        def_fm = pc.split_front_matter(pc.read(default_file))[0]
+        expected_name = str(rel.with_suffix(""))
+        msg = _drift(str(rel), own_fm, def_fm, "playbook_version", expected_name, "playbook")
+        if msg:
+            out.append(msg)
+    return out
+
+
+def drift_state(root, cfg, tpl_path: Path, tpl_source: str) -> str:
+    """Return 'yes' | 'no' | 'n/a' for a template's drift status."""
+    if tpl_source != "project":
+        return "n/a"
+    default_file = pc.SKILL / "assets" / "templates" / tpl_path.name
+    if not default_file.exists():
+        return "n/a"
+    own_fm = pc.split_front_matter(pc.read(tpl_path))[0]
+    def_fm = pc.split_front_matter(pc.read(default_file))[0]
+    expected_type = (def_fm or {}).get("type") or tpl_path.stem
+    msg = _drift(tpl_path.name, own_fm, def_fm, "template_version", expected_type, "template")
+    return "yes" if msg else "no"
+
+
 def audit(root, cfg, today):
     """(files scanned, {check: [message]})."""
     base = Path(root) / cfg["paths"]["documents"]
@@ -99,6 +187,9 @@ def audit(root, cfg, today):
     for p in files:
         for check, msg in audit_file(root, cfg, p, base, today):
             found[check].append(msg)
+    t_drift = template_drift(root, cfg)
+    p_drift = playbook_drift(root, cfg)
+    found["override drift"].extend(t_drift + p_drift)
     return len(files), found
 
 
