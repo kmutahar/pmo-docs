@@ -2,7 +2,7 @@
 
 A project office kept in plain files and run by your AI coding agent. A project keeps its facts in YAML **registers** (tasks, risks, issues, decisions, ...). Scripts render **views** from them, and the agent drafts **documents** (status reports, plans, charters, ...) from **templates** whose checks a script verifies.
 
-> **Status: v0.1.0 released.** Registers, views, documents, checks and recipes work today. Release history is in [`CHANGELOG.md`](CHANGELOG.md); the plan, decisions and later versions are in [`docs/PLAN.md`](docs/PLAN.md).
+> **Status: v0.2.0 released.** Registers, views, documents, checks, generators and recipes work today. Release history is in [`CHANGELOG.md`](CHANGELOG.md); the plan, decisions and later versions are in [`docs/PLAN.md`](docs/PLAN.md).
 
 ## How it works
 
@@ -27,7 +27,7 @@ pmo/
   house-rules.md   your own rules
 ```
 
-Setup asks a few questions (project name, project manager, priority order, week start), shows the files it will write and waits for your yes. It never overwrites a file.
+Setup asks a few questions (project name, project manager, priority order; the week start only if you mention weeks), shows the files it will write and waits for your yes. It never overwrites a file.
 
 Supported doc types: project charter, project plan, roadmap, weekly plan, capacity plan, team checklist, weekly/monthly status report, stakeholder update, release notes, change request, meeting minutes, decision log, delivery report, retrospective, overdue report, and docs audit report.
 
@@ -76,7 +76,7 @@ python3 "$SKILL/scripts/render_views.py"
 python3 "$SKILL/scripts/render_views.py" --check
 ```
 
-`setup.py` never overwrites a file. `render_views.py` prints `registers valid; wrote 16 views to pmo/views`, or the errors it found (and exits 1). `--check` writes nothing and exits 1 when the registers are invalid or a view is stale. Every script answers `--help`.
+`setup.py` never overwrites a file. `render_views.py` prints `registers valid; wrote 17 views to pmo/views`, or the errors it found (and exits 1). `--check` writes nothing and exits 1 when the registers are invalid or a view is stale. Every script answers `--help`.
 
 Next, ask for a document ("draft the project charter", "weekly-status"). A worked example with a small example project is in [`docs/walkthrough.md`](docs/walkthrough.md).
 
@@ -136,7 +136,7 @@ The skill installs no hook. If you want one, call `render_views.py --check` from
 | Version | Theme |
 |---|---|
 | v0.1 | Core skill: registers, views, templates and checks, setup, plugin manifest (released) |
-| v0.2 | Generators, calendar, publishing with `init` and `publish` commands, playbook overrides and drift warnings, a catalogue of doc types |
+| v0.2 | Generators, calendar, publishing with `init` and `publish` commands, playbook overrides and drift warnings, a catalogue of doc types (released) |
 | v0.3 | Languages and translation, intake from chat exports |
 | v0.4 | Stacks, technical and domain templates, and their registers |
 | v0.5 | Other agents and unattended runs: a launcher, schedules, a shared hook |
