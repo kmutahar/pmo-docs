@@ -165,16 +165,24 @@ doc_types:
     generated_from: [tasks, milestones, risks, issues, changes, actions, decisions, teams]
     stale_days: 30
     generator: true
+    when: every week or month before the status meeting
+    regenerate: when tasks or milestones change
   overdue-report:
     title: Overdue report
     template: overdue-report.md
     name: "{period} - {title}.md"
     generated_from: [tasks, milestones, actions, risks, issues]
+    publish: false
+    when: mid-month or on demand before review meetings
+    regenerate: when tasks or actions are updated
   docs-audit-report:
     title: Documentation audit
     template: docs-audit-report.md
     name: "{period} - {title}.md"
     generated_from: []
+    publish: false
+    when: monthly before project review
+    regenerate: after fixing reported issues
   project-plan:
     title: Project plan
     template: project-plan.md
@@ -182,22 +190,30 @@ doc_types:
     generated_from: [tasks, milestones, priorities, teams, risks, assumptions, dependencies, changes, roster]
     stale_days: 30
     generator: true
+    when: at project start and monthly refresh
+    regenerate: when priorities or teams change
   project-charter:
     title: Project charter
     template: project-charter.md
     name: "{title}.md"
     generated_from: [objectives, priorities, budget, assumptions, roster]
     stale_days: 90
+    when: at project kickoff
+    regenerate: never; edit the finished document
   change-request:
     title: Change request
     template: change-request.md
     name: "{date} - {title}.md"
     generated_from: [changes]
+    when: whenever a scope or schedule change is proposed
+    regenerate: never; edit the finished document
   meeting-minutes:
     title: Meeting minutes
     template: meeting-minutes.md
     name: "{date} - {title}.md"
     generated_from: [meetings, actions, decisions]
+    when: after governance and sync meetings
+    regenerate: never; edit the finished document
   team-checklist:
     title: Team checklist
     template: team-checklist.md
@@ -205,35 +221,47 @@ doc_types:
     generated_from: [tasks, teams, milestones]
     stale_days: 14
     generator: true
+    when: start of each period
+    regenerate: when period tasks change
   roadmap:
     title: Roadmap
     template: roadmap.md
     name: "{title}.md"
     generated_from: [milestones, priorities, dependencies]
     stale_days: 30
+    when: quarterly or upon milestone reviews
+    regenerate: when milestones or priorities shift
   retrospective:
     title: Retrospective
     template: retrospective.md
     name: "{period} - {title}.md"
     generated_from: [tasks, issues, changes, actions]
+    when: end of each period or major delivery phase
+    regenerate: never; edit the finished document
   delivery-report:
     title: Delivery report
     template: delivery-report.md
     name: "{period} - {title}.md"
     generated_from: [tasks, milestones, priorities, issues, risks, changes]
     stale_days: 30
+    when: at milestone completion or release cutoff
+    regenerate: when release tasks or issues close
   capacity-plan:
     title: Capacity plan
     template: capacity-plan.md
     name: "{period} - {title}.md"
     generated_from: [capacity, tasks, roster]
     stale_days: 30
+    when: monthly during resource planning
+    regenerate: when leave or staffing changes
   weekly-plan:
     title: Weekly plan
     template: weekly-plan.md
     name: "{period} - {title}.md"
     generated_from: [tasks, actions, capacity]
     stale_days: 7
+    when: on the first day of each week
+    regenerate: when weekly commitments shift
   decision-log:
     title: Decision log
     template: decision-log.md
@@ -241,14 +269,20 @@ doc_types:
     generated_from: [decisions]
     stale_days: 30
     generator: true
+    when: after key technical or architecture decisions
+    regenerate: when decisions register is updated
   stakeholder-update:
     title: Stakeholder update
     template: stakeholder-update.md
     name: "{period} - {title}.md"
     generated_from: [tasks, milestones, risks, issues, decisions, changes]
     stale_days: 30
+    when: monthly or bi-weekly for executive stakeholders
+    regenerate: when milestones or risks change
   release-notes:
     title: Release notes
     template: release-notes.md
     name: "{period} - {title}.md"
     generated_from: [tasks, changes]
+    when: for each release or month end
+    regenerate: when commits or changes are tagged

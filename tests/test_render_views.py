@@ -8,6 +8,9 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 TOOL = REPO / "skills/pmo-docs/scripts/render_views.py"
+sys.path.insert(0, str(REPO / "skills/pmo-docs/scripts"))
+import pmo_common as pc  # noqa: E402
+
 
 
 def run(project, *args):
@@ -163,6 +166,53 @@ class RenderViews(unittest.TestCase):
 
     def test_help(self):
         self.assertEqual(run(self.root, "--help")[0], 0)
+
+    def test_catalogue_lists_every_doc_type(self):
+        code, out = run(self.root)
+        self.assertEqual(code, 0, out)
+        cat_file = self.views / "catalogue.md"
+        self.assertTrue(cat_file.exists())
+        text = cat_file.read_text(encoding="utf-8")
+        self.assertIn("# Catalogue", text)
+        cfg = pc.load_config(self.root)
+        doc_types = list(cfg.get("doc_types", {}).keys())
+        last_idx = -1
+        for dt in doc_types:
+            row_match = f"| {dt} |"
+            self.assertIn(row_match, text)
+            idx = text.index(row_match)
+            self.assertGreater(idx, last_idx)
+            last_idx = idx
+
+    def test_catalogue_follows_project_config(self):
+        with open(self.root / "pmo/config.yaml", "a", encoding="utf-8") as f:
+            f.write("doc_types:\n  status-report:\n    when: custom when trigger\n    generator: null\n")
+        code, out = run(self.root)
+        self.assertEqual(code, 0, out)
+        text = (self.views / "catalogue.md").read_text(encoding="utf-8")
+        self.assertIn("custom when trigger", text)
+        for line in text.splitlines():
+            if "| status-report |" in line:
+                self.assertIn("| agent |", line)
+                self.assertIn("| custom when trigger |", line)
+
+    def test_check_reports_stale_catalogue(self):
+        code, out = run(self.root)
+        self.assertEqual(code, 0, out)
+        self.assertEqual(run(self.root, "--check")[0], 0)
+        cat_file = self.views / "catalogue.md"
+        cat_file.write_text("corrupted content\n", encoding="utf-8")
+        code, out = run(self.root, "--check")
+        self.assertEqual(code, 1)
+        self.assertIn("catalogue.md", out)
+
+    def test_when_must_be_text(self):
+        with open(self.root / "pmo/config.yaml", "a", encoding="utf-8") as f:
+            f.write("doc_types:\n  status-report:\n    when: [a]\n")
+        code, out = run(self.root)
+        self.assertEqual(code, 2)
+        self.assertIn("must be text", out)
+
 
 
 class CommittedViews(unittest.TestCase):
