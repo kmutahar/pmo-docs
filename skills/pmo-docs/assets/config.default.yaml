@@ -162,6 +162,7 @@ doc_types:
     name: "{period} - {title}.md"
     generated_from: [tasks, milestones, risks, issues, changes, actions, decisions, teams]
     stale_days: 30
+    generator: true
   overdue-report:
     title: Overdue report
     template: overdue-report.md
@@ -178,6 +179,7 @@ doc_types:
     name: "{title}.md"
     generated_from: [tasks, milestones, priorities, teams, risks, assumptions, dependencies, changes, roster]
     stale_days: 30
+    generator: true
   project-charter:
     title: Project charter
     template: project-charter.md
@@ -200,6 +202,7 @@ doc_types:
     name: "{title}.md"
     generated_from: [tasks, teams, milestones]
     stale_days: 14
+    generator: true
   roadmap:
     title: Roadmap
     template: roadmap.md
@@ -235,3 +238,4 @@ doc_types:
     name: "{title}.md"
     generated_from: [decisions]
     stale_days: 30
+    generator: true
