@@ -1,5 +1,6 @@
 {
   "name": "pmo-docs",
+  "displayName": "PMO Docs",
   "version": "0.1.0",
   "description": "A project-office and documentation workflow packaged as an Agent Skill: registers, generated views, document templates and checks.",
   "author": {
@@ -7,6 +8,10 @@
   },
   "license": "MIT",
   "homepage": "https://github.com/kmutahar/pmo-docs",
+  "documentationUrl": "https://github.com/kmutahar/pmo-docs#readme",
+  "supportUrl": "https://github.com/kmutahar/pmo-docs/issues",
+  "privacyPolicyUrl": "https://github.com/kmutahar/pmo-docs/blob/main/PRIVACY.md",
+  "termsOfServiceUrl": "https://github.com/kmutahar/pmo-docs/blob/main/TERMS.md",
   "repository": "https://github.com/kmutahar/pmo-docs",
   "skills": [
     "./"

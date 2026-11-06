@@ -27,6 +27,10 @@ class Plugin(unittest.TestCase):
         for key in ("description", "author", "homepage", "repository"):
             self.assertTrue(p.get(key), key)
         self.assertLessEqual(len(p["description"]), 300)
+        for key in ("displayName", "documentationUrl", "supportUrl", "privacyPolicyUrl", "termsOfServiceUrl"):
+            self.assertTrue(p.get(key), key)  # the Anthropic directory asks for these
+        for key in ("privacyPolicyUrl", "termsOfServiceUrl"):
+            self.assertTrue((REPO / p[key].rsplit("/", 1)[1]).is_file(), key)
 
     def test_skill_and_plugin_versions_agree(self):
         sys.path.insert(0, str(REPO / "skills/pmo-docs/scripts/_vendor"))
