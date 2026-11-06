@@ -1,6 +1,6 @@
 # pmo-docs: plan hub
 
-Status: v0.1.0 released (2026-11-05 UTC). v0.2 to after-1.0 planned, one file per version in `docs/plans/`. Last updated 2026-11-06 (UTC). Repo rules and maintainer procedures: `AGENTS.md`. This file holds the settled decisions, how the skill works, the version index and the public-repo safeguards.
+Status: v0.2.0 released (2026-11-06 UTC). v0.3 to after-1.0 planned, one file per version in `docs/plans/`. Last updated 2026-11-06 (UTC). Repo rules and maintainer procedures: `AGENTS.md`. This file holds the settled decisions, how the skill works, the version index and the public-repo safeguards.
 
 `pmo-docs` is a project-office and documentation workflow for AI coding agents. A project keeps its facts in **registers**: YAML files for tasks, risks, issues, decisions and so on. Scripts render views from them. The agent drafts documents from **templates**, and tools check each document against its template's contract.
 
@@ -15,7 +15,7 @@ Effort: S = under an hour, M = one session, L = several sessions.
 | Version | Theme | Plan | Status |
 |---|---|---|---|
 | v0.1 | Core skill: registers, views, templates and checks, setup, plugin manifest | git history up to tag `v0.1.0` | released 2026-11-05 (UTC) |
-| v0.2 | Generators, calendar, publishing with `init` and `publish` commands, playbook overrides and drift warnings, catalogue | [`plans/v0.2.md`](plans/v0.2.md) | planned |
+| v0.2 | Generators, calendar, publishing with `init` and `publish` commands, playbook overrides and drift warnings, catalogue | git history up to tag `v0.2.0` | released 2026-11-06 (UTC) |
 | v0.3 | Languages and translation, intake from chat exports | [`plans/v0.3.md`](plans/v0.3.md) | planned |
 | v0.4 | Stacks, technical and domain templates, their registers | [`plans/v0.4.md`](plans/v0.4.md) | planned |
 | v0.5 | Other agents and unattended runs: launcher, schedule, shared hook | [`plans/v0.5.md`](plans/v0.5.md) | planned |
@@ -138,7 +138,7 @@ Decided by the maintainer in the last package of v0.3, when languages exist. Unt
 ### Not blocking any version
 
 - `dev/release` does not check the tag on origin or the branch name (skipped on purpose).
-- `dev/release` commit, tag and push failure paths are untested (`--bump` is tried in v0.2 W13).
+- `dev/release` commit, tag and push failure paths are untested (`--bump` is tried with `--dry-run` at each release).
 - A contributor who turns on the commit gate without `.scrub-names` is blocked by the pre-commit scrub; the README tells contributors to leave the gate off and rely on CI.
 
 ---
@@ -205,3 +205,30 @@ Sources:
 - https://code.claude.com/docs/en/plugins/components.md
 - https://code.claude.com/docs/en/plugins/publish.md
 - https://claude.com/docs/plugins/pre-submission-checklist
+
+---
+
+## 8. Working on a version plan
+
+**Agent rules**
+
+- Rules from `AGENTS.md` apply in full.
+- Work one package at a time. A package is done when its "Done when" list passes, including `python3 -m unittest discover tests` and `bash dev/scrub.sh`. Leave the changes in the working tree for the maintainer and reply with: files changed, tests added, test and scrub results, anything skipped.
+- Run at most three packages in parallel, and only when their "Touches" lists share no file.
+- Shared docs (`SKILL.md`, `references/conventions.md`, `GLOSSARY.md`, `README.md`, `AGENTS.md`, and any playbook several packages use) are edited only in the plan's docs-and-wiring package. Other packages list "Notes for" that package in their reply instead.
+- Tests follow the existing style: `unittest`, a temp copy of `examples/acme`, the script run with `subprocess` and `sys.executable`, nothing written outside the temp folder. The file's first line is a docstring that says what it tests and how to run it.
+- The suggested model is in each package header. The review before each commit is Opus at high effort.
+- Each package names its commit subject. The maintainer commits in package order with `git commit -- <paths>`.
+
+**Release checklist** (the last package of each plan adds what is specific to it)
+
+- Every package is committed in order, with approval.
+- `python3 -m unittest discover tests` and `bash dev/scrub.sh` pass; CI is green on `main`.
+- `claude plugin validate .` and `claude plugin validate skills/pmo-docs` exit 0, no warnings; the plugin listing shows each skill once.
+- SkillSpector on a clean copy of the tracked files (`git archive HEAD skills/pmo-docs | tar -x -C <tmp>`), Sonnet: SAFE, full coverage, every LLM call succeeded, and the suppression count recorded and not higher than before.
+- Every eval on Sonnet with `dev/run-evals`, one `--case` per run; re-run a failure before changing anything.
+- `dev/release --bump --dry-run`, then release with the explicit version (`dev/release --dry-run X.Y.Z`, then `dev/release X.Y.Z`); in 0.x `--bump` proposes a patch.
+- The dry run's changelog section reads well and holds no private names or machine paths.
+- README roadmap and the version index above: the version marked released, with the date (UTC).
+- After the release workflow publishes the zip: the install check (`dev/test-install.md`) with `V=<the new version>`.
+- The maintainer approves, commits, tags and pushes (`dev/release` asks twice).
