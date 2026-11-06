@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Update the vendored PyYAML to a new release, keeping the safe-only cut.
+# Usage (from anywhere; the script changes to the repo root; clean tree for the vendored folder):
+#   dev/update-pyyaml <path to an unpacked PyYAML sdist>            apply the saved cut to a new release
+#   dev/update-pyyaml --patch <path to an unpacked PyYAML sdist>    regenerate dev/pyyaml-prune.patch
+#   1. get the sdist:  pip download PyYAML==X.Y.Z --no-binary :all: --no-deps -d /tmp/pyyaml && tar xzf /tmp/pyyaml/*.tar.gz -C /tmp/pyyaml
+#   2. run:            dev/update-pyyaml /tmp/pyyaml/pyyaml-X.Y.Z
+#   3. edit skills/pmo-docs/scripts/_vendor/VERSION by hand (new version; keep the "Pruned for ..." line)
+#   4. run the tests and dev/scrub.sh. If the patch did not apply, redo the cut by hand in
+#      skills/pmo-docs/scripts/_vendor/yaml (the removed names are listed in VERSION), then run
+#      dev/update-pyyaml --patch /tmp/pyyaml/pyyaml-X.Y.Z   (it diffs the untouched sdist against your cut).
+# The patch is the whole difference between upstream and the vendored copy (VERSION excluded).
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+mode=apply
+if [ "${1:-}" = "--patch" ]; then mode=patch; shift; fi
+src="${1:?usage: dev/update-pyyaml [--patch] <unpacked PyYAML sdist>}"
+[ -d "$src/lib/yaml" ] || { echo "no lib/yaml in $src" >&2; exit 2; }
+dest=skills/pmo-docs/scripts/_vendor/yaml
+if [ "$mode" = patch ]; then
+  tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
+  mkdir -p "$tmp/$dest" && cp "$src"/lib/yaml/*.py "$tmp/$dest"/
+  git -C "$tmp" init -q && git -C "$tmp" add -A
+  git -C "$tmp" -c user.name=x -c user.email=x@x -c commit.gpgsign=false commit -q -m upstream
+  rm -rf "${tmp:?}/$dest" && mkdir "$tmp/$dest" && cp "$dest"/*.py "$tmp/$dest"/
+  git -C "$tmp" diff > dev/pyyaml-prune.patch
+  echo "wrote dev/pyyaml-prune.patch ($(wc -l < dev/pyyaml-prune.patch) lines)"
+  exit 0
+fi
+[ -z "$(git status --porcelain -- "$dest")" ] || { echo "commit or stash changes in $dest first" >&2; exit 2; }
+rm -rf "$dest" && mkdir "$dest" && cp "$src"/lib/yaml/*.py "$dest"/
+cp "$src/LICENSE" skills/pmo-docs/scripts/_vendor/PyYAML-LICENSE
+git apply dev/pyyaml-prune.patch || { echo "patch did not apply: redo the cut by hand (see header)" >&2; exit 1; }
+python3 -m unittest tests.test_vendor
+echo "done: now edit _vendor/VERSION and run the full tests and dev/scrub.sh"

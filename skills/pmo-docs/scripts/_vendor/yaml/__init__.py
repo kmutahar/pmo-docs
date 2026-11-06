@@ -18,15 +18,7 @@ except ImportError:
 import io
 
 #------------------------------------------------------------------------------
-# XXX "Warnings control" is now deprecated. Leaving in the API function to not
-# break code that uses it.
-#------------------------------------------------------------------------------
-def warnings(settings=None):
-    if settings is None:
-        return {}
-
-#------------------------------------------------------------------------------
-def scan(stream, Loader=Loader):
+def scan(stream, Loader=SafeLoader):
     """
     Scan a YAML stream and produce scanning tokens.
     """
@@ -37,7 +29,7 @@ def scan(stream, Loader=Loader):
     finally:
         loader.dispose()
 
-def parse(stream, Loader=Loader):
+def parse(stream, Loader=SafeLoader):
     """
     Parse a YAML stream and produce parsing events.
     """
@@ -48,7 +40,7 @@ def parse(stream, Loader=Loader):
     finally:
         loader.dispose()
 
-def compose(stream, Loader=Loader):
+def compose(stream, Loader=SafeLoader):
     """
     Parse the first YAML document in a stream
     and produce the corresponding representation tree.
@@ -59,7 +51,7 @@ def compose(stream, Loader=Loader):
     finally:
         loader.dispose()
 
-def compose_all(stream, Loader=Loader):
+def compose_all(stream, Loader=SafeLoader):
     """
     Parse all YAML documents in a stream
     and produce corresponding representation trees.
@@ -71,49 +63,6 @@ def compose_all(stream, Loader=Loader):
     finally:
         loader.dispose()
 
-def load(stream, Loader):
-    """
-    Parse the first YAML document in a stream
-    and produce the corresponding Python object.
-    """
-    loader = Loader(stream)
-    try:
-        return loader.get_single_data()
-    finally:
-        loader.dispose()
-
-def load_all(stream, Loader):
-    """
-    Parse all YAML documents in a stream
-    and produce corresponding Python objects.
-    """
-    loader = Loader(stream)
-    try:
-        while loader.check_data():
-            yield loader.get_data()
-    finally:
-        loader.dispose()
-
-def full_load(stream):
-    """
-    Parse the first YAML document in a stream
-    and produce the corresponding Python object.
-
-    Resolve all tags except those known to be
-    unsafe on untrusted input.
-    """
-    return load(stream, FullLoader)
-
-def full_load_all(stream):
-    """
-    Parse all YAML documents in a stream
-    and produce corresponding Python objects.
-
-    Resolve all tags except those known to be
-    unsafe on untrusted input.
-    """
-    return load_all(stream, FullLoader)
-
 def safe_load(stream):
     """
     Parse the first YAML document in a stream
@@ -122,7 +71,11 @@ def safe_load(stream):
     Resolve only basic YAML tags. This is known
     to be safe for untrusted input.
     """
-    return load(stream, SafeLoader)
+    loader = SafeLoader(stream)
+    try:
+        return loader.get_single_data()
+    finally:
+        loader.dispose()
 
 def safe_load_all(stream):
     """
@@ -132,27 +85,12 @@ def safe_load_all(stream):
     Resolve only basic YAML tags. This is known
     to be safe for untrusted input.
     """
-    return load_all(stream, SafeLoader)
-
-def unsafe_load(stream):
-    """
-    Parse the first YAML document in a stream
-    and produce the corresponding Python object.
-
-    Resolve all tags, even those known to be
-    unsafe on untrusted input.
-    """
-    return load(stream, UnsafeLoader)
-
-def unsafe_load_all(stream):
-    """
-    Parse all YAML documents in a stream
-    and produce corresponding Python objects.
-
-    Resolve all tags, even those known to be
-    unsafe on untrusted input.
-    """
-    return load_all(stream, UnsafeLoader)
+    loader = SafeLoader(stream)
+    try:
+        while loader.check_data():
+            yield loader.get_data()
+    finally:
+        loader.dispose()
 
 def emit(events, stream=None, Dumper=Dumper,
         canonical=None, indent=None, width=None,
@@ -277,11 +215,8 @@ def add_implicit_resolver(tag, regexp, first=None,
     first is a sequence of possible initial characters or None.
     """
     if Loader is None:
-        loader.Loader.add_implicit_resolver(tag, regexp, first)
-        loader.FullLoader.add_implicit_resolver(tag, regexp, first)
-        loader.UnsafeLoader.add_implicit_resolver(tag, regexp, first)
-    else:
-        Loader.add_implicit_resolver(tag, regexp, first)
+        raise TypeError("pass Loader explicitly")
+    Loader.add_implicit_resolver(tag, regexp, first)
     Dumper.add_implicit_resolver(tag, regexp, first)
 
 def add_path_resolver(tag, path, kind=None, Loader=None, Dumper=Dumper):
@@ -292,11 +227,8 @@ def add_path_resolver(tag, path, kind=None, Loader=None, Dumper=Dumper):
     Keys can be string values, integers, or None.
     """
     if Loader is None:
-        loader.Loader.add_path_resolver(tag, path, kind)
-        loader.FullLoader.add_path_resolver(tag, path, kind)
-        loader.UnsafeLoader.add_path_resolver(tag, path, kind)
-    else:
-        Loader.add_path_resolver(tag, path, kind)
+        raise TypeError("pass Loader explicitly")
+    Loader.add_path_resolver(tag, path, kind)
     Dumper.add_path_resolver(tag, path, kind)
 
 def add_constructor(tag, constructor, Loader=None):
@@ -306,11 +238,8 @@ def add_constructor(tag, constructor, Loader=None):
     and a node object and produces the corresponding Python object.
     """
     if Loader is None:
-        loader.Loader.add_constructor(tag, constructor)
-        loader.FullLoader.add_constructor(tag, constructor)
-        loader.UnsafeLoader.add_constructor(tag, constructor)
-    else:
-        Loader.add_constructor(tag, constructor)
+        raise TypeError("pass Loader explicitly")
+    Loader.add_constructor(tag, constructor)
 
 def add_multi_constructor(tag_prefix, multi_constructor, Loader=None):
     """
@@ -320,11 +249,8 @@ def add_multi_constructor(tag_prefix, multi_constructor, Loader=None):
     and a node object and produces the corresponding Python object.
     """
     if Loader is None:
-        loader.Loader.add_multi_constructor(tag_prefix, multi_constructor)
-        loader.FullLoader.add_multi_constructor(tag_prefix, multi_constructor)
-        loader.UnsafeLoader.add_multi_constructor(tag_prefix, multi_constructor)
-    else:
-        Loader.add_multi_constructor(tag_prefix, multi_constructor)
+        raise TypeError("pass Loader explicitly")
+    Loader.add_multi_constructor(tag_prefix, multi_constructor)
 
 def add_representer(data_type, representer, Dumper=Dumper):
     """
@@ -367,7 +293,7 @@ class YAMLObject(metaclass=YAMLObjectMetaclass):
 
     __slots__ = ()  # no direct instantiation, so allow immutable subclasses
 
-    yaml_loader = [Loader, FullLoader, UnsafeLoader]
+    yaml_loader = []
     yaml_dumper = Dumper
 
     yaml_tag = None

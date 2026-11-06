@@ -1,1 +1,2 @@
 PyYAML 6.0.3 (pure Python, from PyPI sdist, MIT). Only safe_load is used.
+Pruned for pmo-docs v0.2: removed FullConstructor, UnsafeConstructor, Constructor, FullLoader, UnsafeLoader, Loader, load, load_all, full_load, full_load_all, unsafe_load, unsafe_load_all and cyaml.py. Redo this cut on every PyYAML update.

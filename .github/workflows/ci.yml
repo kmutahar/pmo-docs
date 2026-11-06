@@ -17,3 +17,9 @@ jobs:
           python-version: ${{ matrix.python }}
       - run: bash dev/scrub.sh
       - run: python3 -m unittest discover tests
+      - name: tests in a clean venv (no PyYAML installed)
+        run: |
+          python3 -m venv "$RUNNER_TEMP/clean"
+          "$RUNNER_TEMP/clean/bin/python" -c "import importlib.util, sys; sys.exit(importlib.util.find_spec('yaml') is not None)"
+          "$RUNNER_TEMP/clean/bin/python" -m unittest discover tests
+
