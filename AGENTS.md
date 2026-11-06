@@ -1,6 +1,6 @@
 # pmo-docs
 
-A project-office and documentation workflow packaged as an Agent Skill (`skills/pmo-docs/`). Plan, decisions and checklist: `docs/PLAN.md`. Read it before changing anything structural. Use the words in `GLOSSARY.md`.
+A project-office and documentation workflow packaged as an Agent Skill (`skills/pmo-docs/`). Plan hub and settled decisions: `docs/PLAN.md`; each version's plan: `docs/plans/`. Read the hub before changing anything structural. Use the words in `GLOSSARY.md`.
 
 ## Rules
 - **Never commit or push without the maintainer's approval.** Never add `Co-Authored-By`, "Generated with Claude Code" or any attribution line to commits or PRs.
@@ -35,12 +35,14 @@ skills/pmo-docs/.claude-plugin/  plugin manifest (name, version, skills)
 examples/acme/     the fake project used by tests and the walkthrough
 tests/             tests
 evals/             plugin eval cases
-dev/               maintainer tools, not shipped: scrub.sh, release, run-evals, make_icon.py, test-install.md, skillspector-baseline.yaml
+dev/               maintainer tools, not shipped: scrub.sh, release, run-evals, test-install.md, skillspector-baseline.yaml, icon.svg (icon master), icon-brief.md, make_icon.py (old placeholder)
 .githooks/         commit gate (pre-commit, commit-msg)
 .github/           CI workflows
-docs/PLAN.md       the plan
+docs/PLAN.md       the plan hub: decisions, version index, safeguards
+docs/plans/        one plan per version, each with its work packages
 docs/walkthrough.md  the Acme walkthrough
 GLOSSARY.md        the words used
+PRIVACY.md, TERMS.md  privacy policy and terms, linked from plugin.json; update them when the skill starts reading or writing something new
 cliff.toml         git-cliff config for CHANGELOG.md
 memory.md          project state for the next session (local, never committed)
 ```
