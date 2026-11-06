@@ -28,7 +28,11 @@ def main(argv=None):
                     metavar="YYYY-MM-DD", help="date to evaluate period against (default: today)")
     ap.add_argument("--hashes", action="store_true",
                     help="also print source_hashes: the Finish value for the type's generated_from registers")
+    ap.add_argument("--title", help="override the doc type's title in the file name")
     args = ap.parse_args(argv)
+
+    if args.title is not None and "/" in args.title:
+        ap.error("title cannot contain '/'")
 
     if not Path(args.project).is_dir():
         ap.error(f"project folder not found: {args.project}")
@@ -39,7 +43,7 @@ def main(argv=None):
         ap.error(f"unknown doc type {args.type!r}; known types: {', '.join(sorted(doc_types))}")
 
     info = doc_types[args.type]
-    title = info.get("title", "")
+    title = args.title if args.title is not None else info.get("title", "")
     pattern = info.get("name", "{title}.md")
 
     try:
@@ -53,7 +57,7 @@ def main(argv=None):
     except ValueError as e:
         ap.error(str(e))
 
-    doc_rel = pc.doc_rel_path(cfg, args.type, period, args.as_of)
+    doc_rel = pc.doc_rel_path(cfg, args.type, period, args.as_of, title=args.title)
     doc_exists = "yes" if (Path(args.project) / doc_rel).exists() else "no"
 
     tpl_name = info.get("template", f"{args.type}.md")

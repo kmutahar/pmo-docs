@@ -168,6 +168,21 @@ class Where(unittest.TestCase):
     def test_missing_project_exits_2(self):
         self.assertEqual(run(self.root / "nope", "decision-log")[0], 2)
 
+    def test_stakeholder_update_and_release_notes(self):
+        f_su = fields(run(self.root, "stakeholder-update", "2026-03")[1])
+        self.assertEqual(f_su["document"], "pmo/documents/2026-03 - Stakeholder update.md")
+
+        f_rn = fields(run(self.root, "release-notes", "2026-03")[1])
+        self.assertEqual(f_rn["document"], "pmo/documents/2026-03 - Release notes.md")
+
+        code, out, _ = run(self.root, "release-notes", "2026-03", "--title", "Release notes - api")
+        self.assertEqual(code, 0)
+        self.assertEqual(fields(out)["document"], "pmo/documents/2026-03 - Release notes - api.md")
+
+        code_bad, _, err = run(self.root, "release-notes", "2026-03", "--title", "bad/title")
+        self.assertEqual(code_bad, 2)
+        self.assertIn("title", err)
+
 
 if __name__ == "__main__":
     unittest.main()

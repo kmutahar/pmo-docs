@@ -241,3 +241,14 @@ doc_types:
     generated_from: [decisions]
     stale_days: 30
     generator: true
+  stakeholder-update:
+    title: Stakeholder update
+    template: stakeholder-update.md
+    name: "{period} - {title}.md"
+    generated_from: [tasks, milestones, risks, issues, decisions, changes]
+    stale_days: 30
+  release-notes:
+    title: Release notes
+    template: release-notes.md
+    name: "{period} - {title}.md"
+    generated_from: [tasks, changes]
