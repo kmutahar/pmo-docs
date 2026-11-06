@@ -53,6 +53,27 @@ class Setup(unittest.TestCase):
         cfg = pc.load_config(self.root)
         self.assertEqual(cfg["vocab"]["priority_order"], ["urgent", "normal"])
 
+    def test_week_start_flag(self):
+        # --week-start saturday writes it
+        tool("setup.py", self.root, "--name", "Demo", "--week-start", "saturday")
+        cfg = pc.load_config(self.root)
+        self.assertEqual(cfg["project"]["week_start"], "saturday")
+        import yaml
+        mine = yaml.safe_load((self.root / "pmo/config.yaml").read_text(encoding="utf-8"))
+        self.assertEqual(mine["project"]["week_start"], "saturday")
+
+    def test_week_start_monday_omitted_from_sparse_config(self):
+        # --week-start monday writes nothing for it
+        tool("setup.py", self.root, "--name", "Demo", "--week-start", "monday")
+        import yaml
+        mine = yaml.safe_load((self.root / "pmo/config.yaml").read_text(encoding="utf-8"))
+        self.assertNotIn("week_start", mine["project"])
+
+    def test_week_start_bad_day_exits_2_and_writes_nothing(self):
+        code, out, err = tool("setup.py", self.root, "--name", "Demo", "--week-start", "someday")
+        self.assertEqual(code, 2)
+        self.assertFalse((self.root / "pmo").exists())
+
     def test_never_overwrites(self):
         tool("setup.py", self.root, "--name", "First")
         reg = self.root / "pmo/registers/tasks.yaml"

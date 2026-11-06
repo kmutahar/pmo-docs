@@ -62,6 +62,43 @@ class Where(unittest.TestCase):
         f = fields(run(self.root, "status-report", "--week", "--as-of", "2026-03-15")[1])
         self.assertEqual(f["document"], "pmo/documents/2026-W11 - Status report.md")
 
+    def test_week_start_saturday_and_window(self):
+        # Monday default
+        f = fields(run(self.root, "status-report", "--week", "--as-of", "2026-11-07")[1])
+        self.assertEqual(f["document"], "pmo/documents/2026-W45 - Status report.md")
+        self.assertEqual(f["window"], "2026-11-02..2026-11-08")
+
+        # Saturday start written into temp Acme config
+        cfg_path = self.root / "pmo/config.yaml"
+        cfg_text = cfg_path.read_text(encoding="utf-8")
+        # add the key inside the existing project map; a second project: key would replace it
+        cfg_path.write_text(cfg_text.replace("project:\n", "project:\n  week_start: saturday\n", 1), encoding="utf-8")
+        code, out, _ = run(self.root, "status-report", "--week", "--as-of", "2026-11-07")
+        self.assertEqual(code, 0)
+        f = fields(out)
+        self.assertEqual(f["document"], "pmo/documents/2026-W46 - Status report.md")
+        self.assertEqual(f["window"], "2026-11-07..2026-11-13")
+
+    def test_month_period_window(self):
+        f = fields(run(self.root, "status-report", "2026-03")[1])
+        self.assertEqual(f["window"], "2026-03-01..2026-03-31")
+
+    def test_week_that_does_not_exist_exits_2(self):
+        code, _, err = run(self.root, "status-report", "2025-W53")
+        self.assertEqual(code, 2)
+        self.assertIn("Invalid week", err)
+
+    def test_type_without_period_has_window_none(self):
+        f = fields(run(self.root, "decision-log")[1])
+        self.assertEqual(f["window"], "none")
+
+    def test_bad_week_start_exits_2(self):
+        cfg_path = self.root / "pmo/config.yaml"
+        cfg_path.write_text("schema_version: 1\nproject:\n  week_start: someday\n", encoding="utf-8")
+        code, _, err = run(self.root, "status-report")
+        self.assertEqual(code, 2)
+        self.assertIn("project.week_start must be one of monday..sunday", err)
+
     def test_skill_template_when_no_override(self):
         f = fields(run(self.root, "status-report", "2026-03")[1])
         self.assertEqual(f["template_source"], "skill")

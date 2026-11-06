@@ -37,9 +37,22 @@ def one_line_entries(text):
 
 
 def config_errors(cfg):
-    """Registers in the config that lack `file`, `view` or `fields`."""
-    return [f"config: register `{n}` needs `{k}`" for n, r in cfg["registers"].items() for k in ("file", "view", "fields")
-            if not isinstance(r, dict) or not r.get(k)]
+    """Registers in the config that lack `file`, `view` or `fields`, bad week_start, or invalid blocked/active statuses."""
+    errors = [f"config: register `{n}` needs `{k}`" for n, r in cfg["registers"].items() for k in ("file", "view", "fields")
+              if not isinstance(r, dict) or not r.get(k)]
+    ws = cfg.get("project", {}).get("week_start") if isinstance(cfg.get("project"), dict) else None
+    if ws is not None and (not isinstance(ws, str) or ws.lower() not in pc.WEEKDAYS):
+        errors.append(f"config: project.week_start `{ws}` not in {list(pc.WEEKDAYS)}")
+    task_statuses = cfg.get("vocab", {}).get("task_status") or []
+    for key in ("blocked", "active"):
+        for s in pc.statuses(cfg, "tasks", key):
+            if task_statuses and s not in task_statuses:
+                errors.append(f"config: registers.tasks.{key} status `{s}` not in vocab.task_status")
+    change_statuses = cfg.get("vocab", {}).get("change_status") or []
+    for s in pc.statuses(cfg, "changes", "accepted"):
+        if change_statuses and s not in change_statuses:
+            errors.append(f"config: registers.changes.accepted status `{s}` not in vocab.change_status")
+    return errors
 
 
 def read_registers(root, cfg):
@@ -108,9 +121,7 @@ def validate(data, cfg):
 def table(rows, cols):
     if not rows:
         return "_No entries._\n"
-    out = ["| " + " | ".join(cols) + " |", "|" + "---|" * len(cols)]
-    out += ["| " + " | ".join(pc.cell(r.get(c)) for c in cols) + " |" for r in rows]
-    return "\n".join(out) + "\n"
+    return pc.md_table(cols, [[r.get(c) for c in cols] for r in rows])
 
 
 def view_tasks(rows, cfg):

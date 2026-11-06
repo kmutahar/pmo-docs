@@ -36,6 +36,12 @@ class Overdue(unittest.TestCase):
         self.assertIn("M-1", out)
         self.assertNotIn("M-2", out)
 
+    def test_null_cells_say_not_set(self):
+        (self.p / "pmo/registers/tasks.yaml").write_text(
+            "tasks:\n  - {id: T-1, title: a, priority: null, owner: null, status: blocked, due: 2026-03-10}\n", encoding="utf-8")
+        _, out = self.run_tool("--as-of", "2026-03-15")
+        self.assertIn("| T-1 | a | not set | 2026-03-10 | 5 | not set |", out)
+
     def test_days_window(self):
         _, out = self.run_tool("--as-of", "2026-03-15", "--days", "60")
         self.assertIn("M-2", out)

@@ -42,19 +42,18 @@ def main(argv=None):
     title = info.get("title", "")
     pattern = info.get("name", "{title}.md")
 
-    if args.period:
-        if not re.fullmatch(r"[0-9]{4}-(0[1-9]|1[0-2]|W(0[1-9]|[1-4][0-9]|5[0-3]))", args.period):
-            ap.error(f"invalid period {args.period!r}; use YYYY-MM or YYYY-Www")
-        period = args.period
-    elif args.week:
-        # shortcut: ISO weeks start on Monday, no per-project week start; add one when a project needs Sunday weeks
-        iso = args.as_of.isocalendar()
-        period = f"{iso.year}-W{iso.week:02d}"
-    else:
-        period = args.as_of.strftime("%Y-%m")
+    try:
+        w_start = pc.week_start(cfg)
+    except ValueError:
+        print("ERROR config: project.week_start must be one of monday..sunday", file=sys.stderr)
+        return 2
 
-    doc_file = pattern.replace("{title}", title).replace("{period}", period).replace("{date}", str(args.as_of))
-    doc_rel = f"{cfg['paths']['documents']}/{doc_file}"
+    try:
+        period = pc.resolve_period(args.period, args.week, args.as_of, w_start)
+    except ValueError as e:
+        ap.error(str(e))
+
+    doc_rel = pc.doc_rel_path(cfg, args.type, period, args.as_of)
     doc_exists = "yes" if (Path(args.project) / doc_rel).exists() else "no"
 
     tpl_name = info.get("template", f"{args.type}.md")
@@ -76,6 +75,14 @@ def main(argv=None):
     based_on = str(fm.get("based_on")) if fm.get("based_on") is not None else "none"
     generated_from = ", ".join(info.get("generated_from") or [])
     stale_days = str(info["stale_days"]) if info.get("stale_days") is not None else "none"
+    if "{period}" in pattern:
+        try:
+            first, last = pc.period_range(period, w_start)
+            window = f"{first}..{last}"
+        except ValueError as e:
+            ap.error(str(e))
+    else:
+        window = "none"
 
     fields = [
         ("type", args.type),
@@ -89,6 +96,7 @@ def main(argv=None):
         ("based_on", based_on),
         ("generated_from", generated_from),
         ("stale_days", stale_days),
+        ("window", window),
     ]
     if args.hashes and info.get("generated_from"):
         pairs = ", ".join(f'{r}: "{register_hash(args.project, cfg, r)}"' for r in info["generated_from"])

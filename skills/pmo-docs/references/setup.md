@@ -23,6 +23,7 @@ Set up a project's `pmo/` folder and starter registers.
 
 3. **Confirm layout**
    Display the tree of files to be created and wait for confirmation:
+   - Week start (default: monday). Ask only if the user mentions weeks or a non-Monday working week; otherwise use the default.
    ```
    pmo/
    ├── config.yaml
@@ -42,7 +43,8 @@ Set up a project's `pmo/` folder and starter registers.
 
 4. **Run setup script**
    Execute `scripts/setup.py` with the chosen flags:
-   `python3 ${CLAUDE_SKILL_DIR}/scripts/setup.py [--name TEXT] [--manager TEXT] [--priority-order LIST]`
+   `python3 ${CLAUDE_SKILL_DIR}/scripts/setup.py [--name TEXT] [--manager TEXT] [--priority-order LIST] [--week-start DAY]`
+   Pass `--week-start` when it is not Monday.
 
 5. **Verify and next steps**
    Run `python3 ${CLAUDE_SKILL_DIR}/scripts/render_views.py --check` to confirm registers and views are valid.

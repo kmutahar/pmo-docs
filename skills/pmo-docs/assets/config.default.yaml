@@ -6,6 +6,7 @@ project:
   name: null          # asked by setup
   manager: null       # the project manager, asked by setup
   period_format: YYYY-MM
+  week_start: monday  # first day of a week: monday to sunday; a week is named by the ISO week of its fourth day
 
 # Folders, relative to the project root.
 paths:
@@ -40,6 +41,9 @@ registers:
     enums: {status: task_status, priority: priority_order, origin: origin}
     dates: [due]
     closed: [done, dropped]
+    # blocked and active: statuses that count as blocked and in progress (generators, RAG)
+    blocked: [blocked]
+    active: [in-progress]
   priorities:
     file: priorities.yaml
     view: priorities.md
@@ -109,6 +113,8 @@ registers:
     enums: {status: change_status, origin: origin}
     dates: [date, decided_on]
     closed: [approved, rejected, implemented]
+    # accepted: statuses that count as agreed scope changes (project-plan change log)
+    accepted: [approved, implemented]
   meetings:
     file: meetings.yaml
     view: meetings.md

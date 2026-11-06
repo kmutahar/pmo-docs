@@ -23,10 +23,7 @@ import pmo_common as pc  # noqa: E402
 
 
 def table(head, rows):
-    rows = rows or [["None"] + [""] * (len(head) - 1)]  # an empty table keeps its header and one row "None"
-    out = ["| " + " | ".join(head) + " |", "|" + "---|" * len(head)]
-    out += ["| " + " | ".join("not set" if c is None else pc.cell(c) for c in r) + " |" for r in rows]
-    return "\n".join(out) + "\n"
+    return pc.md_table(head, [["not set" if c is None else c for c in r] for r in rows])
 
 
 def open_entries(root, cfg, name):

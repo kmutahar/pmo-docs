@@ -1,4 +1,5 @@
 """Tests for scripts/pmo_common.py. Run from the repo root: python3 -m unittest discover tests"""
+import datetime
 import re
 import shutil
 import subprocess
@@ -141,6 +142,103 @@ class Common(unittest.TestCase):
         self.assertEqual(pc.to_date("2026-01-02").day, 2)
 
 
+class Helpers(unittest.TestCase):
+    def test_week_of(self):
+        # Monday start (0)
+        self.assertEqual(pc.week_of(datetime.date(2026, 11, 6), 0), "2026-W45")
+        # Saturday start (5)
+        self.assertEqual(pc.week_of(datetime.date(2026, 11, 6), 5), "2026-W45")
+        self.assertEqual(pc.week_of(datetime.date(2026, 11, 7), 5), "2026-W46")
+        # Sunday start (6)
+        self.assertEqual(pc.week_of(datetime.date(2026, 12, 27), 6), "2026-W53")
+        # Monday start (0)
+        self.assertEqual(pc.week_of(datetime.date(2027, 1, 1), 0), "2026-W53")
+
+    def test_period_range(self):
+        # 2026-03 -> (03-01, 03-31)
+        self.assertEqual(pc.period_range("2026-03", 0), (datetime.date(2026, 3, 1), datetime.date(2026, 3, 31)))
+        # 2026-W46 with Saturday start (5)
+        self.assertEqual(pc.period_range("2026-W46", 5), (datetime.date(2026, 11, 7), datetime.date(2026, 11, 13)))
+        # 2026-W46 with Monday start (0)
+        self.assertEqual(pc.period_range("2026-W46", 0), (datetime.date(2026, 11, 9), datetime.date(2026, 11, 15)))
+        # 2025-W53 raises ValueError
+        with self.assertRaises(ValueError):
+            pc.period_range("2025-W53", 0)
+        # 2026-13 raises ValueError
+        with self.assertRaises(ValueError):
+            pc.period_range("2026-13", 0)
+
+    def test_resolve_period(self):
+        as_of = datetime.date(2026, 11, 6)
+        # given period wins
+        self.assertEqual(pc.resolve_period("2026-04", False, as_of, 0), "2026-04")
+        self.assertEqual(pc.resolve_period("2026-W10", False, as_of, 0), "2026-W10")
+        # week=True uses week_of
+        self.assertEqual(pc.resolve_period(None, True, as_of, 0), "2026-W45")
+        # default is the month
+        self.assertEqual(pc.resolve_period(None, False, as_of, 0), "2026-11")
+
+    def test_md_table(self):
+        # header and separator format, | in cell escaped
+        res = pc.md_table(["ID", "Name"], [["T-1", "A|B"]])
+        self.assertEqual(res, "| ID | Name |\n|---|---|\n| T-1 | A\\|B |\n")
+        # no rows gives | None |  | style row with the right number of cells
+        empty_res = pc.md_table(["ID", "Name", "Extra"], [])
+        self.assertEqual(empty_res, "| ID | Name | Extra |\n|---|---|---|\n| None |  |  |\n")
+
+    def test_person(self):
+        names = {"alice": "Alice Example", "bob": "Bob Sample"}
+        # slug -> name
+        self.assertEqual(pc.person("alice", names), "Alice Example")
+        # list -> joined names
+        self.assertEqual(pc.person(["alice", "bob"], names), "Alice Example, Bob Sample")
+        # unknown text kept
+        self.assertEqual(pc.person("charlie", names), "charlie")
+        # None and "" -> not set
+        self.assertEqual(pc.person(None, names), "not set")
+        self.assertEqual(pc.person("", names), "not set")
+        self.assertEqual(pc.person([], names), "not set")
+
+    def test_rag(self):
+        acme = Path(__file__).resolve().parents[1] / "examples/acme"
+        cfg = pc.load_config(acme)
+        tasks = pc.load_register(acme, cfg, "tasks")
+        milestones = pc.load_register(acme, cfg, "milestones")
+        issues = pc.load_register(acme, cfg, "issues")
+        risks = pc.load_register(acme, cfg, "risks")
+
+        # Acme as of 2026-03-15: T-1 (high, due 03-10, in progress) is overdue -> red, reason names T-1
+        val, reason = pc.rag(cfg, datetime.date(2026, 3, 15), tasks, milestones, issues, risks)
+        self.assertEqual(val, "red")
+        self.assertIn("T-1", reason)
+
+        # In-memory amber case: a blocked medium task only
+        amber_tasks = [{"id": "T-2", "priority": "medium", "status": "blocked", "due": "2026-04-01"}]
+        val, reason = pc.rag(cfg, datetime.date(2026, 3, 15), amber_tasks)
+        self.assertEqual(val, "amber")
+        self.assertIn("T-2", reason)
+
+        # In-memory green case: nothing open is late
+        green_tasks = [{"id": "T-3", "priority": "low", "status": "done", "due": "2026-03-01"}]
+        val, reason = pc.rag(cfg, datetime.date(2026, 3, 15), green_tasks)
+        self.assertEqual(val, "green")
+        self.assertIn("all items on track", reason)
+
+    def test_rag_with_empty_priority_order_has_no_top_priority(self):
+        acme = Path(__file__).resolve().parents[1] / "examples/acme"
+        cfg = pc.load_config(acme)
+        cfg["vocab"]["priority_order"] = []
+        val, _ = pc.rag(cfg, datetime.date(2026, 3, 15), [{"id": "T-9", "status": "in-progress", "due": "2026-03-01"}])
+        self.assertEqual(val, "amber")
+
+    def test_config_errors_reports_week_start(self):
+        import render_views
+        cfg = pc.load_config(Path(__file__).resolve().parents[1] / "examples/acme")
+        cfg["project"]["week_start"] = "someday"
+        errs = render_views.config_errors(cfg)
+        self.assertTrue(any("week_start" in e and "someday" in e for e in errs))
+
+
 SCRIPTS = Path(__file__).resolve().parents[1] / "skills/pmo-docs/scripts"
 TOOLS = ["docs_audit.py", "overdue.py", "render_views.py", "setup.py", "structure_check.py", "where.py"]
 
@@ -168,9 +266,25 @@ class EveryTool(unittest.TestCase):
         self.assertEqual(sorted(p.name for p in (d / "pmo").iterdir()), ["config.yaml"])
 
     def test_no_tool_stages_or_commits(self):
+        verbs = r"(add|commit|push|restore|rm|reset|checkout|stash|clean)"
+        git_literal = re.compile(r"""["']git["']""")
+        verb_literal = re.compile(r"""["']""" + verbs + r"""["']""")
+        git_words = re.compile(r"\bgit " + verbs + r"\b")
+
+        # shortcut: textual check, one line at a time; read-only git (rev-parse) is allowed, any writing verb is not
+        def bad_lines(text):
+            return [ln for ln in text.splitlines()
+                    if git_words.search(ln) or (git_literal.search(ln) and verb_literal.search(ln))]
+
+        # the check must flag the calls it is there for, or it proves nothing
+        for sample in ('subprocess.run(["git", "-C", str(target_dir), "add", "--", str(t)])',
+                       "subprocess.run(['git', 'commit', '-m', 'x'])",
+                       'os.system("git push")'):
+            self.assertTrue(bad_lines(sample), sample)
+        self.assertFalse(bad_lines('subprocess.run(["git", "-C", str(d), "rev-parse", "--show-toplevel"])'))
+
         for f in SCRIPTS.glob("*.py"):
-            text = f.read_text(encoding="utf-8")
-            self.assertFalse(re.search(r"""["']git["']|git (add|commit|push)""", text), f.name)
+            self.assertEqual(bad_lines(f.read_text(encoding="utf-8")), [], f.name)
 
 
 if __name__ == "__main__":
