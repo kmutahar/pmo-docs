@@ -286,3 +286,13 @@ doc_types:
     generated_from: [tasks, changes]
     when: for each release or month end
     regenerate: when commits or changes are tagged
+
+# Publishing: copies finished documents with /pmo-docs:publish only.
+# mode: none (default, nothing is published), folder (a folder inside this project) or repo (the top folder of
+# another local git repository; the command commits there only after a yes and never pushes).
+# path: the target folder, relative to the project root or absolute (repo mode only).
+# url: optional web address of the target folder, used only to print links.
+publish:
+  mode: none
+  path: null
+  url: null

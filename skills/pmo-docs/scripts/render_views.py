@@ -53,6 +53,14 @@ def config_errors(cfg):
     for s in pc.statuses(cfg, "changes", "accepted"):
         if change_statuses and s not in change_statuses:
             errors.append(f"config: registers.changes.accepted status `{s}` not in vocab.change_status")
+    pub = cfg.get("publish")
+    if pub is not None:
+        if isinstance(pub, dict):
+            mode = pub.get("mode")
+            if mode is not None and mode not in ("none", "folder", "repo"):
+                errors.append(f"config: publish.mode `{mode}` must be one of none, folder, repo")
+        else:
+            errors.append("config: publish must be a map")
     for dt, info in (cfg.get("doc_types") or {}).items():
         if isinstance(info, dict):
             for k in ("when", "regenerate"):

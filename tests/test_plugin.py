@@ -9,6 +9,8 @@ import unittest
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO / "skills/pmo-docs/scripts"))
+import pmo_common  # noqa: E402
 
 
 PATHS = {"plugin.json": REPO / "skills/pmo-docs/.claude-plugin/plugin.json", "marketplace.json": REPO / ".claude-plugin/marketplace.json"}
@@ -69,6 +71,19 @@ class Plugin(unittest.TestCase):
         for name in ("plugin.json", "marketplace.json"):
             text = PATHS[name].read_text(encoding="utf-8")
             self.assertNotRegex(text, r"/home/|@[\w.-]+\.\w+")
+
+    def test_command_skills_are_user_only(self):
+        skills = sorted((REPO / "skills/pmo-docs/skills").glob("*/SKILL.md"))
+        self.assertGreaterEqual(len(skills), 2)
+        for path in skills:
+            with self.subTest(path.parent.name):
+                fm, _ = pmo_common.split_front_matter(path.read_text(encoding="utf-8"), strict=True)
+                self.assertIs(fm.get("disable-model-invocation"), True)
+                self.assertEqual(fm.get("name"), path.parent.name)
+
+    def test_main_skill_is_not_user_only(self):
+        fm, _ = pmo_common.split_front_matter((REPO / "skills/pmo-docs/SKILL.md").read_text(encoding="utf-8"), strict=True)
+        self.assertNotIn("disable-model-invocation", fm)
 
 
 class Evals(unittest.TestCase):
