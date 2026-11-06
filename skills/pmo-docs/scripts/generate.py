@@ -59,6 +59,11 @@ class MissingSection(Exception):
     pass
 
 
+def majority_month(window) -> str:
+    """YYYY-MM holding at least 4 of the window's 7 days (its 4th day), so a week lands in one month whatever the week start."""
+    return (window[0] + datetime.timedelta(days=3)).strftime("%Y-%m")
+
+
 def id_number(v):
     s = str(v or "")
     if "-" in s:
@@ -83,7 +88,7 @@ def format_id_list(val):
 
 def period_tasks(ctx: Ctx) -> tuple[list[dict], list[str]]:
     """Tasks belonging to the period, and notes for tasks without period/due."""
-    window_end_month = ctx.window[1].strftime("%Y-%m") if ctx.window else ctx.period
+    window_month = majority_month(ctx.window) if ctx.window else ctx.period
     all_tasks = ctx.data.get("tasks", [])
     matching = []
     unassigned = []
@@ -91,7 +96,7 @@ def period_tasks(ctx: Ctx) -> tuple[list[dict], list[str]]:
         p = t.get("period")
         due = t.get("due")
         if p:
-            if p == window_end_month:
+            if p == window_month:
                 matching.append(t)
         elif due:
             try:
@@ -371,14 +376,14 @@ def generate_team_checklist(ctx: Ctx) -> Filled:
         team_blocks.append("\n".join(lines))
 
     # Milestones for End-of-period target check
-    window_end_month = ctx.window[1].strftime("%Y-%m") if ctx.window else ctx.period
+    window_month = majority_month(ctx.window) if ctx.window else ctx.period
     all_ms = ctx.data.get("milestones", [])
     ms_closed = pc.statuses(ctx.cfg, "milestones", "closed")
     matching_ms = []
     for m in all_ms:
         mp = m.get("period")
         due = m.get("due")
-        if mp == window_end_month:
+        if mp == window_month:
             matching_ms.append(m)
         elif due:
             try:
@@ -630,7 +635,7 @@ def generate_status_report(ctx: Ctx) -> Filled:
     w_start_day = pc.week_start(ctx.cfg)
     window = ctx.window or pc.period_range(ctx.period, w_start_day)
     at = min(window[1], ctx.as_of)
-    window_end_month = window[1].strftime("%Y-%m")
+    window_month = majority_month(window)
 
     counted, notes = period_tasks(ctx)
     task_closed = pc.statuses(ctx.cfg, "tasks", "closed")
@@ -643,12 +648,12 @@ def generate_status_report(ctx: Ctx) -> Filled:
         if t.get("status") in task_closed:
             p = t.get("period")
             due = t.get("due")
-            if p and p < window_end_month:
+            if p and p < window_month:
                 completed_before_count += 1
             elif not p and due:
                 try:
                     d = pc.to_date(due)
-                    if d and d.strftime("%Y-%m") < window_end_month:
+                    if d and d.strftime("%Y-%m") < window_month:
                         completed_before_count += 1
                 except (ValueError, TypeError):
                     pass
@@ -832,7 +837,7 @@ def generate_status_report(ctx: Ctx) -> Filled:
     # 7. Notes on data
     notes_on_data_lines = [
         f"- RAG rule: weekly-status, as computed by pmo_common.rag, as of {at}.",
-        f"- Tasks counted: period {window_end_month}; completed before {window_end_month}: {completed_before_count}.",
+        f"- Tasks counted: period {window_month}; completed before {window_month}: {completed_before_count}.",
         "- No git evidence used.",
     ]
     notes_on_data_body = "\n".join(notes_on_data_lines)

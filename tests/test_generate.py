@@ -262,6 +262,12 @@ class TestGenerate(unittest.TestCase):
         self.assertEqual(code, 0, err)
         self.assertIn("Tasks counted: period 2026-03;", out)
 
+    def test_status_report_week_crossing_months(self):
+        # 2026-W09 runs Mon 23 Feb to Sun 1 Mar: 6 of its 7 days are February, so it counts February
+        code, out, err = tool("generate.py", self.root, "status-report", "2026-W09", "--stdout")
+        self.assertEqual(code, 0, err)
+        self.assertIn("Tasks counted: period 2026-02;", out)
+
     def test_status_report_refuses_existing(self):
         code, out, err = tool("generate.py", self.root, "status-report", "2026-03")
         self.assertEqual(code, 3)
