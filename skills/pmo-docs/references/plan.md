@@ -29,11 +29,12 @@ Where each planning document gets its content and what to ask. Producing the doc
 | Document | Content comes from | Ask only if missing |
 |---|---|---|
 | project-charter | `objectives`, `priorities` (goals), `budget`, `assumptions`, `roster` | purpose, in and out of scope, who approves |
-| project-plan | `tasks`, `milestones`, `priorities` (goals), `teams`, `risks`, `assumptions`, `dependencies`, `changes`, `roster` | the objective of the period |
+| project-plan | generated (`generate.py` pre-fills tables from registers); `tasks`, `milestones`, `priorities` (goals), `teams`, `risks`, `assumptions`, `dependencies`, `changes`, `roster` | the objective of the period |
 | roadmap | `milestones`, `priorities` (goals), `dependencies`; Now is the current period | what is Next and Later, target months |
 | weekly-plan | `tasks` (in progress, due this week, carried over), `actions`, `capacity`; use `--week` with `where.py` | leave this week, any priority change |
 | capacity-plan | `capacity`, open tasks per owner, `roster` | working days and leave per person |
-| team-checklist | `tasks`, `teams`, `milestones` | nothing |
+| team-checklist | generated (`generate.py` pre-fills checklist from registers); `tasks`, `teams`, `milestones` | nothing |
+
 
 ## Do not
 

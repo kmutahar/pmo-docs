@@ -16,6 +16,14 @@ _Avoid_: workspace, instance, client
 A project's own copy of a template that replaces the skill's default as a whole.
 _Avoid_: customisation, patch, fork
 
+**Playbook override**:
+A project's copy of a playbook in `pmo/playbooks/` that replaces the skill's default.
+_Avoid_: custom playbook, local playbook
+
+**Drift**:
+The state of a template or playbook override when the skill's default has moved to a newer version.
+_Avoid_: divergence, desync
+
 **House rules**:
 The project's own rules, added to the skill's rules.
 _Avoid_: project rules, conventions, local rules
@@ -64,6 +72,14 @@ _Avoid_: check, lint
 A read-only summary rendered from registers, never edited by hand.
 _Avoid_: report, dashboard
 
+**Catalogue**:
+The generated view (`pmo/views/catalogue.md`) listing every doc type, when to make it, and its publish settings.
+_Avoid_: document index, doc list
+
+**Week start**:
+The day a project's working week begins (`project.week_start`, default Monday).
+_Avoid_: start of week, calendar start
+
 ## Documents
 
 **Doc type**:
@@ -98,15 +114,43 @@ _Avoid_: doc, output, deliverable
 A document that is not finished yet.
 _Avoid_: working copy, WIP
 
+**Generator**:
+A script (`generate.py`) that pre-fills a document's register-derived sections before agent editing.
+_Avoid_: auto-generator, builder, scaffolder
+
 **Finish**:
 The step that marks a draft finished: version recorded, comments removed, checks passed.
 _Avoid_: finalise, finalize, close, complete
+
+**Command**:
+A slash command the user types to start a fixed task, `/pmo-docs:init` or `/pmo-docs:publish`. The agent never runs one on its own.
+_Avoid_: recipe, skill, macro
+
+**Publish**:
+The process of copying finished documents to the configured folder or repository via `/pmo-docs:publish`.
+_Avoid_: deploy, push, export, sync
+
+**Publish target**:
+Where `/pmo-docs:publish` copies finished documents, set by `publish.mode` in the config: `folder` (a folder inside the project) or `repo` (the top level of another git repository, where a commit is made only after the user says yes).
+_Avoid_: destination, remote, export folder
+
+**Publish conflict**:
+The state `publish.py` reports when a file already exists at the publish target with different content. It is overwritten only with the user's yes for that file.
+_Avoid_: collision, diff
+
+**Published copy**:
+The copy of a finished document written to the publish target.
+_Avoid_: export, artifact, published file
 
 **Stale**:
 Said of a finished document when a register it was made from has changed since it was finished.
 _Avoid_: outdated, out of date
 
 ## Agent work
+
+**Made by**:
+The catalogue column that says whether a document type is filled by a script (`generator`) or by the agent (`agent`).
+_Avoid_: author, source
 
 **Playbook**:
 Step-by-step instructions the agent follows for one kind of request. The skill keeps them in `references/` only because the Agent Skills spec names that folder.

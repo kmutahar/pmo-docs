@@ -17,7 +17,7 @@ The skill's behaviour rules are in [`SKILL.md`](../skills/pmo-docs/SKILL.md); th
 pmo/
   config.yaml      project name and manager only
   registers/       16 registers, one entry per line
-  views/           one view per register, rendered from them
+  views/           one view per register plus the catalogue, rendered from them
   documents/       a status report and a decision log, both drafts
 ```
 
@@ -60,7 +60,7 @@ Render the views again. Views are never edited by hand:
 
 ```
 $ python3 "$SKILL/scripts/render_views.py"
-registers valid; wrote 16 views to pmo/views
+registers valid; wrote 17 views to pmo/views
 [exit 0]
 
 $ python3 "$SKILL/scripts/render_views.py" --check
@@ -131,8 +131,10 @@ template_source: skill
 template_exists: yes
 template_version: 1
 based_on: none
+drift: n/a
 generated_from: tasks, milestones, risks, issues, changes, actions, decisions, teams
 stale_days: 30
+window: 2026-03-01..2026-03-31
 source_hashes: {tasks: "b33ab322", milestones: "0e9469b7", risks: "a9268ee2", issues: "fcc3f6b0", changes: "5351a37c", actions: "3c2a3948", decisions: "988ad57c", teams: "e2679193"}
 [exit 0]
 ```
@@ -182,6 +184,10 @@ None
 None
 
 ## Broken links (0)
+
+None
+
+## Override drift (0)
 
 None
 

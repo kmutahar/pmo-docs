@@ -15,12 +15,19 @@ Run `render_views.py --check`, then `structure_check.py` and `docs_audit.py`. Re
 ## Add a doc type
 
 1. Copy a similar template from the skill into `pmo/templates/<file>.md`. Front matter: `title`, `type` (the new id), `project`, `manager`, `template_version: 1`, `period` when the document is periodic, `status`, `last_updated`, and `checks:` if wanted (the kinds are listed at the top of `scripts/structure_check.py`). One `#` heading, the `##` sections, the last one `## Open questions`. A comment `<!-- Reads: ... -->` naming the registers it reads.
-2. Add the type under `doc_types` in `pmo/config.yaml`: `title`, `template` (the file name), `name` (for example `"{period} - {title}.md"`), `generated_from` (every register the template reads, the same list as its `Reads:` comment) and optionally `stale_days`.
+2. Add the type under `doc_types` in `pmo/config.yaml`: `title`, `template` (the file name), `name` (for example `"{period} - {title}.md"`), `generated_from` (every register the template reads, the same list as its `Reads:` comment), `when`, `regenerate`, and optionally `stale_days`. Set `generator: null` if drafted by the agent, and `publish: false` if it should stay unpublished.
 3. Run `python3 ${CLAUDE_SKILL_DIR}/scripts/where.py <id>` to confirm the template is found, then draft one (`references/draft.md`).
 
 ## Add or change a template
 
 Copy the skill's template to `pmo/templates/` under the same file name and edit it. It replaces the default as a whole. Add `based_on: <type>@<version>` to its front matter. A change to headings or table columns raises `template_version` by one; documents made from the old version then warn until they are redrafted. Existing documents are not rewritten: list them and offer.
+When the default template advances its version, `docs_audit.py` reports drift. Compare the override with the updated default, incorporate any improvements, and update `based_on`.
+
+## Override or add a playbook
+
+1. To override a default playbook, copy the skill's playbook from `references/<name>.md` to `pmo/playbooks/<name>.md`. Keep its front matter (`playbook_version: 1`) and add `based_on: <name>@<version>`.
+2. When the skill's default playbook advances its version, `docs_audit.py` reports drift. Compare your override with the default, apply updates, and raise `based_on`.
+3. To add a custom recipe: write `pmo/playbooks/<name>.md` with a `Reads:` line, inputs, numbered steps, and a reply. Use a name no skill playbook has (a playbook with the same name replaces it as an override). Add one line to `pmo/house-rules.md`: "For `<name>`, follow `pmo/playbooks/<name>.md`." House rules win over the routing table.
 
 ## Add a register
 
@@ -29,12 +36,7 @@ Copy the skill's template to `pmo/templates/` under the same file name and edit 
 3. For a new status or level, add its list under `vocab`.
 4. Run `render_views.py`. It checks the new register and writes its view.
 
-## Add a recipe
 
-A recipe is a named request with fixed inputs that produces a draft and may edit registers; it never publishes or sends.
-
-1. Write `pmo/playbooks/<name>.md` in the shape of the skill's recipes: a `Reads:` line, the inputs, numbered steps, the draft it produces, a reply.
-2. Add one line to `pmo/house-rules.md`: "For `<name>`, follow `pmo/playbooks/<name>.md`." House rules win over the skill's routing table.
 
 ## Change settings
 

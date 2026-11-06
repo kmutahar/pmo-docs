@@ -23,11 +23,11 @@ Set up a project's `pmo/` folder and starter registers.
    - Project name (default: null)
    - Project manager (default: null)
    - Priority order (default: high, medium, low)
+   - Week start (default: monday). Ask only if the user mentions weeks or a non-Monday working week; otherwise use the default.
    Unknown answers stay null and become open questions.
 
 3. **Confirm layout**
    Display the tree of files to be created and wait for confirmation:
-   - Week start (default: monday). Ask only if the user mentions weeks or a non-Monday working week; otherwise use the default.
    ```
    pmo/
    ├── config.yaml

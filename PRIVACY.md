@@ -18,9 +18,9 @@ pmo-docs reads and writes only files on your machine:
 - **Project documents you point it at:** for example when you ask the agent to audit or draft a document.
 - **Its own files:** the skill's instructions, templates and default configuration.
 
-These files can contain personal data that you or your team wrote, such as names, email addresses, roles, task owners or meeting notes. pmo-docs does not look for this data, copy it elsewhere or build profiles from it. It only processes it locally so the agent can fill in, check and render your documents.
+These files can contain personal data that you or your team wrote, such as names, email addresses, roles, task owners or meeting notes. pmo-docs does not look for this data, copy it elsewhere (except when you publish, see section 7) or build profiles from it. It only processes it locally so the agent can fill in, check and render your documents.
 
-pmo-docs does not read your browser data, contacts, calendar, mailbox, keychains or environment variables, and it does not search your machine outside the project you are working in. Its scripts refuse paths that leave the project folder (absolute paths, `..`, symlinks out of the project and `.git`).
+pmo-docs does not read your browser data, contacts, calendar, mailbox, keychains or environment variables, and it does not search your machine outside the project you are working in. Its scripts refuse paths that leave the project folder (absolute paths, `..`, symlinks out of the project and `.git`), with two documented exceptions. First, drafting release notes with `--repo`: the agent reads the git history of another local repository you specify, with read-only `git -C` commands, and never alters it. Second, publishing in `repo` mode, which writes finished documents into another local repository (section 7).
 
 ## 3. What pmo-docs does not do
 
@@ -49,7 +49,7 @@ pmo-docs is a project-office tool for working professionals. It is not directed 
 
 ## 7. Security
 
-All processing happens on your machine under your user account, with the permissions your agent has. The scripts only write inside the project folder, and the skill lists the exact commands the agent may run without asking (`allowed-tools` in `skills/pmo-docs/SKILL.md`). You keep control through your agent's own permission prompts. To report a security problem, see "Contact" below.
+All processing happens on your machine under your user account, with the permissions your agent has. The scripts only write inside the project folder (with one exception: publish `repo` mode copies finished documents into another local repository after your explicit confirmation and, after a second yes, commits them there; it never pushes). The skill lists the exact commands the agent may run without asking (`allowed-tools` in `skills/pmo-docs/SKILL.md`). You keep control through your agent's own permission prompts. To report a security problem, see "Contact" below.
 
 ## 8. Your rights
 

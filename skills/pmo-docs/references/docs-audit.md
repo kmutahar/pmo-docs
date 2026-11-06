@@ -15,8 +15,9 @@ Run as `docs-audit [--fix]` (`--fix` is a recipe flag, not a script flag: `docs_
 
 2. **Run the mechanical checks**
    - `python3 ${CLAUDE_SKILL_DIR}/scripts/render_views.py --check`: register validity and stale views.
-   - `python3 ${CLAUDE_SKILL_DIR}/scripts/docs_audit.py`: front matter, stale, old and broken links.
+   - `python3 ${CLAUDE_SKILL_DIR}/scripts/docs_audit.py`: front matter, stale, old, broken links, and template and playbook drift.
    - `python3 ${CLAUDE_SKILL_DIR}/scripts/structure_check.py`: documents against their templates.
+
    Each exits 1 on findings. A non-zero exit is a result to report, not a failure of the audit. The template comments a draft keeps are expected: report every other error.
 
 3. **Do the checks by reading**
@@ -27,7 +28,8 @@ Run as `docs-audit [--fix]` (`--fix` is a recipe flag, not a script flag: `docs_
    Fill the template (`references/draft.md` steps 4 to 8): one summary row per check with its count (0 is a valid count), findings with severity (high is wrong or contradicts the code, medium is stale or missing, low is naming or front matter), evidence as a file and line or the command, and a suggested fix. Anything not run goes under Not checked.
 
 5. **Fixes (only with `--fix`)**
-   Fix only drafts under `paths.documents`: missing front matter keys and draft file names. Show the planned changes first and wait for a yes. List every change under Fixes applied. Otherwise write "None (no fixes requested)". A stale finished document is listed and a redraft is offered, never done.
+   Fix only drafts under `paths.documents`: missing front matter keys and draft file names. Show the planned changes first (`SKILL.md` Safety rule 3). List every change under Fixes applied. Drift findings for templates and playbooks are listed and the fix is offered (updating `based_on` after comparing with the default), never applied unasked. Otherwise write "None (no fixes requested)". A stale finished document is listed and a redraft is offered, never done.
+
 
 6. **Reply**
    Totals by severity, the three most important findings, and which playbook fixes each (`track`, `draft`, `month-start`).

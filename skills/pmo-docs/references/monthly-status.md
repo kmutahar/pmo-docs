@@ -11,7 +11,8 @@ Run as `monthly-status [--period YYYY-MM]`. Produces a draft `status-report` for
 ## Steps
 
 1. **Find the period and the paths**
-   With no `--period`, use the current month. Run `python3 ${CLAUDE_SKILL_DIR}/scripts/where.py status-report [YYYY-MM]`. If the document exists, follow `references/draft.md` step 2.
+   With no `--period`, use the current month. Run `python3 ${CLAUDE_SKILL_DIR}/scripts/where.py status-report [YYYY-MM]`. Read the `window` line (`YYYY-MM-DD..YYYY-MM-DD`) from its output. If the document exists, follow `references/draft.md` step 2.
+
 
 2. **Do the weekly steps**
    Follow `references/weekly-status.md` steps 2 to 6 with the window set to the whole month (to today when the month is still running). The previous report is the one for the month before.
@@ -26,7 +27,8 @@ Run as `monthly-status [--period YYYY-MM]`. Produces a draft `status-report` for
    - Forecast, as one line in Summary: tasks still open against the weeks left, flagged when the open count is more than the pace of recent weeks would finish. Label it an estimate and give the method in Notes on data.
 
 4. **Draft**
-   Fill the template and write it to the path from step 1 (`references/draft.md` steps 4 to 8).
+   If `doc_types.status-report.generator` is `true`, run `python3 ${CLAUDE_SKILL_DIR}/scripts/generate.py status-report [YYYY-MM]` and fill only what was left (prose, {{comment}}-style cells, agent sections). Otherwise fill the template and write it to the path from step 1 (`references/draft.md` steps 4 to 8).
+
 
 5. **Reply**
    As in `references/weekly-status.md`. If the month has ended, suggest the next steps: draft `delivery-report`, then `retrospective`, then run `month-start`.

@@ -8,7 +8,7 @@ A project-office and documentation workflow packaged as an Agent Skill (`skills/
 - **No private data in this repo.** No real names, roster slugs, emails, phone numbers, machine paths or client/project names from the source project. The repo is public. Enable the commit gate once per clone: `git config core.hooksPath .githooks` (pre-commit runs `dev/scrub.sh`, commit-msg checks the subject). Never use `--no-verify`. The names it checks live in the untracked `.scrub-names`.
 - Fresh history only. Copy source files into `tmp/source/` (gitignored, inside this repo) and stage only generalised files; never import the source project's git history.
 - Generic by default: anything project-specific comes from the user's `pmo/config.yaml`, never from the code or templates.
-- `skills/pmo-docs/` must work alone (other agents load only the skill folder). `SKILL.md` uses only open Agent Skills fields (`name`, `description` up to 1024 chars, `license`, `compatibility`, `metadata`, `allowed-tools`). The folder name equals `name`.
+- `skills/pmo-docs/` must work alone (other agents load only the skill folder). `SKILL.md` uses only open Agent Skills fields (`name`, `description` up to 1024 chars, `license`, `compatibility`, `metadata`, `allowed-tools`). The folder name equals `name`. Command skills under `skills/pmo-docs/skills/` are Claude Code only and may use `disable-model-invocation`.
 - Behaviour rules live only in `SKILL.md`. Other files link to it.
 - Dependencies: PyYAML only, vendored in `skills/pmo-docs/scripts/_vendor/` (pure Python, `safe_load` only), so users install nothing. No new dependency without asking.
 - Tests live in `tests/` and run on the one fake project, `examples/acme`, copied into a temp folder: `python3 -m unittest discover tests`. No network, no real data, nothing written outside a temp folder. CI runs them on every push.
@@ -23,19 +23,20 @@ A project-office and documentation workflow packaged as an Agent Skill (`skills/
 
 ## Maintainer tasks
 - **Tests and scrub:** `python3 -m unittest discover tests`; `bash dev/scrub.sh` (bash, not `sh`).
-- **Evals** (nine cases in `evals/`, real agent runs, about $1 for all on Sonnet): `dev/run-evals [--case <name>] [--keep-temp]`, one `--case` per run. It builds a throwaway plugin copy because the plugin root is `skills/pmo-docs` and `claude plugin eval` needs `evals/` inside the plugin; plain `claude plugin eval` from the repo root never fires the skill. Use Sonnet (Haiku fails 5 of 9). Results are single samples and can flip, so re-run a failing case before changing `SKILL.md`. `--keep-temp` keeps `trace.jsonl` (`chmod 700` the directory to read it). Grader lessons: an `llm` grader sees a file's path, not its text; `max: 0` needs `min: 0`; keep grader text short and positive; name output files in the prompt. Bash fails in the eval sandbox (`apply-seccomp ... setgroups`), so the agent cannot run the scripts and graders must not depend on Bash.
+- **Evals** (ten cases in `evals/`, real agent runs, about $1 for all on Sonnet): `dev/run-evals [--case <name>] [--keep-temp]`, one `--case` per run. It builds a throwaway plugin copy because the plugin root is `skills/pmo-docs` and `claude plugin eval` needs `evals/` inside the plugin; plain `claude plugin eval` from the repo root never fires the skill. Use Sonnet (Haiku fails 5 of 9). Results are single samples and can flip, so re-run a failing case before changing `SKILL.md`. `--keep-temp` keeps `trace.jsonl` (`chmod 700` the directory to read it). Grader lessons: an `llm` grader sees a file's path, not its text; `max: 0` needs `min: 0`; keep grader text short and positive; name output files in the prompt. Bash fails in the eval sandbox (`apply-seccomp ... setgroups`), so the agent cannot run the scripts and graders must not depend on Bash.
 - **SkillSpector** (before each release): scan a clean copy of the tracked files (a tree with `__pycache__` gives false findings) with `SKILLSPECTOR_PROVIDER=claude_cli SKILLSPECTOR_MODEL=sonnet skillspector scan skills/pmo-docs --baseline dev/skillspector-baseline.yaml`. A real result is SAFE with full coverage and every LLM call succeeded (`llm_calls_succeeded`); a cut-off run is not a result. Haiku reports false positives on the vendored PyYAML. Each LLM call is a `claude` session on the maintainer's plan. Avoid apostrophes in `config.default.yaml` comments (they break the static parser). Every baseline entry needs a reason.
+- **Updating vendored PyYAML:** `dev/update-pyyaml <unpacked sdist>` (header has steps; `dev/pyyaml-prune.patch` is the cut; `_vendor/VERSION` is edited by hand).
 - **Install check:** `dev/test-install.md`, in a throwaway `CLAUDE_CONFIG_DIR`.
 
 ## Layout
 ```
-skills/pmo-docs/   the skill: SKILL.md, references/, assets/, scripts/
+skills/pmo-docs/   the skill: SKILL.md, references/, assets/, scripts/, skills/ (command skills)
 .claude-plugin/    marketplace manifest (its one entry installs only skills/pmo-docs/, so dev/, tests/ and docs/ do not ship)
 skills/pmo-docs/.claude-plugin/  plugin manifest (name, version, skills)
 examples/acme/     the fake project used by tests and the walkthrough
 tests/             tests
 evals/             plugin eval cases
-dev/               maintainer tools, not shipped: scrub.sh, release, run-evals, test-install.md, skillspector-baseline.yaml, icon.svg (icon master), icon-brief.md, make_icon.py (old placeholder)
+dev/               maintainer tools, not shipped: scrub.sh, release, run-evals, update-pyyaml, pyyaml-prune.patch, test-install.md, skillspector-baseline.yaml, icon.svg (icon master), icon-brief.md, make_icon.py (old placeholder)
 .githooks/         commit gate (pre-commit, commit-msg)
 .github/           CI workflows
 docs/PLAN.md       the plan hub: decisions, version index, safeguards

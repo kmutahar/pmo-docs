@@ -44,7 +44,8 @@ A goal's acceptance criteria are in `priorities` (`acceptance`, `accepted_by`, `
 
 ## Decision log
 
-Every decision is a `DEC-` entry with title, context, decision, `decided_by`, `date` and status. Add `options` and `consequences` when others must understand the decision later. Link a replaced decision with `supersedes`. The `decision-log` document is a view of `decisions`: after any decision change it is stale, so offer to redraft it (never unasked).
+Every decision is a `DEC-` entry with title, context, decision, `decided_by`, `date` and status. Add `options` and `consequences` when others must understand the decision later. Link a replaced decision with `supersedes`. The `decision-log` document is generated (`generate.py decision-log` pre-fills the table from the `decisions` register): after any decision change it is stale, so offer to redraft it (never unasked).
+
 
 ## Do not
 

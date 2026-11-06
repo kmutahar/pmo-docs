@@ -35,6 +35,9 @@ Everything under `pmo/` is tracked and never ignored: the config, registers, vie
 3. Commit with a one-line subject. If a hook rejects the commit, report why.
 4. Do not push. Push only when the user asks for exactly that.
 
+The publish command's `repo`-mode commit follows `SKILL.md` Safety rule 1 (`references/publish.md`).
+
+
 ## Checking registers in your own hook
 
 The skill installs no hook. A project that wants one writes its own, because the skill's folder is at a different path on each machine and changes when a plugin updates. `render_views.py --check` is made for it: it writes nothing, stages nothing, and exits 1 when the registers fail validation or a view is stale. Needs Python 3.10 or newer.

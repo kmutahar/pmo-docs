@@ -17,14 +17,16 @@ All paths come from the config (`paths`), relative to the project root. Defaults
 | `registers` | `pmo/registers` | one YAML file per register |
 | `views` | `pmo/views` | generated Markdown views, committed, never edited by hand |
 | `templates` | `pmo/templates` | the project's own templates (overrides) |
+| `playbooks` | `pmo/playbooks` | the project's own playbooks (overrides) |
 | `documents` | `pmo/documents` | drafts and finished documents |
 | `house_rules` | `pmo/house-rules.md` | the project's own rules |
 
 ## Where a document lives
 
-Run `python3 ${CLAUDE_SKILL_DIR}/scripts/where.py <type> [period] [--week] [--as-of YYYY-MM-DD] [--hashes]`. It prints `key: value` lines: the document path and whether it exists, the template path and whether it is the skill's or the project's, `template_version`, `based_on`, `generated_from`, `stale_days` and, with `--hashes`, `source_hashes`.
+Run `python3 ${CLAUDE_SKILL_DIR}/scripts/where.py <type> [period] [--week] [--as-of YYYY-MM-DD] [--hashes] [--title TEXT]`. It prints `key: value` lines: the document path and whether it exists, the template path and whether it is the skill's or the project's, `template_version`, `based_on`, `drift`, `generated_from`, `stale_days`, `window` (`YYYY-MM-DD..YYYY-MM-DD`) and, with `--hashes`, `source_hashes`.
 
-The file name comes from the doc type's `name` in the config. Tokens: `{title}` is the type's `title`; `{period}` is the month `YYYY-MM` (or the ISO week `YYYY-Www` with `--week`); `{date}` is the as-of date. With no period, the current month is used. Types named by `{date}` (change request, meeting minutes) need `--as-of` set to the date of the event. The ISO week starts on Monday.
+The file name comes from the doc type's `name` in the config. Tokens: `{title}` is the type's `title` (or overridden by `--title`); `{period}` is the month `YYYY-MM` (or the week `YYYY-Www` with `--week`, starting on `project.week_start`); `{date}` is the as-of date. With no period, the current month is used. Types named by `{date}` (change request, meeting minutes) need `--as-of` set to the date of the event. A week starts on `project.week_start` (default Monday) and is named by the ISO week of its fourth day.
+
 
 ## Front matter
 
@@ -54,17 +56,46 @@ Every document starts with YAML front matter.
 - To edit an entry, find its line with `grep -nE 'id: T-014[,}]' <register file>` and change that line only.
 - After any edit run `render_views.py`. Views are deterministic (sorted, no timestamps), so after a merge conflict in a view the fix is to render again.
 
+## Config keys
+
+- `project.week_start`: day of the week a working week starts (`monday`, `tuesday`, ..., `sunday`; default `monday`).
+- `registers.tasks.blocked`: status values that count as blocked (default `[blocked]`).
+- `registers.tasks.active`: status values marking tasks currently active (default `[in-progress]`).
+- `registers.changes.accepted`: status values marking change requests as accepted (default `[approved, implemented]`).
+- `doc_types.<type>.generator`: `true` to use `generate.py` to pre-fill the document, `false` or `null` to draft via agent.
+- `doc_types.<type>.publish`: `false` excludes the doc type from publishing (e.g. internal audit reports).
+- `doc_types.<type>.when`: text explaining the event or rhythm when the document is made.
+- `doc_types.<type>.regenerate`: guidance on when and how to regenerate the document.
+- `publish.mode`: `none` (default), `folder` (folder inside project), or `repo` (root of another local git repo).
+- `publish.path`: publish target path relative to project root or absolute (`repo` mode).
+- `publish.url`: optional web URL prefix used when printing published links.
+
+## Views and catalogue
+
+- Register views (`pmo/views/<name>.md`) summarize each register.
+- The catalogue view (`pmo/views/catalogue.md`) is rendered by `render_views.py` from `doc_types` in `pmo/config.yaml`. It lists doc type, title, made by (`generator` or `agent`), when to make it, regenerate guidance, stale period, and publish status.
+
+## RAG status
+
+Status reports show RAG (Red / Amber / Green) as `pmo_common.rag` computes it (a house rule can replace it; see `weekly-status.md`). Red and Amber use the vocab positions `vocab.rag[2]` and `[1]`:
+- `Red`: a top-priority task (`vocab.priority_order[0]`) is blocked or overdue, a milestone is overdue, or three or more tasks are blocked or overdue.
+- `Amber`: any task is blocked or overdue, an open issue has one of the two highest severities, an open risk has the highest impact, or a milestone is due within 7 days.
+- `Green`: none of these.
+
 ## Scripts
 
 Run from the project root, or pass `--project DIR`. Every script answers `--help`, needs Python 3.10 or newer, and reads and writes UTF-8.
 
 | Command | What it does | Exit codes |
 |---|---|---|
-| `python3 ${CLAUDE_SKILL_DIR}/scripts/setup.py [--name TEXT] [--manager TEXT] [--priority-order LIST]` | creates the config, house rules, empty registers and documents folder; never overwrites | 0 ok, 1 the new registers failed validation, 2 usage, a `schema_version` newer than the skill, or config paths that leave the project |
-| `python3 ${CLAUDE_SKILL_DIR}/scripts/where.py <type> [period] [--week] [--as-of DATE] [--hashes]` | paths and settings of one doc type; `--hashes` adds the `source_hashes` line Finish records | 0 ok, 2 usage, or a config the skill refuses |
+| `python3 ${CLAUDE_SKILL_DIR}/scripts/setup.py [--name TEXT] [--manager TEXT] [--priority-order LIST] [--week-start DAY]` | creates the config, house rules, empty registers and documents folder; never overwrites | 0 ok, 1 the new registers failed validation, 2 usage, a `schema_version` newer than the skill, or config paths that leave the project |
+| `python3 ${CLAUDE_SKILL_DIR}/scripts/where.py <type> [period] [--week] [--as-of DATE] [--hashes] [--title TEXT]` | paths and settings of one doc type; `--hashes` adds the `source_hashes` line Finish records | 0 ok, 2 usage, or a config the skill refuses |
+| `python3 ${CLAUDE_SKILL_DIR}/scripts/generate.py <type> [period] [--week] [--as-of DATE] [--stdout]` | pre-fills a document from registers for generator doc types; never overwrites | 0 ok, 1 validation errors, 2 usage or invalid doc type, 3 the document already exists |
 | `python3 ${CLAUDE_SKILL_DIR}/scripts/render_views.py [--check]` | validates every register and writes the views; with `--check` it writes nothing and also fails when a view on disk is stale | 0 valid and current, 1 validation errors or stale views, 2 usage, a `schema_version` newer than the skill, or config paths that leave the project |
+| `python3 ${CLAUDE_SKILL_DIR}/scripts/publish.py [--apply] [--overwrite REL]... [--include REL]... [--as-of DATE]` | lists candidates or copies finished documents into `publish.path`; dry run without `--apply` | 0 ok / dry run clean, 1 uncopied conflict or stale documents remaining, 2 usage or invalid target |
 | `python3 ${CLAUDE_SKILL_DIR}/scripts/structure_check.py [files]` | checks documents against their template (default: every document) | 0 clean (warnings allowed), 1 findings, 2 usage or a config the skill refuses |
-| `python3 ${CLAUDE_SKILL_DIR}/scripts/docs_audit.py [--as-of DATE]` | front matter, stale, old and broken-link checks | 0 clean, 1 findings, 2 usage or a config the skill refuses |
+| `python3 ${CLAUDE_SKILL_DIR}/scripts/docs_audit.py [--as-of DATE]` | front matter, stale, old, broken-link and template/playbook drift checks | 0 clean, 1 findings, 2 usage or a config the skill refuses |
 | `python3 ${CLAUDE_SKILL_DIR}/scripts/overdue.py [--as-of DATE] [--days N]` | overdue tasks, actions and milestones, open risks and issues | 0 ok, 2 usage, or a config the skill refuses |
+
 
 `structure_check.py` takes the checks from the winning template, never from the draft. It reports an error for a missing or out-of-order heading, changed table columns, a leftover `{{placeholder}}` or HTML comment, a repeated id in one table, or a declared check that fails (including one that names a section the document lacks). It warns about a missing or different `template_version`, extra `##` sections and empty tables.
