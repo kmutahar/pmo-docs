@@ -40,7 +40,7 @@ last_updated: "{{date}}"
 - {{task}} `{{id}}` - {{lead}} - {{due}}
 
 ## Blockers and decisions needed
-<!-- every blocked or overdue task, with who is needed and by when -->
+<!-- every blocked task, with who is needed and by when -->
 | ID | Item | Needed from | By when |
 |---|---|---|---|
 | {{id}} | {{item}} | {{lead}} | {{date}} |
