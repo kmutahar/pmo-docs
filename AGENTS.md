@@ -27,6 +27,7 @@ A project-office and documentation workflow packaged as an Agent Skill (`skills/
 - **SkillSpector** (before each release): scan a clean copy of the tracked files (a tree with `__pycache__` gives false findings) with `SKILLSPECTOR_PROVIDER=claude_cli SKILLSPECTOR_MODEL=sonnet skillspector scan skills/pmo-docs --baseline dev/skillspector-baseline.yaml`. A real result is SAFE with full coverage and every LLM call succeeded (`llm_calls_succeeded`); a cut-off run is not a result. Haiku reports false positives on the vendored PyYAML. Each LLM call is a `claude` session on the maintainer's plan. Avoid apostrophes in `config.default.yaml` comments (they break the static parser). Every baseline entry needs a reason.
 - **Updating vendored PyYAML:** `dev/update-pyyaml <unpacked sdist>` (header has steps; `dev/pyyaml-prune.patch` is the cut; `_vendor/VERSION` is edited by hand).
 - **Install check:** `dev/test-install.md`, in a throwaway `CLAUDE_CONFIG_DIR`.
+- **Walkthrough check** (before each release): `dev/test-walkthrough.md`, in a throwaway `CLAUDE_CONFIG_DIR`. It runs the walkthrough's commands and the agent prompts; keep it in step with `docs/walkthrough.md`.
 
 ## Layout
 ```
@@ -36,7 +37,7 @@ skills/pmo-docs/.claude-plugin/  plugin manifest (name, version, skills)
 examples/acme/     the fake project used by tests and the walkthrough
 tests/             tests
 evals/             plugin eval cases
-dev/               maintainer tools, not shipped: scrub.sh, release, run-evals, update-pyyaml, pyyaml-prune.patch, test-install.md, skillspector-baseline.yaml, icon.svg (icon master), icon-brief.md, make_icon.py (old placeholder)
+dev/               maintainer tools, not shipped: scrub.sh, release, run-evals, update-pyyaml, pyyaml-prune.patch, test-install.md, test-walkthrough.md, skillspector-baseline.yaml, icon.svg (icon master), icon-brief.md, make_icon.py (old placeholder)
 .githooks/         commit gate (pre-commit, commit-msg)
 .github/           CI workflows
 docs/PLAN.md       the plan hub: decisions, version index, safeguards

@@ -227,6 +227,7 @@ Sources:
 - `claude plugin validate .` and `claude plugin validate skills/pmo-docs` exit 0, no warnings; the plugin listing shows each skill once.
 - SkillSpector on a clean copy of the tracked files (`git archive HEAD skills/pmo-docs | tar -x -C <tmp>`), Sonnet: SAFE, full coverage, every LLM call succeeded, and the suppression count recorded and not higher than before.
 - Every eval on Sonnet with `dev/run-evals`, one `--case` per run; re-run a failure before changing anything.
+- The walkthrough check (`dev/test-walkthrough.md`): the script outputs match `docs/walkthrough.md` and the agent prompts behave as it says.
 - `dev/release --bump --dry-run`, then release with the explicit version (`dev/release --dry-run X.Y.Z`, then `dev/release X.Y.Z`); in 0.x `--bump` proposes a patch.
 - The dry run's changelog section reads well and holds no private names or machine paths.
 - README roadmap and the version index above: the version marked released, with the date (UTC).
