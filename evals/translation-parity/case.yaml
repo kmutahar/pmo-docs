@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: translation-parity
+description: A finished decision log with an xx translation that has one Summary row fewer and a changed date for DEC-1; the translation must not be finished and the answer must report the differences. Note, Bash is blocked in the eval sandbox, so the llm grader reports-the-differences carries the case.
+context:
+  scaffold_script: scaffold.sh
