@@ -29,6 +29,7 @@ def main(argv=None):
     ap.add_argument("--hashes", action="store_true",
                     help="also print source_hashes: the Finish value for the type's generated_from registers")
     ap.add_argument("--title", help="override the doc type's title in the file name")
+    ap.add_argument("--lang", metavar="CODE", help="language code for a translation")
     args = ap.parse_args(argv)
 
     if args.title is not None and "/" in args.title:
@@ -41,6 +42,17 @@ def main(argv=None):
     doc_types = cfg.get("doc_types", {})
     if args.type not in doc_types:
         ap.error(f"unknown doc type {args.type!r}; known types: {', '.join(sorted(doc_types))}")
+
+    type_trans = pc.type_translations(cfg, args.type)
+    tr_flag = pc.translate_flag(cfg, args.type)
+    trans_str = ", ".join(type_trans) if type_trans else "none"
+
+    if args.lang:
+        if args.lang not in type_trans:
+            if type_trans:
+                ap.error(f"doc type {args.type!r} does not translate into {args.lang!r}; allowed codes: {', '.join(type_trans)}")
+            else:
+                ap.error(f"doc type {args.type!r} has no translations configured")
 
     info = doc_types[args.type]
     title = args.title if args.title is not None else info.get("title", "")
@@ -58,7 +70,17 @@ def main(argv=None):
         ap.error(str(e))
 
     doc_rel = pc.doc_rel_path(cfg, args.type, period, args.as_of, title=args.title)
-    doc_exists = "yes" if (Path(args.project) / doc_rel).exists() else "no"
+    if args.lang:
+        trans_doc_rel = pc.translation_rel(doc_rel, args.lang)
+        doc_rel_print = trans_doc_rel
+        doc_exists = "yes" if (Path(args.project) / trans_doc_rel).exists() else "no"
+        orig_exists = "yes" if (Path(args.project) / doc_rel).exists() else "no"
+        lang_info = pc.languages(cfg)["info"].get(args.lang, {})
+        lang_dir = lang_info.get("dir", "ltr")
+        g_app, g_prop = pc.glossary_paths(cfg, args.lang)
+    else:
+        doc_rel_print = doc_rel
+        doc_exists = "yes" if (Path(args.project) / doc_rel).exists() else "no"
 
     tpl_name = info.get("template", f"{args.type}.md")
     tpl_path, tpl_source = pc.find_asset(args.project, cfg, "templates", tpl_name)
@@ -92,8 +114,20 @@ def main(argv=None):
     fields = [
         ("type", args.type),
         ("title", title),
-        ("document", doc_rel),
+        ("document", doc_rel_print),
         ("document_exists", doc_exists),
+    ]
+    if args.lang:
+        fields.extend([
+            ("original", doc_rel),
+            ("original_exists", orig_exists),
+            ("translation_of", f'"{doc_rel[len(cfg["paths"]["documents"]) + 1:]}"'),  # relative to paths.documents (doc_rel_path joins them with "/")
+            ("lang", args.lang),
+            ("dir", lang_dir),
+            ("glossary", g_app if g_app else "none"),
+            ("glossary_proposed", g_prop if g_prop else "none"),
+        ])
+    fields.extend([
         ("template", template_str),
         ("template_source", tpl_source),
         ("template_exists", tpl_exists),
@@ -103,10 +137,20 @@ def main(argv=None):
         ("generated_from", generated_from),
         ("stale_days", stale_days),
         ("window", window),
-    ]
-    if args.hashes and info.get("generated_from"):
-        pairs = ", ".join(f'{r}: "{register_hash(args.project, cfg, r)}"' for r in info["generated_from"])
-        fields.append(("source_hashes", "{" + pairs + "}"))
+        ("translations", trans_str),
+        ("translate", tr_flag),
+    ])
+    if args.hashes:
+        if args.lang:
+            orig_path = Path(args.project) / doc_rel
+            if orig_path.is_file():
+                h = pc.body_hash(pc.read(orig_path))
+                fields.append(("source_hash", f'"{h}"'))
+            else:
+                fields.append(("source_hash", "none"))
+        elif info.get("generated_from"):
+            pairs = ", ".join(f'{r}: "{register_hash(args.project, cfg, r)}"' for r in info["generated_from"])
+            fields.append(("source_hashes", "{" + pairs + "}"))
     for k, v in fields:
         print(f"{k}: {v}")
     return 0

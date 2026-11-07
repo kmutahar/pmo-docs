@@ -120,7 +120,7 @@ The scripts are in this skill's own folder, `scripts/` next to this file. Playbo
 | Script | Use |
 |---|---|
 | `scripts/setup.py` | create `pmo/` (never overwrites) |
-| `scripts/where.py <type> [period]` | where a document, its template and its inputs live; `--hashes` adds the Finish `source_hashes` |
+| `scripts/where.py <type> [period]` | where a document, its template and its inputs live; `--hashes` adds the Finish `source_hashes`; `--lang CODE` gives a translation's paths and `source_hash` |
 | `scripts/generate.py <type> [period]` | pre-fill a document from registers (`generator: true` doc types) |
 | `scripts/render_views.py [--check]` | validate registers, write or compare views |
 | `scripts/structure_check.py [files]` | check documents against their template |

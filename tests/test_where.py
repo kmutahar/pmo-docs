@@ -7,6 +7,10 @@ import unittest
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import translation_fixture as tf  # noqa: E402
+sys.path.insert(0, str(REPO / "skills/pmo-docs/scripts"))
+import pmo_common as pc  # noqa: E402
 TOOL = REPO / "skills/pmo-docs/scripts/where.py"
 
 
@@ -182,6 +186,75 @@ class Where(unittest.TestCase):
         code_bad, _, err = run(self.root, "release-notes", "2026-03", "--title", "bad/title")
         self.assertEqual(code_bad, 2)
         self.assertIn("title", err)
+
+
+class WhereTranslations(unittest.TestCase):
+    def setUp(self):
+        self.root = Path(tempfile.mkdtemp()) / "acme"
+        shutil.copytree(REPO / "examples/acme", self.root)
+
+    def tearDown(self):
+        shutil.rmtree(self.root.parent)
+
+    def test_translations_lines_without_lang(self):
+        # Without languages block in config
+        code, out, _ = run(self.root, "decision-log")
+        self.assertEqual(code, 0)
+        f = fields(out)
+        self.assertEqual(f["translations"], "none")
+        self.assertEqual(f["translate"], "in-period")
+
+        # Acme with xx configured
+        tf.enable_languages(self.root, ("xx",))
+        code, out, _ = run(self.root, "decision-log")
+        self.assertEqual(code, 0)
+        f = fields(out)
+        self.assertEqual(f["translations"], "xx")
+        self.assertEqual(f["translate"], "in-period")
+
+    def test_lang_prints_translation_paths(self):
+        tf.enable_languages(self.root, ("xx",), block="    glossary: pmo/data/glossary-xx.md\n")
+        code, out, _ = run(self.root, "decision-log", "--lang", "xx")
+        self.assertEqual(code, 0)
+        f = fields(out)
+        self.assertEqual(f["document"], "pmo/documents/Decision log.xx.md")
+        self.assertEqual(f["original"], "pmo/documents/Decision log.md")
+        self.assertEqual(f["original_exists"], "yes")
+        self.assertEqual(f["translation_of"], '"Decision log.md"')
+        self.assertEqual(f["dir"], "rtl")
+        self.assertEqual(f["glossary"], "pmo/data/glossary-xx.md")
+        self.assertEqual(f["glossary_proposed"], "pmo/data/glossary-xx.proposed.md")
+
+    def test_lang_hashes_prints_source_hash(self):
+        tf.enable_languages(self.root, ("xx",))
+        code, out, _ = run(self.root, "decision-log", "--lang", "xx", "--hashes")
+        self.assertEqual(code, 0)
+        f = fields(out)
+        orig_text = (self.root / "pmo/documents/Decision log.md").read_text(encoding="utf-8")
+        expected_hash = f'"{pc.body_hash(orig_text)}"'
+        self.assertEqual(f["source_hash"], expected_hash)
+        self.assertNotIn("source_hashes", f)
+
+    def test_lang_not_configured_exits_2(self):
+        code, _, err = run(self.root, "decision-log", "--lang", "xx")
+        self.assertEqual(code, 2)
+        self.assertIn("translations", err)
+
+    def test_lang_not_allowed_for_type_exits_2(self):
+        tf.enable_languages(self.root, ("xx",))
+        cfg_file = self.root / "pmo/config.yaml"
+        cfg_file.write_text(cfg_file.read_text(encoding="utf-8") + "\ndoc_types:\n  decision-log:\n    translations: []\n", encoding="utf-8")
+        code, _, err = run(self.root, "decision-log", "--lang", "xx")
+        self.assertEqual(code, 2)
+        self.assertIn("translations", err)
+
+    def test_translate_flag_after_close(self):
+        tf.enable_languages(self.root, ("xx",))
+        cfg_file = self.root / "pmo/config.yaml"
+        cfg_file.write_text(cfg_file.read_text(encoding="utf-8") + "\ndoc_types:\n  decision-log:\n    translate: after-close\n", encoding="utf-8")
+        code, out, _ = run(self.root, "decision-log")
+        self.assertEqual(code, 0)
+        self.assertEqual(fields(out)["translate"], "after-close")
 
 
 if __name__ == "__main__":
