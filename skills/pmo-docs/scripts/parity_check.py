@@ -40,12 +40,6 @@ def normalise(text: str, info: dict) -> str:
         for v in conn.values():
             if isinstance(v, str) and v.strip():
                 words.add(v.strip())
-    elif isinstance(conn, (list, tuple)):
-        for v in conn:
-            if isinstance(v, str) and v.strip():
-                words.add(v.strip())
-    elif isinstance(conn, str) and conn.strip():
-        words.add(conn.strip())
 
     words_pat = "|".join(re.escape(w) for w in sorted(words, key=lambda w: -len(w)))
     text = re.sub(r"(?<=\d)\s+(?:" + words_pat + r")\s+(?=\d)", "~", text, flags=re.IGNORECASE)
@@ -64,11 +58,11 @@ def id_regex(cfg) -> re.Pattern:
 
 
 def numbers(text: str, info: dict, idrx) -> list[str]:
-    """Number phrases in order: ids are removed first, then normalise(), then runs like 2026~03~15, 3~5, 25, 3.5. A percent sign is ignored."""
+    """Number phrases in order: ids are removed first, then normalise(), then runs like 2026~03~15, 3~5, 25, 3.5, -5. A percent sign is ignored."""
     text = idrx.sub("", text)
     text = text.replace("%", "").replace("\u066a", "")
     norm = normalise(text, info)
-    return re.findall(r"\d+(?:[.~]\d+)*", norm)
+    return re.findall(r"(?<!\w)[+-]?\d+(?:[.~]\d+)*|\d+(?:[.~]\d+)*", norm)  # a sign counts only at a word start: not in 3-5 or COVID-19
 
 
 def text_outside_tables(text: str) -> str:
@@ -221,8 +215,8 @@ def main(argv=None):
                     fm, _ = pc.split_front_matter(pc.read(f))
                     if fm and "translation_of" in fm:
                         files.append(f)
-                except Exception:
-                    pass
+                except UnicodeDecodeError:
+                    pass  # not UTF-8: not a document
 
     bad = 0
     for f in files:

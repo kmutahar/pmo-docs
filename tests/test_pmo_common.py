@@ -102,6 +102,12 @@ class Common(unittest.TestCase):
         self.assertNotIn("rag", c["vocab"])  # null removes
         self.assertNotIn("roadmap", c["doc_types"])
 
+    def test_config_that_is_not_a_map_exits_2(self):
+        for cfg in ("- a\n- b\n", "schema_version: 1\npaths: null\n", "schema_version: 1\nregisters: [x]\n"):
+            with self.assertRaises(SystemExit) as cm:
+                pc.load_config(self.project(cfg))
+            self.assertEqual(cm.exception.code, 2, cfg)
+
     def test_newer_schema_refused(self):
         with self.assertRaises(SystemExit):
             pc.load_config(self.project("schema_version: 99\n"))
@@ -230,6 +236,10 @@ class Helpers(unittest.TestCase):
         cfg["vocab"]["priority_order"] = []
         val, _ = pc.rag(cfg, datetime.date(2026, 3, 15), [{"id": "T-9", "status": "in-progress", "due": "2026-03-01"}])
         self.assertEqual(val, "amber")
+
+    def test_rag_without_risk_levels_ignores_unrated_risks(self):
+        cfg = {"vocab": {"risk_level": []}}
+        self.assertEqual(pc.rag(cfg, datetime.date(2026, 3, 15), [], risks=[{"id": "R-1", "status": "open"}]), ("green", "all items on track"))
 
     def test_config_errors_reports_week_start(self):
         import render_views

@@ -93,6 +93,12 @@ class RenderViews(unittest.TestCase):
         self.assertIn("probability 'huge'", out)
         self.assertIn("owner 'zed' is not in the roster", out)
 
+    def test_owner_that_is_a_map_is_an_error_not_a_crash(self):
+        self.append("risks", "  - {id: R-9, title: x, owner: {name: alice}, status: open}")
+        code, out = run(self.root)
+        self.assertIn("is not in the roster", out)
+        self.assertNotIn("Traceback", out)
+
     def test_duplicate_id_across_registers(self):
         self.append("actions", "  - {id: T-1, text: x, status: open}")
         self.assertIn("duplicate id T-1", run(self.root)[1])

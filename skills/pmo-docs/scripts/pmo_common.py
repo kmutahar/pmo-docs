@@ -61,12 +61,18 @@ def load_config(root="."):
     f = Path(root) / CONFIG
     if f.exists():
         mine = yaml.safe_load(read(f)) or {}
+        if not isinstance(mine, dict):
+            print(f"{f}: must be a YAML map of keys, got {type(mine).__name__}", file=sys.stderr)
+            sys.exit(2)
         v = mine.get("schema_version", 1)
         if not isinstance(v, int) or v > SCHEMA_VERSION:
             print(f"{f}: schema_version {v!r} is newer than this skill knows ({SCHEMA_VERSION}). Update the skill.", file=sys.stderr)
             sys.exit(2)  # 2, not 1: callers read 1 as "findings"
         cfg = merge(cfg, mine)
-    root_r = Path(root).resolve()
+    for key in ("paths", "registers"):  # `paths: null` removes the key, a list or text is not a map
+        if not isinstance(cfg.get(key), dict):
+            print(f"{f}: `{key}` must be a map", file=sys.stderr)
+            sys.exit(2)
 
     def is_outside(*parts):
         return outside(root, *parts)
@@ -101,6 +107,7 @@ def find_asset(root, cfg, kind, name):
 
 def split_front_matter(text, strict=False):
     """(front matter dict or None when absent, body). Invalid YAML, or YAML that is not a map, gives {}, or raises yaml.YAMLError when strict."""
+    # shortcut: pc.read() uses Path.read_text(), which normalises \r\n to \n across all callers
     m = re.match(r"\A---\n(.*?)\n---\n", text, flags=re.S)
     if not m:
         return None, text
@@ -133,10 +140,17 @@ def languages(cfg) -> dict:
     return {"draft": draft, "translations": translations, "info": info}
 
 
+def _doc_type(cfg, doc_type):
+    """The doc_types.<type> map, or None when doc_types or the type is not a map."""
+    dt = cfg.get("doc_types")
+    info = dt.get(doc_type) if isinstance(dt, dict) else None
+    return info if isinstance(info, dict) else None
+
+
 def type_translations(cfg, doc_type) -> list[str]:
     """doc_types.<type>.translations if the key is present (a list, [] = none), else languages.translations."""
-    dt_info = cfg.get("doc_types", {}).get(doc_type) if isinstance(cfg.get("doc_types"), dict) else None
-    if isinstance(dt_info, dict) and "translations" in dt_info:
+    dt_info = _doc_type(cfg, doc_type)
+    if dt_info and "translations" in dt_info:
         val = dt_info.get("translations")
         return list(val) if isinstance(val, list) else []
     return languages(cfg)["translations"]
@@ -144,8 +158,8 @@ def type_translations(cfg, doc_type) -> list[str]:
 
 def translate_flag(cfg, doc_type) -> str:
     """doc_types.<type>.translate, default 'in-period'."""
-    dt_info = cfg.get("doc_types", {}).get(doc_type) if isinstance(cfg.get("doc_types"), dict) else None
-    if isinstance(dt_info, dict):
+    dt_info = _doc_type(cfg, doc_type)
+    if dt_info:
         val = dt_info.get("translate")
         if val is not None:
             return str(val)
@@ -362,68 +376,55 @@ def rag(cfg, as_of: datetime.date, tasks, milestones=(), issues=(), risks=()) ->
     prio_order = cfg.get("vocab", {}).get("priority_order") or []
     top_pri = prio_order[0] if prio_order else None
 
+    def say(noun, ids, verb, rest):
+        """'task T-1, T-2 are overdue': plural noun and verb when there is more than one id; at most three ids."""
+        many = len(ids) > 1
+        return f"{noun}{'s' if many else ''} {', '.join(str(x) for x in ids[:3])} {({'is': 'are', 'has': 'have'}[verb] if many else verb)} {rest}"
+
+    def open_(t):
+        return t.get("status") not in task_closed
+
     # Red rules
-    # 1. Top priority task is blocked or overdue
-    top_overdue = [t["id"] for t in tasks if top_pri is not None and t.get("priority") == top_pri and t.get("status") not in task_closed and _is_overdue(t)]
+    # shortcut: direct list comprehensions kept over a shared helper to keep each rule explicit and avoid abstraction
+    top = [t for t in tasks if top_pri is not None and t.get("priority") == top_pri and open_(t)]
+    top_overdue = [t["id"] for t in top if _is_overdue(t)]
     if top_overdue:
-        ids = ", ".join(str(x) for x in top_overdue[:3])
-        return red_val, f"top-priority task{'s' if len(top_overdue) > 1 else ''} {ids} {'are' if len(top_overdue) > 1 else 'is'} overdue"
-
-    top_blocked = [t["id"] for t in tasks if top_pri is not None and t.get("priority") == top_pri and t.get("status") not in task_closed and t.get("status") in task_blocked]
+        return red_val, say("top-priority task", top_overdue, "is", "overdue")
+    top_blocked = [t["id"] for t in top if t.get("status") in task_blocked]
     if top_blocked:
-        ids = ", ".join(str(x) for x in top_blocked[:3])
-        return red_val, f"top-priority task{'s' if len(top_blocked) > 1 else ''} {ids} {'are' if len(top_blocked) > 1 else 'is'} blocked"
+        return red_val, say("top-priority task", top_blocked, "is", "blocked")
 
-    # 2. Milestone is overdue
     ms_overdue = [m["id"] for m in milestones if m.get("status") not in ms_closed and _is_overdue(m)]
     if ms_overdue:
-        ids = ", ".join(str(x) for x in ms_overdue[:3])
-        return red_val, f"milestone{'s' if len(ms_overdue) > 1 else ''} {ids} {'are' if len(ms_overdue) > 1 else 'is'} overdue"
+        return red_val, say("milestone", ms_overdue, "is", "overdue")
 
-    # 3. 3 or more tasks are blocked or overdue
-    all_bad_tasks = [t["id"] for t in tasks if t.get("status") not in task_closed and (t.get("status") in task_blocked or _is_overdue(t))]
+    all_bad_tasks = [t["id"] for t in tasks if open_(t) and (t.get("status") in task_blocked or _is_overdue(t))]
     if len(all_bad_tasks) >= 3:
-        ids = ", ".join(str(x) for x in all_bad_tasks[:3])
-        return red_val, f"3 or more tasks are blocked or overdue ({ids})"
+        return red_val, f"3 or more tasks are blocked or overdue ({', '.join(str(x) for x in all_bad_tasks[:3])})"
 
     # Amber rules
-    # 1. Any task is blocked or overdue
-    any_overdue = [t["id"] for t in tasks if t.get("status") not in task_closed and _is_overdue(t)]
+    any_overdue = [t["id"] for t in tasks if open_(t) and _is_overdue(t)]
     if any_overdue:
-        ids = ", ".join(str(x) for x in any_overdue[:3])
-        return amber_val, f"task{'s' if len(any_overdue) > 1 else ''} {ids} {'are' if len(any_overdue) > 1 else 'is'} overdue"
-
-    any_blocked = [t["id"] for t in tasks if t.get("status") not in task_closed and t.get("status") in task_blocked]
+        return amber_val, say("task", any_overdue, "is", "overdue")
+    any_blocked = [t["id"] for t in tasks if open_(t) and t.get("status") in task_blocked]
     if any_blocked:
-        ids = ", ".join(str(x) for x in any_blocked[:3])
-        return amber_val, f"task{'s' if len(any_blocked) > 1 else ''} {ids} {'are' if len(any_blocked) > 1 else 'is'} blocked"
+        return amber_val, say("task", any_blocked, "is", "blocked")
 
-    # 2. Open issue whose severity is one of the two last values of vocab.issue_severity
     issue_sev = cfg.get("vocab", {}).get("issue_severity") or []
-    target_sev = set(issue_sev[-2:]) if len(issue_sev) >= 2 else set(issue_sev)
+    target_sev = set(issue_sev[-2:])
     bad_issues = [i["id"] for i in issues if i.get("status") not in issue_closed and i.get("severity") in target_sev]
     if bad_issues:
-        ids = ", ".join(str(x) for x in bad_issues[:3])
-        return amber_val, f"open issue{'s' if len(bad_issues) > 1 else ''} {ids} {'have' if len(bad_issues) > 1 else 'has'} high severity"
+        return amber_val, say("open issue", bad_issues, "has", "high severity")
 
-    # 3. Open risk whose impact is the last value of vocab.risk_level
     risk_levels = cfg.get("vocab", {}).get("risk_level") or []
     target_risk = risk_levels[-1] if risk_levels else None
-    bad_risks = [r["id"] for r in risks if r.get("status") not in risk_closed and r.get("impact") == target_risk]
+    bad_risks = [r["id"] for r in risks if target_risk is not None and r.get("status") not in risk_closed and r.get("impact") == target_risk]
     if bad_risks:
-        ids = ", ".join(str(x) for x in bad_risks[:3])
-        return amber_val, f"open risk{'s' if len(bad_risks) > 1 else ''} {ids} {'have' if len(bad_risks) > 1 else 'has'} high impact"
+        return amber_val, say("open risk", bad_risks, "has", "high impact")
 
-    # 4. Milestone not closed and due within 7 days after as_of
-    soon_ms = []
-    for m in milestones:
-        if m.get("status") not in ms_closed:
-            d = _safe_date(m.get("due"))
-            if d is not None and as_of <= d <= as_of + datetime.timedelta(days=7):
-                soon_ms.append(m["id"])
+    soon_ms = [m["id"] for m in milestones if m.get("status") not in ms_closed
+               and (d := _safe_date(m.get("due"))) is not None and as_of <= d <= as_of + datetime.timedelta(days=7)]
     if soon_ms:
-        ids = ", ".join(str(x) for x in soon_ms[:3])
-        return amber_val, f"milestone{'s' if len(soon_ms) > 1 else ''} {ids} {'are' if len(soon_ms) > 1 else 'is'} due within 7 days"
+        return amber_val, say("milestone", soon_ms, "is", "due within 7 days")
 
-    # Green rule
     return green_val, "all items on track"

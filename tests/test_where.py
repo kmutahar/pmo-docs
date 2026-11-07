@@ -155,6 +155,14 @@ class Where(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertIn("status-report", err)
 
+    def test_hashes_skips_unknown_register(self):
+        cfg = self.root / "pmo/config.yaml"
+        cfg.write_text(cfg.read_text(encoding="utf-8") + "\ndoc_types:\n  overdue-report:\n    generated_from: [tasks, nope]\n", encoding="utf-8")
+        code, out, err = run(self.root, "overdue-report", "--hashes")
+        self.assertEqual(code, 0, err)
+        self.assertIn("tasks:", out)
+        self.assertNotIn("nope", out.split("source_hashes", 1)[1])
+
     def test_hashes_option(self):
         import hashlib
         code, out, _ = run(self.root, "overdue-report", "--hashes")

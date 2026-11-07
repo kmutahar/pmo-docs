@@ -1,4 +1,5 @@
 """Tests for scripts/parity_check.py on a copy of examples/acme. Run from the repo root: python3 -m unittest discover tests"""
+import re
 import shutil
 import subprocess
 import sys
@@ -204,6 +205,12 @@ class ParityCheck(unittest.TestCase):
         code, out = run(self.proj, str(self.dec_log))
         self.assertEqual(code, 1, out)
         self.assertIn("no translation_of", out)
+
+    def test_sign_counts_but_range_and_hyphenated_word_do_not(self):
+        no_ids = re.compile(r"(?!)")
+        n = lambda t: pc_tool.numbers(t, {}, no_ids)
+        self.assertNotEqual(n("down -5%"), n("down +5%"))
+        self.assertEqual(n("pages 3-5, COVID-19"), ["3~5", "19"])
 
     def test_prose_wording_is_not_compared(self):
         tf.enable_languages(self.proj, ("xx",))

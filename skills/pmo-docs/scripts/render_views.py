@@ -266,7 +266,7 @@ def validate(data, cfg):
                     errors.append(f"{who}: {field} {r[field]!r} is not a YYYY-MM-DD date")
             owners = r.get("owner")
             for o in owners if isinstance(owners, list) else [owners]:
-                if o and slugs - {None} and o not in slugs:
+                if o and slugs - {None} and not (isinstance(o, (str, int)) and o in slugs):  # a map or list is unhashable
                     errors.append(f"{who}: owner {o!r} is not in the roster")
     return errors
 

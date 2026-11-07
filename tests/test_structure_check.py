@@ -108,6 +108,11 @@ class StructureCheck(unittest.TestCase):
         bad = GOOD.replace("| sam | 2026-04-01 |", "| | 2026-04-01 |").replace("template_version: 2\n", "template_version: 2\nchecks: []\n")
         self.assertIn("Owner empty", self.errs(bad))
 
+    def test_doc_type_without_template_key_uses_type_name(self):
+        # where.py and generate.py default the template to <type>.md; the structure check must too
+        self.cfg["doc_types"]["roadmap"].pop("template", None)
+        self.assertEqual(self.run_check(GOOD), ([], []))
+
     def test_required_cells_and_none_row(self):
         self.assertIn("row `M-001`: Owner empty", self.errs(GOOD.replace("sam", "")))
         self.assertIn("column `Due` missing", self.errs(GOOD.replace("| ID | Owner | Due |", "| ID | Owner | Date |", 1)))
@@ -145,6 +150,9 @@ class StructureCheck(unittest.TestCase):
         self.assertIn("{{placeholder}}", self.errs(GOOD + "\n{{todo}}\n"))
         self.assertIn("HTML comment", self.errs(GOOD + "\n<!-- note -->\n"))
         self.assertIn("duplicate IDs in one table: M-001", self.errs(GOOD.replace("| None | | |", "| M-001 | a | b |")))
+
+    def test_duplicate_ids_in_backticks(self):
+        self.assertEqual(sc.duplicate_ids("| ID |\n|---|\n| `DEC-1` |\n| `DEC-1` |\n"), ["DEC-1"])
 
     def test_invalid_template_front_matter_is_an_error(self):
         (self.root / "pmo/templates/roadmap.md").write_text("---\nperiod: {{x}}\n---\n# t\n", encoding="utf-8")

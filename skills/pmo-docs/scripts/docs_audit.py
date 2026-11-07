@@ -196,6 +196,13 @@ def _drift(rel_str: str, own_fm: dict | None, default_fm: dict | None, version_k
     return None
 
 
+def _template_msg(rel_str, own_file, default_file):
+    own_fm = pc.split_front_matter(pc.read(own_file))[0]
+    def_fm = pc.split_front_matter(pc.read(default_file))[0]
+    expected_type = (def_fm or {}).get("type") or own_file.stem
+    return _drift(rel_str, own_fm, def_fm, "template_version", expected_type, "template")
+
+
 def template_drift(root, cfg) -> list[str]:
     """One message per project template in paths.templates whose default (same file name in the skill's
     assets/templates) exists and whose based_on is missing, malformed, names another type, or has a version
@@ -209,10 +216,7 @@ def template_drift(root, cfg) -> list[str]:
         default_file = pc.SKILL / "assets" / "templates" / rel.name
         if not default_file.exists():
             continue
-        own_fm = pc.split_front_matter(pc.read(p))[0]
-        def_fm = pc.split_front_matter(pc.read(default_file))[0]
-        expected_type = (def_fm or {}).get("type") or rel.stem
-        msg = _drift(str(rel), own_fm, def_fm, "template_version", expected_type, "template")
+        msg = _template_msg(str(rel), p, default_file)
         if msg:
             out.append(msg)
     return out
@@ -248,11 +252,7 @@ def drift_state(root, cfg, tpl_path: Path, tpl_source: str) -> str:
     default_file = pc.SKILL / "assets" / "templates" / tpl_path.name
     if not default_file.exists():
         return "n/a"
-    own_fm = pc.split_front_matter(pc.read(tpl_path))[0]
-    def_fm = pc.split_front_matter(pc.read(default_file))[0]
-    expected_type = (def_fm or {}).get("type") or tpl_path.stem
-    msg = _drift(tpl_path.name, own_fm, def_fm, "template_version", expected_type, "template")
-    return "yes" if msg else "no"
+    return "yes" if _template_msg(tpl_path.name, tpl_path, default_file) else "no"
 
 
 def audit(root, cfg, today):

@@ -168,28 +168,38 @@ def duplicate_ids(text):
     for _, rows in tables(re.sub(r"```.*?```", "", text, flags=re.S)):
         seen = set()
         for r in rows:
-            if r and re.fullmatch(r"[A-Z]{1,4}-\d+[A-Za-z]?", r[0]):
-                (dups if r[0] in seen else seen).add(r[0])
+            cell = r[0].strip("`") if r else ""  # ids may be written as `DEC-1`
+            if re.fullmatch(r"[A-Z]{1,4}-\d+[A-Za-z]?", cell):
+                (dups if cell in seen else seen).add(cell)
     return sorted(dups)
 
 
-def check_translation_light(tfm, fm, text, body):
-    """(errors, warnings) for a translation document (light check)."""
-    errors, warns = [], []
-    tfm = tfm or {}
+def check_head(tfm, fm, errors, warns):
+    """Front-matter keys the template has, and its template_version."""
     errors += [f"front matter key `{k}` missing" for k in tfm if k != "checks" and k not in fm]
     tv, dv = tfm.get("template_version"), fm.get("template_version")
     if tv is not None and dv != tv:
         warns.append(f"template_version {dv} differs from template v{tv}" if dv is not None else f"no template_version (template is v{tv})")
-    dsec = sections(body)
-    if sum(1 for lv, _, _ in dsec if lv == 1) != 1:
-        errors.append("document must have exactly one `#` title")
+
+
+def check_tail(text, body, errors):
+    """Placeholders, HTML comments and duplicate ids left in a document."""
     if re.search(r"\{\{.*?\}\}", re.sub(r"```.*?```", "", text, flags=re.S)):
         errors.append("unreplaced {{placeholder}} left in text")
     if "<!--" in body:
         errors.append("HTML comment `<!--` left in document (remove template/author notes)")
     if dups := duplicate_ids(body):
         errors.append("duplicate IDs in one table: " + ", ".join(dups[:8]))
+
+
+def check_translation_light(tfm, fm, text, body):
+    """(errors, warnings) for a translation document (light check)."""
+    errors, warns = [], []
+    check_head(tfm or {}, fm, errors, warns)
+    dsec = sections(body)
+    if sum(1 for lv, _, _ in dsec if lv == 1) != 1:
+        errors.append("document must have exactly one `#` title")
+    check_tail(text, body, errors)
     return errors, warns
 
 
@@ -206,20 +216,17 @@ def check(root, cfg, text):
     dt = cfg["doc_types"].get(tid) if isinstance(tid, str) else None
     if not dt:
         return [f"front matter type `{tid}` is not a doc type in the config"], warns
-    tpl, _ = pc.find_asset(root, cfg, "templates", dt["template"])
+    tpl, _ = pc.find_asset(root, cfg, "templates", dt.get("template", f"{tid}.md"))
     if not tpl.exists():
-        return [f"template {dt['template']} not found"], warns
+        return [f"template {dt.get('template', f'{tid}.md')} not found"], warns
     try:
         tfm, tbody = pc.split_front_matter(pc.read(tpl), strict=True)
     except pc.yaml.YAMLError:
-        return [f"template {dt['template']}: template front matter invalid"], warns
+        return [f"template {dt.get('template', f'{tid}.md')}: template front matter invalid"], warns
     tfm = tfm or {}
     if fm.get("translation_of") is not None:
         return check_translation_light(tfm, fm, text, body)
-    errors += [f"front matter key `{k}` missing" for k in tfm if k != "checks" and k not in fm]
-    tv, dv = tfm.get("template_version"), fm.get("template_version")
-    if tv is not None and dv != tv:
-        warns.append(f"template_version {dv} differs from template v{tv}" if dv is not None else f"no template_version (template is v{tv})")
+    check_head(tfm, fm, errors, warns)
 
     tsec, dsec = sections(tbody), sections(body)
     if sum(1 for lv, _, _ in dsec if lv == 1) != 1:
@@ -247,12 +254,7 @@ def check(root, cfg, text):
         warns.append("extra sections: " + "; ".join(extra[:6]) + (" ..." if len(extra) > 6 else ""))
     warns += [f"`{t}`: empty table (keep the header and add one row: None)" for lv, t, txt in dsec if lv == 2 for _, rows in tables(txt) if not rows]
 
-    if re.search(r"\{\{.*?\}\}", re.sub(r"```.*?```", "", text, flags=re.S)):
-        errors.append("unreplaced {{placeholder}} left in text")
-    if "<!--" in body:
-        errors.append("HTML comment `<!--` left in document (remove template/author notes)")
-    if dups := duplicate_ids(body):
-        errors.append("duplicate IDs in one table: " + ", ".join(dups[:8]))
+    check_tail(text, body, errors)
     return errors + run_checks(tfm.get("checks"), dsec), warns
 
 

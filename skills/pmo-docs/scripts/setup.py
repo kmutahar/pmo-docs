@@ -32,7 +32,7 @@ def main(argv=None):
     priority_order = None
     if args.priority_order is not None:
         parts = [p.strip() for p in args.priority_order.split(",")]
-        if not parts or any(not p for p in parts):
+        if any(not p for p in parts):
             ap.error(f"invalid --priority-order: {args.priority_order!r}")
         priority_order = parts
 

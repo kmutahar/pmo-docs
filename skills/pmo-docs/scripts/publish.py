@@ -113,9 +113,7 @@ def main(argv=None) -> int:
         rel = f.relative_to(docs_base).as_posix()
         try:
             fm = pc.split_front_matter(pc.read(f))[0] or {}
-        except Exception:
-            fm = {}
-        if not isinstance(fm, dict):
+        except UnicodeDecodeError:  # not UTF-8: not a document we can publish
             fm = {}
         ty = fm.get("type")
         if not isinstance(ty, str):
@@ -210,8 +208,6 @@ def main(argv=None) -> int:
                     to_copy = True
             else:
                 uncopied_issue = True
-        elif state == "unchanged":
-            pass
 
         if to_copy:
             tmp_f = target_f.with_name(target_f.name + ".tmp")
