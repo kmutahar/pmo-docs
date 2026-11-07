@@ -172,6 +172,10 @@ _Avoid_: dictionary, term base
 Said of a translation whose original changed after it was translated.
 _Avoid_: stale (that word is for register changes), outdated
 
+**Intake**:
+Reading a chat export and proposing register entries from it; nothing is written before the user confirms.
+_Avoid_: import, ingest
+
 ## Agent work
 
 **Made by**:

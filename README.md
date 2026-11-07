@@ -105,6 +105,10 @@ languages:
 
 A translation is a file next to its original, `<name>.xx.md`, made with the `translate` playbook and never unasked. `doc_types.<type>.translate` (`in-period` or `after-close`) says when; `doc_types.<type>.translations` limits the languages for one type. `parity_check.py` compares a translation with its original (headings, tables, ids, numbers) and `docs_audit.py` reports a translation behind its original. The approved glossary is read only; new terms go to a proposed file next to it. Generators write English only.
 
+## Intake from chat exports
+
+Ask the agent to take tasks, finished work or decisions from a chat export. It reads the export itself, shows the proposed entries and writes nothing until you confirm. It does not copy the export into the project, and it refuses credentials: registers reject them.
+
 ## Publishing
 
 Finished documents can be published to a publish target folder inside the project or to another local repository using `/pmo-docs:publish` (or `publish.py` directly).

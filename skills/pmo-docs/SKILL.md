@@ -1,6 +1,6 @@
 ---
 name: pmo-docs
-description: Project-office and documentation workflow. Keeps a project's facts in registers (tasks, risks, issues, decisions, changes, actions, milestones, people) under pmo/, renders read-only views, and drafts documents (status reports, project plan, charter, roadmap, change requests, meeting minutes, checklists, retrospectives, stakeholder updates, release notes) from templates that scripts check. Use to set up a project office under pmo/, draft, translate or finish a document, track or update entries ("mark T-014 done", log a risk), plan, record a change request or decision, or run weekly-status, monthly-status, month-start, overdue-report and docs-audit. Not for general coding, or personal to-do lists outside a pmo/ project.
+description: Project-office and documentation workflow. Keeps a project's facts in registers (tasks, risks, issues, decisions, changes, actions, milestones, people) under pmo/, renders read-only views, and drafts documents (status reports, project plan, charter, roadmap, change requests, meeting minutes, checklists, retrospectives, stakeholder updates, release notes) from templates that scripts check. Use to set up a project office under pmo/, draft, translate or finish a document, take tasks from chat exports, track or update entries ("mark T-014 done", log a risk), plan, record a change request or decision, or run weekly-status, monthly-status, month-start, overdue-report and docs-audit. Not for general coding, or personal to-do lists outside a pmo/ project.
 license: MIT
 compatibility: Needs Python 3.10 or newer on Linux or macOS (Windows through WSL). PyYAML is bundled; nothing to install. Works on the project in the current folder.
 metadata:
@@ -28,6 +28,7 @@ Work from the project root (the folder that holds `pmo/`). If `pmo/config.yaml` 
 | to publish documents | tell the user to type `/pmo-docs:publish`; do not publish from this skill |
 | to add, change or close tasks, risks, issues, assumptions, dependencies, actions, meetings, objectives, budget, milestones, capacity, people, goals or teams; "mark X done"; a pasted message with tasks | `references/track.md` |
 | to translate a document, bring a translation back in step, or find where a translation lives | `references/translate.md` |
+| to take tasks, finished work or decisions from a chat export or a long pasted conversation | `references/intake.md` |
 | to add a language | `references/extend.md` |
 | a project plan, charter, roadmap, weekly plan, capacity plan or team checklist | `references/plan.md` |
 | a change request, decision, sign-off, definition of done, minutes or retrospective | `references/govern.md` |
