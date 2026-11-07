@@ -8,6 +8,8 @@ import unittest
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import translation_fixture as tf  # noqa: E402
 sys.path.insert(0, str(REPO / "skills/pmo-docs/scripts"))
 import pmo_common as pc  # noqa: E402
 import structure_check as sc  # noqa: E402
@@ -174,6 +176,21 @@ class StructureCheck(unittest.TestCase):
             with self.assertRaises(SystemExit) as cm:
                 sc.main(["--help"])
         self.assertEqual(cm.exception.code, 0)
+
+    def test_translation_is_not_compared_with_template_headings(self):
+        dec_log = (REPO / "examples/acme/pmo/documents/Decision log.md").read_text(encoding="utf-8")
+        trans_text = tf.make_translation(dec_log)
+        errors, warns = self.run_check(trans_text)
+        self.assertEqual(errors, [])
+
+    def test_translation_with_leftover_comment_fails(self):
+        dec_log = (REPO / "examples/acme/pmo/documents/Decision log.md").read_text(encoding="utf-8")
+        trans_text = tf.make_translation(dec_log) + "\n<!-- author comment -->\n"
+        errors, warns = self.run_check(trans_text)
+        self.assertTrue(any("HTML comment" in e for e in errors))
+
+    def test_document_without_translation_of_checked_as_before(self):
+        self.assertIn("heading `## Index` is missing", self.errs(GOOD.replace("## Index", "## Other")))
 
 
 if __name__ == "__main__":

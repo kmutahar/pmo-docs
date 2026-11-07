@@ -15,7 +15,7 @@ Run as `docs-audit [--fix]` (`--fix` is a recipe flag, not a script flag: `docs_
 
 2. **Run the mechanical checks**
    - `python3 ${CLAUDE_SKILL_DIR}/scripts/render_views.py --check`: register validity and stale views.
-   - `python3 ${CLAUDE_SKILL_DIR}/scripts/docs_audit.py`: front matter, stale, old, broken links, and template and playbook drift.
+   - `python3 ${CLAUDE_SKILL_DIR}/scripts/docs_audit.py`: front matter, stale, old, broken links, template and playbook drift, translations behind their original, and translation parity.
    - `python3 ${CLAUDE_SKILL_DIR}/scripts/structure_check.py`: documents against their templates.
 
    Each exits 1 on findings. A non-zero exit is a result to report, not a failure of the audit. The template comments a draft keeps are expected: report every other error.

@@ -102,7 +102,7 @@ Run from the project root, or pass `--project DIR`. Every script answers `--help
 | `python3 ${CLAUDE_SKILL_DIR}/scripts/publish.py [--apply] [--overwrite REL]... [--include REL]... [--as-of DATE]` | lists candidates or copies finished documents into `publish.path`; dry run without `--apply` | 0 ok / dry run clean, 1 uncopied conflict or stale documents remaining, 2 usage or invalid target |
 | `python3 ${CLAUDE_SKILL_DIR}/scripts/structure_check.py [files]` | checks documents against their template (default: every document) | 0 clean (warnings allowed), 1 findings, 2 usage or a config the skill refuses |
 | `python3 ${CLAUDE_SKILL_DIR}/scripts/parity_check.py [files]` | checks that a translation has the same headings, tables, ids and numbers as its original (default: every translation) | 0 all match or none found, 1 a difference or a pair that cannot be compared, 2 usage or a config the skill refuses |
-| `python3 ${CLAUDE_SKILL_DIR}/scripts/docs_audit.py [--as-of DATE]` | front matter, stale, old, broken-link and template/playbook drift checks | 0 clean, 1 findings, 2 usage or a config the skill refuses |
+| `python3 ${CLAUDE_SKILL_DIR}/scripts/docs_audit.py [--as-of DATE]` | front matter, stale, old, broken-link, template/playbook drift, translation-behind and parity checks | 0 clean, 1 findings, 2 usage or a config the skill refuses |
 | `python3 ${CLAUDE_SKILL_DIR}/scripts/overdue.py [--as-of DATE] [--days N]` | overdue tasks, actions and milestones, open risks and issues | 0 ok, 2 usage, or a config the skill refuses |
 
 

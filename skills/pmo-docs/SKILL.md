@@ -125,7 +125,7 @@ The scripts are in this skill's own folder, `scripts/` next to this file. Playbo
 | `scripts/render_views.py [--check]` | validate registers, write or compare views |
 | `scripts/structure_check.py [files]` | check documents against their template |
 | `scripts/parity_check.py [files]` | check that a translation matches its original in headings, tables, ids and numbers |
-| `scripts/docs_audit.py` | stale, old and broken documents; exits 1 on findings |
+| `scripts/docs_audit.py` | stale, old, behind and broken documents; exits 1 on findings |
 | `scripts/overdue.py` | overdue tasks, actions, risks, issues and milestones |
 
 ## How to reply

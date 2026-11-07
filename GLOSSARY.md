@@ -164,6 +164,10 @@ _Avoid_: localisation, version
 The state of a translation that has the same headings, tables, ids and numbers as its original (`parity_check.py`).
 _Avoid_: match, sync
 
+**Behind**:
+Said of a translation whose original changed after it was translated.
+_Avoid_: stale (that word is for register changes), outdated
+
 ## Agent work
 
 **Made by**:

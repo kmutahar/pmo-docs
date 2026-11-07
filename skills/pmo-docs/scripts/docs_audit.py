@@ -10,6 +10,8 @@ be a doc type in the config. Checks:
   front matter  `type` is present and is a known doc type
   stale         a document with `status: finished` is stale when the hash recorded in its front matter for any
                 register in the type's `generated_from` differs from the register's current hash
+  translation behind a finished translation whose source_hash differs from body_hash of its original
+  parity        a translation differing in headings, tables, ids or numbers from its original
   old           a finished document is older than its type's `stale_days` (front-matter
                 `last_updated`; a finished document without it is a front-matter finding)
   broken links  relative Markdown links that point at a missing file
@@ -30,6 +32,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+import parity_check as pcheck  # noqa: E402
 import pmo_common as pc  # noqa: E402
 
 
@@ -38,13 +41,83 @@ def _unquote(s):
     return re.sub(r"(?:%[0-9A-Fa-f]{2})+", lambda m: bytes.fromhex(m[0].replace("%", "")).decode("utf-8", "replace"), s)
 
 
-CHECKS = ("front matter", "stale", "old", "broken links", "override drift")
+CHECKS = ("front matter", "stale", "old", "broken links", "override drift", "translation behind", "parity")
+STALE_CHECKS = ("stale", "translation behind")
 
 
 def register_hash(root, cfg, name):
     """8 hex characters of the SHA-256 of a register's file, or "none" when the file is missing."""
     f = Path(root) / cfg["paths"]["registers"] / cfg["registers"][name]["file"]
     return hashlib.sha256(f.read_bytes()).hexdigest()[:8] if f.exists() else "none"
+
+
+def audit_translation(root, cfg, path, base, fm, text) -> list[tuple[str, str]]:
+    """Findings for one translation. All 'front matter' unless named."""
+    rel = path.relative_to(base)
+    out = []
+
+    trans_of = fm.get("translation_of")
+    if not isinstance(trans_of, str) or not trans_of.strip():
+        return [("front matter", f"`{rel}` - translation_of does not name a document")]
+
+    p_trans = Path(trans_of)
+    if p_trans.is_absolute() or ".." in p_trans.parts or pc.outside(base, trans_of):
+        return [("front matter", f"`{rel}` - translation_of does not name a document")]
+
+    orig_path = (base / trans_of).resolve()
+    if not orig_path.is_file():
+        return [("front matter", f"`{rel}` - translation_of does not name a document")]
+
+    orig_text = pc.read(orig_path)
+    orig_fm, _ = pc.split_front_matter(orig_text)
+    orig_fm = orig_fm or {}
+
+    if "translation_of" in orig_fm:
+        return [("front matter", f"`{rel}` - the original is itself a translation")]
+
+    trans_langs = pc.languages(cfg).get("translations", [])
+    lang = fm.get("lang")
+    if not lang or not isinstance(lang, str) or lang not in trans_langs:
+        out.append(("front matter", f"`{rel}` - lang {lang} is not a translation language in the config"))
+
+    ty = fm.get("type")
+    if isinstance(ty, str) and isinstance(lang, str) and lang in trans_langs:
+        if lang not in pc.type_translations(cfg, ty):
+            out.append(("front matter", f"`{rel}` - type {ty} is not translated into {lang}"))
+
+    if isinstance(lang, str) and not path.name.endswith(f".{lang}.md"):
+        out.append(("front matter", f"`{rel}` - the file name should end in .{lang}.md"))
+
+    if isinstance(lang, str) and lang in trans_langs:
+        expected_dir = pc.languages(cfg)["info"].get(lang, {}).get("dir")
+        if fm.get("dir") != expected_dir:
+            out.append(("front matter", f"`{rel}` - dir should be {expected_dir}"))
+
+    if fm.get("type") != orig_fm.get("type"):
+        out.append(("front matter", f"`{rel}` - type differs from the original"))
+
+    if "source_hashes" in fm:
+        out.append(("front matter", f"`{rel}` - translations record source_hash, not source_hashes"))
+
+    sh = fm.get("source_hash")
+    if sh is None or not isinstance(sh, str):
+        out.append(("front matter", f"`{rel}` - source_hash is missing or not quoted text"))
+
+    is_finished = fm.get("status") == "finished"
+    orig_finished = orig_fm.get("status") == "finished"
+    if is_finished and not orig_finished:
+        out.append(("front matter", f"`{rel}` - finished, but its original is not finished"))
+
+    if is_finished and isinstance(sh, str):
+        if pc.body_hash(orig_text) != sh:
+            out.append(("translation behind", f"`{rel}` - translation behind its original: the original changed since it was translated"))
+
+    if isinstance(lang, str) and lang in pc.languages(cfg)["info"]:
+        parity_messages = pcheck.compare(orig_text, text, pc.languages(cfg)["info"][lang], cfg)
+        for msg in parity_messages:
+            out.append(("parity", f"`{rel}` - {msg}"))
+
+    return out
 
 
 def audit_file(root, cfg, path, base, today):
@@ -61,30 +134,33 @@ def audit_file(root, cfg, path, base, today):
     t = cfg["doc_types"].get(ty) if isinstance(ty, str) else None
     if ty and not t:
         out.append(("front matter", f"`{rel}` - type `{fm['type']}` is not a doc type in the config"))
-    if t and fm.get("status") == "finished":
-        recorded = fm.get("source_hashes") or {}
-        if not isinstance(recorded, dict):
-            out.append(("front matter", f"`{rel}` - source_hashes must be a map of register to hash"))
-            recorded = {}
-        for reg in t.get("generated_from") or []:
-            if reg not in cfg["registers"]:
-                continue
-            if reg not in recorded:
-                out.append(("stale", f"`{rel}` - no recorded hash for register `{reg}`"))
-            elif not isinstance(recorded[reg], str):
-                out.append(("front matter", f"`{rel}` - recorded hash for register `{reg}` is not text: quote the hash"))
-            elif recorded[reg] != register_hash(root, cfg, reg):
-                out.append(("stale", f"`{rel}` - register `{reg}` changed since the document was finished"))
-        try:
-            stamp = pc.to_date(fm.get("last_updated"))
-        except ValueError:
-            stamp = None
-            out.append(("front matter", f"`{rel}` - last_updated is not a YYYY-MM-DD date"))
-        else:
-            if stamp is None:
-                out.append(("front matter", f"`{rel}` - finished but has no `last_updated`"))
-        if stamp and t.get("stale_days") and (today - stamp).days > t["stale_days"]:
-            out.append(("old", f"`{rel}` - {(today - stamp).days} days old (limit {t['stale_days']})"))
+    if "translation_of" in fm:
+        out.extend(audit_translation(root, cfg, path, base, fm, text))
+    else:
+        if t and fm.get("status") == "finished":
+            recorded = fm.get("source_hashes") or {}
+            if not isinstance(recorded, dict):
+                out.append(("front matter", f"`{rel}` - source_hashes must be a map of register to hash"))
+                recorded = {}
+            for reg in t.get("generated_from") or []:
+                if reg not in cfg["registers"]:
+                    continue
+                if reg not in recorded:
+                    out.append(("stale", f"`{rel}` - no recorded hash for register `{reg}`"))
+                elif not isinstance(recorded[reg], str):
+                    out.append(("front matter", f"`{rel}` - recorded hash for register `{reg}` is not text: quote the hash"))
+                elif recorded[reg] != register_hash(root, cfg, reg):
+                    out.append(("stale", f"`{rel}` - register `{reg}` changed since the document was finished"))
+            try:
+                stamp = pc.to_date(fm.get("last_updated"))
+            except ValueError:
+                stamp = None
+                out.append(("front matter", f"`{rel}` - last_updated is not a YYYY-MM-DD date"))
+            else:
+                if stamp is None:
+                    out.append(("front matter", f"`{rel}` - finished but has no `last_updated`"))
+            if stamp and t.get("stale_days") and (today - stamp).days > t["stale_days"]:
+                out.append(("old", f"`{rel}` - {(today - stamp).days} days old (limit {t['stale_days']})"))
     for target in re.findall(r"\]\((?!https?://|#|mailto:)([^)\s]+)\)", text):
         if not (path.parent / _unquote(target.split("#")[0])).exists():
             out.append(("broken links", f"`{rel}` -> `{target}`"))

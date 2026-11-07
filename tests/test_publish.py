@@ -9,6 +9,8 @@ from unittest import mock
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import translation_fixture as tf  # noqa: E402
 SCRIPTS = REPO / "skills/pmo-docs/scripts"
 sys.path.insert(0, str(SCRIPTS))
 import docs_audit as da  # noqa: E402
@@ -53,6 +55,18 @@ class Publish(unittest.TestCase):
             f"source_hashes:\n  decisions: \"{h}\"\n---\n# Decision log\n\nContent here.\n",
             encoding="utf-8"
         )
+        return f
+
+    def finish_translation(self, orig_file, lang="xx", dir_="rtl"):
+        orig_text = orig_file.read_text(encoding="utf-8")
+        trans_text = tf.make_translation(orig_text, lang=lang, dir_=dir_)
+        fm, body = pc.split_front_matter(trans_text)
+        fm["status"] = "finished"
+        fm["last_updated"] = "2026-03-15"
+        import yaml
+        new_text = f"---\n{yaml.safe_dump(fm, sort_keys=False)}---\n{body}"
+        f = self.docs / f"Decision log.{lang}.md"
+        f.write_text(new_text, encoding="utf-8")
         return f
 
     def test_mode_none_exits_0_and_writes_nothing(self):
@@ -339,6 +353,49 @@ class Publish(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertIn("not a candidate", err)
         self.assertFalse((self.root / "published").exists())
+
+    def test_translation_is_published_like_any_finished_document(self):
+        self.set_config("publish:\n  mode: folder\n  path: published\n")
+        tf.enable_languages(self.root, ("xx",))
+        src = self.finish_decision_log()
+        trans = self.finish_translation(src)
+
+        code, out, _ = run(self.root)
+        self.assertEqual(code, 0)
+        self.assertIn("new: Decision log.xx.md", out)
+
+        code, out, _ = run(self.root, "--apply")
+        self.assertEqual(code, 0)
+        self.assertIn("copied: Decision log.xx.md", out)
+
+        pub_file = self.root / "published/Decision log.xx.md"
+        self.assertTrue(pub_file.exists())
+        self.assertEqual(pub_file.read_bytes(), trans.read_bytes())
+
+    def test_translation_behind_is_stale(self):
+        self.set_config("publish:\n  mode: folder\n  path: published\n")
+        tf.enable_languages(self.root, ("xx",))
+        src = self.finish_decision_log()
+        self.finish_translation(src)
+
+        # Modify original body so translation is behind
+        src.write_text(src.read_text(encoding="utf-8") + "\nModified body.\n", encoding="utf-8")
+
+        # Dry run lists it as stale
+        code, out, _ = run(self.root)
+        self.assertEqual(code, 0)
+        self.assertIn("stale: Decision log.xx.md", out)
+
+        # Apply without --include skips it and exits 1
+        code, out, _ = run(self.root, "--apply")
+        self.assertEqual(code, 1)
+        self.assertFalse((self.root / "published/Decision log.xx.md").exists())
+
+        # Apply with --include copies it
+        code, out, _ = run(self.root, "--apply", "--include", "Decision log.xx.md")
+        self.assertEqual(code, 0)
+        self.assertIn("copied: Decision log.xx.md", out)
+        self.assertTrue((self.root / "published/Decision log.xx.md").exists())
 
 
 if __name__ == "__main__":

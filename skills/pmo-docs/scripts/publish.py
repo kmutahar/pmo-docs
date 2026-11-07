@@ -146,7 +146,7 @@ def main(argv=None) -> int:
             return 2
 
         audit_findings = docs_audit.audit_file(root, cfg, f, docs_base, args.as_of)
-        is_stale = any(chk == "stale" for chk, _ in audit_findings)
+        is_stale = any(chk in docs_audit.STALE_CHECKS for chk, _ in audit_findings)
 
         if not target_f.exists():
             state = "new"

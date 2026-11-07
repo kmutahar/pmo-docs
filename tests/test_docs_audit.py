@@ -2,6 +2,7 @@
 import contextlib
 import datetime
 import io
+import re
 import shutil
 import sys
 import tempfile
@@ -9,6 +10,8 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import translation_fixture as tf  # noqa: E402
 sys.path.insert(0, str(ROOT / "skills/pmo-docs/scripts"))
 import docs_audit as da  # noqa: E402
 import pmo_common as pc  # noqa: E402
@@ -205,6 +208,206 @@ class Audit(unittest.TestCase):
         code, out = self.run_audit()
         self.assertEqual(code, 0, out)
         self.assertIn("## Override drift (0)", out)
+
+
+class Translations(unittest.TestCase):
+    def setUp(self):
+        self.d = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.d)
+        shutil.copytree(ROOT / "examples/acme", self.d / "p")
+        self.p = self.d / "p"
+        self.docs = self.p / "pmo/documents"
+
+    def run_audit(self, as_of=AS_OF):
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            code = da.main(["--project", str(self.p), "--as-of", as_of])
+        return code, out.getvalue()
+
+    def finish_decision_log(self, text=None):
+        cfg = pc.load_config(self.p)
+        h = da.register_hash(self.p, cfg, "decisions")
+        f = self.docs / "Decision log.md"
+        base_text = text if text is not None else f.read_text(encoding="utf-8")
+        fm, body = pc.split_front_matter(base_text)
+        fm = fm or {}
+        fm["status"] = "finished"
+        fm["last_updated"] = "2026-03-15"
+        fm["source_hashes"] = {"decisions": str(h)}
+        import yaml
+        new_text = f"---\n{yaml.safe_dump(fm, sort_keys=False)}---\n{body}"
+        f.write_text(new_text, encoding="utf-8")
+        return f, new_text
+
+    def finish_translation(self, orig_text, lang="xx", dir_="rtl"):
+        trans_text = tf.make_translation(orig_text, lang=lang, dir_=dir_)
+        fm, body = pc.split_front_matter(trans_text)
+        fm["status"] = "finished"
+        fm["last_updated"] = "2026-03-15"
+        import yaml
+        new_text = f"---\n{yaml.safe_dump(fm, sort_keys=False)}---\n{body}"
+        f = self.docs / f"Decision log.{lang}.md"
+        f.write_text(new_text, encoding="utf-8")
+        return f, new_text
+
+    def test_good_translation_is_clean(self):
+        tf.enable_languages(self.p, ("xx",))
+        _, orig_text = self.finish_decision_log()
+        self.finish_translation(orig_text)
+        code, out = self.run_audit()
+        self.assertEqual(code, 0, out)
+        self.assertIn("Total findings: 0", out)
+
+    def test_translation_behind(self):
+        tf.enable_languages(self.p, ("xx",))
+        _, orig_text = self.finish_decision_log()
+        self.finish_translation(orig_text)
+
+        # Body changed in original
+        (self.docs / "Decision log.md").write_text(orig_text.replace("Need cheap hosting", "Need costly hosting"), encoding="utf-8")
+        code, out = self.run_audit()
+        self.assertEqual(code, 1)
+        self.assertIn("## Translation behind (1)", out)
+        self.assertIn("translation behind its original", out)
+
+        # Comment-only change does not make it behind
+        (self.docs / "Decision log.md").write_text(orig_text + "\n<!-- extra comment -->\n", encoding="utf-8")
+        code, out = self.run_audit()
+        self.assertEqual(code, 0, out)
+
+    def test_finishing_the_original_does_not_make_it_behind(self):
+        tf.enable_languages(self.p, ("xx",))
+        draft_orig = (self.docs / "Decision log.md").read_text(encoding="utf-8") + "\n<!-- author note -->\n"
+        (self.docs / "Decision log.md").write_text(draft_orig, encoding="utf-8")
+        self.finish_translation(draft_orig)
+
+        # Now finish the original (adds finished status and hashes, strips comments)
+        self.finish_decision_log()
+        code, out = self.run_audit()
+        self.assertNotIn("translation behind its original", out)
+
+    def test_parity_findings_are_reported(self):
+        tf.enable_languages(self.p, ("xx",))
+        _, orig_text = self.finish_decision_log()
+        trans_file, trans_text = self.finish_translation(orig_text)
+
+        bad_trans = "\n".join([ln for ln in trans_text.splitlines() if "DEC-2 |" not in ln])
+        trans_file.write_text(bad_trans, encoding="utf-8")
+        code, out = self.run_audit()
+        self.assertEqual(code, 1)
+        self.assertIn("## Parity (2)", out)
+        self.assertIn("Summary", out)
+
+    def test_missing_translation_of_target(self):
+        tf.enable_languages(self.p, ("xx",))
+        _, orig_text = self.finish_decision_log()
+        trans_text = tf.make_translation(orig_text).replace("translation_of: Decision log.md", "translation_of: Missing.md")
+        (self.docs / "Decision log.xx.md").write_text(trans_text, encoding="utf-8")
+        code, out = self.run_audit()
+        self.assertEqual(code, 1)
+        self.assertIn("translation_of does not name a document", out)
+
+    def test_translation_of_a_translation(self):
+        tf.enable_languages(self.p, ("xx", "yy"))
+        _, orig_text = self.finish_decision_log()
+        self.finish_translation(orig_text, lang="xx")
+
+        trans2 = tf.make_translation(orig_text, lang="yy").replace("translation_of: Decision log.md", "translation_of: Decision log.xx.md")
+        (self.docs / "Decision log.yy.md").write_text(trans2, encoding="utf-8")
+        code, out = self.run_audit()
+        self.assertEqual(code, 1)
+        self.assertIn("the original is itself a translation", out)
+
+    def test_unknown_lang(self):
+        tf.enable_languages(self.p, ("xx",))
+        _, orig_text = self.finish_decision_log()
+        trans_text = tf.make_translation(orig_text, lang="yy")
+        (self.docs / "Decision log.yy.md").write_text(trans_text, encoding="utf-8")
+        code, out = self.run_audit()
+        self.assertEqual(code, 1)
+        self.assertIn("lang yy is not a translation language in the config", out)
+
+    def test_type_not_translated_into_lang(self):
+        tf.enable_languages(self.p, ("xx",))
+        cfg_file = self.p / "pmo/config.yaml"
+        cfg_file.write_text(cfg_file.read_text(encoding="utf-8") + "\ndoc_types:\n  decision-log:\n    translations: []\n", encoding="utf-8")
+        _, orig_text = self.finish_decision_log()
+        self.finish_translation(orig_text)
+        code, out = self.run_audit()
+        self.assertEqual(code, 1)
+        self.assertIn("type decision-log is not translated into xx", out)
+
+    def test_wrong_file_suffix(self):
+        tf.enable_languages(self.p, ("xx",))
+        _, orig_text = self.finish_decision_log()
+        trans_text = tf.make_translation(orig_text)
+        (self.docs / "Decision log.wrong.md").write_text(trans_text, encoding="utf-8")
+        code, out = self.run_audit()
+        self.assertEqual(code, 1)
+        self.assertIn("the file name should end in .xx.md", out)
+
+    def test_wrong_dir(self):
+        tf.enable_languages(self.p, ("xx",))
+        _, orig_text = self.finish_decision_log()
+        trans_text = tf.make_translation(orig_text, dir_="ltr")
+        (self.docs / "Decision log.xx.md").write_text(trans_text, encoding="utf-8")
+        code, out = self.run_audit()
+        self.assertEqual(code, 1)
+        self.assertIn("dir should be rtl", out)
+
+    def test_source_hashes_present(self):
+        tf.enable_languages(self.p, ("xx",))
+        _, orig_text = self.finish_decision_log()
+        trans_text = tf.make_translation(orig_text).replace("source_hash:", "source_hashes:\n  decisions: 12345678\nsource_hash:")
+        (self.docs / "Decision log.xx.md").write_text(trans_text, encoding="utf-8")
+        code, out = self.run_audit()
+        self.assertEqual(code, 1)
+        self.assertIn("translations record source_hash, not source_hashes", out)
+
+    def test_unquoted_all_digit_source_hash(self):
+        tf.enable_languages(self.p, ("xx",))
+        _, orig_text = self.finish_decision_log()
+        trans_text = tf.make_translation(orig_text)
+        bad_trans = re.sub(r"source_hash:.*", "source_hash: 12345678", trans_text)
+        (self.docs / "Decision log.xx.md").write_text(bad_trans, encoding="utf-8")
+        code, out = self.run_audit()
+        self.assertEqual(code, 1)
+        self.assertIn("source_hash is missing or not quoted text", out)
+
+    def test_finished_translation_of_draft_original(self):
+        tf.enable_languages(self.p, ("xx",))
+        orig_text = (self.docs / "Decision log.md").read_text(encoding="utf-8")
+        self.finish_translation(orig_text)
+        code, out = self.run_audit()
+        self.assertEqual(code, 1)
+        self.assertIn("finished, but its original is not finished", out)
+
+    def test_register_stale_check_skips_translations(self):
+        tf.enable_languages(self.p, ("xx",))
+        _, orig_text = self.finish_decision_log()
+        self.finish_translation(orig_text)
+
+        # Modify decisions register
+        reg = self.p / "pmo/registers/decisions.yaml"
+        reg.write_text(reg.read_text(encoding="utf-8") + "\n", encoding="utf-8")
+
+        code, out = self.run_audit()
+        self.assertEqual(code, 1)
+        self.assertIn("`Decision log.md` - register `decisions` changed", out)
+        self.assertNotIn("Decision log.xx.md` - register", out)
+
+    def test_old_check_skips_translations(self):
+        tf.enable_languages(self.p, ("xx",))
+        _, orig_text = self.finish_decision_log()
+        self.finish_translation(orig_text)
+
+        code, out = self.run_audit(as_of="2030-01-01")
+        self.assertEqual(code, 1)
+        self.assertIn("`Decision log.md` - ", out)
+        self.assertIn("days old", out)
+        # Verify Decision log.xx.md is not in ## Old
+        old_section = out.split("## Old")[1].split("##")[0]
+        self.assertNotIn("Decision log.xx.md", old_section)
 
 
 if __name__ == "__main__":

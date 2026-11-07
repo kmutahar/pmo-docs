@@ -4,6 +4,8 @@
 Usage:
     python3 structure_check.py [--project ROOT] [FILE ...]   # default: every .md under paths.documents
 
+Translations (front matter `translation_of`) are checked lightly: keys, title, placeholders, comments, duplicate IDs; parity_check compares their structure.
+
 A document's type is its front-matter `type`. The template is found like `where.py` does it
 (pmo/templates/<name> in the project wins over the skill's default), and the checks come from
 that template only, never from the draft.
@@ -171,6 +173,26 @@ def duplicate_ids(text):
     return sorted(dups)
 
 
+def check_translation_light(tfm, fm, text, body):
+    """(errors, warnings) for a translation document (light check)."""
+    errors, warns = [], []
+    tfm = tfm or {}
+    errors += [f"front matter key `{k}` missing" for k in tfm if k != "checks" and k not in fm]
+    tv, dv = tfm.get("template_version"), fm.get("template_version")
+    if tv is not None and dv != tv:
+        warns.append(f"template_version {dv} differs from template v{tv}" if dv is not None else f"no template_version (template is v{tv})")
+    dsec = sections(body)
+    if sum(1 for lv, _, _ in dsec if lv == 1) != 1:
+        errors.append("document must have exactly one `#` title")
+    if re.search(r"\{\{.*?\}\}", re.sub(r"```.*?```", "", text, flags=re.S)):
+        errors.append("unreplaced {{placeholder}} left in text")
+    if "<!--" in body:
+        errors.append("HTML comment `<!--` left in document (remove template/author notes)")
+    if dups := duplicate_ids(body):
+        errors.append("duplicate IDs in one table: " + ", ".join(dups[:8]))
+    return errors, warns
+
+
 def check(root, cfg, text):
     """(errors, warnings) for one document's text."""
     errors, warns = [], []
@@ -192,6 +214,8 @@ def check(root, cfg, text):
     except pc.yaml.YAMLError:
         return [f"template {dt['template']}: template front matter invalid"], warns
     tfm = tfm or {}
+    if fm.get("translation_of") is not None:
+        return check_translation_light(tfm, fm, text, body)
     errors += [f"front matter key `{k}` missing" for k in tfm if k != "checks" and k not in fm]
     tv, dv = tfm.get("template_version"), fm.get("template_version")
     if tv is not None and dv != tv:
