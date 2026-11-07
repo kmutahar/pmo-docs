@@ -18,4 +18,3 @@ touches:
 
 ## Watch out
 - Bash is blocked in the eval sandbox, so the agent cannot run the scripts there (`SKILL.md` names `assets/templates/` as the fallback for `where.py`) and graders must not depend on Bash.
-- Open question (v0.2 W14): an AppArmor profile for the `claude` binary or `bwrap`, other sandbox settings, or a container. Kernel settings need sudo: ask the maintainer.

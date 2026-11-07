@@ -2,8 +2,6 @@
 title: Anthropic directory submission lint flags
 author: maintainer
 date: 2026-11-06
-branch: main
-cost: { minutes: 9, tokens: 161417 }
 touches:
   - skills/pmo-docs/.claude-plugin/plugin.json
   - skills/pmo-docs/references/plan.md
