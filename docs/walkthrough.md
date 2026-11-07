@@ -135,11 +135,13 @@ drift: n/a
 generated_from: tasks, milestones, risks, issues, changes, actions, decisions, teams
 stale_days: 30
 window: 2026-03-01..2026-03-31
+translations: none
+translate: in-period
 source_hashes: {tasks: "b33ab322", milestones: "0e9469b7", risks: "a9268ee2", issues: "fcc3f6b0", changes: "5351a37c", actions: "3c2a3948", decisions: "988ad57c", teams: "e2679193"}
 [exit 0]
 ```
 
-The `template` line shows the full path on your machine; it is shortened here. `generated_from` lists the registers a status report is made from. `source_hashes` is what Finish records in a finished document, so that a later change to one of those registers can be noticed (the document is then stale).
+The `template` line shows the full path on your machine; it is shortened here. `generated_from` lists the registers a status report is made from. `source_hashes` is what Finish records in a finished document, so that a later change to one of those registers can be noticed (the document is then stale). `translations` and `translate` say which languages the type is translated into and when; Acme writes English only (section 6).
 
 ## 5. Check the documents
 
@@ -191,16 +193,87 @@ None
 
 None
 
+## Translation behind (0)
+
+None
+
+## Parity (0)
+
+None
+
 **Total findings: 0**
 [exit 0]
 ```
 
-## 6. With the agent
+## 6. Languages and translations
+
+Acme has no `languages` block, so it writes English only. Add one to `pmo/config.yaml` to translate documents into a second language (`xx` is an invented code):
+
+```yaml
+languages:
+  translations: [xx]
+  xx: { label: XX, dir: rtl, glossary: pmo/data/glossary-xx.md }
+```
+
+`render_views.py --check` validates the new keys (it still prints `registers valid, views current`). `where.py --lang` then gives the translation's path, the value for its `translation_of` and the `source_hash` of the original's body:
+
+```
+$ python3 "$SKILL/scripts/where.py" decision-log --lang xx --hashes
+type: decision-log
+title: Decision log
+document: pmo/documents/Decision log.xx.md
+document_exists: no
+original: pmo/documents/Decision log.md
+original_exists: yes
+translation_of: "Decision log.md"
+lang: xx
+dir: rtl
+glossary: pmo/data/glossary-xx.md
+glossary_proposed: pmo/data/glossary-xx.proposed.md
+template: <skill folder>/assets/templates/decision-log.md
+template_source: skill
+template_exists: yes
+template_version: 1
+based_on: none
+drift: n/a
+generated_from: decisions
+stale_days: 30
+window: none
+translations: xx
+translate: in-period
+source_hash: "f1bea050"
+[exit 0]
+```
+
+A type that is not translated refuses the flag. The shipped defaults translate neither the audit report nor the overdue report:
+
+```
+$ python3 "$SKILL/scripts/where.py" docs-audit-report --lang xx
+usage: where.py [-h] [--project PROJECT] [--week] [--as-of YYYY-MM-DD]
+                [--hashes] [--title TITLE] [--lang CODE]
+                type [period]
+where.py: error: doc type 'docs-audit-report' has no translations configured
+[exit 2]
+```
+
+`parity_check.py` compares each translation with its original: the same headings, tables, ids and numbers. Acme has no translation yet:
+
+```
+$ python3 "$SKILL/scripts/parity_check.py"
+
+0 file(s) differ from their originals
+[exit 0]
+```
+
+The agent writes the translation with the `translate` playbook, and only when asked. `docs_audit.py` then reports a translation whose original changed afterwards (`Translation behind`) and every parity difference (`Parity`). Generators write English only.
+
+## 7. With the agent
 
 In Claude Code, with the plugin installed, open a copy of Acme as a project and ask:
 
 - "weekly-status" or "monthly-status": a draft report from the registers.
-- "mark T-1 done": the agent first asks for QA or test evidence (the definition of done) and changes nothing until you answer. Then it changes that one line and renders the views.
-- "finish the status report": Finish records the template version and the hashes, removes the template's comments and checks, and marks the document finished.
+- "mark T-1 done": the agent first asks for QA or test evidence (the definition of done) and changes nothing until you answer. Then it changes that one line, sets `done_on` to the date the work was finished, and renders the views.
+- "finish the status report": Finish records the template version and the hashes, removes the template's comments and checks, and marks the document finished. With the `languages` block of section 6, it then asks once whether to translate the report now.
+- "take the tasks from this chat export": the agent reads the export, shows the entries it proposes and writes nothing until you confirm. It never copies a password or token from the chat.
 
 The agent never commits or pushes unless you ask. When you want a check before every commit, see "Check the registers in your own git hook" in the [README](../README.md).
