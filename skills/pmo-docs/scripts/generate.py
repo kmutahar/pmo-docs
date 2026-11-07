@@ -874,6 +874,11 @@ def main(argv=None) -> int:
         ap.error(f"project folder not found: {args.project}")
 
     cfg = pc.load_config(root)
+    draft_lang = pc.languages(cfg)["draft"]
+    if draft_lang != "en":
+        print(f"generators write English only; this project's draft language is {draft_lang}. Set generator: null for each doc type in pmo/config.yaml and draft with references/draft.md.", file=sys.stderr)
+        return 2
+
     doc_types = cfg.get("doc_types", {})
     if args.type not in doc_types:
         ap.error(f"unknown doc type {args.type!r}; known types: {', '.join(sorted(doc_types))}")

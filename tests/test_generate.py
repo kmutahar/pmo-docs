@@ -292,6 +292,24 @@ class TestGenerate(unittest.TestCase):
         disallowed = [e for e in errs if not any(re.search(p, e) for p in allowed_pats)]
         self.assertEqual(disallowed, [], f"Status report disallowed errors: {disallowed}")
 
+    def test_non_english_draft_language_exits_2(self):
+        cfg_path = self.root / "pmo/config.yaml"
+        cfg_path.write_text(cfg_path.read_text(encoding="utf-8") + "\nlanguages:\n  draft: xx\n  xx: {label: XX, dir: rtl}\n", encoding="utf-8")
+        doc = self.root / "pmo/documents/Decision log.md"
+        if doc.exists():
+            doc.unlink()
+        code, out, err = tool("generate.py", self.root, "decision-log", "--stdout")
+        self.assertEqual(code, 2)
+        self.assertIn("generator: null", err)
+        self.assertFalse(doc.exists())
+
+    def test_english_with_translations_still_generates(self):
+        cfg_path = self.root / "pmo/config.yaml"
+        cfg_path.write_text(cfg_path.read_text(encoding="utf-8") + "\nlanguages:\n  draft: en\n  translations: [xx]\n  en: {label: EN, dir: ltr}\n  xx: {label: XX, dir: rtl}\n", encoding="utf-8")
+        code, out, err = tool("generate.py", self.root, "decision-log", "--stdout")
+        self.assertEqual(code, 0, err)
+        self.assertIn("Decision log", out)
+
 
 if __name__ == "__main__":
     unittest.main()

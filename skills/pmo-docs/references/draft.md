@@ -11,7 +11,7 @@ Write one draft of one document from its template and the registers. Rules for f
 ## Steps
 
 1. **Identify the document**
-   Take the doc type from `doc_types` in the config; ask if it is unclear. Take the period from the request. With none, use the current month (a weekly document, such as `weekly-plan`, uses the current week: pass `--week`). A type named by `{date}` needs the date of the event: ask.
+   A generator writes English only (`references/conventions.md`). Take the doc type from `doc_types` in the config; ask if it is unclear. Take the period from the request. With none, use the current month (a weekly document, such as `weekly-plan`, uses the current week: pass `--week`). A type named by `{date}` needs the date of the event: ask.
 
 2. **Find the paths**
    Run `python3 ${CLAUDE_SKILL_DIR}/scripts/where.py <type> [period] [--week] [--as-of YYYY-MM-DD]`. Note the document path, the template path, `template_version` and `generated_from`.
