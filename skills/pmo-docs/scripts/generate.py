@@ -64,6 +64,16 @@ def majority_month(window) -> str:
     return (window[0] + datetime.timedelta(days=3)).strftime("%Y-%m")
 
 
+def task_sort_key_for(cfg):
+    """Sort key: priority (vocab.priority_order first, unknown last), then due date (unset last), then id number."""
+    order = cfg.get("vocab", {}).get("priority_order") or []
+
+    def key(t):
+        p, d = t.get("priority"), str(t.get("due") or "")
+        return ((p not in order, order.index(p) if p in order else 0, str(p)), not d, d, id_number(t.get("id")))
+    return key
+
+
 def id_number(v):
     s = str(v or "")
     if "-" in s:
@@ -72,6 +82,18 @@ def id_number(v):
         if m:
             return int(m.group(0))
     return 0
+
+
+def partition_tasks_by_team(tasks, teams_reg):
+    """(teams in order, {team id: [tasks]}, tasks without a known team). A task's team matches a team id or heading, ignoring case."""
+    teams_sorted = sorted(teams_reg, key=lambda tm: (tm.get("order") if tm.get("order") is not None else 999, id_number(tm.get("id"))))
+    team_tasks = {tm.get("id"): [] for tm in teams_sorted}
+    no_team_tasks = []
+    for t in tasks:
+        raw_team = str(t.get("team") or "").strip().lower()
+        tm = next((tm for tm in teams_sorted if raw_team and raw_team in (str(tm.get("id") or "").lower(), str(tm.get("heading") or "").lower())), None)
+        (team_tasks[tm.get("id")] if tm else no_team_tasks).append(t)
+    return teams_sorted, team_tasks, no_team_tasks
 
 
 def format_id_list(val):
@@ -297,33 +319,10 @@ def generate_team_checklist(ctx: Ctx) -> Filled:
     blocked = sum(1 for t in tasks if t.get("status") in task_blocked)
 
     # Sort priorities
-    prio_order = ctx.cfg.get("vocab", {}).get("priority_order") or []
-    def prio_key(p):
-        return (p not in prio_order, prio_order.index(p) if p in prio_order else 0, str(p))
-
-    def task_sort_key(t):
-        p = t.get("priority")
-        d = str(t.get("due") or "")
-        return (prio_key(p), not bool(d), d, id_number(t.get("id")))
+    task_sort_key = task_sort_key_for(ctx.cfg)
 
     # Team matching
-    teams_reg = ctx.data.get("teams", [])
-    teams_sorted = sorted(teams_reg, key=lambda tm: (tm.get("order") if tm.get("order") is not None else 999, id_number(tm.get("id"))))
-
-    # Match each task to a team
-    team_tasks = {tm.get("id"): [] for tm in teams_sorted}
-    no_team_tasks = []
-
-    for t in tasks:
-        raw_team = str(t.get("team") or "").strip().lower()
-        matched = False
-        for tm in teams_sorted:
-            if raw_team and (raw_team == str(tm.get("id") or "").lower() or raw_team == str(tm.get("heading") or "").lower()):
-                team_tasks[tm.get("id")].append(t)
-                matched = True
-                break
-        if not matched:
-            no_team_tasks.append(t)
+    teams_sorted, team_tasks, no_team_tasks = partition_tasks_by_team(tasks, ctx.data.get("teams", []))
 
     # Build slot blocks
     team_blocks = []
@@ -475,31 +474,9 @@ def generate_project_plan(ctx: Ctx) -> Filled:
     all_tasks = ctx.data.get("tasks", [])
     open_tasks = [t for t in all_tasks if t.get("status") not in task_closed]
 
-    prio_order = ctx.cfg.get("vocab", {}).get("priority_order") or []
-    def prio_key(p):
-        return (p not in prio_order, prio_order.index(p) if p in prio_order else 0, str(p))
+    task_sort_key = task_sort_key_for(ctx.cfg)
 
-    def task_sort_key(t):
-        p = t.get("priority")
-        d = str(t.get("due") or "")
-        return (prio_key(p), not bool(d), d, id_number(t.get("id")))
-
-    teams_reg = ctx.data.get("teams", [])
-    teams_sorted = sorted(teams_reg, key=lambda tm: (tm.get("order") if tm.get("order") is not None else 999, id_number(tm.get("id"))))
-
-    team_tasks = {tm.get("id"): [] for tm in teams_sorted}
-    no_team_tasks = []
-
-    for t in open_tasks:
-        raw_team = str(t.get("team") or "").strip().lower()
-        matched = False
-        for tm in teams_sorted:
-            if raw_team and (raw_team == str(tm.get("id") or "").lower() or raw_team == str(tm.get("heading") or "").lower()):
-                team_tasks[tm.get("id")].append(t)
-                matched = True
-                break
-        if not matched:
-            no_team_tasks.append(t)
+    teams_sorted, team_tasks, no_team_tasks = partition_tasks_by_team(open_tasks, ctx.data.get("teams", []))
 
     team_blocks = []
     for tm in teams_sorted:
@@ -702,22 +679,7 @@ def generate_status_report(ctx: Ctx) -> Filled:
     progress_by_priority_body = pc.md_table(["Priority", "Done / Total", "In progress", "Blocked", "RAG", "Comment"], prio_rows).strip()
 
     # 2. Progress by team
-    teams_reg = ctx.data.get("teams", [])
-    teams_sorted = sorted(teams_reg, key=lambda tm: (tm.get("order") if tm.get("order") is not None else 999, id_number(tm.get("id"))))
-
-    team_tasks = {tm.get("id"): [] for tm in teams_sorted}
-    no_team_tasks = []
-
-    for t in counted:
-        raw_team = str(t.get("team") or "").strip().lower()
-        matched = False
-        for tm in teams_sorted:
-            if raw_team and (raw_team == str(tm.get("id") or "").lower() or raw_team == str(tm.get("heading") or "").lower()):
-                team_tasks[tm.get("id")].append(t)
-                matched = True
-                break
-        if not matched:
-            no_team_tasks.append(t)
+    teams_sorted, team_tasks, no_team_tasks = partition_tasks_by_team(counted, ctx.data.get("teams", []))
 
     team_rows = []
     for tm in teams_sorted:
@@ -900,12 +862,7 @@ def main(argv=None) -> int:
         ap.error(str(e))
 
     pattern = info.get("name", "{title}.md")
-    if "{period}" in pattern:
-        try:
-            window = pc.period_range(period, w_start)
-        except ValueError as e:
-            ap.error(str(e))
-    elif args.period or args.week:
+    if "{period}" in pattern or args.period or args.week:
         try:
             window = pc.period_range(period, w_start)
         except ValueError as e:
