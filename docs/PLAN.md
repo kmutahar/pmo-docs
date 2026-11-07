@@ -16,7 +16,7 @@ Effort: S = under an hour, M = one session, L = several sessions.
 |---|---|---|---|
 | v0.1 | Core skill: registers, views, templates and checks, setup, plugin manifest | git history up to tag `v0.1.0` | released 2026-11-05 (UTC) |
 | v0.2 | Generators, calendar, publishing with `init` and `publish` commands, playbook overrides and drift warnings, catalogue | git history up to tag `v0.2.0` | released 2026-11-06 (UTC) |
-| v0.3 | Languages and translation, intake from chat exports | [`plans/v0.3.md`](plans/v0.3.md) | planned |
+| v0.3 | Languages and translation, intake from chat exports | [`plans/v0.3.md`](plans/v0.3.md) | built (W1 to W11), not released |
 | v0.4 | Stacks, technical and domain templates, their registers | [`plans/v0.4.md`](plans/v0.4.md) | planned |
 | v0.5 | Other agents and unattended runs: launcher, schedule, shared hook | [`plans/v0.5.md`](plans/v0.5.md) | planned |
 | 1.0 | Stable formats, `renumber.py` for duplicate ids, upgrade test, config reference test | [`plans/v1.0.md`](plans/v1.0.md) | planned |
