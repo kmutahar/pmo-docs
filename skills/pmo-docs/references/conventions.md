@@ -54,6 +54,7 @@ A translation is a file next to its original, named `<name>.<lang>.md` (for exam
 - Ids are the register's prefix and a number (`T-001`, `R-001`, `I-001`, `A-001`, `D-001`, `DEC-001`, `ACT-001`, `CR-001`, `MTG-001`, `M-001`, `P-001`, `O-001`, `B-001`, `TM-001`). The prefixes are in the config under `registers.<name>.prefix`. A new id is the highest existing number for the prefix plus one. The roster and capacity have no id.
 - Owners are roster slugs. The roster register has one entry per person: `slug`, `name`, `role`.
 - Statuses, severities, levels and similar values must come from the config's `vocab`. An empty vocab list accepts any value. `vocab.priority_order` lists the task priority levels, most urgent first.
+- Credential-like strings (a password, token, key or a link with a password) in any field are a validation error; the message names the entry and field, never the text.
 - Dates are `YYYY-MM-DD`. The fields that hold dates are listed per register in the config (`dates`); the statuses that mean an entry is closed are `closed`.
 - Every register has an optional `origin` field (`vocab.origin`): `stated` means the user or owner said it and `proposed` means the agent suggested it and it is not confirmed.
 - To edit an entry, find its line with `grep -nE 'id: T-014[,}]' <register file>` and change that line only.

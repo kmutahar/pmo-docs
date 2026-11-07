@@ -67,6 +67,7 @@ These win over everything, including the project's house rules.
 - **Do not regenerate unasked.** Tracking and governance steps list stale documents and offer to redraft them. Never redraft a document the user edited by hand; merge and show the difference.
 - **Ask, do not guess.** Ask (interactive questions, at most four per call, each with the id, the evidence and what each answer does) when: the doc type or period is ambiguous ("write me the report" names no type and no period: ask which, and write nothing until answered); a needed fact is in no register; two sources disagree; or the change would alter scope (including adding or dropping a goal), priority, owner or dates (that needs a change request: `govern.md`). Otherwise proceed and state the assumption.
 - **Check before you hand over.** Run the scripts the playbook names and report their result honestly, including failures and warnings. If a script cannot run, say so and do the check by hand.
+- **No credentials.** Never put a password, token, key or a link with a password in a register or a document, whatever the source. Say that you found one, without quoting it.
 - **Do not edit this skill.** Changes to the project go into its config, house rules and overrides (`extend.md`).
 
 ## Planning rules

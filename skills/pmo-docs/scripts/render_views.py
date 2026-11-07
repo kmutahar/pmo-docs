@@ -191,6 +191,43 @@ def read_registers(root, cfg):
     return data, errors
 
 
+CREDENTIAL_PATTERNS = [(label, re.compile(rx)) for label, rx in (
+    ("private key header", r"-----BEGIN [A-Z ]*PRIVATE KEY-----"),
+    ("password or secret assignment", r"(?i)\b(?:password|passwd|pwd|secret|api[_-]?key|access[_-]?token|auth[_-]?token|token)\s*(?:=\s*\S+|:\s*(?=\S*\d)\S{8,})"),  # after ':' only a value of 8+ characters with a digit, so "Reset password: done" stays valid
+    ("GitHub token", r"\b(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{20,}|\bgithub_pat_[A-Za-z0-9_]{20,}"),
+    ("API key", r"\bsk-[A-Za-z0-9_-]{20,}|\bAKIA[0-9A-Z]{16}\b|\bAIza[0-9A-Za-z_-]{30,}"),
+    ("chat or bearer token", r"\bxox[abprs]-[A-Za-z0-9-]{10,}|\bBearer\s+[A-Za-z0-9._~+/-]{20,}"),
+    ("JSON web token", r"\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{4,}"),
+    ("URL with a password", r"://[^/\s:@]+:[^/\s@]+@"),
+)]
+
+
+def credential_labels(value) -> list[str]:
+    """Labels of the patterns that match a register value: a string, or the strings inside a list or map. The matched text is never returned."""
+    strings = []
+
+    def collect(v):
+        if isinstance(v, str):
+            strings.append(v)
+        elif isinstance(v, (list, tuple, set)):
+            for item in v:
+                collect(item)
+        elif isinstance(v, dict):
+            for k, val in v.items():
+                if isinstance(k, str):
+                    collect(k)
+                collect(val)
+
+    collect(value)
+    if not strings:
+        return []
+    labels = []
+    for label, rx in CREDENTIAL_PATTERNS:
+        if any(rx.search(s) for s in strings):
+            labels.append(label)
+    return labels
+
+
 def validate(data, cfg):
     errors, seen = [], {}
     vocab = cfg["vocab"]
@@ -204,6 +241,8 @@ def validate(data, cfg):
             for k in r:
                 if k not in allowed and not str(k).startswith("x_"):
                     errors.append(f"{who}: unexpected field '{k}' (an unquoted comma in a value? allowed: {sorted(allowed)})")
+                for label in credential_labels(r[k]):
+                    errors.append(f"{who}: {k} looks like a credential ({label}); remove it, registers never hold credentials")
             if "id" in allowed:
                 if not rid:
                     errors.append(f"{who}: missing id")

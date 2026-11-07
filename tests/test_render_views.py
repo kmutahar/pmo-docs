@@ -304,6 +304,123 @@ class LanguageConfig(unittest.TestCase):
         self.assertFalse((self.views / "tasks.md").exists())
 
 
+class Credentials(unittest.TestCase):
+    def setUp(self):
+        self.root = Path(tempfile.mkdtemp()) / "acme"
+        shutil.copytree(REPO / "examples/acme", self.root)
+        self.cfg = pc.load_config(self.root)
+
+    def tearDown(self):
+        shutil.rmtree(self.root.parent)
+
+    def check_secret(self, secret):
+        data = {"tasks": [{"id": "T-1", "title": "x", "status": "not-started", "notes": secret}]}
+        return render_views.validate(data, self.cfg)
+
+    def test_pattern_private_key_header(self):
+        secret = "-----" + "BEGIN " + "RSA " + "PRIVATE KEY-----"
+        errs = self.check_secret(secret)
+        self.assertTrue(any("looks like a credential (private key header)" in e for e in errs))
+
+    def test_pattern_github_token(self):
+        secret = "gh" + "p_" + "a" * 36
+        errs = self.check_secret(secret)
+        self.assertTrue(any("looks like a credential (GitHub token)" in e for e in errs))
+
+    def test_pattern_api_key(self):
+        secret = "s" + "k-" + "b" * 30
+        errs = self.check_secret(secret)
+        self.assertTrue(any("looks like a credential (API key)" in e for e in errs))
+
+    def test_pattern_bearer_token(self):
+        secret = "Bear" + "er " + "c" * 25
+        errs = self.check_secret(secret)
+        self.assertTrue(any("looks like a credential (chat or bearer token)" in e for e in errs))
+
+    def test_pattern_jwt(self):
+        secret = "ey" + "Jh" + "a" * 10 + "." + "ey" + "Jb" + "b" * 10 + "." + "c" * 10
+        errs = self.check_secret(secret)
+        self.assertTrue(any("looks like a credential (JSON web token)" in e for e in errs))
+
+    def test_pattern_url_with_password(self):
+        secret = "ht" + "tps://" + "user:pass@" + "local" + "host/api"
+        errs = self.check_secret(secret)
+        self.assertTrue(any("looks like a credential (URL with a password)" in e for e in errs))
+
+    def test_pattern_password_assignment(self):
+        secret = "pass" + "word=" + "secret123"
+        errs = self.check_secret(secret)
+        self.assertTrue(any("looks like a credential (password or secret assignment)" in e for e in errs))
+
+    def test_pattern_password_after_colon(self):
+        for secret in ("pass" + "word: " + "Example-Pa55-zz", "tok" + "en:" + "a1b2c3d4e5"):
+            errs = self.check_secret(secret)
+            self.assertTrue(any("looks like a credential (password or secret assignment)" in e for e in errs), secret)
+
+    def test_found_in_any_field(self):
+        token = "gh" + "p_" + "x" * 25
+        d1 = {"tasks": [{"id": "T-1", "title": "t", "status": "not-started", "notes": token}]}
+        errs1 = render_views.validate(d1, self.cfg)
+        self.assertTrue(any("notes looks like a credential" in e for e in errs1))
+
+        d2 = {"tasks": [{"id": "T-1", "title": "t", "status": "not-started", "x_extra": token}]}
+        errs2 = render_views.validate(d2, self.cfg)
+        self.assertTrue(any("x_extra looks like a credential" in e for e in errs2))
+
+        d3 = {"tasks": [{"id": "T-1", "title": "t", "status": "not-started", "notes": ["keep", token]}]}
+        errs3 = render_views.validate(d3, self.cfg)
+        self.assertTrue(any("notes looks like a credential" in e for e in errs3))
+
+    def test_message_never_repeats_the_secret(self):
+        secret = "s" + "k-" + "supersecretstring1234567890"
+        data = {"tasks": [{"id": "T-42", "title": "t", "status": "not-started", "notes": secret}]}
+        errs = render_views.validate(data, self.cfg)
+        cred_errs = [e for e in errs if "looks like a credential" in e]
+        self.assertTrue(cred_errs)
+        for e in cred_errs:
+            self.assertNotIn(secret, e)
+            self.assertIn("tasks T-42", e)
+            self.assertIn("notes", e)
+
+    def test_ordinary_text_is_not_flagged(self):
+        phrases = [
+            "Rotate the API key before launch",
+            "Reset password flow",
+            "token refresh fails",
+            "Use the secret manager",
+            "Meeting at 10:30",
+            "Reset password: done",
+            "Token: see the vault",
+            "Secret: rotated on Friday",
+        ]
+        for phrase in phrases:
+            data = {"tasks": [{"id": "T-1", "title": phrase, "status": "not-started", "notes": phrase}]}
+            errs = render_views.validate(data, self.cfg)
+            cred_errs = [e for e in errs if "looks like a credential" in e]
+            self.assertEqual(cred_errs, [], f"flagged ordinary text: {phrase}")
+
+    def test_cli_exits_1_and_writes_no_views(self):
+        views_folder = self.root / "pmo/views"
+        for v in views_folder.glob("*.md"):
+            v.unlink()
+        secret = "gh" + "p_" + "z" * 30
+        task_file = self.root / "pmo/registers/tasks.yaml"
+        with open(task_file, "a", encoding="utf-8") as f:
+            f.write(f'  - {{id: T-99, title: leak, status: not-started, notes: "{secret}"}}\n')
+        code, out = run(self.root)
+        self.assertEqual(code, 1)
+        self.assertIn("looks like a credential", out)
+        self.assertNotIn(secret, out)
+        self.assertEqual(list(views_folder.glob("*.md")), [])
+
+    def test_acme_still_valid(self):
+        data, read_errors = render_views.read_registers(self.root, self.cfg)
+        self.assertEqual(read_errors, [])
+        errors = render_views.validate(data, self.cfg)
+        self.assertEqual(errors, [])
+
+
+
 class CommittedViews(unittest.TestCase):
     def test_acme_views_are_current(self):
         self.assertEqual(run(REPO / "examples/acme", "--check")[0], 0)
