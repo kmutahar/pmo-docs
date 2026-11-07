@@ -15,3 +15,6 @@ rules:
   - id: "EA3"
     path: "*scripts/_vendor/PyYAML-LICENSE"
     reason: "False positive: the phrase 'NOT LIMITED TO' is licence text"
+  - id: "AST4"
+    path: "*scripts/publish.py"
+    reason: "Runs git rev-parse with an explicit argument list and no shell to verify publish targets"
