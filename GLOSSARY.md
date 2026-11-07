@@ -160,6 +160,10 @@ _Avoid_: master, source document
 A document in another language, next to its original as `<name>.<lang>.md`, with the same headings, tables, ids and numbers.
 _Avoid_: localisation, version
 
+**Parity**:
+The state of a translation that has the same headings, tables, ids and numbers as its original (`parity_check.py`).
+_Avoid_: match, sync
+
 ## Agent work
 
 **Made by**:

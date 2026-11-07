@@ -333,7 +333,7 @@ class Languages(unittest.TestCase):
 
 
 SCRIPTS = Path(__file__).resolve().parents[1] / "skills/pmo-docs/scripts"
-TOOLS = ["docs_audit.py", "generate.py", "overdue.py", "render_views.py", "setup.py", "structure_check.py", "where.py"]
+TOOLS = ["docs_audit.py", "generate.py", "overdue.py", "parity_check.py", "render_views.py", "setup.py", "structure_check.py", "where.py"]
 
 
 class EveryTool(unittest.TestCase):
