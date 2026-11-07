@@ -76,6 +76,15 @@ class ScrubTest(unittest.TestCase):
         msg.write_text("feat: add acmecorp render\n", encoding="utf-8")
         self.assertEqual(run(), 1)
 
+    def test_invalid_name_pattern_is_an_error_not_clean(self):
+        (self.tmp / ".scrub-names").write_text("acme(\n", encoding="utf-8")
+        self.write("a.md", "nothing private\n")
+        self.assertEqual(self.scrub().returncode, 1)
+        msg = self.tmp / "MSG"
+        msg.write_text("feat: add render\n", encoding="utf-8")
+        hook = ROOT / ".githooks/commit-msg"
+        self.assertEqual(subprocess.run(["bash", str(hook), str(msg)], cwd=self.tmp, capture_output=True).returncode, 1)
+
 
 if __name__ == "__main__":
     unittest.main()

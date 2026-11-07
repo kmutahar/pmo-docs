@@ -20,6 +20,9 @@ hits=$(scan -E -e "$generic")
 [ -n "$hits" ] && { echo "== machine paths / emails / phones =="; echo "$hits"; fail=1; }
 
 if [ -s .scrub-names ]; then
+  # an invalid pattern makes git grep fail, and scan hides its errors: that would read as "clean"
+  grep -qiEf .scrub-names /dev/null 2>/dev/null
+  [ $? -eq 2 ] && { echo "error: .scrub-names holds an invalid regex, so names can't be checked" >&2; exit 1; }
   hits=$(scan -iE -f .scrub-names)
   [ -n "$hits" ] && { echo "== blocked names =="; echo "$hits"; fail=1; }
   # commit messages become CHANGELOG entries (git-cliff), so they must be clean too
