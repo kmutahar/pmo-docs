@@ -146,6 +146,20 @@ _Avoid_: export, artifact, published file
 Said of a finished document when a register it was made from has changed since it was finished.
 _Avoid_: outdated, out of date
 
+## Languages
+
+**Language**:
+A language documents are written in (the draft language, `languages.draft`) or translated into (a translation language).
+_Avoid_: locale
+
+**Original**:
+The document a translation is made from.
+_Avoid_: master, source document
+
+**Translation**:
+A document in another language, next to its original as `<name>.<lang>.md`, with the same headings, tables, ids and numbers.
+_Avoid_: localisation, version
+
 ## Agent work
 
 **Made by**:

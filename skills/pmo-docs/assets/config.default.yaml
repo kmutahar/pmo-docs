@@ -18,6 +18,19 @@ paths:
   # project playbooks that replace the skill playbook of the same path
   playbooks: pmo/playbooks
 
+# Languages. A project that does not set this block writes English only.
+# draft: the code of the language documents are written in. translations: the codes of the other languages.
+# Every code has a block: label (short name) and dir (ltr or rtl). Optional keys per language:
+#   glossary: approved term list, a Markdown file inside the project; the proposed list sits next to it
+#   digits: the ten characters for 0 to 9, when the language does not write 0123456789
+#   connectors: the words for of, to and and between two numbers, as in 3 of 5
+#   separators: characters used as a decimal or thousands mark between digits
+# Quote a code that YAML would read as something else (no, on, off, yes).
+languages:
+  draft: en
+  translations: []
+  en: { label: EN, dir: ltr }
+
 # Vocabulary: the values each entry field may take. An empty list means any value is accepted.
 vocab:
   task_status: [not-started, in-progress, blocked, done, dropped]
@@ -39,9 +52,9 @@ registers:
     file: tasks.yaml
     view: tasks.md
     prefix: T
-    fields: [id, title, team, group, priority, owner, status, due, period, notes, origin]
+    fields: [id, title, team, group, priority, owner, status, due, done_on, period, notes, origin]
     enums: {status: task_status, priority: priority_order, origin: origin}
-    dates: [due]
+    dates: [due, done_on]
     closed: [done, dropped]
     # blocked and active: statuses that count as blocked and in progress (generators, RAG)
     blocked: [blocked]
@@ -157,6 +170,7 @@ registers:
 # Doc types. name is the file name; {period} is the month (YYYY-MM) or the week.
 # generated_from lists every register the template reads (checked for staleness).
 # stale_days: warn when a finished document is older than this many days.
+# translate: in-period (default) or after-close, when translations are made. translations: codes that replace languages.translations for this type; [] means none.
 doc_types:
   status-report:
     title: Status report
@@ -172,6 +186,7 @@ doc_types:
     template: overdue-report.md
     name: "{period} - {title}.md"
     generated_from: [tasks, milestones, actions, risks, issues]
+    translations: []
     publish: false
     when: mid-month or on demand before review meetings
     regenerate: when tasks or actions are updated
@@ -180,6 +195,7 @@ doc_types:
     template: docs-audit-report.md
     name: "{period} - {title}.md"
     generated_from: []
+    translations: []
     publish: false
     when: monthly before project review
     regenerate: after fixing reported issues

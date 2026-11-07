@@ -35,7 +35,7 @@ Add, change or close entries in the registers. Rules on status, consent and prop
 
 | User says | You do |
 |---|---|
-| "T-014 is done", "in progress", "blocked", "dropped" | Set `status` on that line. `done` follows the definition of done in `SKILL.md`. For `blocked`, put the reason in `notes` and ask who can unblock it. Evidence from git or a checklist only suggests a change: say what it is and wait for a yes. |
+| "T-014 is done", "in progress", "blocked", "dropped" | Set `status` on that line. `done` follows the definition of done in `SKILL.md`, which also says when to set `done_on` (for `done` and `dropped`). For `blocked`, put the reason in `notes` and ask who can unblock it. Evidence from git or a checklist only suggests a change: say what it is and wait for a yes. |
 | "add a task" | New `T-` entry with `status: not-started`. Ask for any of title, team, group, priority, owner, period and due that is missing. |
 | "add a goal, milestone, objective, budget item" | New `P-` (goal), `M-`, `O-` or `B-` entry. A new goal, or a date or owner change on an existing milestone, is a scope change (step 3). A task's priority is a level, not a goal (`SKILL.md`, Working rules). |
 | "add a team", "change a team's owners" | One `TM-` entry per team in `teams`: `order`, `heading`, `owners`. Owners are roster slugs. |

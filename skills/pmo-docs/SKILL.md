@@ -27,6 +27,7 @@ Work from the project root (the folder that holds `pmo/`). If `pmo/config.yaml` 
 | to finish a draft ("ready", "finish it") | `references/finish.md` |
 | to publish documents | tell the user to type `/pmo-docs:publish`; do not publish from this skill |
 | to add, change or close tasks, risks, issues, assumptions, dependencies, actions, meetings, objectives, budget, milestones, capacity, people, goals or teams; "mark X done"; a pasted message with tasks | `references/track.md` |
+| to add a language | `references/extend.md` |
 | a project plan, charter, roadmap, weekly plan, capacity plan or team checklist | `references/plan.md` |
 | a change request, decision, sign-off, definition of done, minutes or retrospective | `references/govern.md` |
 | a new doc type, register, recipe, template override or config change | `references/extend.md` |
@@ -109,7 +110,7 @@ A finished document is stale when a register in its `generated_from` changed aft
 
 ## Definition of done
 
-A task is marked `done` only when the user confirms that it was tested (QA passed), or agrees to record that it was not. In the second case the entry's `notes` say `no test evidence recorded`. Never mark a task done from git history alone. A project can say in its house rules which tasks need QA; it cannot remove this rule.
+A task is marked `done` only when the user confirms that it was tested (QA passed), or agrees to record that it was not. In the second case the entry's `notes` say `no test evidence recorded`. When a task is closed (`done` or `dropped`), set `done_on` to the date it was finished or dropped: today unless the user names a date. Never mark a task done from git history alone. A project can say in its house rules which tasks need QA; it cannot remove this rule.
 
 ## Scripts
 

@@ -42,6 +42,18 @@ When the default template advances its version, `docs_audit.py` reports drift. C
 
 Put only what differs in `pmo/config.yaml`: maps merge, lists replace, `null` removes a map entry. Typical changes are the priority order, the vocabularies, the paths and `stale_days`. Renaming a key that the skill's defaults define breaks the project's documents and templates: say so before doing it.
 
+## Add a language
+
+1. Add the language to `languages` in `pmo/config.yaml` (codes are 2 or 3 letters; quote one YAML would read as something else, such as `no`). Existing documents are not translated until you ask.
+   ```yaml
+   languages:
+     translations: [xx]
+     xx: { label: XX, dir: rtl, glossary: pmo/data/glossary-xx.md }
+   ```
+2. `glossary` is a Markdown file inside the project; the proposed list sits next to it as `<name>.proposed.md`. `digits`, `connectors` and `separators` are optional (`references/conventions.md`).
+3. To change when or where a type is translated, set `doc_types.<type>.translate` (`in-period` or `after-close`) and `doc_types.<type>.translations` (a list that replaces `languages.translations`; `[]` means none).
+4. Run `render_views.py`; it checks the new keys.
+
 ## Do not
 
 - Edit `SKILL.md`, the skill's templates or its scripts.

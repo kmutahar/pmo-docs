@@ -37,7 +37,7 @@ def one_line_entries(text):
     return all(re.match(r"\s*- ", ln) for ln in lines[1:])
 
 
-def config_errors(cfg):
+def config_errors(cfg, root=None):
     """Registers in the config that lack `file`, `view` or `fields`, bad week_start, or invalid blocked/active statuses."""
     errors = [f"config: register `{n}` needs `{k}`" for n, r in cfg["registers"].items() for k in ("file", "view", "fields")
               if not isinstance(r, dict) or not r.get(k)]
@@ -67,6 +67,105 @@ def config_errors(cfg):
                 v = info.get(k)
                 if v is not None and not isinstance(v, str):
                     errors.append(f"config: doc_types.{dt}.{k} must be text")
+
+    langs = cfg.get("languages")
+    if langs is not None:
+        if not isinstance(langs, dict):
+            errors.append("config: languages must be a map")
+        else:
+            draft = langs.get("draft")
+            if "draft" in langs:
+                if not isinstance(draft, str):
+                    errors.append(f"config: languages.draft `{draft}` must be text (quote it if YAML parsed it as a boolean)")
+                elif not pc.LANG_CODE.fullmatch(draft):
+                    errors.append(f"config: languages.draft `{draft}` must match {pc.LANG_CODE.pattern}")
+
+            trans = langs.get("translations")
+            if "translations" in langs:
+                if not isinstance(trans, list):
+                    errors.append("config: languages.translations must be a list")
+                else:
+                    seen_trans = set()
+                    for t in trans:
+                        if not isinstance(t, str):
+                            errors.append(f"config: languages.translations entry `{t}` must be text (quote it if YAML parsed it as a boolean)")
+                        elif not pc.LANG_CODE.fullmatch(t):
+                            errors.append(f"config: languages.translations entry `{t}` must match {pc.LANG_CODE.pattern}")
+                        elif isinstance(draft, str) and t == draft:
+                            errors.append(f"config: languages.translations code `{t}` cannot be the draft language")
+                        elif t in seen_trans:
+                            errors.append(f"config: duplicate code `{t}` in languages.translations")
+                        else:
+                            seen_trans.add(t)
+
+            codes_to_check = set()
+            if isinstance(draft, str) and pc.LANG_CODE.fullmatch(draft):
+                codes_to_check.add(draft)
+            if isinstance(trans, list):
+                for t in trans:
+                    if isinstance(t, str) and pc.LANG_CODE.fullmatch(t):
+                        codes_to_check.add(t)
+
+            for code in sorted(codes_to_check):
+                block = langs.get(code)
+                if not isinstance(block, dict):
+                    errors.append(f"config: languages.{code} must be a map with label and dir")
+                else:
+                    label = block.get("label")
+                    if not isinstance(label, str) or not label.strip():
+                        errors.append(f"config: languages.{code}.label must be a non-empty string")
+                    d = block.get("dir")
+                    if d not in ("ltr", "rtl"):
+                        errors.append(f"config: languages.{code}.dir `{d}` must be ltr or rtl")
+
+            for code, block in langs.items():
+                if code in ("draft", "translations") or not isinstance(block, dict):
+                    continue
+                if "glossary" in block:
+                    g = block.get("glossary")
+                    if not isinstance(g, str) or not g.endswith(".md"):
+                        errors.append(f"config: languages.{code}.glossary `{g}` must be a string ending in .md")
+                    elif root is not None and pc.outside(root, g):
+                        errors.append(f"config: languages.{code}.glossary `{g}` must stay inside the project")
+                if "digits" in block:
+                    digs = block.get("digits")
+                    if not isinstance(digs, str) or len(digs) != 10 or len(set(digs)) != 10:
+                        errors.append(f"config: languages.{code}.digits `{digs}` must be a string of ten distinct characters")
+                if "connectors" in block:
+                    conn = block.get("connectors")
+                    if not isinstance(conn, dict):
+                        errors.append(f"config: languages.{code}.connectors must be a map")
+                    else:
+                        allowed_keys = {"of", "to", "and"}
+                        for ck, cv in conn.items():
+                            if ck not in allowed_keys:
+                                errors.append(f"config: languages.{code}.connectors key `{ck}` must be one of {sorted(allowed_keys)}")
+                            elif not isinstance(cv, str) or not cv.strip():
+                                errors.append(f"config: languages.{code}.connectors.{ck} must be a non-empty string")
+                if "separators" in block:
+                    sep = block.get("separators")
+                    if not isinstance(sep, str):
+                        errors.append(f"config: languages.{code}.separators must be text")
+
+    proj_trans = set()
+    if isinstance(langs, dict) and isinstance(langs.get("translations"), list):
+        proj_trans = {t for t in langs["translations"] if isinstance(t, str)}
+
+    for dt, info in (cfg.get("doc_types") or {}).items():
+        if isinstance(info, dict):
+            if "translate" in info:
+                tr = info.get("translate")
+                if tr not in ("in-period", "after-close"):
+                    errors.append(f"config: doc_types.{dt}.translate `{tr}` must be in-period or after-close")
+            if "translations" in info:
+                dtrans = info.get("translations")
+                if not isinstance(dtrans, list):
+                    errors.append(f"config: doc_types.{dt}.translations must be a list")
+                else:
+                    for c in dtrans:
+                        if not isinstance(c, str) or c not in proj_trans:
+                            errors.append(f"config: doc_types.{dt}.translations code `{c}` not in languages.translations")
+
     return errors
 
 
@@ -193,7 +292,7 @@ def main(argv=None):
     if not Path(args.project).is_dir():
         ap.error(f"project folder not found: {args.project}")
     cfg = pc.load_config(args.project)
-    if bad := config_errors(cfg):
+    if bad := config_errors(cfg, root=args.project):
         print("\n".join("ERROR " + e for e in bad))
         return 2
     data, errors = read_registers(args.project, cfg)

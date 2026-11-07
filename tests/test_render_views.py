@@ -10,6 +10,7 @@ REPO = Path(__file__).resolve().parents[1]
 TOOL = REPO / "skills/pmo-docs/scripts/render_views.py"
 sys.path.insert(0, str(REPO / "skills/pmo-docs/scripts"))
 import pmo_common as pc  # noqa: E402
+import render_views  # noqa: E402
 
 
 
@@ -213,6 +214,94 @@ class RenderViews(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertIn("must be text", out)
 
+    def test_done_on_date_error_and_acme_task_valid(self):
+        code, out = run(self.root)
+        self.assertEqual(code, 0, out)
+        self.append("tasks", "  - {id: T-99, title: x, status: done, done_on: '2026-13-01'}")
+        code, out = run(self.root)
+        self.assertEqual(code, 1)
+        self.assertIn("done_on '2026-13-01' is not a YYYY-MM-DD date", out)
+
+
+class LanguageConfig(unittest.TestCase):
+    def setUp(self):
+        self.root = Path(tempfile.mkdtemp()) / "acme"
+        shutil.copytree(REPO / "examples/acme", self.root)
+        self.views = self.root / "pmo/views"
+        for v in self.views.glob("*.md"):
+            v.unlink()
+        self.defaults = pc.load_config(self.root)
+
+    def tearDown(self):
+        shutil.rmtree(self.root.parent)
+
+    def test_valid_config_returns_empty(self):
+        errs = render_views.config_errors(self.defaults, root=self.root)
+        self.assertEqual(errs, [])
+        valid_custom = pc.merge(self.defaults, {
+            "languages": {
+                "translations": ["xx"],
+                "xx": {"label": "XX", "dir": "rtl"}
+            }
+        })
+        self.assertEqual(render_views.config_errors(valid_custom, root=self.root), [])
+
+    def test_bad_dir(self):
+        cfg = pc.merge(self.defaults, {"languages": {"en": {"dir": "up"}}})
+        errs = render_views.config_errors(cfg, root=self.root)
+        self.assertTrue(any("languages.en.dir `up` must be ltr or rtl" in e for e in errs))
+
+    def test_translation_equal_to_draft(self):
+        cfg = pc.merge(self.defaults, {"languages": {"translations": ["en"]}})
+        errs = render_views.config_errors(cfg, root=self.root)
+        self.assertTrue(any("languages.translations code `en` cannot be the draft language" in e for e in errs))
+
+    def test_translation_without_block(self):
+        cfg = pc.merge(self.defaults, {"languages": {"translations": ["xx"]}})
+        errs = render_views.config_errors(cfg, root=self.root)
+        self.assertTrue(any("languages.xx must be a map with label and dir" in e for e in errs))
+
+    def test_non_string_code_mentions_quoting(self):
+        cfg = pc.merge(self.defaults, {"languages": {"translations": [False]}})
+        errs = render_views.config_errors(cfg, root=self.root)
+        self.assertTrue(any("quote" in e.lower() for e in errs))
+
+    def test_digits_nine_characters(self):
+        cfg = pc.merge(self.defaults, {"languages": {"en": {"digits": "123456789"}}})
+        errs = render_views.config_errors(cfg, root=self.root)
+        self.assertTrue(any("digits `123456789` must be a string of ten distinct characters" in e for e in errs))
+
+    def test_unknown_connectors_key(self):
+        cfg = pc.merge(self.defaults, {"languages": {"en": {"connectors": {"with": "and"}}}})
+        errs = render_views.config_errors(cfg, root=self.root)
+        self.assertTrue(any("connectors key `with` must be one of ['and', 'of', 'to']" in e for e in errs))
+
+    def test_glossary_outside_project_or_not_md(self):
+        cfg1 = pc.merge(self.defaults, {"languages": {"en": {"glossary": "../glossary.md"}}})
+        errs1 = render_views.config_errors(cfg1, root=self.root)
+        self.assertTrue(any("must stay inside the project" in e for e in errs1))
+
+        cfg2 = pc.merge(self.defaults, {"languages": {"en": {"glossary": "glossary.txt"}}})
+        errs2 = render_views.config_errors(cfg2, root=self.root)
+        self.assertTrue(any("must be a string ending in .md" in e for e in errs2))
+
+    def test_translate_sometimes(self):
+        cfg = pc.merge(self.defaults, {"doc_types": {"status-report": {"translate": "sometimes"}}})
+        errs = render_views.config_errors(cfg, root=self.root)
+        self.assertTrue(any("doc_types.status-report.translate `sometimes` must be in-period or after-close" in e for e in errs))
+
+    def test_type_translations_not_in_languages_translations(self):
+        cfg = pc.merge(self.defaults, {"doc_types": {"status-report": {"translations": ["zz"]}}})
+        errs = render_views.config_errors(cfg, root=self.root)
+        self.assertTrue(any("doc_types.status-report.translations code `zz` not in languages.translations" in e for e in errs))
+
+    def test_cli_exits_2_on_language_error(self):
+        with open(self.root / "pmo/config.yaml", "a", encoding="utf-8") as f:
+            f.write("languages:\n  draft: xx\n")
+        code, out = run(self.root)
+        self.assertEqual(code, 2)
+        self.assertIn("languages.xx", out)
+        self.assertFalse((self.views / "tasks.md").exists())
 
 
 class CommittedViews(unittest.TestCase):

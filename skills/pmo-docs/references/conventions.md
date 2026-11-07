@@ -44,6 +44,9 @@ Every document starts with YAML front matter.
 | `checks` | the template's checks; present in drafts, removed by Finish |
 | `source_hashes` | written by Finish: register name to a quoted 8-character hash |
 | `based_on` | in a template override only: `<type>@<version>` |
+| `lang`, `dir`, `translation_of`, `source_hash` | a translation only: its language code, `ltr` or `rtl`, the original's path relative to `paths.documents`, and the 8-character hash of the original's body when it was translated (quoted). A translation has no `checks` and no `source_hashes`. |
+
+A translation is a file next to its original, named `<name>.<lang>.md` (for example `2026-03 - Status report.xx.md`). It is a translation when its front matter has `translation_of`. Templates do not carry these keys.
 
 ## Registers
 
@@ -62,6 +65,9 @@ Every document starts with YAML front matter.
 - `registers.tasks.blocked`: status values that count as blocked (default `[blocked]`).
 - `registers.tasks.active`: status values marking tasks currently active (default `[in-progress]`).
 - `registers.changes.accepted`: status values marking change requests as accepted (default `[approved, implemented]`).
+- `languages`: `draft` (the language documents are written in, default `en`), `translations` (codes of the other languages, default none) and one block per code with `label`, `dir` (`ltr` or `rtl`) and optionally `glossary` (approved term list, a `.md` file inside the project; the proposed list is `<stem>.proposed.md` next to it), `digits` (ten characters for 0 to 9), `connectors` (words for `of`, `to`, `and` between two numbers) and `separators` (decimal or thousands marks). A missing block means English only. Quote a code YAML would read as something else (`no`, `on`).
+- `doc_types.<type>.translate`: `in-period` (default) or `after-close`, when translations are made. `doc_types.<type>.translations`: codes that replace `languages.translations` for the type; `[]` means none.
+- `registers.tasks` field `done_on` (a date, optional): when a task was finished or dropped.
 - `doc_types.<type>.generator`: `true` to use `generate.py` to pre-fill the document, `false` or `null` to draft via agent.
 - `doc_types.<type>.publish`: `false` excludes the doc type from publishing (e.g. internal audit reports).
 - `doc_types.<type>.when`: text explaining the event or rhythm when the document is made.

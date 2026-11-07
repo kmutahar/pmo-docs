@@ -239,6 +239,99 @@ class Helpers(unittest.TestCase):
         self.assertTrue(any("week_start" in e and "someday" in e for e in errs))
 
 
+class Languages(unittest.TestCase):
+    def test_missing_block_is_english_only(self):
+        c = pc.load_config(Path(__file__).resolve().parents[1] / "examples/acme")
+        info = pc.languages(c)
+        self.assertEqual(info["draft"], "en")
+        self.assertEqual(info["translations"], [])
+        self.assertEqual(info["info"]["en"]["dir"], "ltr")
+
+    def test_project_block_merges(self):
+        base = pc.load_config(Path(__file__).resolve().parents[1] / "examples/acme")
+        merged = pc.merge(base, {
+            "languages": {
+                "translations": ["xx"],
+                "xx": {"label": "XX", "dir": "rtl"}
+            }
+        })
+        info = pc.languages(merged)
+        self.assertEqual(info["info"]["xx"]["dir"], "rtl")
+
+    def test_type_translations_and_flag(self):
+        base = pc.load_config(Path(__file__).resolve().parents[1] / "examples/acme")
+        merged = pc.merge(base, {
+            "languages": {
+                "translations": ["xx"],
+                "xx": {"label": "XX", "dir": "rtl"}
+            }
+        })
+        self.assertEqual(pc.type_translations(merged, "status-report"), ["xx"])
+        overridden = pc.merge(merged, {
+            "doc_types": {
+                "status-report": {"translations": []}
+            }
+        })
+        self.assertEqual(pc.type_translations(overridden, "status-report"), [])
+        self.assertEqual(pc.type_translations(merged, "docs-audit-report"), [])
+        self.assertEqual(pc.type_translations(merged, "overdue-report"), [])
+        self.assertEqual(pc.translate_flag(merged, "status-report"), "in-period")
+        with_flag = pc.merge(merged, {
+            "doc_types": {
+                "status-report": {"translate": "after-close"}
+            }
+        })
+        self.assertEqual(pc.translate_flag(with_flag, "status-report"), "after-close")
+
+    def test_translation_rel(self):
+        self.assertEqual(
+            pc.translation_rel("pmo/documents/2026-03 - Status report.md", "xx"),
+            "pmo/documents/2026-03 - Status report.xx.md"
+        )
+        with self.assertRaises(ValueError):
+            pc.translation_rel("notes.txt", "xx")
+
+    def test_body_hash_ignores_front_matter_comments_and_blank_lines(self):
+        draft = (
+            "---\n"
+            "status: draft\n"
+            "---\n"
+            "<!-- draft comment -->\n"
+            "\n"
+            "# Title\n"
+            "\n"
+            "Paragraph text.  \n"
+            "<!-- another comment -->\n"
+        )
+        finished = (
+            "---\n"
+            "status: finished\n"
+            "source_hashes:\n"
+            "  tasks: 12345678\n"
+            "---\n"
+            "# Title\n"
+            "Paragraph text.\n"
+        )
+        h1 = pc.body_hash(draft)
+        h2 = pc.body_hash(finished)
+        self.assertEqual(len(h1), 8)
+        self.assertEqual(h1, h2)
+        different = finished + "\nExtra word.\n"
+        self.assertNotEqual(h1, pc.body_hash(different))
+
+    def test_glossary_paths(self):
+        base = pc.load_config(Path(__file__).resolve().parents[1] / "examples/acme")
+        cfg = pc.merge(base, {
+            "languages": {
+                "xx": {"glossary": "pmo/data/glossary-xx.md"}
+            }
+        })
+        approved, proposed = pc.glossary_paths(cfg, "xx")
+        self.assertEqual(approved, "pmo/data/glossary-xx.md")
+        self.assertEqual(proposed, "pmo/data/glossary-xx.proposed.md")
+        self.assertEqual(pc.glossary_paths(base, "en"), (None, None))
+
+
 SCRIPTS = Path(__file__).resolve().parents[1] / "skills/pmo-docs/scripts"
 TOOLS = ["docs_audit.py", "generate.py", "overdue.py", "render_views.py", "setup.py", "structure_check.py", "where.py"]
 

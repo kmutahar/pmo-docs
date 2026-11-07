@@ -6,6 +6,7 @@ if sys.version_info < (3, 10):
 
 import copy
 import datetime
+import hashlib
 import re
 from pathlib import Path
 
@@ -16,6 +17,7 @@ import yaml  # noqa: E402  (vendored, loaded only with safe_load)
 SCHEMA_VERSION = 1
 CONFIG = Path("pmo/config.yaml")
 WEEKDAYS = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
+LANG_CODE = re.compile(r"[a-z]{2,3}(-[A-Za-z0-9]{2,8})?")
 
 
 def add_project_arg(parser):
@@ -111,6 +113,79 @@ def split_front_matter(text, strict=False):
         if strict:
             raise
         return {}, text[m.end():]
+
+
+def languages(cfg) -> dict:
+    """{'draft': 'en', 'translations': ['xx'], 'info': {code: block}} from cfg['languages']. A missing or empty block gives English only; 'info' holds the draft code and every translation code (an absent block is {})."""
+    block = cfg.get("languages") if isinstance(cfg, dict) else None
+    if not isinstance(block, dict):
+        block = {}
+    draft = block.get("draft")
+    if not isinstance(draft, str) or not draft:
+        draft = "en"
+    trans = block.get("translations")
+    translations = [t for t in trans if isinstance(t, str)] if isinstance(trans, list) else []
+    codes = [draft] + [t for t in translations if t != draft]
+    info = {}
+    for c in codes:
+        val = block.get(c)
+        info[c] = copy.deepcopy(val) if isinstance(val, dict) else {}
+    return {"draft": draft, "translations": translations, "info": info}
+
+
+def type_translations(cfg, doc_type) -> list[str]:
+    """doc_types.<type>.translations if the key is present (a list, [] = none), else languages.translations."""
+    dt_info = cfg.get("doc_types", {}).get(doc_type) if isinstance(cfg.get("doc_types"), dict) else None
+    if isinstance(dt_info, dict) and "translations" in dt_info:
+        val = dt_info.get("translations")
+        return list(val) if isinstance(val, list) else []
+    return languages(cfg)["translations"]
+
+
+def translate_flag(cfg, doc_type) -> str:
+    """doc_types.<type>.translate, default 'in-period'."""
+    dt_info = cfg.get("doc_types", {}).get(doc_type) if isinstance(cfg.get("doc_types"), dict) else None
+    if isinstance(dt_info, dict):
+        val = dt_info.get("translate")
+        if val is not None:
+            return str(val)
+    return "in-period"
+
+
+def translation_rel(doc_rel: str, lang: str) -> str:
+    """'a/b.md' -> 'a/b.xx.md'. ValueError when doc_rel does not end in '.md'."""
+    if not doc_rel.endswith(".md"):
+        raise ValueError(f"doc_rel must end in '.md': {doc_rel!r}")
+    return doc_rel[:-3] + f".{lang}.md"
+
+
+def body_hash(text: str) -> str:
+    """8 hex characters of the SHA-256 of the document body: front matter removed (split_front_matter), HTML comments removed, every line right-stripped, blank lines dropped, lines joined with one newline, UTF-8."""
+    _, body = split_front_matter(text)
+    body = re.sub(r"<!--.*?-->", "", body, flags=re.S)
+    lines = [ln.rstrip() for ln in body.splitlines()]
+    non_blank = [ln for ln in lines if ln]
+    joined = "\n".join(non_blank)
+    return hashlib.sha256(joined.encode("utf-8")).hexdigest()[:8]
+
+
+def glossary_paths(cfg, lang: str) -> tuple[str | None, str | None]:
+    """(approved, proposed) paths as written in the config, or (None, None) without a glossary. proposed = same folder, '<stem>.proposed.md'."""
+    langs = cfg.get("languages") if isinstance(cfg, dict) else None
+    if not isinstance(langs, dict):
+        return None, None
+    block = langs.get(lang)
+    if not isinstance(block, dict):
+        return None, None
+    g = block.get("glossary")
+    if not isinstance(g, str) or not g.strip():
+        return None, None
+    if g.endswith(".md"):
+        proposed = g[:-3] + ".proposed.md"
+    else:
+        p = Path(g)
+        proposed = f"{p.parent.as_posix()}/{p.stem}.proposed{p.suffix}" if str(p.parent) != "." else f"{p.stem}.proposed{p.suffix}"
+    return g, proposed
 
 
 def doc_type(text):
