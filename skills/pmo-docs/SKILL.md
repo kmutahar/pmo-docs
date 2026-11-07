@@ -1,6 +1,6 @@
 ---
 name: pmo-docs
-description: Project-office and documentation workflow. Keeps a project's facts in registers (tasks, risks, issues, decisions, changes, actions, milestones, people) under pmo/, renders read-only views, and drafts documents (status reports, project plan, charter, roadmap, change requests, meeting minutes, checklists, retrospectives, stakeholder updates, release notes) from templates that scripts check. Use to set up a project office under pmo/, draft or finish a document, track or update entries ("mark T-014 done", log a risk), plan, record a change request or decision, or run weekly-status, monthly-status, month-start, overdue-report and docs-audit. Not for general coding, or personal to-do lists outside a pmo/ project.
+description: Project-office and documentation workflow. Keeps a project's facts in registers (tasks, risks, issues, decisions, changes, actions, milestones, people) under pmo/, renders read-only views, and drafts documents (status reports, project plan, charter, roadmap, change requests, meeting minutes, checklists, retrospectives, stakeholder updates, release notes) from templates that scripts check. Use to set up a project office under pmo/, draft, translate or finish a document, track or update entries ("mark T-014 done", log a risk), plan, record a change request or decision, or run weekly-status, monthly-status, month-start, overdue-report and docs-audit. Not for general coding, or personal to-do lists outside a pmo/ project.
 license: MIT
 compatibility: Needs Python 3.10 or newer on Linux or macOS (Windows through WSL). PyYAML is bundled; nothing to install. Works on the project in the current folder.
 metadata:
@@ -27,6 +27,7 @@ Work from the project root (the folder that holds `pmo/`). If `pmo/config.yaml` 
 | to finish a draft ("ready", "finish it") | `references/finish.md` |
 | to publish documents | tell the user to type `/pmo-docs:publish`; do not publish from this skill |
 | to add, change or close tasks, risks, issues, assumptions, dependencies, actions, meetings, objectives, budget, milestones, capacity, people, goals or teams; "mark X done"; a pasted message with tasks | `references/track.md` |
+| to translate a document, bring a translation back in step, or find where a translation lives | `references/translate.md` |
 | to add a language | `references/extend.md` |
 | a project plan, charter, roadmap, weekly plan, capacity plan or team checklist | `references/plan.md` |
 | a change request, decision, sign-off, definition of done, minutes or retrospective | `references/govern.md` |
@@ -87,13 +88,23 @@ A template is the contract: its front matter declares the checks, `structure_che
 - Keep every heading (text, level, order) and every table's columns exactly. A heading that starts with `{{x}}` is a repeatable slot: write it once per item, or leave it out if there are none. Only one `#` heading.
 - Replace every `{{placeholder}}` and delete every example row. The placeholder `{{lead}}` means an owner: write the person's name from the roster (`roster.yaml` holds the slug, name and role), never a slug, and never a name that is not in the roster.
 - A comment in a template says how to fill its section (safety rule 4 still applies). Follow it and leave it in the draft for the user to see; Finish removes it.
-- Front matter: keep every key. `project` and `manager` come from the config; `period` from the request or `where.py`; `status: draft`; `last_updated` is today; `template_version` is copied from the template.
+- Front matter: keep every key. `project` and `manager` come from the config; `period` from the request or `where.py`; `status: draft`; `last_updated` is today; `template_version` is copied from the template. A translation also has `lang`, `dir`, `translation_of` and `source_hash` (see Translations).
 - Numbers come from the registers and must add up: counts in the prose equal the rows in the tables. Where a template asks for a RAG or a flag, state the rule used in the section that says so.
 - Show register ids in backticks where the template does. Ids are unique within a table.
 - Content the template has no section for goes into the nearest section or `## Open questions`. When a section is `## Open questions` and nothing is open, write `- None`.
 - Dates are `YYYY-MM-DD`, months `YYYY-MM`, weeks `YYYY-Www`. A week starts on `project.week_start` (default Monday) and is named by the ISO week of its fourth day; `where.py` prints its `window`. Give `where.py` the flag `--week` for weekly documents (the weekly-status report, `weekly-plan`) and `--as-of DATE` for types named by `{date}` (change request, meeting minutes). Short sentences, concrete nouns, no filler.
 - Plain Markdown that any converter reads: headings, pipe tables, `- ` lists, `- [ ]` task lists, fenced code. No HTML except the template's comments. You never export to other formats.
 - Changing a template's headings or columns raises its `template_version` by one. Older documents then warn.
+
+## Translations
+
+A translation is a document in another language, next to its original as `<name>.<lang>.md` (`references/conventions.md`). It is made with `references/translate.md`, never unasked.
+
+- It keeps the original's headings, tables, ids and numbers. `parity_check.py` reports no difference before Finish.
+- Ids, paths, dates and code stay as they are. Add nothing to the original's facts and drop nothing.
+- The approved glossary of a language is read only. New terms go to the proposed file next to it; moving a row to the approved file is the user's step.
+- A translation records `source_hash`, not `source_hashes`. It is behind its original when the original's text changed afterwards (`docs_audit.py` compares the hash).
+- A translation is finished only after its original. The original is never edited from a translation.
 
 ## Finish
 
@@ -106,6 +117,7 @@ Finish turns a draft into a finished document. It is defined here once; recipes 
 5. Remove every HTML comment and the `checks:` block from the document.
 6. Run `structure_check.py <file>`. Fix errors until it reports none; report warnings.
 7. Set `status: finished` and `last_updated` to today.
+8. Translations. `where.py` prints `translations` and `translate` for the type. `after-close`: skip, and say translation waits until the period closes. `in-period`: ask once, "Translate into <codes> now?"; on yes, for each language follow `references/translate.md` and Finish the translation: the steps above, with `where.py --lang <code> --hashes`, `source_hash` in place of `source_hashes`, and `parity_check.py` before `structure_check.py`.
 
 A finished document is stale when a register in its `generated_from` changed afterwards (`docs_audit.py` compares the hashes). A finished document that is edited goes back to `status: draft` and loses `source_hashes`.
 

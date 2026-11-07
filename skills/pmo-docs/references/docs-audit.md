@@ -28,7 +28,7 @@ Run as `docs-audit [--fix]` (`--fix` is a recipe flag, not a script flag: `docs_
    Fill the template (`references/draft.md` steps 4 to 8): one summary row per check with its count (0 is a valid count), findings with severity (high is wrong or contradicts the code, medium is stale or missing, low is naming or front matter), evidence as a file and line or the command, and a suggested fix. Anything not run goes under Not checked.
 
 5. **Fixes (only with `--fix`)**
-   Fix only drafts under `paths.documents`: missing front matter keys and draft file names. Show the planned changes first (`SKILL.md` Safety rule 3). List every change under Fixes applied. Drift findings for templates and playbooks are listed and the fix is offered (updating `based_on` after comparing with the default), never applied unasked. Otherwise write "None (no fixes requested)". A stale finished document is listed and a redraft is offered, never done.
+   Fix only drafts under `paths.documents`: missing front matter keys and draft file names. Show the planned changes first (`SKILL.md` Safety rule 3). List every change under Fixes applied. Drift findings for templates and playbooks are listed and the fix is offered (updating `based_on` after comparing with the default), never applied unasked. Otherwise write "None (no fixes requested)". A stale finished document is listed and a redraft is offered, never done. A translation behind its original is listed and `references/translate.md` is offered, never run unasked.
 
 
 6. **Reply**
