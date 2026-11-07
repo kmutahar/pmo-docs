@@ -19,7 +19,7 @@ Run as `weekly-status [--week YYYY-Www]`. Produces a draft `status-report` for o
    Run `python3 ${CLAUDE_SKILL_DIR}/scripts/render_views.py --check`. Stop on errors.
 
 3. **Count the period's tasks**
-   Count only tasks whose `period` is the month the window ends in. Done tasks of earlier periods appear on one line ("completed before <period>: N") and stay out of totals, percentages and deltas.
+   Count only tasks whose `period` is the month that holds at least 4 of the window's 7 days (the month of its fourth day; a task with no `period` counts when its `due` falls in the window). Done tasks of earlier periods appear on one line ("completed before <period>: N") and stay out of totals, percentages and deltas.
 
 4. **Git evidence (optional)**
    If the user names folders that hold work, read their history for the window (`references/git.md`) and say "local history as of <date>". With none, write in Notes on data that no git evidence was used.

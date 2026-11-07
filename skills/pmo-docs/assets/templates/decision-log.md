@@ -18,7 +18,7 @@ checks:
 # Decision log - {{project}}
 
 ## Summary
-<!-- one row per decision, newest first; the Decision column holds the decision text, the Status column says whether it is proposed -->
+<!-- one row per decision, in id order; the Decision column holds the decision text, the Status column says whether it is proposed -->
 | ID | Decision | Status | Date | Decided by |
 |---|---|---|---|---|
 | {{id}} | {{decision}} | {{status}} | {{date}} | {{decided_by}} |

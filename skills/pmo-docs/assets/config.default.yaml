@@ -1,4 +1,4 @@
-# Defaults for every project. A project's pmo/config.yaml holds only what differs.
+# Defaults for every project. pmo/config.yaml in a project holds only what differs.
 # Merge rule: maps merge, lists replace, null removes a map entry.
 schema_version: 1
 
