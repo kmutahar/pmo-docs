@@ -16,7 +16,7 @@ Effort: S = under an hour, M = one session, L = several sessions.
 |---|---|---|---|
 | v0.1 | Core skill: registers, views, templates and checks, setup, plugin manifest | git history up to tag `v0.1.0` | released 2026-11-05 (UTC) |
 | v0.2 | Generators, calendar, publishing with `init` and `publish` commands, playbook overrides and drift warnings, catalogue | git history up to tag `v0.2.0` | released 2026-11-06 (UTC) |
-| v0.3 | Languages and translation, intake from chat exports | [`plans/v0.3.md`](plans/v0.3.md) | built (W1 to W11), not released |
+| v0.3 | Languages and translation, intake from chat exports | git history up to tag `v0.3.0` | released 2026-11-09 (UTC) |
 | v0.4 | Stacks, technical and domain templates, their registers | [`plans/v0.4.md`](plans/v0.4.md) | planned |
 | v0.5 | Other agents and unattended runs: launcher, schedule, shared hook | [`plans/v0.5.md`](plans/v0.5.md) | planned |
 | 1.0 | Stable formats, `renumber.py` for duplicate ids, upgrade test, config reference test | [`plans/v1.0.md`](plans/v1.0.md) | planned |
@@ -133,7 +133,7 @@ The skill keeps playbooks in `references/` because the Agent Skills spec names t
 | Cost | About one session plus checks. Template and hook paths move. | Every fix is made twice and the copies drift. |
 | Gain | One engine; a fix helps every project. | No change now. |
 
-Decided by the maintainer in the last package of v0.3, when languages exist. Until then there is no sync.
+Languages now exist (v0.3.0). The maintainer decides before v0.4 starts (v0.4, W0). Until then there is no sync.
 
 ### Not blocking any version
 
@@ -231,5 +231,6 @@ Sources:
 - `dev/release --bump --dry-run`, then release with the explicit version (`dev/release --dry-run X.Y.Z`, then `dev/release X.Y.Z`); in 0.x `--bump` proposes a patch.
 - The dry run's changelog section reads well and holds no private names or machine paths.
 - README roadmap and the version index above: the version marked released, with the date (UTC).
+- Cleanup goes in its own commit before `dev/release`: delete the version's plan file, point the hub row to the new tag, move unfinished work to the next plan. The release commit then holds only `CHANGELOG.md` and the version files.
 - After the release workflow publishes the zip: the install check (`dev/test-install.md`) with `V=<the new version>`.
 - The maintainer approves, commits, tags and pushes (`dev/release` asks twice).
