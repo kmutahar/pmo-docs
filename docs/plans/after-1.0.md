@@ -2,7 +2,7 @@
 
 Status: planned (light packages). Decided with the maintainer on 2026-11-06 (UTC). Hub and settled decisions: [`docs/PLAN.md`](../PLAN.md).
 
-v0.1 to 1.0 are built for one writer per project and are safe for teams: duplicate ids fail validation, `renumber.py` fixes them (1.0), views are deterministic, and the launcher makes a shared hook possible (v0.5). What is left is documents that two people edit.
+Every version up to 1.0 is built for one writer per project and are safe for teams: duplicate ids fail validation, `renumber.py` fixes them (1.0), views are deterministic, and the launcher makes a shared hook possible. What is left is documents that two people edit.
 
 ## Scope
 
