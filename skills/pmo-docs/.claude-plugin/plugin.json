@@ -1,7 +1,7 @@
 {
   "name": "pmo-docs",
   "displayName": "PMO Docs",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A project-office and documentation workflow packaged as an Agent Skill: registers, generated views, document templates and checks.",
   "author": {
     "name": "kmutahar"
