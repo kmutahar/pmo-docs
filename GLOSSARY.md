@@ -221,3 +221,7 @@ _Avoid_: reference, guide, procedure, mode
 **Recipe**:
 A named request with fixed inputs (such as weekly-status) that has its own playbook and produces a draft. It may edit registers, but never publishes or sends.
 _Avoid_: workflow, command, routine, macro
+
+**Schedule**:
+An optional list of recipes and run times in the project config (`schedule`) that records what runs unattended.
+_Avoid_: cron job, scheduled task, automated run, timer

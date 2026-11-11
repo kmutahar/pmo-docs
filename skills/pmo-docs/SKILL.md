@@ -39,6 +39,7 @@ Work from the project root (the folder that holds `pmo/`). If `pmo/config.yaml` 
 | `month-start` | `references/month-start.md` |
 | `overdue-report` | `references/overdue-report.md` |
 | `docs-audit` | `references/docs-audit.md` |
+| to run a recipe on a schedule | `references/schedule.md` |
 | to commit, stage or push | `references/git.md` |
 
 If the request fits none of these, say what you can do (this table) and ask which. If it fits two, do them in order and say so.
