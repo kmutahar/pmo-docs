@@ -21,6 +21,8 @@ All paths come from the config (`paths`), relative to the project root. Defaults
 | `documents` | `pmo/documents` | drafts and finished documents |
 | `house_rules` | `pmo/house-rules.md` | the project's own rules |
 
+Templates and playbooks follow the lookup rule: the project's file in `paths.templates` or `paths.playbooks` wins over the skill's default. Playbook lookup includes subfolders such as `stacks/`: `<paths.playbooks>/stacks/<stack>.md` overrides `references/stacks/<stack>.md`.
+
 ## Where a document lives
 
 Run `python3 ${CLAUDE_SKILL_DIR}/scripts/where.py <type> [period] [--week] [--as-of YYYY-MM-DD] [--hashes] [--title TEXT] [--lang CODE]`. It prints `key: value` lines: the document path and whether it exists, the template path and whether it is the skill's or the project's, `template_version`, `based_on`, `drift`, `generated_from`, `stale_days`, `window` (`YYYY-MM-DD..YYYY-MM-DD`), `translations` (the codes the type translates into, or `none`), `translate` (`in-period` or `after-close`) and, with `--hashes`, `source_hashes`. With `--lang CODE`, `document` is the translation's path and these lines follow it: `original`, `original_exists`, `translation_of` (the value for the front matter, quoted), `lang`, `dir`, `glossary`, `glossary_proposed` (`none` when not configured); `--hashes` then prints `source_hash` (the hash of the original's body, or `none`) instead of `source_hashes`. A code the type does not translate into exits 2.
@@ -43,6 +45,7 @@ Every document starts with YAML front matter.
 | `last_updated` | `YYYY-MM-DD` |
 | `checks` | the template's checks; present in drafts, removed by Finish |
 | `source_hashes` | written by Finish: register name to a quoted 8-character hash |
+| `code_ref` | documents read from code: the commit hash the code was read at (quoted) |
 | `based_on` | in a template override only: `<type>@<version>` |
 | `lang`, `dir`, `translation_of`, `source_hash` | a translation only: its language code, `ltr` or `rtl`, the original's path relative to `paths.documents`, and the 8-character hash of the original's body when it was translated (quoted). A translation has no `checks` and no `source_hashes`. |
 
@@ -51,7 +54,7 @@ A translation is a file next to its original, named `<name>.<lang>.md` (for exam
 ## Registers
 
 - A register file holds a single list named after it. Each entry is one line, a YAML flow mapping: `- { id: T-014, title: ..., owner: alice, status: in-progress, due: YYYY-MM-DD }`. A multi-line entry fails validation.
-- Ids are the register's prefix and a number (`T-001`, `R-001`, `I-001`, `A-001`, `D-001`, `DEC-001`, `ACT-001`, `CR-001`, `MTG-001`, `M-001`, `P-001`, `O-001`, `B-001`, `TM-001`). The prefixes are in the config under `registers.<name>.prefix`. A new id is the highest existing number for the prefix plus one. The roster and capacity have no id.
+- Ids are the register's prefix and a number (`T-001`, `R-001`, `I-001`, `A-001`, `D-001`, `DEC-001`, `ACT-001`, `CR-001`, `MTG-001`, `M-001`, `P-001`, `O-001`, `B-001`, `TM-001`, `REQ-001`, `TST-001`, `ENV-001`, `PERM-001`). The prefixes are in the config under `registers.<name>.prefix`. A new id is the highest existing number for the prefix plus one. The roster and capacity have no id.
 - Owners are roster slugs. The roster register has one entry per person: `slug`, `name`, `role`.
 - Statuses, severities, levels and similar values must come from the config's `vocab`. An empty vocab list accepts any value. `vocab.priority_order` lists the task priority levels, most urgent first.
 - Credential-like strings (a password, token, key or a link with a password) in any field are a validation error; the message names the entry and field, never the text.
@@ -63,6 +66,12 @@ A translation is a file next to its original, named `<name>.<lang>.md` (for exam
 ## Config keys
 
 - `project.week_start`: day of the week a working week starts (`monday`, `tuesday`, ..., `sunday`; default `monday`).
+- `domain.lifecycle_entity`: entity name whose life cycle is described by `entity-lifecycle` (default `null`).
+- `domain.roles`: list of permission roles as named in code (for example `[admin, editor, viewer]`).
+- `technical.stacks`: list of stack names the project code is built on (such as `[nextjs]`).
+- `technical.consumers`: list of systems or teams that call the API, one section each in `integration-guide`.
+- `registers.<name>.refs`: mapping of register field names to target register names (e.g. `tests: tests`). Validation checks that referenced IDs exist in the target register when that register exists.
+- `registers.tasks.done`: status values marking tasks as done (default `[done]`).
 - `registers.tasks.blocked`: status values that count as blocked (default `[blocked]`).
 - `registers.tasks.active`: status values marking tasks currently active (default `[in-progress]`).
 - `registers.changes.accepted`: status values marking change requests as accepted (default `[approved, implemented]`).

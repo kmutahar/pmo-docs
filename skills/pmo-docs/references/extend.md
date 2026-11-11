@@ -29,6 +29,12 @@ When the default template advances its version, `docs_audit.py` reports drift. C
 2. When the skill's default playbook advances its version, `docs_audit.py` reports drift. Compare your override with the default, apply updates, and raise `based_on`.
 3. To add a custom recipe: write `pmo/playbooks/<name>.md` with a `Reads:` line, inputs, numbered steps, and a reply. Use a name no skill playbook has (a playbook with the same name replaces it as an override). Add one line to `pmo/house-rules.md`: "For `<name>`, follow `pmo/playbooks/<name>.md`." House rules win over the routing table.
 
+## Add a stack file
+
+1. To support a new framework or technology, write `pmo/playbooks/stacks/<stack>.md` with front matter `playbook_version: 1`, followed by `Detected by: ...` and `Checked against: ...`, a `#` title, and the six standard `##` headings in order: `Routes, pages or screens`, `Data models`, `Permissions and auth`, `Config and environments`, `Tests`, `List the API live`.
+2. To override a shipped stack file, copy `references/stacks/<stack>.md` to `pmo/playbooks/stacks/<stack>.md` and record `based_on: stacks/<stack>@<version>` in its front matter.
+3. Add the stack slug to `technical.stacks` in `pmo/config.yaml`.
+
 ## Add a register
 
 1. Create `pmo/registers/<name>.yaml`: a header comment and one list named `<name>`, one entry per line (`references/conventions.md`).

@@ -28,6 +28,14 @@ _Avoid_: divergence, desync
 The project's own rules, added to the skill's rules.
 _Avoid_: project rules, conventions, local rules
 
+**Stack**:
+The technology or framework the project code is built on (for example Next.js, Express, Django).
+_Avoid_: technology, tech stack, platform
+
+**Stack file**:
+A one-page reference file (`references/stacks/<stack>.md` or `pmo/playbooks/stacks/<stack>.md`) with standard headings explaining where routes, models, permissions, config and tests live in a stack.
+_Avoid_: tech guide, cheat sheet, framework guide
+
 ## People
 
 **Project manager**:
@@ -80,6 +88,22 @@ _Avoid_: document index, doc list
 The day a project's working week begins (`project.week_start`, default Monday).
 _Avoid_: start of week, calendar start
 
+**Requirement**:
+An entry of the `requirements` register (`REQ-`): a functional or technical condition the product must meet.
+_Avoid_: spec, feature request, demand
+
+**Test**:
+An entry of the `tests` register (`TST-`): a test case or verification item linked to tasks or requirements. Not the same as a check on a document.
+_Avoid_: check, test spec
+
+**Environment**:
+An entry of the `environments` register (`ENV-`): a runtime context (e.g. dev, staging, prod) where the product runs.
+_Avoid_: stage, tier, deployment
+
+**Permission**:
+An entry of the `permissions` register (`PERM-`): an access rule mapping a role or action to an entity or operation.
+_Avoid_: right, privilege, auth rule, ACL
+
 ## Documents
 
 **Doc type**:
@@ -109,6 +133,10 @@ _Avoid_: cycle, sprint, interval
 **Document**:
 One doc type written for one period (or once, where the doc type has no periods). It is a draft until it is finished.
 _Avoid_: doc, output, deliverable
+
+**Technical document**:
+A document drafted from the code or technical registers, such as an API reference, integration guide, architecture overview, user guide or entity lifecycle.
+_Avoid_: engineering doc, code doc, system doc
 
 **Draft**:
 A document that is not finished yet.

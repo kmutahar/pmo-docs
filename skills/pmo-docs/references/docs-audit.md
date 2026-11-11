@@ -15,13 +15,14 @@ Run as `docs-audit [--fix]` (`--fix` is a recipe flag, not a script flag: `docs_
 
 2. **Run the mechanical checks**
    - `python3 ${CLAUDE_SKILL_DIR}/scripts/render_views.py --check`: register validity and stale views.
-   - `python3 ${CLAUDE_SKILL_DIR}/scripts/docs_audit.py`: front matter, stale, old, broken links, template and playbook drift, translations behind their original, and translation parity.
+   - `python3 ${CLAUDE_SKILL_DIR}/scripts/docs_audit.py`: front matter, stale, old, broken links, template and playbook drift (including stack files), translations behind their original, and translation parity.
    - `python3 ${CLAUDE_SKILL_DIR}/scripts/structure_check.py`: documents against their templates.
 
    Each exits 1 on findings. A non-zero exit is a result to report, not a failure of the audit. The template comments a draft keeps are expected: report every other error.
 
 3. **Do the checks by reading**
    - Document against register: a checklist's ticks against `tasks` statuses, and a plan's goals, owners and dependencies against the registers. List the differences both ways.
+   - Commits behind: for each document whose front matter has a `code_ref` other than `not set`, run read-only `git log <code_ref>..HEAD --oneline` and count the commits the document is behind. Skip documents without a `code_ref` or with `not set`.
    - Drift against code: only when the user names the folders that hold the code and the documents that describe it. Compare what the document claims with what the code does, read-only, and report only clear contradictions with a file and line on both sides. Without folders, list the check under Not checked.
 
 4. **Draft the report**

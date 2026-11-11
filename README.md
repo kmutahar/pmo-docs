@@ -19,7 +19,7 @@ The words used here are defined in [`GLOSSARY.md`](GLOSSARY.md).
 ```
 pmo/
   config.yaml      only your settings; defaults come from the skill
-  registers/       tasks, risks, issues, decisions, ...
+  registers/       tasks, risks, issues, decisions, requirements, tests, environments, permissions, ...
   views/           generated summaries and catalogue (commit them)
   documents/       drafts and finished documents
   templates/       only the templates you changed or added
@@ -29,7 +29,7 @@ pmo/
 
 Setup asks a few questions (project name, project manager, priority order; the week start only if you mention weeks), shows the files it will write and waits for your yes. It never overwrites a file.
 
-Supported doc types: project charter, project plan, roadmap, weekly plan, capacity plan, team checklist, weekly/monthly status report, stakeholder update, release notes, change request, meeting minutes, decision log, delivery report, retrospective, overdue report, and docs audit report.
+Supported doc types: project charter, project plan, roadmap, weekly plan, capacity plan, team checklist, weekly/monthly status report, stakeholder update, release notes, change request, meeting minutes, decision log, delivery report, retrospective, overdue report, docs audit report, functional requirements, test acceptance, defect-gap report, entity lifecycle, API reference, integration guide, architecture overview, and user guide.
 
 ## Install
 
@@ -76,7 +76,7 @@ python3 "$SKILL/scripts/render_views.py"
 python3 "$SKILL/scripts/render_views.py" --check
 ```
 
-`setup.py` never overwrites a file. `render_views.py` prints `registers valid; wrote 17 views to pmo/views`, or the errors it found (and exits 1). `--check` writes nothing and exits 1 when the registers are invalid or a view is stale. Every script answers `--help`.
+`setup.py` never overwrites a file. `render_views.py` prints `registers valid; wrote 21 views to pmo/views`, or the errors it found (and exits 1). `--check` writes nothing and exits 1 when the registers are invalid or a view is stale. Every script answers `--help`.
 
 Next, ask for a document ("draft the project charter", "weekly-status"). A worked example with a small example project is in [`docs/walkthrough.md`](docs/walkthrough.md).
 
@@ -125,9 +125,18 @@ Finished documents can be published to a publish target folder inside the projec
 
 A project can override templates in `pmo/templates/` and playbooks in `pmo/playbooks/`. Each override records `based_on: <name>@<version>`. When the skill's default template or playbook advances, `docs_audit.py` warns of drift.
 
+## Technical documents and stacks
+
+For documents drafted from code (API reference, integration guide, architecture overview, user guide, entity lifecycle), the agent reads your repository's code, routes, data models, permissions and configuration using stack reference files.
+
+Seven stacks ship with the skill: Next.js (`nextjs`), Express (`express`), ASP.NET Core (`aspnet-core`), Spring Boot (`spring-boot`), FastAPI (`fastapi`, also covers Flask), Django (`django`), and Flutter (`flutter`).
+
+- **Add a stack**: To use a stack that is not shipped, write `pmo/playbooks/stacks/<stack>.md` with the standard six headings and `playbook_version: 1` (`skills/pmo-docs/references/extend.md`).
+- **Safety**: The agent reads your code and does not run it. Commands like listing the API live are run by you, or by the agent only after you say yes (`skills/pmo-docs/SKILL.md`, Documents).
+
 ## What it reads and writes
 
-- It reads the project's `pmo/` folder, the skill's own files and, only as evidence, read-only git history. Drafting release notes with `--repo` also reads the git history of another local repository you name.
+- It reads the project's `pmo/` folder, the skill's own files and, only as evidence, read-only git history. Drafting release notes with `--repo` also reads the git history of another local repository you name. Drafting a technical document reads your project's source code (routes, models, config and test files, names only) and runs read-only git on it.
 - It writes only inside the folders named in `pmo/config.yaml` (by default, under `pmo/`). Anything else is shown first and waits for your yes. The one exception you set up yourself: `/pmo-docs:publish` copies finished documents to `publish.path` and, in `repo` mode, commits there only after a second yes. It never pushes.
 - It never overwrites a file you edited by hand.
 - The rules are in [`skills/pmo-docs/SKILL.md`](skills/pmo-docs/SKILL.md) (Safety rules).

@@ -25,6 +25,7 @@ Write one draft of one document from its template and the registers. Rules for f
    Read the whole template, including its comments and `checks:`. The comments say how to fill each section; the checks say what will be verified.
 
 5. **Gather the content**
+   - For documents written from code (`entity-lifecycle`, `api-reference`, `integration-guide`, `architecture-overview`, `user-guide`), follow `references/draft-technical.md` to gather content from the codebase and stack files.
    - Read the registers named in `generated_from`. A document is a view of them.
    - Run `python3 ${CLAUDE_SKILL_DIR}/scripts/overdue.py` when the template lists overdue work.
    - Use git history only as read-only evidence (`references/git.md`).

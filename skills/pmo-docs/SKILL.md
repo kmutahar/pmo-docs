@@ -1,6 +1,6 @@
 ---
 name: pmo-docs
-description: Project-office and documentation workflow. Keeps a project's facts in registers (tasks, risks, issues, decisions, changes, actions, milestones, people) under pmo/, renders read-only views, and drafts documents (status reports, project plan, charter, roadmap, change requests, meeting minutes, checklists, retrospectives, stakeholder updates, release notes) from templates that scripts check. Use to set up a project office under pmo/, draft, translate or finish a document, take tasks from chat exports, track or update entries ("mark T-014 done", log a risk), plan, record a change request or decision, or run weekly-status, monthly-status, month-start, overdue-report and docs-audit. Not for general coding, or personal to-do lists outside a pmo/ project.
+description: Project-office and documentation workflow. Keeps a project's facts in registers (tasks, risks, issues, decisions, changes, actions, milestones, people, requirements, tests, environments, permissions) under pmo/, renders read-only views, and drafts documents (status reports, plans, charters, roadmaps, change requests, minutes, checklists, retrospectives, release notes, requirements, test acceptance, defect gap reports, entity lifecycles, API references, integration guides, architecture overviews, user guides) from templates that scripts check. Use to set up a project office under pmo/, draft, translate or finish a document, take tasks from chat exports, track or update entries ("mark T-014 done", log a risk), plan, record a change request or decision, or run weekly-status, monthly-status, month-start, overdue-report and docs-audit. Not for general coding, or personal to-do lists outside a pmo/ project.
 license: MIT
 compatibility: Needs Python 3.10 or newer on Linux or macOS (Windows through WSL). PyYAML is bundled; nothing to install. Works on the project in the current folder.
 metadata:
@@ -22,11 +22,12 @@ Work from the project root (the folder that holds `pmo/`). If `pmo/config.yaml` 
 | to set up a project office, or `pmo/` is missing | `references/setup.md` |
 | paths, front matter, id formats, the scripts and their exit codes | `references/conventions.md` |
 | to draft, write, create or regenerate a document | `references/draft.md` |
+| to draft an API reference, integration guide, architecture overview, user guide or entity lifecycle (written from the code) | `references/draft-technical.md` |
 | a stakeholder update | `references/draft.md` |
 | to draft release notes, or when commits change documents | `references/release-notes.md` |
 | to finish a draft ("ready", "finish it") | `references/finish.md` |
 | to publish documents | tell the user to type `/pmo-docs:publish`; do not publish from this skill |
-| to add, change or close tasks, risks, issues, assumptions, dependencies, actions, meetings, objectives, budget, milestones, capacity, people, goals or teams; "mark X done"; a pasted message with tasks | `references/track.md` |
+| to add, change or close tasks, risks, issues, assumptions, dependencies, actions, meetings, objectives, budget, milestones, capacity, people, goals, teams, requirements, tests, environments or permissions; "mark X done"; a pasted message with tasks | `references/track.md` |
 | to translate a document, bring a translation back in step, or find where a translation lives | `references/translate.md` |
 | to take tasks, finished work or decisions from a chat export or a long pasted conversation | `references/intake.md` |
 | to add a language | `references/extend.md` |
@@ -89,7 +90,8 @@ A template is the contract: its front matter declares the checks, `structure_che
 - Keep every heading (text, level, order) and every table's columns exactly. A heading that starts with `{{x}}` is a repeatable slot: write it once per item, or leave it out if there are none. Only one `#` heading.
 - Replace every `{{placeholder}}` and delete every example row. The placeholder `{{lead}}` means an owner: write the person's name from the roster (`roster.yaml` holds the slug, name and role), never a slug, and never a name that is not in the roster.
 - A comment in a template says how to fill its section (safety rule 4 still applies). Follow it and leave it in the draft for the user to see; Finish removes it.
-- Front matter: keep every key. `project` and `manager` come from the config; `period` from the request or `where.py`; `status: draft`; `last_updated` is today; `template_version` is copied from the template. A translation also has `lang`, `dir`, `translation_of` and `source_hash` (see Translations).
+- Front matter: keep every key. `project` and `manager` come from the config; `period` from the request or `where.py`; `status: draft`; `last_updated` is today; `template_version` is copied from the template; `code_ref` records the commit the code was read at for code-read documents. A translation also has `lang`, `dir`, `translation_of` and `source_hash` (see Translations).
+- Technical documents (`references/draft-technical.md`): describe only code you opened, each item with `path:line`; write what the code does not show as `not recorded`, and running behaviour only from output the user gave. Read the project's code, config and tests; never run its commands, start the app, build, call a URL or install anything unless the user says yes. Record variable and setting names, never their values.
 - Numbers come from the registers and must add up: counts in the prose equal the rows in the tables. Where a template asks for a RAG or a flag, state the rule used in the section that says so.
 - Show register ids in backticks where the template does. Ids are unique within a table.
 - Content the template has no section for goes into the nearest section or `## Open questions`. When a section is `## Open questions` and nothing is open, write `- None`.
@@ -124,7 +126,7 @@ A finished document is stale when a register in its `generated_from` changed aft
 
 ## Definition of done
 
-A task is marked `done` only when the user confirms that it was tested (QA passed), or agrees to record that it was not. In the second case the entry's `notes` say `no test evidence recorded`. When a task is closed (`done` or `dropped`), set `done_on` to the date it was finished or dropped: today unless the user names a date. Never mark a task done from git history alone. A project can say in its house rules which tasks need QA; it cannot remove this rule.
+A task is marked `done` only when the user confirms that it was tested (QA passed), or agrees to record that it was not. In the second case the entry's `notes` say `no test evidence recorded`. In a project with a `tests` register in use (at least one entry), a task marked done with no linked test (`tests` on the task or `task` on the test) also gets the note `no test evidence recorded`. When a task is closed (`done` or `dropped`), set `done_on` to the date it was finished or dropped: today unless the user names a date. Never mark a task done from git history alone. A project can say in its house rules which tasks need QA; it cannot remove this rule.
 
 ## Scripts
 

@@ -23,7 +23,7 @@ A project-office and documentation workflow packaged as an Agent Skill (`skills/
 
 ## Maintainer tasks
 - **Tests and scrub:** `python3 -m unittest discover tests`; `bash dev/scrub.sh` (bash, not `sh`).
-- **Evals** (twelve cases in `evals/`, real agent runs, about $1.50 for all on Sonnet): `dev/run-evals [--case <name>] [--keep-temp]`, one `--case` per run. It builds a throwaway plugin copy because the plugin root is `skills/pmo-docs` and `claude plugin eval` needs `evals/` inside the plugin; plain `claude plugin eval` from the repo root never fires the skill. Use Sonnet (Haiku fails 5 of 9). Results are single samples and can flip, so re-run a failing case before changing `SKILL.md`. `--keep-temp` keeps `trace.jsonl` (`chmod 700` the directory to read it). Grader lessons: an `llm` grader sees a file's path, not its text; `max: 0` needs `min: 0`; keep grader text short and positive; name output files in the prompt. Bash fails in the eval sandbox (`apply-seccomp ... setgroups`), so the agent cannot run the scripts and graders must not depend on Bash.
+- **Evals** (thirteen cases in `evals/`, real agent runs, about $1.50 for all on Sonnet): `dev/run-evals [--case <name>] [--keep-temp]`, one `--case` per run. It builds a throwaway plugin copy because the plugin root is `skills/pmo-docs` and `claude plugin eval` needs `evals/` inside the plugin; plain `claude plugin eval` from the repo root never fires the skill. Use Sonnet (Haiku fails 5 of 9). Results are single samples and can flip, so re-run a failing case before changing `SKILL.md`. `--keep-temp` keeps `trace.jsonl` (`chmod 700` the directory to read it). Grader lessons: an `llm` grader sees a file's path, not its text; `max: 0` needs `min: 0`; keep grader text short and positive; name output files in the prompt. Bash fails in the eval sandbox (`apply-seccomp ... setgroups`), so the agent cannot run the scripts and graders must not depend on Bash.
 - **SkillSpector** (before each release): scan a clean copy of the tracked files (a tree with `__pycache__` gives false findings) with `SKILLSPECTOR_PROVIDER=claude_cli SKILLSPECTOR_MODEL=sonnet skillspector scan skills/pmo-docs --baseline dev/skillspector-baseline.yaml`. A real result is SAFE with full coverage and every LLM call succeeded (`llm_calls_succeeded`); a cut-off run is not a result. Haiku reports false positives on the vendored PyYAML. Each LLM call is a `claude` session on the maintainer's plan. Avoid apostrophes in `config.default.yaml` comments (they break the static parser). Every baseline entry needs a reason.
 - **Updating vendored PyYAML:** `dev/update-pyyaml <unpacked sdist>` (header has steps; `dev/pyyaml-prune.patch` is the cut; `_vendor/VERSION` is edited by hand).
 - **Install check:** `dev/test-install.md`, in a throwaway `CLAUDE_CONFIG_DIR`.
@@ -31,13 +31,13 @@ A project-office and documentation workflow packaged as an Agent Skill (`skills/
 
 ## Layout
 ```
-skills/pmo-docs/   the skill: SKILL.md, references/, assets/, scripts/, skills/ (command skills)
+skills/pmo-docs/   the skill: SKILL.md, references/, references/stacks/, assets/, scripts/, skills/ (command skills)
 .claude-plugin/    marketplace manifest (its one entry installs only skills/pmo-docs/, so dev/, tests/ and docs/ do not ship)
 skills/pmo-docs/.claude-plugin/  plugin manifest (name, version, skills)
 examples/acme/     the fake project used by tests and the walkthrough
 tests/             tests
 evals/             plugin eval cases
-dev/               maintainer tools, not shipped: scrub.sh, release, run-evals, update-pyyaml, pyyaml-prune.patch, test-install.md, test-walkthrough.md, skillspector-baseline.yaml, icon.svg (icon master), icon-brief.md, make_icon.py (old placeholder)
+dev/               maintainer tools, not shipped: scrub.sh, release, run-evals, run-evals-quiet.sh, update-pyyaml, pyyaml-prune.patch, test-install.md, test-walkthrough.md, skillspector-baseline.yaml, icon.svg (icon master), icon-brief.md, make_icon.py (old placeholder)
 .githooks/         commit gate (pre-commit, commit-msg)
 .github/           CI workflows
 docs/PLAN.md       the plan hub: decisions, version index, safeguards

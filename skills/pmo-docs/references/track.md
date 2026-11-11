@@ -20,7 +20,7 @@ Add, change or close entries in the registers. Rules on status, consent and prop
    Moving a date, owner or priority of committed work, or adding or dropping a goal, is a scope change: go to `references/govern.md` (change request) first, unless the user says it is the agreed new plan. Then apply it and log a decision there.
 
 4. **Edit one line**
-   Edit that line only (new entries go at the end of the list). A new id is the highest number for the prefix plus one. Check that an owner is in the roster and that every value is in the vocabulary. Ask for a missing owner, date or priority; leave it `null` until answered.
+   Edit that line only (new entries go at the end of the list). Before the first entry of `requirements`, `tests`, `environments` or `permissions`, copy its starter file from `${CLAUDE_SKILL_DIR}/assets/starter/optional-registers/` to `paths.registers/`. A new id is the highest number for the prefix plus one. Check that an owner is in the roster and that every value is in the vocabulary. Ask for a missing owner, date or priority; leave it `null` until answered.
 
 5. **Validate**
    Run `python3 ${CLAUDE_SKILL_DIR}/scripts/render_views.py` and fix what it reports before going on.
@@ -35,8 +35,9 @@ Add, change or close entries in the registers. Rules on status, consent and prop
 
 | User says | You do |
 |---|---|
-| "T-014 is done", "in progress", "blocked", "dropped" | Set `status` on that line. `done` follows the definition of done in `SKILL.md`, which also says when to set `done_on` (for `done` and `dropped`). For `blocked`, put the reason in `notes` and ask who can unblock it. Evidence from git or a checklist only suggests a change: say what it is and wait for a yes. |
+| "T-014 is done", "in progress", "blocked", "dropped" | Set `status` on that line. `done` follows the definition of done in `SKILL.md` (with a `tests` register in use, see `SKILL.md`, Definition of done), which also says when to set `done_on` (for `done` and `dropped`). For `blocked`, put the reason in `notes` and ask who can unblock it. Evidence from git or a checklist only suggests a change: say what it is and wait for a yes. |
 | "add a task" | New `T-` entry with `status: not-started`. Ask for any of title, team, group, priority, owner, period and due that is missing. |
+| "add a requirement, test, environment, permission" | New `REQ-`, `TST-`, `ENV-` or `PERM-` entry. Before the first entry of an optional register, copy its starter file (step 4). |
 | "add a goal, milestone, objective, budget item" | New `P-` (goal), `M-`, `O-` or `B-` entry. A new goal, or a date or owner change on an existing milestone, is a scope change (step 3). A task's priority is a level, not a goal (`SKILL.md`, Working rules). |
 | "add a team", "change a team's owners" | One `TM-` entry per team in `teams`: `order`, `heading`, `owners`. Owners are roster slugs. |
 | "add capacity", "leave for alice" | One entry per person and period in `capacity`; no id. Unknown days stay `null`. |

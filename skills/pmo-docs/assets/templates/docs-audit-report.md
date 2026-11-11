@@ -31,6 +31,7 @@ last_updated: "{{date}}"
 | Parity | |
 | Structure vs template | |
 | Document vs register | |
+| Commits behind | |
 | Drift vs code | |
 
 ## Findings

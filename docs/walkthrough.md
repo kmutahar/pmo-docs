@@ -16,7 +16,7 @@ The skill's behaviour rules are in [`SKILL.md`](../skills/pmo-docs/SKILL.md); th
 ```
 pmo/
   config.yaml      project name and manager only
-  registers/       16 registers, one entry per line
+  registers/       20 registers, one entry per line
   views/           one view per register plus the catalogue, rendered from them
   documents/       a status report and a decision log, both drafts
 ```
@@ -60,7 +60,7 @@ Render the views again. Views are never edited by hand:
 
 ```
 $ python3 "$SKILL/scripts/render_views.py"
-registers valid; wrote 17 views to pmo/views
+registers valid; wrote 21 views to pmo/views
 [exit 0]
 
 $ python3 "$SKILL/scripts/render_views.py" --check

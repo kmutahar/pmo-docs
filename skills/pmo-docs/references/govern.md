@@ -6,7 +6,7 @@ Reads: pmo/config.yaml (registers, vocab), `changes`, `decisions`, `actions`, `m
 
 # Govern
 
-Change control, sign-off, definition of done, minutes, retrospectives and the decision log. Consent and status rules are in `SKILL.md`; register edits follow `references/track.md`; documents are drafted by `references/draft.md`.
+Change control, sign-off, definition of done, minutes, retrospectives, the decision log, and requirement and test planning documents (functional requirements, test acceptance, defect gap report). Consent and status rules are in `SKILL.md`; register edits follow `references/track.md`; documents are drafted by `references/draft.md`.
 
 ## Change request
 
@@ -24,7 +24,7 @@ Trigger: anything that changes the scope, priority, owner or date of committed w
 
 ## Definition of done
 
-Defined once in `SKILL.md` (Definition of done). When the user agrees to mark a task done without QA, record `no test evidence recorded` in its `notes`.
+Defined once in `SKILL.md` (Definition of done).
 
 ## Sign-off and acceptance
 

@@ -43,7 +43,7 @@ Set up a project's `pmo/` folder and starter registers.
        ├── risks.yaml         ├── roster.yaml        ├── tasks.yaml
        └── teams.yaml
    ```
-   Wait for the user to confirm before writing anything.
+   Wait for the user to confirm before writing anything. Optional registers (`requirements`, `tests`, `environments`, `permissions`) are not created at setup; they are copied on their first entry (`references/track.md`).
 
 4. **Run setup script**
    Execute `scripts/setup.py` with the chosen flags:

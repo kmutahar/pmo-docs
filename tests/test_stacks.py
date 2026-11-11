@@ -64,6 +64,15 @@ class StackFiles(unittest.TestCase):
         for f in files:
             self.assertRegex(f.stem, r"^[a-z0-9][a-z0-9-]*$", f"{f.name} stem is not a lowercase slug")
 
+    def test_the_seven_stacks_ship(self):
+        stacks_dir = pc.SKILL / "references" / "stacks"
+        files = sorted(stacks_dir.glob("*.md")) if stacks_dir.exists() else []
+        stems = {f.stem for f in files}
+        self.assertEqual(
+            stems,
+            {"nextjs", "express", "aspnet-core", "spring-boot", "fastapi", "django", "flutter"},
+        )
+
 
 class Lookup(unittest.TestCase):
     def setUp(self):
