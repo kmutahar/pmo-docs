@@ -25,6 +25,8 @@ TYPES = {  # doc type: (template file, ordered ## headings, generated_from, code
     "entity-lifecycle": ("entity-lifecycle.md", ["Entity", "States", "Transitions", "Who can do what", "Rules and side effects", "Gaps", "Open questions"], ["permissions"], True),
     "api-reference": ("api-reference.md", ["Overview", "Authentication and permissions", "Endpoints", "Errors", "Environments", "Open questions"], ["environments", "permissions"], True),
     "integration-guide": ("integration-guide.md", ["Purpose and audience", "Before you start", "Authentication", "Consumers at a glance", "Consumers", "Environments", "Errors and retries", "Go-live checklist", "Open questions"], ["environments", "permissions"], True),
+    "architecture-overview": ("architecture-overview.md", ["Context", "Components", "Data and models", "Runtime and environments", "Cross-cutting concerns", "Key decisions", "Open questions"], ["environments", "decisions"], True),
+    "user-guide": ("user-guide.md", ["Who this guide is for", "Getting started", "How to", "Roles and what each can do", "Troubleshooting", "Terms", "Open questions"], ["requirements", "permissions"], True),
 }
 
 DRAFT_BODIES = {
@@ -225,6 +227,79 @@ Integration guide for external consumers.
 ## Open questions
 - None
 """,
+    "architecture-overview": """# Architecture overview - Acme
+
+## Context
+Acme project architecture context.
+
+```text
+[User] -> [Frontend] -> [Backend API] -> [Database]
+```
+
+## Components
+| Component | Responsibility | Technology | Location |
+|---|---|---|---|
+| API Server | Handle HTTP requests | Express | src/server.js:1 |
+
+## Data and models
+| Entity | Purpose | Defined in |
+|---|---|---|
+| Order | Customer order | src/models/order.py:10 |
+
+## Runtime and environments
+| Environment | Kind | Location | Deploy |
+|---|---|---|---|
+| Staging | test | staging.example.com | CI pipeline |
+
+## Cross-cutting concerns
+- **Authentication:** JWT tokens checked in src/auth.js:15
+- **Configuration:** Environment variables in src/config.js:5
+- **Logging:** Structured JSON logging in src/logger.js:10
+- **Errors:** Global error middleware in src/errors.js:20
+
+## Key decisions
+| ID | Decision | Status |
+|---|---|---|
+| `DEC-1` | Use Express for API | approved |
+
+## Open questions
+- None
+""",
+    "user-guide": """# User guide - Acme
+
+## Who this guide is for
+This guide is for platform users and managers.
+
+## Getting started
+1. Open the application.
+2. Sign in with your credentials.
+
+## How to
+### Create an order
+1. Navigate to Orders page.
+2. Click New Order and submit.
+
+- **What you see:** Order confirmation with tracking ID
+- **Who can do this:** customer, admin
+
+## Roles and what each can do
+| Role | Can | Cannot |
+|---|---|---|
+| customer | Place orders and view history | Modify system settings |
+
+## Troubleshooting
+| Problem | Cause | What to do |
+|---|---|---|
+| Login fails | Invalid password | Reset password via email |
+
+## Terms
+| Term | Meaning |
+|---|---|
+| Order | Request for goods |
+
+## Open questions
+- None
+""",
 }
 
 
@@ -357,6 +432,18 @@ class TechnicalDocs(unittest.TestCase):
         self.assertEqual(lhs[0].get("sections_in"), "Consumers")
         self.assertEqual(lhs[0].get("level"), 3)
 
+    def test_all_eight_types_are_listed(self):
+        expected = {
+            "functional-requirements",
+            "test-acceptance",
+            "defect-gap-report",
+            "entity-lifecycle",
+            "api-reference",
+            "integration-guide",
+            "architecture-overview",
+            "user-guide",
+        }
+        self.assertEqual(set(TYPES.keys()), expected)
 
 
 if __name__ == "__main__":

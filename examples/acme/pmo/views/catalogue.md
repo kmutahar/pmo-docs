@@ -26,3 +26,5 @@
 | entity-lifecycle | Entity lifecycle | agent | After the first release that changes the entity, and when its rules are disputed. | A state, transition or permission changes in the code or the permissions register. | 60 days | yes |
 | api-reference | API reference | agent | When the API has a first consumer, and before each release that changes an endpoint. | An endpoint, a permission or an environment changes. | 30 days | yes |
 | integration-guide | Integration guide | agent | Before a new consumer connects. | A consumer is added, an endpoint or an environment changes. | 30 days | yes |
+| architecture-overview | Architecture overview | agent | When a new person or team needs the big picture, and after any change of components. | A component, an environment or a decision changes. | 90 days | yes |
+| user-guide | User guide | agent | Before the product reaches its first users, and when a screen or a role changes. | A screen, a requirement or a permission changes. | 60 days | yes |

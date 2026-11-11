@@ -405,6 +405,22 @@ doc_types:
     stale_days: 30
     when: Before a new consumer connects.
     regenerate: A consumer is added, an endpoint or an environment changes.
+  architecture-overview:
+    title: Architecture overview
+    template: architecture-overview.md
+    name: "{title}.md"
+    generated_from: [environments, decisions]
+    stale_days: 90
+    when: When a new person or team needs the big picture, and after any change of components.
+    regenerate: A component, an environment or a decision changes.
+  user-guide:
+    title: User guide
+    template: user-guide.md
+    name: "{title}.md"
+    generated_from: [requirements, permissions]
+    stale_days: 60
+    when: Before the product reaches its first users, and when a screen or a role changes.
+    regenerate: A screen, a requirement or a permission changes.
 
 # Publishing: copies finished documents with /pmo-docs:publish only.
 # mode: none (default, nothing is published), folder (a folder inside this project) or repo (the top folder of
