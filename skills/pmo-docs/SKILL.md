@@ -132,7 +132,7 @@ A task is marked `done` only when the user confirms that it was tested (QA passe
 
 ## Scripts
 
-The scripts are in this skill's own folder, `scripts/` next to this file. Playbooks write that folder as `${CLAUDE_SKILL_DIR}` (Claude Code fills it in; any other agent uses the folder that holds this SKILL.md): `python3 ${CLAUDE_SKILL_DIR}/scripts/where.py status-report`. Run them with the project root as the working folder, or pass `--project DIR`. Details, flags and exit codes are in `references/conventions.md`.
+The scripts are in this skill's own folder, `scripts/` next to this file. Playbooks write that folder as `${CLAUDE_SKILL_DIR}` (Claude Code fills it in; any other agent uses the project launcher `pmo/bin/pmo <script> [args]` or the folder that holds this SKILL.md): `python3 ${CLAUDE_SKILL_DIR}/scripts/where.py status-report` (or `pmo/bin/pmo where status-report`). Run them with the project root as the working folder, or pass `--project DIR`. Details, flags and exit codes are in `references/conventions.md`.
 
 | Script | Use |
 |---|---|

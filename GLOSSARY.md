@@ -36,6 +36,10 @@ _Avoid_: technology, tech stack, platform
 A one-page reference file (`references/stacks/<stack>.md` or `pmo/playbooks/stacks/<stack>.md`) with standard headings explaining where routes, models, permissions, config and tests live in a stack.
 _Avoid_: tech guide, cheat sheet, framework guide
 
+**Launcher**:
+The project script (`pmo/bin/pmo`) that finds the installed skill and runs one of its scripts with the project root set.
+_Avoid_: wrapper, runner, CLI, entrypoint
+
 ## People
 
 **Project manager**:

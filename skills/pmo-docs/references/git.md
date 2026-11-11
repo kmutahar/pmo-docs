@@ -40,16 +40,16 @@ The publish command's `repo`-mode commit follows `SKILL.md` Safety rule 1 (`refe
 
 ## Checking registers in your own hook
 
-The skill installs no hook. A project that wants one writes its own, because the skill's folder is at a different path on each machine and changes when a plugin updates. `render_views.py --check` is made for it: it writes nothing, stages nothing, and exits 1 when the registers fail validation or a view is stale. Needs Python 3.10 or newer.
+The skill installs no hook. A project that wants one writes its own. The project launcher `pmo/bin/pmo render_views --check` is made for it: it finds the installed skill automatically without hardcoding machine-specific paths, writes nothing, stages nothing, and exits 1 when the registers fail validation or a view is stale. Needs Python 3.10 or newer.
 
 ```sh
 #!/bin/sh
-# .git/hooks/pre-commit - set PMO_DOCS to the skill folder on this machine
-PMO_DOCS=/path/to/skills/pmo-docs
-python3 "$PMO_DOCS/scripts/render_views.py" --project "$(git rev-parse --show-toplevel)" --check || {
-  echo "pmo: fix the registers, or run render_views.py to refresh the views, then commit again" >&2
+# .git/hooks/pre-commit
+ROOT="$(git rev-parse --show-toplevel)"
+"$ROOT/pmo/bin/pmo" render_views --check || {
+  echo "pmo: fix the registers, or run render_views to refresh the views, then commit again" >&2
   exit 1
 }
 ```
 
-Make it executable. A hook in `.git/hooks` is not shared with teammates; to share one, keep it in a tracked folder and set `git config core.hooksPath <folder>` in each clone.
+Make it executable. A hook in `.git/hooks` is not shared with teammates; to share one, keep it in a tracked folder (such as `.githooks/pre-commit`) and set `git config core.hooksPath <folder>` in each clone.

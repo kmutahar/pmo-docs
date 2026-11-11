@@ -23,6 +23,8 @@ All paths come from the config (`paths`), relative to the project root. Defaults
 
 Templates and playbooks follow the lookup rule: the project's file in `paths.templates` or `paths.playbooks` wins over the skill's default. Playbook lookup includes subfolders such as `stacks/`: `<paths.playbooks>/stacks/<stack>.md` overrides `references/stacks/<stack>.md`.
 
+The project launcher `pmo/bin/pmo` (mode 755) is written at setup. It is checked into git and runs skill scripts without knowing where the skill is installed.
+
 ## Where a document lives
 
 Run `python3 ${CLAUDE_SKILL_DIR}/scripts/where.py <type> [period] [--week] [--as-of YYYY-MM-DD] [--hashes] [--title TEXT] [--lang CODE]`. It prints `key: value` lines: the document path and whether it exists, the template path and whether it is the skill's or the project's, `template_version`, `based_on`, `drift`, `generated_from`, `stale_days`, `window` (`YYYY-MM-DD..YYYY-MM-DD`), `translations` (the codes the type translates into, or `none`), `translate` (`in-period` or `after-close`) and, with `--hashes`, `source_hashes`. With `--lang CODE`, `document` is the translation's path and these lines follow it: `original`, `original_exists`, `translation_of` (the value for the front matter, quoted), `lang`, `dir`, `glossary`, `glossary_proposed` (`none` when not configured); `--hashes` then prints `source_hash` (the hash of the original's body, or `none`) instead of `source_hashes`. A code the type does not translate into exits 2.
@@ -114,5 +116,21 @@ Run from the project root, or pass `--project DIR`. Every script answers `--help
 | `python3 ${CLAUDE_SKILL_DIR}/scripts/docs_audit.py [--as-of DATE]` | front matter, stale, old, broken-link, template/playbook drift, translation-behind and parity checks | 0 clean, 1 findings, 2 usage or a config the skill refuses |
 | `python3 ${CLAUDE_SKILL_DIR}/scripts/overdue.py [--as-of DATE] [--days N]` | overdue tasks, actions and milestones, open risks and issues | 0 ok, 2 usage, or a config the skill refuses |
 
+
+## Launcher
+
+The project launcher `pmo/bin/pmo` is a POSIX `sh` script (`#!/bin/sh`, `set -eu`) copied by `setup.py` (and updated with `setup.py --launcher`). It dispatches to any skill script: `pmo/bin/pmo <script> [args]`. It sets the project root from its own location and passes `--project <root>` to the script.
+
+Lookup order:
+1. `$PMO_DOCS_SKILL` environment variable if set. Must contain `SKILL.md` and `scripts/`; exits 2 if set but invalid.
+2. Project skill folders: `.claude/skills/pmo-docs`, `.agents/skills/pmo-docs`, `.github/skills/pmo-docs`, `.cursor/skills/pmo-docs`, `.gemini/skills/pmo-docs`.
+3. Claude plugin cache: newest version under `${CLAUDE_CONFIG_DIR:-$HOME/.claude}/plugins/cache/` (compared by `plugin.json` semver version).
+4. User skill folders: `~/.claude/skills/pmo-docs`, `~/.agents/skills/pmo-docs`, `~/.copilot/skills/pmo-docs`, `~/.cursor/skills/pmo-docs`, `~/.gemini/skills/pmo-docs`.
+
+A candidate folder counts only when it contains `SKILL.md` and `scripts/`. If none is found, the launcher prints `pmo-docs not found: set PMO_DOCS_SKILL` to stderr and exits 2.
+
+Exit codes:
+- 2: bad script name (must match `[a-z_]+` and exist under `<skill>/scripts/<script>.py`), invalid `$PMO_DOCS_SKILL`, or skill not found.
+- The underlying script's exit code passes through (0 ok, 1 findings/stale, 2 error).
 
 `structure_check.py` takes the checks from the winning template, never from the draft. It reports an error for a missing or out-of-order heading, changed table columns, a leftover `{{placeholder}}` or HTML comment, a repeated id in one table, or a declared check that fails (including one that names a section the document lacks). It warns about a missing or different `template_version`, extra `##` sections and empty tables.
