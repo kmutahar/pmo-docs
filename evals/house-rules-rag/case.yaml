@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: house-rules-rag
+description: "A project house rule replaces the RAG rule (red only for an overdue milestone): the March status report is amber on 2026-03-15 where the default rule gives red, and the rule is stated in Notes on data."
+context:
+  scaffold_script: scaffold.sh

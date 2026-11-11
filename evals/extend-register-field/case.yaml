@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: extend-register-field
+description: "Adding a reviewer field to the tasks register: the planned config change lists every default field plus reviewer (lists replace), and the skill's own defaults are never edited."
+context:
+  scaffold_script: scaffold.sh

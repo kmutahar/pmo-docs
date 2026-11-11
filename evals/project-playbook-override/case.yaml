@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: project-playbook-override
+description: "A project playbook pmo/playbooks/overdue-report.md replaces the skill's: the report has exactly two NEXT: steps, the first naming Sam Example, and the reply ends with an Escalation line."
+context:
+  scaffold_script: scaffold.sh

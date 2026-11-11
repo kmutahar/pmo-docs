@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: release-notes-from-given-log
+description: "Release notes from a pasted commit log (git cannot run): commits are sorted by type, a breaking one only under Breaking changes, a named task id linked, a title match only proposed."
+context:
+  scaffold_script: scaffold.sh

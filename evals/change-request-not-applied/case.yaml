@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: change-request-not-applied
+description: "A request to move task T-2 to a later date is recorded as proposed change CR-3 and drafted, but the task date is not changed and nothing is approved by the agent."
+context:
+  scaffold_script: scaffold.sh

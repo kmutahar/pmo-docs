@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: schedule-shows-before-writing
+description: "Scheduling weekly-status for Monday 08:00: the agent shows the planned schedule entry and a draft-only cron line, installs nothing, and waits for a yes before writing the config."
+context:
+  scaffold_script: scaffold.sh

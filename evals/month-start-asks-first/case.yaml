@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: month-start-asks-first
+description: "Month-start on Acme at 2026-04-01 shows the carry-over (tasks by priority, milestone M-1 asked about) and waits for a yes before changing any register."
+context:
+  scaffold_script: scaffold.sh

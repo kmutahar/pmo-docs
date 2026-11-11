@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: docs-audit-finds-old-document
+description: "Docs audit as of 2026-05-04 on Acme with the March status report finished; the only finding is its age (50 days against a limit of 30) and the report is honest about checks that could not run."
+context:
+  scaffold_script: scaffold.sh

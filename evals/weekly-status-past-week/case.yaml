@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: weekly-status-past-week
+description: "Weekly status report for the past week 2026-W10 as of 2026-03-16; the window, the RAG as of the last day of the week (amber, not red) and the rows dated in that week must be right."
+context:
+  scaffold_script: scaffold.sh

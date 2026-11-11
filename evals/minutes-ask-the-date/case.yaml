@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: minutes-ask-the-date
+description: "A request for meeting minutes with no date and no notes: the agent asks which meeting (the type is named by date) and writes nothing; Acme has two meetings, MTG-1 and MTG-2."
+context:
+  scaffold_script: scaffold.sh
