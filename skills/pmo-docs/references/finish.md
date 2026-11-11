@@ -15,7 +15,7 @@ Turn a draft the user has approved into a finished document. The Finish steps ar
    A document that is already finished: say so and stop, unless `docs_audit.py` reports it stale, in which case offer a new draft (`references/draft.md`).
 
 2. **Check the registers have not moved**
-   For each register in `generated_from`, find when it last changed: `git log -1 --format=%cs -- <register file>`, or the file's modified date when it is not tracked. If it is newer than the draft's `last_updated`, tell the user what changed and ask whether to refresh the draft first. Finish records the registers as they are now. Never refresh over the user's edits.
+   Compare the register hashes recorded in the document's front matter (`source_hashes`) against current hashes from `where.py --hashes`. If any recorded hash differs, tell the user what changed and ask whether to refresh the draft first. If the document has no recorded `source_hashes` (a draft being finished for the first time), do not compare file modification dates or git commit dates: a fresh clone or an older period draft always looks newer than its file dates. Finish records the registers as they are now. Never refresh over the user's edits.
 
 3. **Look at the open questions**
    If the draft still has open questions, list them and ask whether to finish anyway. They stay in the document.
