@@ -22,3 +22,5 @@
 | release-notes | Release notes | agent | for each release or month end | when commits or changes are tagged | not set | yes |
 | functional-requirements | Functional requirements | agent | Once the requirements are agreed, and before design or test planning starts. | A requirement is added, accepted, changed or dropped. | 30 days | yes |
 | test-acceptance | Test acceptance | agent | Before each acceptance round, and again after it with the results. | A test is added or run, a requirement changes, or an environment changes. | 14 days | yes |
+| defect-gap-report | Defect and gap report | agent | At the end of a test round, and before a release decision. | A test result, an issue or a requirement changes. | 30 days | yes |
+| entity-lifecycle | Entity lifecycle | agent | After the first release that changes the entity, and when its rules are disputed. | A state, transition or permission changes in the code or the permissions register. | 60 days | yes |

@@ -21,6 +21,8 @@ CFG = pc.load_config(".")
 TYPES = {  # doc type: (template file, ordered ## headings, generated_from, code_ref)
     "functional-requirements": ("functional-requirements.md", ["Summary", "Requirements", "Quality and constraints", "Out of scope", "Open questions"], ["requirements"], False),
     "test-acceptance": ("test-acceptance.md", ["Scope", "Test environment", "Test cases", "Results", "Requirements coverage", "Acceptance sign-off", "Open questions"], ["tests", "requirements", "environments"], False),
+    "defect-gap-report": ("defect-gap-report.md", ["Summary", "Defects", "Open issues", "Gaps", "Recommendations", "Open questions"], ["tests", "issues", "requirements"], False),
+    "entity-lifecycle": ("entity-lifecycle.md", ["Entity", "States", "Transitions", "Who can do what", "Rules and side effects", "Gaps", "Open questions"], ["permissions"], True),
 }
 
 DRAFT_BODIES = {
@@ -79,6 +81,67 @@ Acceptance testing round for release 1.0.
 | Role | Name | Decision | Date |
 |---|---|---|---|
 | QA Lead | Bob | not set | not set |
+
+## Open questions
+- None
+""",
+    "defect-gap-report": """# Defect and gap report - Acme
+
+**Period:** 2026-03
+
+## Summary
+**Failed tests:** 1 - **Open issues:** 1 - **Requirements without a passing test:** 1
+
+Quality state summary for current period.
+
+## Defects
+| ID | Failed test | Requirement | Issue | Severity | Lead |
+|---|---|---|---|---|---|
+| TST-2 | Slow query | REQ-2 | I-1 | high | Bob |
+
+## Open issues
+| ID | Issue | Severity | Lead | Status | Raised |
+|---|---|---|---|---|---|
+| I-1 | Slow query on dashboard | high | Bob | open | 2026-03-10 |
+
+## Gaps
+| Requirement | Title | Priority | Gap |
+|---|---|---|---|
+| REQ-2 | Performance | high | test failed |
+
+## Recommendations
+- Fix index for issue I-1
+
+## Open questions
+- None
+""",
+    "entity-lifecycle": """# Entity lifecycle - order
+
+## Entity
+Order entity description.
+
+**Defined in:** src/models/order.py:10
+
+## States
+| State | Meaning | Entered when | Final |
+|---|---|---|---|
+| draft | Initial state | Created | no |
+
+## Transitions
+| From | To | Trigger | Code |
+|---|---|---|---|
+| draft | paid | pay | src/order.py:45 |
+
+## Who can do what
+| Action | Allowed roles | Condition | Source |
+|---|---|---|---|
+| pay | customer, admin | none | permissions |
+
+## Rules and side effects
+- Audit row created at src/order.py:50
+
+## Gaps
+- None
 
 ## Open questions
 - None
@@ -196,6 +259,14 @@ class TechnicalDocs(unittest.TestCase):
                 self.assertTrue(any("HTML comment" in e for e in errors), doc_type)
                 clean = re.sub(r"<!--.*?-->\n?", "", body, flags=re.S)
                 self.assertEqual(sc.check(REPO / "examples/acme", CFG, head + clean)[0], [], doc_type)
+
+    def test_entity_title_uses_the_entity_placeholder(self):
+        tpl_path = TEMPLATES / "entity-lifecycle.md"
+        fm, body = pc.split_front_matter(pc.read(tpl_path), strict=True)
+        self.assertIn("{{entity}}", fm.get("title", ""))
+        h1 = [title for lv, title, _ in sc.sections(body) if lv == 1]
+        self.assertEqual(len(h1), 1)
+        self.assertIn("{{entity}}", h1[0])
 
 
 
