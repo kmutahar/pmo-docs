@@ -225,7 +225,7 @@ The skill installs no hook. If you want one, call `pmo/bin/pmo render_views --ch
 | v0.3 | Languages and translation, intake from chat exports (released) |
 | v0.4 | Stacks, technical and domain templates, and their registers (released) |
 | v0.5 | Other agents and unattended runs: a launcher, schedules, a shared hook (released) |
-| v0.6 | Hardening: more eval cases, a wider unit-test suite and the fixes it found |
+| v0.6 | Hardening: more eval cases, a wider unit-test suite and the fixes it found (released) |
 | v0.7 | Teams: a command that fixes duplicate ids, an editor named on each draft, written merge rules |
 | v0.8 | Format freeze: a test that a v0.1 project still works, a test that every config key is documented, the stability promise |
 | v0.9 | Verification: the evals, the security scan and the install check |
