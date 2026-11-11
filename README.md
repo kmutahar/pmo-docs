@@ -2,7 +2,7 @@
 
 A project office kept in plain files and run by your AI coding agent. A project keeps its facts in YAML **registers** (tasks, risks, issues, decisions, ...). Scripts render **views** from them, and the agent drafts **documents** (status reports, plans, charters, ...) from **templates** whose checks a script verifies.
 
-> **Status: v0.5.0 released.** Registers, views, documents, checks, generators, recipes, languages and stacks work today. Release history is in [`CHANGELOG.md`](CHANGELOG.md); the plan, decisions and later versions are in [`docs/PLAN.md`](docs/PLAN.md).
+> **Status: v0.6.0 released.** Registers, views, documents, checks, generators, recipes, languages and stacks work today. Release history is in [`CHANGELOG.md`](CHANGELOG.md); the plan, decisions and later versions are in [`docs/PLAN.md`](docs/PLAN.md).
 
 ## How it works
 
@@ -56,9 +56,9 @@ The marketplace and the plugin are both named `pmo-docs` (see `.claude-plugin/` 
 ```sh
 mkdir -p ~/.agents/skills
 tmp=$(mktemp -d)
-curl -fsSL https://github.com/kmutahar/pmo-docs/archive/refs/tags/v0.5.0.tar.gz | tar -xz -C "$tmp"
+curl -fsSL https://github.com/kmutahar/pmo-docs/archive/refs/tags/v0.6.0.tar.gz | tar -xz -C "$tmp"
 rm -rf ~/.agents/skills/pmo-docs
-cp -R "$tmp"/pmo-docs-0.5.0/skills/pmo-docs ~/.agents/skills/pmo-docs
+cp -R "$tmp"/pmo-docs-0.6.0/skills/pmo-docs ~/.agents/skills/pmo-docs
 rm -rf "$tmp"
 ls ~/.agents/skills/pmo-docs/SKILL.md ~/.agents/skills/pmo-docs/scripts
 ```
@@ -77,7 +77,7 @@ Then restart the agent or open a new session and ask it to list its skills: `pmo
 Paste this into any coding agent. It reads [`docs/INSTALL_FOR_AGENTS.md`](docs/INSTALL_FOR_AGENTS.md), looks for existing copies, shows its plan, asks before every write, installs and verifies:
 
 ```
-Read the raw text of https://raw.githubusercontent.com/kmutahar/pmo-docs/v0.5.0/docs/INSTALL_FOR_AGENTS.md (curl it, do not work from a summary), then follow it exactly to install and verify the pmo-docs skill for the agent you are running in. Respond in the user's language.
+Read the raw text of https://raw.githubusercontent.com/kmutahar/pmo-docs/v0.6.0/docs/INSTALL_FOR_AGENTS.md (curl it, do not work from a summary), then follow it exactly to install and verify the pmo-docs skill for the agent you are running in. Respond in the user's language.
 ```
 
 ### Update
