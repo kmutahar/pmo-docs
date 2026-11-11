@@ -1,6 +1,6 @@
 # Privacy Policy
 
-Last updated: 2026-11-10 (UTC)
+Last updated: 2026-11-11 (UTC)
 
 pmo-docs is a project-office and documentation workflow packaged as an Agent Skill. It is a folder of instructions, templates and Python scripts. An AI agent that you run (for example Claude Code) reads the instructions and runs the scripts on your own machine. This page explains what that means for your data.
 
@@ -25,7 +25,7 @@ pmo-docs does not read your browser data, contacts, calendar, mailbox or keychai
 
 ## 3. What pmo-docs does not do
 
-- **No network calls.** The scripts use only the Python standard library and a vendored copy of PyYAML. They do not open connections, download files, call APIs or send email. The only web addresses in the code are inside comments and documentation text.
+- **No network calls.** The scripts use only the Python standard library and a vendored copy of PyYAML. They do not open connections, download files, call APIs or send email. The only web addresses in the code are inside comments and documentation text. (When you ask an agent to install or update the skill via `docs/INSTALL_FOR_AGENTS.md`, the agent downloads the release archive from GitHub only after you say yes.)
 - **No telemetry or analytics.** Nothing is counted, logged remotely or reported back.
 - **No credentials.** It does not read, ask for, store or forward passwords, tokens, API keys or SSH keys.
 - **No cookies or tracking.** There is no website or app, so there is nothing to track.
@@ -50,7 +50,7 @@ pmo-docs is a project-office tool for working professionals. It is not directed 
 
 ## 7. Security
 
-All processing happens on your machine under your user account, with the permissions your agent has. The scripts only write inside the project folder (with one exception: publish `repo` mode copies finished documents into another local repository after your explicit confirmation and, after a second yes, commits them there; it never pushes). The skill lists the exact commands the agent may run without asking (`allowed-tools` in `skills/pmo-docs/SKILL.md`). You keep control through your agent's own permission prompts. To report a security problem, see "Contact" below.
+All processing happens on your machine under your user account, with the permissions your agent has. The scripts only write inside the project folder (with one exception: publish `repo` mode copies finished documents into another local repository after your explicit confirmation and, after a second yes, commits them there; it never pushes). Automated agent installation guided by `docs/INSTALL_FOR_AGENTS.md` writes the skill folder to `~/.agents/skills` or a project skill folder only after your explicit confirmation. The skill lists the exact commands the agent may run without asking (`allowed-tools` in `skills/pmo-docs/SKILL.md`). You keep control through your agent's own permission prompts. To report a security problem, see "Contact" below.
 
 ## 8. Your rights
 

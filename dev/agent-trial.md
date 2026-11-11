@@ -47,10 +47,10 @@ Record the result of this section in `$LOG/install.txt`: the list the agent prin
 
 ## 2. The install prompt (D10)
 
-Give each agent this prompt, unchanged, in a fresh session. It is the same prompt the README shows. The install document is written in v0.5 W5; until the release tag exists, put the commit you tested in place of the tag:
+Give each agent this prompt, unchanged, in a fresh session. It is the same prompt the README shows. The install document is written in v0.5 W5; until the release tag exists, put the commit you tested in place of `<tag>` (the README shows the real tag):
 
 ```
-Install the pmo-docs agent skill for me. Read the raw text of docs/INSTALL_FOR_AGENTS.md at the release tag v0.5.0 from https://github.com/<owner>/pmo-docs (not main). Fetch it with curl, do not summarise it, then follow it exactly and reply in my language.
+Read the raw text of https://raw.githubusercontent.com/<owner>/pmo-docs/<tag>/docs/INSTALL_FOR_AGENTS.md (curl it, do not work from a summary), then follow it exactly to install and verify the pmo-docs skill for the agent you are running in. Respond in the user's language.
 ```
 
 The prompt must end with the agent asking before any write. Answer yes only to the install step, and record each question the agent asked in `$LOG/install.txt`.

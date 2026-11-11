@@ -2,7 +2,7 @@
 
 A project office kept in plain files and run by your AI coding agent. A project keeps its facts in YAML **registers** (tasks, risks, issues, decisions, ...). Scripts render **views** from them, and the agent drafts **documents** (status reports, plans, charters, ...) from **templates** whose checks a script verifies.
 
-> **Status: v0.2.0 released.** Registers, views, documents, checks, generators and recipes work today. Release history is in [`CHANGELOG.md`](CHANGELOG.md); the plan, decisions and later versions are in [`docs/PLAN.md`](docs/PLAN.md).
+> **Status: v0.4.0 released.** Registers, views, documents, checks, generators, recipes, languages and stacks work today. Release history is in [`CHANGELOG.md`](CHANGELOG.md); the plan, decisions and later versions are in [`docs/PLAN.md`](docs/PLAN.md).
 
 ## How it works
 
@@ -34,26 +34,61 @@ Supported doc types: project charter, project plan, roadmap, weekly plan, capaci
 
 ## Install
 
-Claude Code, as a plugin:
+Needs Python 3.10 or newer on Linux or macOS (Windows: use WSL). Nothing to `pip install`: PyYAML is bundled with the skill. The skill works alone; nothing else in this repo is needed.
+
+### For humans
+
+**Claude Code**, as a plugin:
 
 ```
 /plugin marketplace add kmutahar/pmo-docs
 /plugin install pmo-docs@pmo-docs
 ```
 
-The marketplace and the plugin are both named `pmo-docs` (see `.claude-plugin/` and `skills/pmo-docs/.claude-plugin/`). Installing copies only the skill folder.
-
-The short form `kmutahar/pmo-docs` clones over SSH. If you have no SSH key on GitHub, add the marketplace with the web address instead:
+The marketplace and the plugin are both named `pmo-docs` (see `.claude-plugin/` and `skills/pmo-docs/.claude-plugin/`). Installing copies only the skill folder. The short form `kmutahar/pmo-docs` clones over SSH. With no SSH key on GitHub, add the marketplace with the web address instead:
 
 ```
 /plugin marketplace add https://github.com/kmutahar/pmo-docs.git
 ```
 
-Other agents: copy the folder `skills/pmo-docs/` into the agent's skills folder, or download `pmo-docs-<version>.zip` from the [GitHub release](https://github.com/kmutahar/pmo-docs/releases) and unzip it there. It works alone; nothing else in this repo is needed.
+**Antigravity, Codex and other agents** read skills from `~/.agents/skills`. Copy the skill folder there from the release tag:
 
-Claude Code is the only agent verified. Other agents are untested.
+```sh
+mkdir -p ~/.agents/skills
+tmp=$(mktemp -d)
+curl -fsSL https://github.com/kmutahar/pmo-docs/archive/refs/tags/v0.4.0.tar.gz | tar -xz -C "$tmp"
+rm -rf ~/.agents/skills/pmo-docs
+cp -R "$tmp"/pmo-docs-0.4.0/skills/pmo-docs ~/.agents/skills/pmo-docs
+rm -rf "$tmp"
+ls ~/.agents/skills/pmo-docs/SKILL.md ~/.agents/skills/pmo-docs/scripts
+```
 
-Needs Python 3.10 or newer on Linux or macOS (Windows: use WSL). Nothing to `pip install`: PyYAML is bundled with the skill.
+Then restart the agent or open a new session and ask it to list its skills: `pmo-docs` should appear. For one project only, copy the folder to `.agents/skills/pmo-docs` in that project instead. You can also download `pmo-docs-<version>.zip` from the [GitHub release](https://github.com/kmutahar/pmo-docs/releases) and unzip it into `~/.agents/skills/`.
+
+| Agent | Status |
+|---|---|
+| Claude Code | verified |
+| Antigravity (`agy`) | verified |
+| Codex | tested; works from `~/.agents/skills` |
+| Gemini CLI, Cursor, Copilot | untested |
+
+### For agents
+
+Paste this into any coding agent. It reads [`docs/INSTALL_FOR_AGENTS.md`](docs/INSTALL_FOR_AGENTS.md), looks for existing copies, shows its plan, asks before every write, installs and verifies:
+
+```
+Read the raw text of https://raw.githubusercontent.com/kmutahar/pmo-docs/v0.4.0/docs/INSTALL_FOR_AGENTS.md (curl it, do not work from a summary), then follow it exactly to install and verify the pmo-docs skill for the agent you are running in. Respond in the user's language.
+```
+
+### Update
+
+Claude Code installs a copy, so a new version reaches you only when you pull it in:
+
+```sh
+claude plugin marketplace update pmo-docs && claude plugin update pmo-docs@pmo-docs
+```
+
+Other agents: run the commands above with the newer tag, or give the agent the prompt again (it compares the installed copy and asks before replacing it). Restart the agent afterwards. Your project's `pmo/` folder is never touched by an update; if the project launcher changed, the agent shows the difference and asks first.
 
 ## Quick start
 
