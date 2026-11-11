@@ -30,7 +30,13 @@ class Common(unittest.TestCase):
                 self.assertIn(g, c["registers"])
         for r in c["registers"].values():
             for v in r.get("enums", {}).values():
-                self.assertIn(v, c["vocab"])
+                if "." in v:
+                    node = c
+                    for part in v.split("."):
+                        node = node.get(part) if isinstance(node, dict) else None
+                    self.assertIsInstance(node, list)
+                else:
+                    self.assertIn(v, c["vocab"])
 
     def test_paths_that_leave_the_project_exit_2(self):
         for cfg in ("registers: {tasks: {view: ../x.md}}\n", "registers: {tasks: {file: ../x.yaml}}\n",

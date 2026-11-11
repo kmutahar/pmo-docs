@@ -41,6 +41,16 @@ def config_errors(cfg, root=None):
     """Registers in the config that lack `file`, `view` or `fields`, bad week_start, or invalid blocked/active statuses."""
     errors = [f"config: register `{n}` needs `{k}`" for n, r in cfg["registers"].items() for k in ("file", "view", "fields")
               if not isinstance(r, dict) or not r.get(k)]
+    for n, r in cfg.get("registers", {}).items():
+        if isinstance(r, dict):
+            refs = r.get("refs")
+            if refs is not None and not isinstance(refs, dict):
+                errors.append(f"config: registers.{n}.refs must be a map of field to register")
+            for f, target in (refs.items() if isinstance(refs, dict) else ()):
+                if not isinstance(target, str):
+                    errors.append(f"config: registers.{n}.refs must be a map of field to register")
+                elif target not in cfg.get("registers", {}):
+                    errors.append(f"config: registers.{n}.refs target `{target}` is not a register")
     ws = cfg.get("project", {}).get("week_start") if isinstance(cfg.get("project"), dict) else None
     if ws is not None and (not isinstance(ws, str) or ws.lower() not in pc.WEEKDAYS):
         errors.append(f"config: project.week_start `{ws}` not in {list(pc.WEEKDAYS)}")
@@ -53,6 +63,37 @@ def config_errors(cfg, root=None):
     for s in pc.statuses(cfg, "changes", "accepted"):
         if change_statuses and s not in change_statuses:
             errors.append(f"config: registers.changes.accepted status `{s}` not in vocab.change_status")
+
+    dom = cfg.get("domain")
+    if dom is not None:
+        if not isinstance(dom, dict):
+            errors.append("config: domain must be a map")
+        else:
+            le = dom.get("lifecycle_entity")
+            if le is not None and (not isinstance(le, str) or not le.strip()):
+                errors.append(f"config: domain.lifecycle_entity `{le}` must be null or non-empty text")
+            if "roles" in dom:
+                roles = dom.get("roles")
+                if not isinstance(roles, list) or not all(isinstance(r, str) and r.strip() for r in roles):
+                    errors.append("config: domain.roles must be a list of non-empty text")
+
+    tech = cfg.get("technical")
+    if tech is not None:
+        if not isinstance(tech, dict):
+            errors.append("config: technical must be a map")
+        else:
+            if "stacks" in tech:
+                stacks = tech.get("stacks")
+                if not isinstance(stacks, list) or not all(isinstance(s, str) and s.strip() for s in stacks):
+                    errors.append("config: technical.stacks must be a list of non-empty text")
+                else:
+                    for s in stacks:
+                        if not re.fullmatch(r"[a-z0-9][a-z0-9-]*", s):
+                            errors.append(f"config: technical.stacks entry `{s}` must match [a-z0-9][a-z0-9-]*")
+            if "consumers" in tech:
+                consumers = tech.get("consumers")
+                if not isinstance(consumers, list) or not all(isinstance(c, str) and c.strip() for c in consumers):
+                    errors.append("config: technical.consumers must be a list of non-empty text")
     pub = cfg.get("publish")
     if pub is not None:
         if isinstance(pub, dict):
@@ -228,22 +269,32 @@ def credential_labels(value) -> list[str]:
     return labels
 
 
+def allowed(cfg, name):
+    """Allowed values for an `enums` entry: a vocab name, or a dotted config path such as domain.roles. [] means any value."""
+    if "." not in name:
+        return cfg["vocab"].get(name) or []
+    node = cfg
+    for part in name.split("."):
+        node = node.get(part) if isinstance(node, dict) else None
+    return node if isinstance(node, list) else []
+
+
 def validate(data, cfg):
     errors, seen = [], {}
-    vocab = cfg["vocab"]
+    ids = {n: {e.get("id") for e in rows if isinstance(e.get("id"), (str, int))} for n, rows in data.items()}
     slugs = {r.get("slug") for r in data.get("roster", [])}
     for name, rows in data.items():
         reg = cfg["registers"][name]
-        allowed, prefix = set(reg["fields"]), reg.get("prefix")
+        allowed_fields, prefix = set(reg["fields"]), reg.get("prefix")
         for i, r in enumerate(rows, 1):
             rid = r.get("id")
             who = f"{name} {rid if rid else '#%d' % i}"
             for k in r:
-                if k not in allowed and not str(k).startswith("x_"):
-                    errors.append(f"{who}: unexpected field '{k}' (an unquoted comma in a value? allowed: {sorted(allowed)})")
+                if k not in allowed_fields and not str(k).startswith("x_"):
+                    errors.append(f"{who}: unexpected field '{k}' (an unquoted comma in a value? allowed: {sorted(allowed_fields)})")
                 for label in credential_labels(r[k]):
                     errors.append(f"{who}: {k} looks like a credential ({label}); remove it, registers never hold credentials")
-            if "id" in allowed:
+            if "id" in allowed_fields:
                 if not rid:
                     errors.append(f"{who}: missing id")
                 elif not isinstance(rid, str):
@@ -256,14 +307,27 @@ def validate(data, cfg):
                     errors.append(f"{who}: id must look like {prefix}-1")
             for field, vname in reg.get("enums", {}).items():
                 values = r.get(field)  # null is allowed (never guess), except for status
-                if values is None and field != "status" or not vocab.get(vname):
+                ok = allowed(cfg, vname)
+                if values is None and field != "status" or not ok:
                     continue
                 for v in values if isinstance(values, list) else [values]:
-                    if v not in vocab[vname]:
-                        errors.append(f"{who}: {field} {v!r} not in {vocab[vname]}")
+                    if v not in ok:
+                        errors.append(f"{who}: {field} {v!r} not in {ok}")
             for field in reg.get("dates", []):
                 if r.get(field) and not real_date(r[field]):
                     errors.append(f"{who}: {field} {r[field]!r} is not a YYYY-MM-DD date")
+            for field, target in reg.get("refs", {}).items():
+                if field not in allowed_fields or target not in data:
+                    continue                      # a field the project dropped, or a target register file that does not exist
+                value = r.get(field)
+                for v in value if isinstance(value, list) else [value]:
+                    if v in (None, ""):
+                        continue
+                    if not isinstance(v, (str, int)):
+                        errors.append(f"{who}: {field} must be an id or a list of ids")
+                        break
+                    if v not in ids[target]:
+                        errors.append(f"{who}: {field} {v!r} is not an id in {target}")
             owners = r.get("owner")
             for o in owners if isinstance(owners, list) else [owners]:
                 if o and slugs - {None} and not (isinstance(o, (str, int)) and o in slugs):  # a map or list is unhashable

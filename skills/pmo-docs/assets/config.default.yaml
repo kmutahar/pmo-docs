@@ -18,6 +18,21 @@ paths:
   # project playbooks that replace the skill playbook of the same path
   playbooks: pmo/playbooks
 
+# Domain: the words of the project that the technical templates need. Both are optional.
+# lifecycle_entity: the one thing whose life cycle the entity-lifecycle document describes (for example: order).
+# roles: the permission roles of the product, as the code names them (for example: admin, editor, viewer).
+domain:
+  lifecycle_entity: null
+  roles: []
+
+# Technical: what the code-reading drafts need. Both are optional.
+# stacks: the stacks the code is built on, named like the files in references/stacks (nextjs, express, ...).
+#   A stack with no shipped file gets a stack file in the project playbook folder, written once with the user.
+# consumers: names of the systems or teams that call the API, one section each in the integration guide.
+technical:
+  stacks: []
+  consumers: []
+
 # Languages. A project that does not set this block writes English only.
 # draft: the code of the language documents are written in. translations: the codes of the other languages.
 # Every code has a block: label (short name) and dir (ltr or rtl). Optional keys per language:

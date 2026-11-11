@@ -427,6 +427,114 @@ class Credentials(unittest.TestCase):
 
 
 
+class RegisterLinks(unittest.TestCase):
+    def setUp(self):
+        self.root = Path(tempfile.mkdtemp()) / "acme"
+        shutil.copytree(REPO / "examples/acme", self.root)
+        self.reg = self.root / "pmo/registers"
+        self.views = self.root / "pmo/views"
+        self.cfg_file = self.root / "pmo/config.yaml"
+
+    def tearDown(self):
+        shutil.rmtree(self.root.parent)
+
+    def write_config(self, extra):
+        cfg = pc.yaml.safe_load(self.cfg_file.read_text(encoding="utf-8")) or {}
+        merged = pc.merge(cfg, extra)
+        self.cfg_file.write_text(pc.yaml.safe_dump(merged), encoding="utf-8")
+
+    def append(self, name, line):
+        with open(self.reg / f"{name}.yaml", "a", encoding="utf-8") as f:
+            f.write(line + "\n")
+
+    def test_dotted_enum_checks_against_a_config_list(self):
+        self.write_config({
+            "domain": {"roles": ["lead"]},
+            "registers": {"roster": {"enums": {"role": "domain.roles", "origin": "origin"}}},
+        })
+        code, out = run(self.root, "--check")
+        self.assertEqual(code, 1)
+        self.assertIn("role 'Project manager' not in ['lead']", out)
+
+        self.write_config({
+            "domain": {"roles": ["Project manager", "Platform lead", "Web lead", "admin", "editor", "viewer"]},
+        })
+        code, out = run(self.root, "--check")
+        self.assertEqual(code, 0, out)
+
+        self.write_config({
+            "domain": {"roles": []},
+        })
+        code, out = run(self.root, "--check")
+        self.assertEqual(code, 0, out)
+
+    def test_refs_report_an_unknown_id(self):
+        self.write_config({
+            "registers": {"issues": {"refs": {"related_tasks": "tasks"}}},
+        })
+        code, out = run(self.root, "--check")
+        self.assertEqual(code, 0, out)
+
+        issue_line = "  - {id: I-99, title: Bad task ref, description: none, severity: low, owner: bob, status: open, origin: stated, raised: 2026-03-10, resolved: null, related_tasks: [T-99]}"
+        self.append("issues", issue_line)
+        code, out = run(self.root)
+        self.assertEqual(code, 1)
+        self.assertIn("related_tasks 'T-99' is not an id in tasks", out)
+
+        issues_path = self.reg / "issues.yaml"
+        lines = issues_path.read_text(encoding="utf-8").splitlines()
+        lines[-1] = "  - {id: I-99, title: Empty task ref, description: none, severity: low, owner: bob, status: open, origin: stated, raised: 2026-03-10, resolved: null, related_tasks: []}"
+        issues_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        code, out = run(self.root)
+        self.assertEqual(code, 0, out)
+
+        lines[-1] = "  - {id: I-99, title: Null task ref, description: none, severity: low, owner: bob, status: open, origin: stated, raised: 2026-03-10, resolved: null, related_tasks: null}"
+        issues_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        code, out = run(self.root)
+        self.assertEqual(code, 0, out)
+
+    def test_refs_to_a_missing_register_file_are_skipped(self):
+        self.write_config({
+            "registers": {"issues": {"refs": {"related_tasks": "tasks"}}},
+        })
+        (self.reg / "tasks.yaml").unlink()
+        (self.views / "tasks.md").unlink()
+        code, out = run(self.root, "--check")
+        self.assertEqual(code, 0, out)
+
+    def test_refs_config_errors(self):
+        self.write_config({
+            "registers": {"issues": {"refs": {"related_tasks": "unknown_register"}}},
+        })
+        code, out = run(self.root)
+        self.assertEqual(code, 2)
+        self.assertIn("config: registers.issues.refs target `unknown_register` is not a register", out)
+
+    def test_refs_must_be_a_map_of_field_to_register(self):
+        for bad in ("tasks", ["tasks"], {"related_tasks": ["tasks"]}):
+            self.write_config({"registers": {"issues": {"refs": bad}}})
+            code, out = run(self.root)
+            self.assertEqual(code, 2, bad)
+            self.assertIn("registers.issues.refs must be a map of field to register", out)
+            self.assertNotIn("Traceback", out)
+
+    def test_domain_and_technical_config_errors(self):
+        self.write_config({"technical": {"stacks": ["Next.js"]}})
+        code, out = run(self.root)
+        self.assertEqual(code, 2)
+        self.assertIn("config: technical.stacks", out)
+
+        self.write_config({"technical": {"stacks": []}, "domain": {"roles": "admin"}})
+        code, out = run(self.root)
+        self.assertEqual(code, 2)
+        self.assertIn("config: domain.roles", out)
+
+        self.write_config({"domain": {"roles": [], "lifecycle_entity": ""}})
+        code, out = run(self.root)
+        self.assertEqual(code, 2)
+        self.assertIn("config: domain.lifecycle_entity", out)
+
+
 class CommittedViews(unittest.TestCase):
     def test_acme_views_are_current(self):
         self.assertEqual(run(REPO / "examples/acme", "--check")[0], 0)
