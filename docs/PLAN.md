@@ -1,6 +1,6 @@
 # pmo-docs: plan hub
 
-Status: v0.4.0 released (2026-11-11 UTC). v0.5 to after-1.0 planned, one file per version in `docs/plans/`. Last updated 2026-11-11 (UTC). Repo rules and maintainer procedures: `AGENTS.md`. This file holds the settled decisions, how the skill works, the version index and the public-repo safeguards.
+Status: v0.5.0 released (2026-11-11 UTC). v1.0 to after-1.0 planned, one file per version in `docs/plans/`. Last updated 2026-11-11 (UTC). Repo rules and maintainer procedures: `AGENTS.md`. This file holds the settled decisions, how the skill works, the version index and the public-repo safeguards.
 
 `pmo-docs` is a project-office and documentation workflow for AI coding agents. A project keeps its facts in **registers**: YAML files for tasks, risks, issues, decisions and so on. Scripts render views from them. The agent drafts documents from **templates**, and tools check each document against its template's contract.
 
@@ -18,7 +18,7 @@ Effort: S = under an hour, M = one session, L = several sessions.
 | v0.2 | Generators, calendar, publishing with `init` and `publish` commands, playbook overrides and drift warnings, catalogue | git history up to tag `v0.2.0` | released 2026-11-06 (UTC) |
 | v0.3 | Languages and translation, intake from chat exports | git history up to tag `v0.3.0` | released 2026-11-09 (UTC) |
 | v0.4 | Stacks, technical and domain templates, their registers | git history up to tag `v0.4.0` | released 2026-11-11 (UTC) |
-| v0.5 | Other agents and unattended runs: launcher, schedule, shared hook | [`plans/v0.5.md`](plans/v0.5.md) | planned |
+| v0.5 | Other agents and unattended runs: launcher, schedule, shared hook | git history up to tag `v0.5.0` | released 2026-11-11 (UTC) |
 | 1.0 | Stable formats, `renumber.py` for duplicate ids, upgrade test, config reference test | [`plans/v1.0.md`](plans/v1.0.md) | planned |
 | 1.0.1 | Verification release: evals, SkillSpector, walkthrough check, install check and the Opus review, for every version up to 1.0 | [`plans/v1.0.1.md`](plans/v1.0.1.md) | planned |
 | After 1.0 | Documents with several writers | [`plans/after-1.0.md`](plans/after-1.0.md) | planned |

@@ -1,6 +1,6 @@
 # Trial the skill in other agents
 
-A maintainer checklist, not shipped. It fills section 5 of [`docs/plans/v0.5.md`](../docs/plans/v0.5.md) (W3). You run each agent yourself, in its own terminal session, and save what it did. The commands below are for zsh and write to `~/pmo-trial-logs/`.
+A maintainer checklist, not shipped. It fills the agent results table of the v0.5 plan (W3, in git history up to tag `v0.5.0`). You run each agent yourself, in its own terminal session, and save what it did. The commands below are for zsh and write to `~/pmo-trial-logs/`.
 
 Each trial works on a copy of the example project, `examples/acme`, in `~/pmo-trial/`. Nothing here touches your real projects.
 
@@ -149,7 +149,7 @@ rm -rf ~/pmo-trial/switch
 
 ## 5. Fill the results table
 
-Open `docs/plans/v0.5.md`, section 5, and add one row per agent. Use the UTC date in the Notes column. Each cell is one short word or a pass/fail:
+Open the plan of the version you are testing (`docs/plans/`), section 5, and add one row per agent. Use the UTC date in the Notes column. Each cell is one short word or a pass/fail:
 
 - **Version:** the `metadata.version` the agent's copy reports (from `SKILL.md`).
 - **Skill found:** `yes` when the agent listed `pmo-docs` without a manual path.

@@ -224,7 +224,7 @@ The skill installs no hook. If you want one, call `pmo/bin/pmo render_views --ch
 | v0.2 | Generators, calendar, publishing with `init` and `publish` commands, playbook overrides and drift warnings, a catalogue of doc types (released) |
 | v0.3 | Languages and translation, intake from chat exports (released) |
 | v0.4 | Stacks, technical and domain templates, and their registers (released) |
-| v0.5 | Other agents and unattended runs: a launcher, schedules, a shared hook |
+| v0.5 | Other agents and unattended runs: a launcher, schedules, a shared hook (released) |
 | 1.0 | Stable formats, a command that fixes duplicate ids, a test that a v0.1 project still works |
 | 1.0.1 | Verification release: the evals, the security scan and the install check |
 | After 1.0 | Documents edited by several writers |
