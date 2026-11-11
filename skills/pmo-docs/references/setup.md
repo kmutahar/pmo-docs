@@ -19,12 +19,7 @@ Set up a project's `pmo/` folder and starter registers.
    Stop after reporting the status.
 
 2. **Gather configuration**
-   Ask the user for initial project details, showing defaults:
-   - Project name (default: null)
-   - Project manager (default: null)
-   - Priority order (default: high, medium, low)
-   - Week start (default: monday). Ask only if the user mentions weeks or a non-Monday working week; otherwise use the default.
-   Unknown answers stay null and become open questions.
+   Ask the user for initial project details (project name, project manager; priority order and week start use defaults unless mentioned), and display the file list to be created (step 3). Wait for a yes before running `setup.py` or writing any file (`SKILL.md`, Safety rule 3: ask before writing beyond the request). Unknown answers stay null and become open questions.
 
 3. **Confirm layout**
    Display the tree of files to be created and wait for confirmation:
