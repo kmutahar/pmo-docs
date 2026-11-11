@@ -1,6 +1,6 @@
 # Trial the skill in other agents
 
-A maintainer checklist, not shipped. It fills the agent results table of the v0.5 plan (W3, in git history up to tag `v0.5.0`). You run each agent yourself, in its own terminal session, and save what it did. The commands below are for zsh and write to `~/pmo-trial-logs/`.
+A maintainer checklist, not shipped. Its results go into the agent table in the README and the hub's "Other agents" row. You run each agent yourself, in its own terminal session, and save what it did. The commands below are for zsh and write to `~/pmo-trial-logs/`.
 
 Each trial works on a copy of the example project, `examples/acme`, in `~/pmo-trial/`. Nothing here touches your real projects.
 
@@ -15,7 +15,7 @@ mkdir -p "$LOG" ~/pmo-trial
 
 ## 1. Install per agent
 
-All four agents read the shared folder `~/.agents/skills`, so one copy serves them all (D10). Install that copy first:
+All four agents read the shared folder `~/.agents/skills`, so one copy serves them all. Install that copy first:
 
 ```
 mkdir -p ~/.agents/skills
@@ -45,9 +45,9 @@ Per agent, check these lines in the log:
 
 Record the result of this section in `$LOG/install.txt`: the list the agent printed, and the copy it used.
 
-## 2. The install prompt (D10)
+## 2. The install prompt
 
-Give each agent this prompt, unchanged, in a fresh session. It is the same prompt the README shows. The install document is written in v0.5 W5; until the release tag exists, put the commit you tested in place of `<tag>` (the README shows the real tag):
+Give each agent this prompt, unchanged, in a fresh session. It is the same prompt the README shows. Use the latest release tag in place of `<tag>` (the README shows it), or the commit you are testing:
 
 ```
 Read the raw text of https://raw.githubusercontent.com/<owner>/pmo-docs/<tag>/docs/INSTALL_FOR_AGENTS.md (curl it, do not work from a summary), then follow it exactly to install and verify the pmo-docs skill for the agent you are running in. Respond in the user's language.
@@ -165,6 +165,6 @@ YYYY-MM-DD UTC | <prompt> | <what happened, in one sentence> | likely file: <pat
 
 Example: `2026-11-12 UTC | track | agent wrote the views by hand | likely file: skills/pmo-docs/references/track.md`.
 
-If an agent cannot load skill folders at all, say so in the table and stop there. Tell the maintainer; W4 then decides on the portable prompt (D5).
+If an agent cannot load skill folders at all, say so in the table and stop there, and tell the maintainer.
 
 Save the agent's final message for each prompt in `$LOG`. The table needs only the counts and the one-line notes, but the logs are what you share if a result is disputed.

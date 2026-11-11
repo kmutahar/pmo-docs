@@ -1,18 +1,85 @@
 #!/usr/bin/env bash
-# Maintainer tool: run the plugin evals. Not shipped to users (dev/, not bin/).
-# The plugin root is skills/pmo-docs, but `claude plugin eval` needs evals/ inside the plugin and the
-# cases copy examples/acme, so this builds a throwaway copy: the skill folder plus evals/ and examples/.
-# Usage: dev/run-evals [extra claude plugin eval options, e.g. --case ask-dont-guess --keep-temp]
-# Every case is a real agent run, so it uses Claude usage.
-set -euo pipefail
-if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then sed -n 2,6p "$0" | sed 's/^# \{0,1\}//'; exit 0; fi
+# Maintainer tool: run the plugin evals on Sonnet (agent and judge), cases in parallel. Every case is a real agent run and uses Claude usage.
+# Usage: dev/run-evals [--case NAME]... [--runs N] [--jobs N] [--out DIR] [-- extra claude plugin eval options]
+#   default: every case in evals/, 1 run each, 4 cases at once, out ~/pmo-eval-runs/<UTC time>
+# Everything stays in the out folder: plugin/ (the throwaway plugin copy), summary.log, and cases/<case>/ with
+# eval.log, aggregate-result.json, report.html and sandbox-<n>/ (the kept run: out/trace.jsonl, config/projects/*/*.jsonl,
+# sealed/<home>/cwd = the project as the agent left it). Do not run git inside a sandbox folder.
+# Exit code: 0 when every case passed, 1 otherwise.
+set -uo pipefail
+if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then sed -n 2,8p "$0" | sed 's/^# \{0,1\}//'; exit 0; fi
 repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-work="$(mktemp -d)"
-trap 'rm -rf "$work"' EXIT
-cp -R "$repo/skills/pmo-docs/." "$work/"
-find "$work" -name __pycache__ -type d -prune -exec rm -rf {} +
-mkdir -p "$work/examples"
-cp -R "$repo/evals" "$work/evals" && rm -rf "$work/evals/results"
-cp -R "$repo/examples/acme" "$work/examples/acme"
-cd "$work"
-claude plugin eval . --scaffold --allow-tools Bash,Write,Edit --runs 1 --ablation none --no-publish --model sonnet --trust-plugin "$@"
+cases=(); runs=1; jobs=4; out=""; extra=()
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --case) cases+=("$2"); shift 2 ;;
+    --runs) runs="$2"; shift 2 ;;
+    --jobs) jobs="$2"; shift 2 ;;
+    --out) out="$2"; shift 2 ;;
+    --) shift; extra=("$@"); break ;;
+    *) echo "run-evals: unknown option $1 (see --help)" >&2; exit 2 ;;
+  esac
+done
+if [ ${#cases[@]} -eq 0 ]; then
+  for p in "$repo"/evals/*/prompt.md; do cases+=("$(basename "$(dirname "$p")")"); done
+fi
+for c in "${cases[@]}"; do
+  [ -f "$repo/evals/$c/prompt.md" ] || { echo "run-evals: no case evals/$c" >&2; exit 2; }
+done
+out="${out:-$HOME/pmo-eval-runs/$(date -u +%Y%m%dT%H%M%SZ)}"
+mkdir -p "$out/cases" || exit 2
+out="$(cd "$out" && pwd)"
+
+# The plugin root is skills/pmo-docs, but `claude plugin eval` needs evals/ inside the plugin and the cases copy
+# examples/acme, so the copy holds the skill folder plus evals/ and examples/acme.
+plugin="$out/plugin"
+mkdir -p "$plugin/examples"
+cp -R "$repo/skills/pmo-docs/." "$plugin/"
+find "$plugin" -name __pycache__ -type d -prune -exec rm -rf {} +
+cp -R "$repo/evals" "$plugin/evals" && rm -rf "$plugin/evals/results"
+cp -R "$repo/examples/acme" "$plugin/examples/acme"
+
+run_case() {
+  local c="$1" dir="$out/cases/$1" start rc n=0 k line
+  mkdir -p "$dir"; : > "$dir/.started"; start=$(date +%s)
+  echo "start  $c"
+  (cd "$plugin" && claude plugin eval . --case "$c" --scaffold --allow-tools Bash,Write,Edit --runs "$runs" --ablation none \
+    --no-publish --model sonnet --judge-model sonnet --trust-plugin --keep-temp \
+    --output-dir "$dir" --report "$dir/report.html" "${extra[@]}") > "$dir/eval.log" 2>&1
+  rc=$?
+  # Move each kept sandbox into the case folder; the eval seals it read-only, so open it first.
+  while IFS= read -r k; do
+    [ -d "$k" ] || continue
+    n=$((n + 1)); chmod -R u+rwX "$k" && mv "$k" "$dir/sandbox-$n"
+  done < <(sed -n 's/^ *kept temp: //p' "$dir/eval.log")
+  line="$(grep -E "^(✓|✗) $c " "$dir/eval.log" | tail -1)"
+  [ -n "$line" ] || line="✗ $c  no result (exit $rc, see eval.log)"
+  failed="$(sed -n 's/^ *✗ \([^ ]*\) (weight.*/\1/p' "$dir/eval.log" | sort -u | paste -sd, -)"
+  echo "$line  $(( $(date +%s) - start ))s${failed:+  failed: $failed}" > "$dir/.done"
+  echo "done   $(cat "$dir/.done")   [$(ls "$out"/cases/*/.done 2>/dev/null | wc -l | tr -d " ")/$total]"
+}
+total=${#cases[@]}; t0=$(date +%s)
+export -f run_case
+export out plugin runs total
+# shortcut: extra options are split on spaces, so an option value cannot hold a space; pass it through a file if ever needed.
+export EXTRA="${extra[*]:-}"
+
+echo "run-evals: $total case(s), $runs run(s) each, $jobs at once, model sonnet, judge sonnet"
+echo "run folder: $out"
+# Heartbeat every 30 s; it checks a stop file each second so it ends with the run.
+( while true; do
+    for _ in $(seq 30); do [ -e "$out/.stop" ] && exit 0; sleep 1; done
+    running=""; for d in "$out"/cases/*/; do [ -e "$d.started" ] && [ ! -e "$d.done" ] && running="$running $(basename "$d")"; done
+    echo "...    $(ls "$out"/cases/*/.done 2>/dev/null | wc -l | tr -d " ")/$total done, $(( ($(date +%s) - t0) / 60 ))m$(( ($(date +%s) - t0) % 60 ))s, running:${running:- none}"
+  done ) &
+beat=$!
+trap ': > "$out/.stop"' EXIT
+printf '%s\n' "${cases[@]}" | xargs -P "$jobs" -I{} bash -c 'extra=($EXTRA); run_case "$1"' _ {}
+: > "$out/.stop"; wait $beat
+
+for c in "${cases[@]}"; do cat "$out/cases/$c/.done" 2>/dev/null || echo "✗ $c  did not finish"; done > "$out/summary.log"
+pass=$(grep -c '^✓' "$out/summary.log")
+cost=$(grep -o '\$[0-9.]*' "$out/summary.log" | tr -d '$' | awk '{s += $1} END {printf "%.2f", s}')
+echo "total: $pass/$total passed, \$${cost:-?} (as the eval CLI reports each case), $(( $(date +%s) - t0 ))s" >> "$out/summary.log"
+echo; cat "$out/summary.log"; echo "summary: $out/summary.log"
+[ "$pass" -eq "$total" ]
