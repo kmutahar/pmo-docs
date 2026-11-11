@@ -1,6 +1,6 @@
 # pmo-docs: plan hub
 
-Status: v0.2.0 released (2026-11-06 UTC). v0.3 to after-1.0 planned, one file per version in `docs/plans/`. Last updated 2026-11-06 (UTC). Repo rules and maintainer procedures: `AGENTS.md`. This file holds the settled decisions, how the skill works, the version index and the public-repo safeguards.
+Status: v0.4.0 released (2026-11-11 UTC). v0.5 to after-1.0 planned, one file per version in `docs/plans/`. Last updated 2026-11-11 (UTC). Repo rules and maintainer procedures: `AGENTS.md`. This file holds the settled decisions, how the skill works, the version index and the public-repo safeguards.
 
 `pmo-docs` is a project-office and documentation workflow for AI coding agents. A project keeps its facts in **registers**: YAML files for tasks, risks, issues, decisions and so on. Scripts render views from them. The agent drafts documents from **templates**, and tools check each document against its template's contract.
 
@@ -17,9 +17,10 @@ Effort: S = under an hour, M = one session, L = several sessions.
 | v0.1 | Core skill: registers, views, templates and checks, setup, plugin manifest | git history up to tag `v0.1.0` | released 2026-11-05 (UTC) |
 | v0.2 | Generators, calendar, publishing with `init` and `publish` commands, playbook overrides and drift warnings, catalogue | git history up to tag `v0.2.0` | released 2026-11-06 (UTC) |
 | v0.3 | Languages and translation, intake from chat exports | git history up to tag `v0.3.0` | released 2026-11-09 (UTC) |
-| v0.4 | Stacks, technical and domain templates, their registers | [`plans/v0.4.md`](plans/v0.4.md) | planned |
+| v0.4 | Stacks, technical and domain templates, their registers | git history up to tag `v0.4.0` | released 2026-11-11 (UTC) |
 | v0.5 | Other agents and unattended runs: launcher, schedule, shared hook | [`plans/v0.5.md`](plans/v0.5.md) | planned |
 | 1.0 | Stable formats, `renumber.py` for duplicate ids, upgrade test, config reference test | [`plans/v1.0.md`](plans/v1.0.md) | planned |
+| 1.0.1 | Verification release: evals, SkillSpector, walkthrough check, install check and the Opus review, for every version up to 1.0 | [`plans/v1.0.1.md`](plans/v1.0.1.md) | planned |
 | After 1.0 | Documents with several writers | [`plans/after-1.0.md`](plans/after-1.0.md) | planned |
 
 The README holds the user-facing copy of this table (keep both current). When a version is released, mark it here and in the README. Once nothing in its file is pending, the file can be deleted: git keeps it.
@@ -58,7 +59,7 @@ Dropped: `client-summary` (overlaps `stakeholder-update`), `sync_repos`, the spr
 | Python | Python 3.10 or newer. PyYAML is vendored in `scripts/_vendor/` (pure Python, `safe_load` only). Every script stops with a clear message below 3.10. | PEP 668 system Pythons refuse `pip install`, so vendoring means users install nothing. Stock macOS `python3` is 3.9.6, hence the message. |
 | Platforms | Linux and macOS. Windows through WSL. | Hooks and dev tools are bash. |
 | Tests | `tests/` at the repo root, stdlib `unittest`, on the one fake project `examples/acme` copied into a temp folder | One Acme keeps the walkthrough and the tests in agreement. Overrides the maintainer's global `claude-tests/` rule for this repo. |
-| Evals | `claude plugin eval` cases in `evals/`, more with each release, run by hand before a release with `dev/run-evals` (they cost tokens), not in CI | Evals are the only check of the skill's behaviour. |
+| Evals | `claude plugin eval` cases in `evals/`, more with each release, run by hand with `dev/run-evals` (they cost tokens), not in CI. Decided 2026-11-11 (UTC): they run once, in the 1.0.1 verification release, not before each release before 1.0 | Evals are the only check of the skill's behaviour. |
 | CI | GitHub Actions on push and pull request: the tests on Python 3.10 and the newest stable release, plus `dev/scrub.sh` (generic patterns only) | The repo is public, and outside pull requests never pass through the local hooks. |
 | Raw copies | Source files are copied into `tmp/source/` inside this repo (gitignored). Only generalised files are staged. | A raw copy committed once stays in history. |
 | Schema version | `schema_version: 1` in `config.yaml`. Tools refuse a project with a newer version (exit 2). The first format change ships a migration script (`scripts/migrate/NNNN_*.py`) and a CHANGELOG upgrade note. Optional new keys do not bump it. It stays 1 through 1.0. | Without it, every older project has to be guessed at. |
@@ -133,7 +134,7 @@ The skill keeps playbooks in `references/` because the Agent Skills spec names t
 | Cost | About one session plus checks. Template and hook paths move. | Every fix is made twice and the copies drift. |
 | Gain | One engine; a fix helps every project. | No change now. |
 
-Languages now exist (v0.3.0). The maintainer decides before v0.4 starts (v0.4, W0). Until then there is no sync.
+**Decided (2026-11-11, UTC):** migrate. The source project changes only occasionally, so there is no sync until then. The migration happens after v1.0 and gets its own plan file.
 
 ### Not blocking any version
 
@@ -225,12 +226,16 @@ Sources:
 - Every package is committed in order, with approval.
 - `python3 -m unittest discover tests` and `bash dev/scrub.sh` pass; CI is green on `main`.
 - `claude plugin validate .` and `claude plugin validate skills/pmo-docs` exit 0, no warnings; the plugin listing shows each skill once.
-- SkillSpector on a clean copy of the tracked files (`git archive HEAD skills/pmo-docs | tar -x -C <tmp>`), Sonnet: SAFE, full coverage, every LLM call succeeded, and the suppression count recorded and not higher than before.
-- Every eval on Sonnet with `dev/run-evals`, one `--case` per run; re-run a failure before changing anything.
-- The walkthrough check (`dev/test-walkthrough.md`): the script outputs match `docs/walkthrough.md` and the agent prompts behave as it says.
 - `dev/release --bump --dry-run`, then release with the explicit version (`dev/release --dry-run X.Y.Z`, then `dev/release X.Y.Z`); in 0.x `--bump` proposes a patch.
 - The dry run's changelog section reads well and holds no private names or machine paths.
 - README roadmap and the version index above: the version marked released, with the date (UTC).
 - Cleanup goes in its own commit before `dev/release`: delete the version's plan file, point the hub row to the new tag, move unfinished work to the next plan. The release commit then holds only `CHANGELOG.md` and the version files.
-- After the release workflow publishes the zip: the install check (`dev/test-install.md`) with `V=<the new version>`.
 - The maintainer approves, commits, tags and pushes (`dev/release` asks twice).
+
+**Deferred checks** (decided 2026-11-11, UTC: they use a lot of usage, so they run once, in the 1.0.1 verification release, for every version before it; the plan is `plans/v1.0.1.md`)
+
+- SkillSpector on a clean copy of the tracked files (`git archive HEAD skills/pmo-docs | tar -x -C <tmp>`), Sonnet: SAFE, full coverage, every LLM call succeeded, and the suppression count recorded and not higher than before.
+- Every eval on Sonnet with `dev/run-evals`, one `--case` per run; re-run a failure before changing anything.
+- The walkthrough check (`dev/test-walkthrough.md`): the script outputs match `docs/walkthrough.md` and the agent prompts behave as it says.
+- After the release workflow publishes the zip: the install check (`dev/test-install.md`) with `V=<the new version>`.
+- One Opus review at high effort over everything built since the last review.
