@@ -1,0 +1,147 @@
+#!/bin/sh
+set -eu
+
+case "$0" in
+    */*)
+        LAUNCHER_PATH="$0"
+        ;;
+    *)
+        LAUNCHER_PATH=$(command -v "$0" 2>/dev/null || echo "./$0")
+        ;;
+esac
+
+LAUNCHER_DIR=$(CDPATH= cd -- "$(dirname -- "$LAUNCHER_PATH")" && pwd -P)
+PROJECT_ROOT=$(CDPATH= cd -- "$LAUNCHER_DIR/../.." && pwd -P)
+
+SKILL_DIR=""
+
+if [ -n "${PMO_DOCS_SKILL+x}" ]; then
+    if [ -n "$PMO_DOCS_SKILL" ] && [ -f "$PMO_DOCS_SKILL/SKILL.md" ] && [ -d "$PMO_DOCS_SKILL/scripts" ]; then
+        SKILL_DIR="$PMO_DOCS_SKILL"
+    else
+        echo "invalid PMO_DOCS_SKILL: $PMO_DOCS_SKILL" >&2
+        exit 2
+    fi
+fi
+
+if [ -z "$SKILL_DIR" ]; then
+    for dir in \
+        "$PROJECT_ROOT/.claude/skills/pmo-docs" \
+        "$PROJECT_ROOT/.agents/skills/pmo-docs" \
+        "$PROJECT_ROOT/.github/skills/pmo-docs" \
+        "$PROJECT_ROOT/.cursor/skills/pmo-docs" \
+        "$PROJECT_ROOT/.gemini/skills/pmo-docs"
+    do
+        if [ -f "$dir/SKILL.md" ] && [ -d "$dir/scripts" ]; then
+            SKILL_DIR="$dir"
+            break
+        fi
+    done
+fi
+
+if [ -z "$SKILL_DIR" ]; then
+    CACHE_DIR="${CLAUDE_CONFIG_DIR:-${HOME:-}/.claude}/plugins/cache"
+    if [ -d "$CACHE_DIR" ]; then
+        CACHED=$(python3 -c '
+import sys, re, json
+from pathlib import Path
+
+cache = Path(sys.argv[1])
+candidates = []
+for p in cache.glob("**/SKILL.md"):
+    d = p.parent
+    if not (d / "scripts").is_dir():
+        continue
+    pj = d / ".claude-plugin" / "plugin.json"
+    if not pj.is_file():
+        pj = d / "plugin.json"
+    v_str = None
+    name = None
+    if pj.is_file():
+        try:
+            data = json.loads(pj.read_text(encoding="utf-8"))
+            name = data.get("name")
+            v_str = data.get("version")
+        except Exception:
+            pass
+    if name != "pmo-docs" and "pmo-docs" not in d.parts:
+        continue
+    if not v_str:
+        v_str = d.name
+    nums = [int(n) for n in re.findall(r"\d+", str(v_str))]
+    if nums:
+        candidates.append((nums, d))
+
+if candidates:
+    candidates.sort(key=lambda c: c[0])
+    print(candidates[-1][1].resolve())
+    sys.exit(0)
+sys.exit(1)
+' "$CACHE_DIR" 2>/dev/null || true)
+        if [ -n "$CACHED" ] && [ -f "$CACHED/SKILL.md" ] && [ -d "$CACHED/scripts" ]; then
+            SKILL_DIR="$CACHED"
+        fi
+    fi
+fi
+
+if [ -z "$SKILL_DIR" ] && [ -n "${HOME:-}" ]; then
+    for dir in \
+        "$HOME/.claude/skills/pmo-docs" \
+        "$HOME/.agents/skills/pmo-docs" \
+        "$HOME/.copilot/skills/pmo-docs" \
+        "$HOME/.cursor/skills/pmo-docs" \
+        "$HOME/.gemini/skills/pmo-docs"
+    do
+        if [ -f "$dir/SKILL.md" ] && [ -d "$dir/scripts" ]; then
+            SKILL_DIR="$dir"
+            break
+        fi
+    done
+fi
+
+if [ -z "$SKILL_DIR" ]; then
+    echo "pmo-docs not found: set PMO_DOCS_SKILL" >&2
+    exit 2
+fi
+
+list_scripts() {
+    echo "available scripts:" >&2
+    for s in "$SKILL_DIR"/scripts/*.py; do
+        if [ -f "$s" ]; then
+            name=$(basename "$s" .py)
+            case "$name" in
+                _* | pmo_common)
+                    ;;
+                *)
+                    echo "  $name" >&2
+                    ;;
+            esac
+        fi
+    done
+}
+
+if [ $# -lt 1 ]; then
+    echo "usage: pmo <script> [args]" >&2
+    list_scripts
+    exit 2
+fi
+
+case "$1" in
+    "" | *[!a-z_]*)
+        echo "invalid script name: $1" >&2
+        list_scripts
+        exit 2
+        ;;
+esac
+
+SCRIPT="$1"
+shift
+
+if [ ! -f "$SKILL_DIR/scripts/${SCRIPT}.py" ]; then
+    echo "unknown script: $SCRIPT" >&2
+    list_scripts
+    exit 2
+fi
+
+cd "$PROJECT_ROOT"
+exec python3 "$SKILL_DIR/scripts/${SCRIPT}.py" --project "$PROJECT_ROOT" "$@"

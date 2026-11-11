@@ -24,10 +24,28 @@ def main(argv=None):
                     help="comma-separated priority order (most urgent first)")
     ap.add_argument("--week-start", choices=pc.WEEKDAYS, default="monday",
                     help="first day of the week (default monday)")
+    ap.add_argument("--launcher", action="store_true",
+                    help="write only pmo/bin/pmo")
     args = ap.parse_args(argv)
 
     if not Path(args.project).is_dir():
         ap.error(f"project folder not found: {args.project}")
+
+    launcher_src = pc.SKILL / "assets" / "starter" / "bin" / "pmo"
+    launcher_dest = Path(args.project) / "pmo" / "bin" / "pmo"
+
+    if args.launcher:
+        if launcher_dest.exists():
+            if launcher_dest.read_bytes() != launcher_src.read_bytes():
+                print("pmo/bin/pmo already exists and differs: delete it to replace", file=sys.stderr)
+                return 1
+            print("kept: pmo/bin/pmo")
+            return 0
+        launcher_dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(launcher_src, launcher_dest)
+        launcher_dest.chmod(0o755)
+        print("created: pmo/bin/pmo")
+        return 0
 
     priority_order = None
     if args.priority_order is not None:
@@ -54,6 +72,10 @@ def main(argv=None):
             print("the skill is out of date, update it")
             return 2
         return 0
+
+    if launcher_dest.exists() and launcher_dest.read_bytes() != launcher_src.read_bytes():
+        print("pmo/bin/pmo already exists and differs: delete it to replace", file=sys.stderr)
+        return 1
 
     cfg = pc.load_config(args.project)
     paths = cfg["paths"]
@@ -116,7 +138,14 @@ def main(argv=None):
         pc.write(gitkeep, "")
         actions.append(f"created: {rel_gitkeep}")
 
-    rv_script = Path(__file__).resolve().parent / "render_views.py"
+    if launcher_dest.exists():
+        actions.append("kept: pmo/bin/pmo")
+    else:
+        launcher_dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(launcher_src, launcher_dest)
+        launcher_dest.chmod(0o755)
+        actions.append("created: pmo/bin/pmo")
+
     out = io.StringIO()
     try:
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(out):
@@ -134,7 +163,7 @@ def main(argv=None):
         print(act)
     print()
     print("next: add your first tasks, or draft the project charter")
-    print(f"optional hook line: python3 {rv_script.resolve()} --check")
+    print("optional hook line: pmo/bin/pmo render_views --check")
     return 0
 
 

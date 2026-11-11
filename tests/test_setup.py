@@ -32,6 +32,8 @@ class Setup(unittest.TestCase):
         self.assertTrue((self.root / "pmo/config.yaml").exists())
         self.assertTrue((self.root / "pmo/house-rules.md").exists())
         self.assertTrue((self.root / "pmo/documents").is_dir())
+        self.assertTrue((self.root / "pmo/bin/pmo").is_file())
+        self.assertEqual((self.root / "pmo/bin/pmo").stat().st_mode & 0o777, 0o755)
         cfg = pc.load_config(self.root)
         self.assertEqual(cfg["project"]["name"], "Demo")
         self.assertEqual(cfg["project"]["manager"], "Pat Example")
@@ -118,7 +120,43 @@ class Setup(unittest.TestCase):
 
     def test_prints_hook_line(self):
         out = tool("setup.py", self.root)[1]
-        self.assertIn("render_views.py --check", out)
+        self.assertIn("pmo/bin/pmo render_views --check", out)
+
+    def test_launcher_flag_on_existing_project(self):
+        tool("setup.py", self.root, "--name", "Demo")
+        (self.root / "pmo/bin/pmo").unlink()
+        code, out, err = tool("setup.py", self.root, "--launcher")
+        self.assertEqual(code, 0, err)
+        self.assertIn("created: pmo/bin/pmo", out)
+        self.assertTrue((self.root / "pmo/bin/pmo").is_file())
+        self.assertEqual((self.root / "pmo/bin/pmo").stat().st_mode & 0o777, 0o755)
+        code, out, err = tool("setup.py", self.root, "--launcher")
+        self.assertEqual(code, 0, err)
+        self.assertIn("kept: pmo/bin/pmo", out)
+
+    def test_launcher_flag_existing_differs_exits_1(self):
+        tool("setup.py", self.root, "--name", "Demo")
+        (self.root / "pmo/bin/pmo").write_text("custom content\n", encoding="utf-8")
+        code, out, err = tool("setup.py", self.root, "--launcher")
+        self.assertEqual(code, 1)
+        self.assertIn("differs", out + err)
+        self.assertEqual((self.root / "pmo/bin/pmo").read_text(encoding="utf-8"), "custom content\n")
+
+    def test_fresh_setup_existing_differs_exits_1_and_writes_nothing(self):
+        (self.root / "pmo/bin").mkdir(parents=True)
+        (self.root / "pmo/bin/pmo").write_text("custom content\n", encoding="utf-8")
+        code, out, err = tool("setup.py", self.root, "--name", "Demo")
+        self.assertEqual(code, 1)
+        self.assertIn("differs", out + err)
+        self.assertFalse((self.root / "pmo/config.yaml").exists())
+
+    def test_fresh_setup_existing_matches_kept(self):
+        starter = REPO / "skills/pmo-docs/assets/starter/bin/pmo"
+        (self.root / "pmo/bin").mkdir(parents=True)
+        shutil.copyfile(starter, self.root / "pmo/bin/pmo")
+        code, out, err = tool("setup.py", self.root, "--name", "Demo")
+        self.assertEqual(code, 0, err)
+        self.assertIn("kept: pmo/bin/pmo", out)
 
     def test_bad_flag_values_exit_2(self):
         self.assertEqual(tool("setup.py", self.root, "--bogus-flag")[0], 2)
