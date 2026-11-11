@@ -4,7 +4,7 @@ A maintainer document, not shipped with the skill. It tells a designer what to m
 
 ## What exists now
 
-A placeholder drawn by `dev/make_icon.py`: a white clipboard with a checklist (two ticked boxes, one empty) on a dark blue rounded square. It passes the validator. Replace it when a designer's version is ready. The file to replace is:
+A placeholder (drawn once by a script that is no longer in the repo): a white clipboard with a checklist (two ticked boxes, one empty) on a dark blue rounded square. It passes the validator. Replace it when a designer's version is ready. The file to replace is:
 
 ```
 skills/pmo-docs/.claude-plugin/icon.png
@@ -57,11 +57,10 @@ Keep contrast high: the main shape against the background at least 4.5 to 1, so 
 2. The editable source (SVG, Figma or similar), so the icon can be changed later.
 3. One line saying whether the corners are filled or rounded with transparency.
 4. A preview at 512, 128, 64 and 32 pixels on a white and on a dark background, to show it holds up when small.
-5. Confirmation that the artwork is original or licensed for use in an MIT-licensed open source project, with the licence of any font or stock element. The repository is public, so the icon is public too.
+4. Confirmation that the artwork is original or licensed for use in an MIT-licensed open source project, with the licence of any font or stock element. The repository is public, so the icon is public too.
 
 ## How to install the delivered file
 
 1. Replace `skills/pmo-docs/.claude-plugin/icon.png` with the new file.
 2. Run `python3 -m unittest tests.test_plugin` (checks format, shape, size) and `claude plugin validate skills/pmo-docs` (must show no warnings).
-3. Keep `dev/make_icon.py` only if you still want the generated placeholder; delete it once the designer's file is final, and remove it from the `dev/` line in `AGENTS.md`.
-4. Commit it as `chore: add the plugin icon` or `docs: ...` (it is not a user-facing change, so `chore` keeps it out of the changelog).
+3. Commit it as `chore: add the plugin icon` or `docs: ...` (it is not a user-facing change, so `chore` keeps it out of the changelog).
