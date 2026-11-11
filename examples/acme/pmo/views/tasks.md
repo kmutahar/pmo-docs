@@ -4,6 +4,8 @@
 
 **Progress:** 1/4 closed (25%). not-started 1, in-progress 1, blocked 1, done 1, dropped 0
 
+**Done without a linked test:** none
+
 ## By priority
 
 | priority | total | not-started | in-progress | blocked | done | dropped |

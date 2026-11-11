@@ -59,6 +59,14 @@ def config_errors(cfg, root=None):
         for s in pc.statuses(cfg, "tasks", key):
             if task_statuses and s not in task_statuses:
                 errors.append(f"config: registers.tasks.{key} status `{s}` not in vocab.task_status")
+    tasks_reg = cfg.get("registers", {}).get("tasks") if isinstance(cfg.get("registers"), dict) else None
+    done_vocab = tasks_reg.get("enums", {}).get("status") if isinstance(tasks_reg, dict) else "task_status"
+    if not done_vocab:
+        done_vocab = "task_status"
+    done_allowed = allowed(cfg, done_vocab)
+    for s in pc.statuses(cfg, "tasks", "done"):
+        if done_allowed and s not in done_allowed:
+            errors.append(f"config: registers.tasks.done status `{s}` not in vocab.{done_vocab}")
     change_statuses = cfg.get("vocab", {}).get("change_status") or []
     for s in pc.statuses(cfg, "changes", "accepted"):
         if change_statuses and s not in change_statuses:
@@ -341,13 +349,73 @@ def table(rows, cols):
     return pc.md_table(cols, [[r.get(c) for c in cols] for r in rows])
 
 
-def view_tasks(rows, cfg):
+def _id_num(tid):
+    m = re.search(r"\d+", str(tid))
+    return int(m.group()) if m else 0
+
+
+def tests_in_use(data) -> bool:
+    """True when the tests register has at least one entry."""
+    return bool(data.get("tests"))
+
+
+def linked_tests(data, task_id) -> list[str]:
+    """Ids of tests entries linked to a task: the ids in the task's `tests`, plus every test whose `task` is the task id
+    (text or list). No duplicates, sorted by id number. Ids that are not in the tests register are ignored."""
+    if not isinstance(task_id, str):
+        return []
+    test_rows = data.get("tests") or []
+    valid_test_ids = {t.get("id") for t in test_rows if isinstance(t.get("id"), (str, int))}
+    linked = set()
+
+    for task in data.get("tasks") or []:
+        if task.get("id") == task_id:
+            val = task.get("tests")
+            for tid in (val if isinstance(val, list) else [val]):
+                if isinstance(tid, (str, int)) and tid in valid_test_ids:
+                    linked.add(tid)
+            break
+
+    for t in test_rows:
+        tid = t.get("id")
+        if not isinstance(tid, (str, int)) or tid not in valid_test_ids:
+            continue
+        val = t.get("task")
+        for linked_task in (val if isinstance(val, list) else [val]):
+            if linked_task == task_id:
+                linked.add(tid)
+
+    return sorted(linked, key=lambda x: (_id_num(x), str(x)))
+
+
+def done_without_test(cfg, data) -> list[str]:
+    """Ids of tasks whose status is in registers.tasks.done and that have no linked test, sorted by number.
+    [] when tests_in_use is false."""
+    if not tests_in_use(data):
+        return []
+    done_statuses = set(pc.statuses(cfg, "tasks", "done"))
+    missing = []
+    for t in data.get("tasks") or []:
+        tid = t.get("id")
+        if not tid or not isinstance(tid, str):
+            continue
+        if t.get("status") in done_statuses:
+            if not linked_tests(data, tid):
+                missing.append(tid)
+    return sorted(missing, key=lambda x: (_id_num(x), str(x)))
+
+
+def view_tasks(rows, cfg, missing=None):
     reg = cfg["registers"]["tasks"]
     statuses, closed = cfg["vocab"].get(reg.get("enums", {}).get("status")) or [], reg.get("closed", [])
     n = lambda rs, s: sum(1 for r in rs if r.get("status") == s)
     done = sum(1 for r in rows if r.get("status") in closed)
     counts = ", ".join(f"{s} {n(rows, s)}" for s in statuses)
-    out = [f"# Tasks\n\n**Progress:** {done}/{len(rows)} closed ({round(100 * done / len(rows)) if rows else 0}%). {counts}\n"]
+    prog = f"**Progress:** {done}/{len(rows)} closed ({round(100 * done / len(rows)) if rows else 0}%). {counts}"
+    if missing is not None:
+        items = ", ".join(str(x) for x in missing) if missing else "none"
+        prog += f"\n\n**Done without a linked test:** {items}"
+    out = [f"# Tasks\n\n{prog}\n"]
     order = cfg["vocab"].get("priority_order") or []
     key = lambda p: (p is None, order.index(p) if p in order else len(order), str(p))
     pri = [{"priority": p or "not set", "total": len(rs := [r for r in rows if r.get("priority") == p]),
@@ -366,9 +434,10 @@ def view_tasks(rows, cfg):
 def render(data, cfg):
     """{view file name: text}, in config order."""
     views = {}
+    missing = done_without_test(cfg, data) if tests_in_use(data) else None
     for name, rows in data.items():
         reg = cfg["registers"][name]
-        body = view_tasks(rows, cfg) if name == "tasks" else f"# {name.capitalize()}\n\n" + table(rows, reg["fields"])
+        body = view_tasks(rows, cfg, missing=missing) if name == "tasks" else f"# {name.capitalize()}\n\n" + table(rows, reg["fields"])
         views[reg["view"]] = HEADER.format(f=f"{cfg['paths']['registers']}/{reg['file']}") + body
     cat_headers = ["Doc type", "Title", "Made by", "When", "Regenerate", "Stale after", "Published"]
     cat_rows = []
