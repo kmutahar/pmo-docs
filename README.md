@@ -164,9 +164,10 @@ The skill installs no hook. If you want one, call `render_views.py --check` from
 | v0.1 | Core skill: registers, views, templates and checks, setup, plugin manifest (released) |
 | v0.2 | Generators, calendar, publishing with `init` and `publish` commands, playbook overrides and drift warnings, a catalogue of doc types (released) |
 | v0.3 | Languages and translation, intake from chat exports (released) |
-| v0.4 | Stacks, technical and domain templates, and their registers |
+| v0.4 | Stacks, technical and domain templates, and their registers (released) |
 | v0.5 | Other agents and unattended runs: a launcher, schedules, a shared hook |
 | 1.0 | Stable formats, a command that fixes duplicate ids, a test that a v0.1 project still works |
+| 1.0.1 | Verification release: the evals, the security scan and the install check |
 | After 1.0 | Documents edited by several writers |
 
 ## Contributing
