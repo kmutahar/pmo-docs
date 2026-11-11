@@ -2,3 +2,9 @@ schema_version: 1
 project:
   name: Acme Portal
   manager: Sam Example
+domain:
+  lifecycle_entity: account
+  roles: [admin, editor, viewer]
+technical:
+  stacks: [express]
+  consumers: [Mobile app, Partner portal]

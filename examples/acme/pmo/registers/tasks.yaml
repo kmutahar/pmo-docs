@@ -1,5 +1,5 @@
 tasks:
   - {id: T-1, title: Set up staging server, team: platform, group: infra, priority: high, owner: alice, status: in-progress, due: 2026-03-10, period: 2026-03, notes: Overdue on purpose}
   - {id: T-2, title: Design login page, team: web, group: ui, priority: medium, owner: bob, status: not-started, due: 2026-03-25, period: 2026-03, notes: ""}
-  - {id: T-3, title: Write API outline, team: platform, group: docs, priority: low, owner: alice, status: done, due: 2026-03-05, period: 2026-03, notes: ""}
+  - {id: T-3, title: Write API outline, team: platform, group: docs, priority: low, owner: alice, status: done, due: 2026-03-05, period: 2026-03, notes: "", tests: [TST-1]}
   - {id: T-4, title: Pick a payment vendor, team: web, group: ui, priority: medium, owner: bob, status: blocked, due: 2026-04-01, period: 2026-03, notes: Waiting for budget}

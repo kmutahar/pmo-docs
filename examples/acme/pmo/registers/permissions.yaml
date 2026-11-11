@@ -1,0 +1,3 @@
+permissions:
+  - {id: PERM-1, resource: Profile, action: view own, roles: [viewer, editor, admin], condition: "", source: src/auth/profile.js, notes: "", origin: stated}
+  - {id: PERM-2, resource: Profile, action: reset password, roles: [admin], condition: "", source: src/auth/admin.js, notes: "", origin: stated}

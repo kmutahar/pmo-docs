@@ -1,0 +1,4 @@
+# requirements: one entry per line, e.g.
+#   - {id: ..., title: ..., description: ..., kind: ..., priority: ..., source: ..., owner: ..., acceptance: ..., status: ..., related_tasks: [], origin: ...}
+# ids look like REQ-1
+requirements: []

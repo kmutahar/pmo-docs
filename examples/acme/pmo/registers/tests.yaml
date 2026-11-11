@@ -1,0 +1,3 @@
+tests:
+  - {id: TST-1, title: API outline matches the API, kind: acceptance, requirement: null, task: T-3, issue: null, expected: The outline lists every public endpoint, status: passed, run_on: 2026-03-06, owner: alice, evidence: Reviewed against staging, notes: "", origin: stated}
+  - {id: TST-2, title: Login with valid credentials, kind: acceptance, requirement: REQ-1, task: T-2, issue: I-3, expected: The home page opens, status: failed, run_on: 2026-03-12, owner: bob, evidence: "", notes: "", origin: stated}

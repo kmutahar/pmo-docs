@@ -35,8 +35,11 @@ class Setup(unittest.TestCase):
         cfg = pc.load_config(self.root)
         self.assertEqual(cfg["project"]["name"], "Demo")
         self.assertEqual(cfg["project"]["manager"], "Pat Example")
-        for reg in cfg["registers"].values():
-            self.assertTrue((self.root / cfg["paths"]["registers"] / reg["file"]).exists(), reg["file"])
+        optional = {"requirements", "tests", "environments", "permissions"}
+        self.assertEqual(len(cfg["registers"]), 20)
+        for name, reg in cfg["registers"].items():
+            dest = self.root / cfg["paths"]["registers"] / reg["file"]
+            self.assertEqual(dest.exists(), name not in optional, name)
         self.assertEqual(tool("render_views.py", self.root, "--check")[0], 0)
         self.assertEqual(tool("docs_audit.py", self.root)[0], 0)
         self.assertEqual(tool("structure_check.py", self.root)[0], 0)

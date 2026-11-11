@@ -1,0 +1,4 @@
+# permissions: one entry per line, e.g.
+#   - {id: ..., resource: ..., action: ..., roles: [], condition: ..., source: ..., notes: ..., origin: ...}
+# ids look like PERM-1
+permissions: []

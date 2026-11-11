@@ -59,6 +59,12 @@ vocab:
   rag: [green, amber, red]
   origin: []
   priority_order: [high, medium, low]   # sort order for priorities, first = most urgent
+  requirement_status: [proposed, accepted, implemented, verified, dropped]
+  requirement_kind: [functional, quality, constraint]
+  test_status: [planned, passed, failed, blocked, skipped]
+  test_kind: [acceptance, regression, smoke, exploratory]
+  environment_kind: [local, test, staging, production]
+  environment_status: [planned, active, retired]
 
 # Registers: file and view name, id prefix, fields, which fields are checked
 # against a vocab, which are dates, and which statuses mean the entry is closed.
@@ -67,10 +73,13 @@ registers:
     file: tasks.yaml
     view: tasks.md
     prefix: T
-    fields: [id, title, team, group, priority, owner, status, due, done_on, period, notes, origin]
+    fields: [id, title, team, group, priority, owner, status, due, done_on, period, notes, origin, tests]
     enums: {status: task_status, priority: priority_order, origin: origin}
     dates: [due, done_on]
+    refs: {tests: tests}
     closed: [done, dropped]
+    # done: statuses that mean finished work (the definition of done; the tasks view lists done tasks with no linked test)
+    done: [done]
     # blocked and active: statuses that count as blocked and in progress (generators, RAG)
     blocked: [blocked]
     active: [in-progress]
@@ -181,6 +190,37 @@ registers:
     view: roster.md
     fields: [slug, name, role, origin]
     enums: {origin: origin}
+  # tests, environments and permissions hold names and ids only. Never put a secret value in a register.
+  requirements:
+    file: requirements.yaml
+    view: requirements.md
+    prefix: REQ
+    fields: [id, title, description, kind, priority, source, owner, acceptance, status, related_tasks, origin]
+    enums: {kind: requirement_kind, priority: priority_order, status: requirement_status, origin: origin}
+    refs: {related_tasks: tasks}
+    closed: [verified, dropped]
+  tests:
+    file: tests.yaml
+    view: tests.md
+    prefix: TST
+    fields: [id, title, kind, requirement, task, issue, expected, status, run_on, owner, evidence, notes, origin]
+    enums: {kind: test_kind, status: test_status, origin: origin}
+    dates: [run_on]
+    refs: {requirement: requirements, task: tasks, issue: issues}
+    closed: [passed, skipped]
+  environments:
+    file: environments.yaml
+    view: environments.md
+    prefix: ENV
+    fields: [id, name, kind, location, branch, deploy, variables, owner, status, notes, origin]
+    enums: {kind: environment_kind, status: environment_status, origin: origin}
+    closed: [retired]
+  permissions:
+    file: permissions.yaml
+    view: permissions.md
+    prefix: PERM
+    fields: [id, resource, action, roles, condition, source, notes, origin]
+    enums: {roles: domain.roles, origin: origin}
 
 # Doc types. name is the file name; {period} is the month (YYYY-MM) or the week.
 # generated_from lists every register the template reads (checked for staleness).

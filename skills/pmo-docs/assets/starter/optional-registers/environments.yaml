@@ -1,0 +1,4 @@
+# environments: one entry per line, e.g.
+#   - {id: ..., name: ..., kind: ..., location: ..., branch: ..., deploy: ..., variables: [], owner: ..., status: ..., notes: ..., origin: ...}
+# ids look like ENV-1; variables holds variable names only
+environments: []

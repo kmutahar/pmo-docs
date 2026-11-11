@@ -1,0 +1,3 @@
+requirements:
+  - {id: REQ-1, title: Users can log in, description: A user signs in with email and password, kind: functional, priority: high, source: sam, owner: bob, acceptance: Valid credentials open the home page, status: accepted, related_tasks: [T-2], origin: stated}
+  - {id: REQ-2, title: Pages load fast, description: The home page loads in under two seconds, kind: quality, priority: medium, source: sam, owner: alice, acceptance: Median load time under 2 s on staging, status: proposed, related_tasks: [], origin: stated}

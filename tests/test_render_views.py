@@ -140,6 +140,8 @@ class RenderViews(unittest.TestCase):
         (self.root / "pmo/config.yaml").write_text(
             "schema_version: 1\nvocab: {priority_order: null, my_status: [todo, done]}\nregisters: {tasks: {enums: {status: my_status}}}\n", encoding="utf-8")
         (self.reg / "tasks.yaml").write_text("tasks:\n  - {id: T-1, title: a, status: todo, priority: high}\n", encoding="utf-8")
+        (self.reg / "tests.yaml").unlink(missing_ok=True)
+        (self.reg / "requirements.yaml").unlink(missing_ok=True)
         self.assertEqual(run(self.root)[0], 0)
         self.assertIn("todo 1, done 0", (self.views / "tasks.md").read_text(encoding="utf-8"))
 
@@ -510,6 +512,16 @@ class RegisterLinks(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertIn("config: registers.issues.refs target `unknown_register` is not a register", out)
 
+    def test_refs_field_missing_from_fields_is_skipped(self):
+        # a project that lists its own tasks.fields without `tests` keeps the default tasks.refs {tests: tests}
+        cfg = pc.load_config(self.root)
+        fields = [f for f in cfg["registers"]["tasks"]["fields"] if f != "tests"]
+        self.write_config({"registers": {"tasks": {"fields": fields}}})
+        lines = (self.reg / "tasks.yaml").read_text(encoding="utf-8").replace(", tests: [TST-1]", "")
+        (self.reg / "tasks.yaml").write_text(lines, encoding="utf-8")
+        code, out = run(self.root)
+        self.assertEqual(code, 0, out)
+
     def test_refs_must_be_a_map_of_field_to_register(self):
         for bad in ("tasks", ["tasks"], {"related_tasks": ["tasks"]}):
             self.write_config({"registers": {"issues": {"refs": bad}}})
@@ -517,6 +529,19 @@ class RegisterLinks(unittest.TestCase):
             self.assertEqual(code, 2, bad)
             self.assertIn("registers.issues.refs must be a map of field to register", out)
             self.assertNotIn("Traceback", out)
+
+    def test_link_fields_of_the_wrong_type_are_reported(self):
+        tasks = self.reg / "tasks.yaml"
+        tests = self.reg / "tests.yaml"
+        tasks_text, tests_text = tasks.read_text(encoding="utf-8"), tests.read_text(encoding="utf-8")
+        for bad in ("{TST-1}", "[[TST-1]]", "{a: b}"):
+            tasks.write_text(tasks_text.replace("tests: [TST-1]", f"tests: {bad}"), encoding="utf-8")
+            tests.write_text(tests_text.replace("task: T-3", f"task: {bad}"), encoding="utf-8")
+            p = subprocess.run([sys.executable, str(TOOL), "--project", str(self.root)], capture_output=True, text=True, encoding="utf-8")
+            self.assertEqual(p.returncode, 1, bad)
+            self.assertNotIn("Traceback", p.stderr)
+            self.assertIn("tasks T-3: tests must be an id or a list of ids", p.stdout)
+            self.assertIn("tests TST-1: task must be an id or a list of ids", p.stdout)
 
     def test_domain_and_technical_config_errors(self):
         self.write_config({"technical": {"stacks": ["Next.js"]}})

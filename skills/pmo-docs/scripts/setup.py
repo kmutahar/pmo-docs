@@ -91,9 +91,7 @@ def main(argv=None):
             src = starter_dir / rf
             if src.exists():
                 shutil.copyfile(src, dest)
-            else:
-                pc.write(dest, f"{name}: []\n")
-            actions.append(f"created: {rel_dest}")
+                actions.append(f"created: {rel_dest}")
 
     rel_hr = paths["house_rules"]
     if house_rules_file.exists():

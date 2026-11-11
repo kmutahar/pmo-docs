@@ -1,0 +1,3 @@
+environments:
+  - {id: ENV-1, name: Staging, kind: staging, location: staging.example.test, branch: develop, deploy: Automatic on merge, variables: [DATABASE_URL, API_KEY], owner: alice, status: active, notes: "", origin: stated}
+  - {id: ENV-2, name: Production, kind: production, location: portal.example.test, branch: main, deploy: Manual release, variables: [DATABASE_URL, API_KEY], owner: alice, status: planned, notes: "", origin: stated}
