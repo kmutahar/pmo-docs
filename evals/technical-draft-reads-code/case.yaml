@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: technical-draft-reads-code
+description: Draft the API reference from a small fake Express app; the draft must exist, be read from the code, and list only the endpoints in the code with the role each needs.
+context:
+  scaffold_script: scaffold.sh
