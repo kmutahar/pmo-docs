@@ -560,6 +560,69 @@ class RegisterLinks(unittest.TestCase):
         self.assertIn("config: domain.lifecycle_entity", out)
 
 
+class ScheduleConfig(unittest.TestCase):
+    def setUp(self):
+        self.root = Path(tempfile.mkdtemp()) / "acme"
+        shutil.copytree(REPO / "examples/acme", self.root)
+        self.defaults = pc.load_config(self.root)
+
+    def tearDown(self):
+        shutil.rmtree(self.root.parent)
+
+    def test_valid_schedule_passes(self):
+        cfg = pc.merge(self.defaults, {
+            "schedule": [
+                {"recipe": "weekly-status", "when": "Mon 08:00"},
+                {"recipe": "docs-audit", "when": "1st 09:00"},
+            ]
+        })
+        errs = render_views.config_errors(cfg, root=self.root)
+        self.assertEqual(errs, [])
+
+    def test_recipe_from_project_playbook_passes(self):
+        pb_dir = self.root / "pmo/playbooks"
+        pb_dir.mkdir(parents=True, exist_ok=True)
+        (pb_dir / "custom-recipe.md").write_text("# Custom\n", encoding="utf-8")
+        cfg = pc.merge(self.defaults, {
+            "schedule": [
+                {"recipe": "custom-recipe", "when": "Fri 17:00"}
+            ]
+        })
+        errs = render_views.config_errors(cfg, root=self.root)
+        self.assertEqual(errs, [])
+
+    def test_unknown_recipe_is_config_error(self):
+        cfg = pc.merge(self.defaults, {
+            "schedule": [
+                {"recipe": "unknown-recipe", "when": "Mon 08:00"}
+            ]
+        })
+        errs = render_views.config_errors(cfg, root=self.root)
+        self.assertTrue(any("unknown" in e and "recipe" in e for e in errs), errs)
+
+    def test_missing_when_is_config_error(self):
+        cfg = pc.merge(self.defaults, {
+            "schedule": [
+                {"recipe": "weekly-status"}
+            ]
+        })
+        errs = render_views.config_errors(cfg, root=self.root)
+        self.assertTrue(any("when" in e for e in errs), errs)
+
+    def test_schedule_shape_errors(self):
+        cfg_str = pc.merge(self.defaults, {"schedule": "not-a-list"})
+        errs_str = render_views.config_errors(cfg_str, root=self.root)
+        self.assertTrue(any("must be a list" in e for e in errs_str), errs_str)
+
+        cfg_item = pc.merge(self.defaults, {"schedule": ["not-a-map"]})
+        errs_item = render_views.config_errors(cfg_item, root=self.root)
+        self.assertTrue(any("must be a map" in e for e in errs_item), errs_item)
+
+        cfg_rec = pc.merge(self.defaults, {"schedule": [{"when": "Mon 08:00"}]})
+        errs_rec = render_views.config_errors(cfg_rec, root=self.root)
+        self.assertTrue(any("needs recipe" in e for e in errs_rec), errs_rec)
+
+
 class CommittedViews(unittest.TestCase):
     def test_acme_views_are_current(self):
         self.assertEqual(run(REPO / "examples/acme", "--check")[0], 0)

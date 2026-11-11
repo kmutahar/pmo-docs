@@ -431,3 +431,9 @@ publish:
   mode: none
   path: null
   url: null
+
+# Schedule: optional list of recurring recipe runs, recorded as a record only.
+# Each item has recipe (a known recipe name or project playbook) and when (time description as text).
+# Example:
+#   - { recipe: weekly-status, when: "Mon 08:00" }
+schedule: []
