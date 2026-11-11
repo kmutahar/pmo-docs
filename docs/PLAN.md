@@ -54,7 +54,7 @@ Dropped: `client-summary` (overlaps `stakeholder-update`), `sync_repos`, the spr
 | Origin | `origin` is an optional field on every register: `proposed` until the user confirms, then `stated` | Marks inferred entries. |
 | Dash check | None. A project that wants plain `-` says so in its house rules. | It was the source project's house style. |
 | Setup | `references/setup.md` playbook plus `scripts/setup.py` | The agent asks and runs the script, or the user runs the script directly. |
-| Git hook | None installed in user projects. The agent runs the checks at Finish; `render_views --check` exits 1 when validation fails or views are stale; the README shows how to call it from the user's own hook. No tool or hook in pmo-docs runs `git add`. | A plugin's path changes on every update, a copied skill sits at a different path on each machine, and `.git/hooks` is not shared. |
+| Git hook | None installed in user projects. The agent runs the checks at Finish; `render_views --check` exits 1 when validation fails or views are stale; the README shows how to call it from the user's own hook as `pmo/bin/pmo render_views --check`. No tool or hook in pmo-docs runs `git add`. | A plugin's path changes on every update, a copied skill sits at a different path on each machine, and `.git/hooks` is not shared. The v0.5 launcher resolves the skill path, so the hook needs no machine path. |
 | Views | Committed in the user's project. Rendering is deterministic (sorted, no run timestamps). | Stakeholders read them on GitHub, and a merge conflict in a view is fixed by rendering again. |
 | Python | Python 3.10 or newer. PyYAML is vendored in `scripts/_vendor/` (pure Python, `safe_load` only). Every script stops with a clear message below 3.10. | PEP 668 system Pythons refuse `pip install`, so vendoring means users install nothing. Stock macOS `python3` is 3.9.6, hence the message. |
 | Platforms | Linux and macOS. Windows through WSL. | Hooks and dev tools are bash. |
@@ -75,7 +75,7 @@ Dropped: `client-summary` (overlaps `stakeholder-update`), `sync_repos`, the spr
 | Source repo | One-way copy, no sync | The two repos diverge on purpose (section 4). |
 | Visibility | Public, built in the open (decided 2026-11-04) | The safety net is the commit gate (`AGENTS.md`), not privacy. |
 | Licence | MIT | Easiest for companies to adopt. |
-| Other agents | Verified on Claude Code only until v0.5, which adds the `pmo/bin/pmo` launcher for agents, cron and hooks | The skill uses only open Agent Skills fields; other agents are tested once the skill is stable. |
+| Other agents | Verified on Claude Code and Antigravity in v0.5 (Codex tested, Gemini CLI, Cursor and Copilot untested). v0.5 adds the `pmo/bin/pmo` launcher for agents, cron and hooks, and `docs/INSTALL_FOR_AGENTS.md` for one-line agent installs | The skill uses only open Agent Skills fields; trials on other agents turned up fixes, not a portable prompt. |
 
 ---
 
