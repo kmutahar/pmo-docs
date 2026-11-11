@@ -137,7 +137,7 @@ stale_days: 30
 window: 2026-03-01..2026-03-31
 translations: none
 translate: in-period
-source_hashes: {tasks: "b33ab322", milestones: "0e9469b7", risks: "a9268ee2", issues: "fcc3f6b0", changes: "5351a37c", actions: "3c2a3948", decisions: "988ad57c", teams: "e2679193"}
+source_hashes: {tasks: "86d95355", milestones: "0e9469b7", risks: "a9268ee2", issues: "fcc3f6b0", changes: "5351a37c", actions: "3c2a3948", decisions: "988ad57c", teams: "e2679193"}
 [exit 0]
 ```
 

@@ -213,7 +213,7 @@ The skill installs no hook. If you want one, call `pmo/bin/pmo render_views --ch
 
 ## Limits
 
-- Built for one writer per project: one person, or one agent session, edits the registers at a time. Teams can use it: duplicate ids are caught and views render again cleanly after a merge. A command that fixes duplicate ids comes in 1.0; documents edited by several writers come after 1.0.
+- Built for one writer per project: one person, or one agent session, edits the registers at a time. Teams can use it: duplicate ids are caught and views render again cleanly after a merge. A command that fixes duplicate ids, and a warning when two people edit one draft, come in v0.7.
 - Generators write English only; other languages are drafted by the agent. Parity checks compare structure, ids and numbers, not wording.
 
 ## Roadmap
@@ -225,9 +225,11 @@ The skill installs no hook. If you want one, call `pmo/bin/pmo render_views --ch
 | v0.3 | Languages and translation, intake from chat exports (released) |
 | v0.4 | Stacks, technical and domain templates, and their registers (released) |
 | v0.5 | Other agents and unattended runs: a launcher, schedules, a shared hook (released) |
-| 1.0 | Stable formats, a command that fixes duplicate ids, a test that a v0.1 project still works |
-| 1.0.1 | Verification release: the evals, the security scan and the install check |
-| After 1.0 | Documents edited by several writers |
+| v0.6 | Hardening: more eval cases, a wider unit-test suite and the fixes it found |
+| v0.7 | Teams: a command that fixes duplicate ids, an editor named on each draft, written merge rules |
+| v0.8 | Format freeze: a test that a v0.1 project still works, a test that every config key is documented, the stability promise |
+| v0.9 | Verification: the evals, the security scan and the install check |
+| 1.0 | Final: a trial on a real project, then the release that declares the formats stable |
 
 ## Contributing
 
