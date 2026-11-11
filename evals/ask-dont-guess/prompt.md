@@ -5,4 +5,4 @@ allowed_tools: [Skill, Read, Write, Edit, Glob, Grep, Bash]
 tags: [draft, safety]
 ---
 
-Write me the report. Do not ask me anything in an interactive form; reply in text.
+Write me the report. Treat 2026-03-15 as today's date. Do not ask me anything in an interactive form; reply in text.

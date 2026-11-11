@@ -13,7 +13,7 @@ last_updated: "2026-03-15"
 
 **Period:** 2026-03
 
-**Overall:** amber - staging is late and the payment vendor is not chosen
+**Overall:** red - top-priority task T-1 is overdue
 **Progress:** 1/4 tasks done (25%), first report so no comparison
 
 ## Summary
@@ -22,7 +22,7 @@ Staging is late and the vendor choice is blocked. The API outline is done. Next 
 ## Progress by priority
 | Priority | Done / Total | In progress | Blocked | RAG | Comment |
 |---|---|---|---|---|---|
-| high | 0 / 1 | 1 | 0 | amber | Staging is overdue |
+| high | 0 / 1 | 1 | 0 | red | Staging is overdue |
 | medium | 0 / 2 | 0 | 1 | amber | Vendor choice waits for budget |
 | low | 1 / 1 | 0 | 0 | green | API outline done |
 
@@ -36,20 +36,22 @@ Staging is late and the vendor choice is blocked. The API outline is done. Next 
 - Write API outline `T-3`
 
 ## Planned next
-- Design login page `T-2` - bob - 2026-03-25
-- Set up staging server `T-1` - alice - 2026-03-10
+- Set up staging server `T-1` - Alice Example - 2026-03-10
+- Design login page `T-2` - Bob Example - 2026-03-25
+- Pick a payment vendor `T-4` - Bob Example - 2026-04-01
 
 ## Blockers and decisions needed
 | ID | Item | Needed from | By when |
 |---|---|---|---|
-| T-4 | Pick a payment vendor, waiting for budget | sam | 2026-04-01 |
-| T-1 | Set up staging server, overdue | alice | 2026-03-10 |
+| T-4 | Pick a payment vendor, waiting for budget | Bob Example | 2026-04-01 |
+| DEC-2 | Host on shared cloud | Sam Example | not set |
+| CR-1 | Add dark mode | not set | not set |
 
 ## Decisions and changes
 | ID | Title | Status | Date |
 |---|---|---|---|
-| DEC-2 | Host on shared cloud | proposed | 2026-03-09 |
 | CR-1 | Add dark mode | proposed | 2026-03-06 |
+| DEC-2 | Host on shared cloud | proposed | 2026-03-09 |
 
 ## Risks and issues
 - Vendor delay is open `R-1`
@@ -61,7 +63,7 @@ Staging is late and the vendor choice is blocked. The API outline is done. Next 
 | M-1 | Staging ready | 2026-03-20 | in-progress |
 
 ## Notes on data
-Overall is amber because a task is overdue and another is blocked.
+- RAG rule: weekly-status, as computed by pmo_common.rag, as of 2026-03-15: red because the top-priority task T-1 is overdue.
 
 ## Open questions
 - Who approves the budget for the vendor?
