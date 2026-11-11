@@ -15,5 +15,6 @@ touches:
 - Keeping learnings that only restate `docs/PLAN.md`, `AGENTS.md` or `memory.md`: they go stale and can contradict them.
 
 ## Watch out
-- Check a learning's numbers against `AGENTS.md` before keeping it (one said ten evals and $1; the repo has thirteen and about $1.50 for all).
-- Re-read the learnings after a change of policy: one said every commit must pass its tests alone after the maintainer chose to test at the end.
+- Check a learning's numbers and names against `AGENTS.md` and the repo before keeping it (counts of evals and costs go stale fast). Prefer no number to a wrong one.
+- Re-read the learnings after a change of policy or tooling: a learning that describes a replaced tool or an old way of working (an outer `xargs` loop, a deleted script) is worse than none.
+- When several learnings cover one topic, merge them into one file and delete the rest; keep the front matter to `title`, `author`, `date`, `touches`.
