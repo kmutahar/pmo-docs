@@ -95,7 +95,7 @@ A template is the contract: its front matter declares the checks, `structure_che
 - Numbers come from the registers and must add up: counts in the prose equal the rows in the tables. Where a template asks for a RAG or a flag, state the rule used in the section that says so.
 - Show register ids in backticks where the template does. Ids are unique within a table.
 - Content the template has no section for goes into the nearest section or `## Open questions`. When a section is `## Open questions` and nothing is open, write `- None`.
-- Dates are `YYYY-MM-DD`, months `YYYY-MM`, weeks `YYYY-Www`. A week starts on `project.week_start` (default Monday) and is named by the ISO week of its fourth day; `where.py` prints its `window`. Give `where.py` the flag `--week` for weekly documents (the weekly-status report, `weekly-plan`) and `--as-of DATE` for types named by `{date}` (change request, meeting minutes). Short sentences, concrete nouns, no filler.
+- Dates are `YYYY-MM-DD`, months `YYYY-MM`, weeks `YYYY-Www`. A week starts on `project.week_start` (default Monday) and is named by the ISO week of its fourth day; `where.py` prints its `window`. Give `where.py` the flag `--week` for weekly documents (a weekly `status-report`, `weekly-plan`) and `--as-of DATE` for types named by `{date}` (change request, meeting minutes). Short sentences, concrete nouns, no filler.
 - Plain Markdown that any converter reads: headings, pipe tables, `- ` lists, `- [ ]` task lists, fenced code. No HTML except the template's comments. You never export to other formats.
 - Changing a template's headings or columns raises its `template_version` by one. Older documents then warn.
 

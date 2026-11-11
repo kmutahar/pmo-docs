@@ -79,7 +79,7 @@ The expected files come from `docs/walkthrough.md` and the scripts. Compare each
 | 1 | setup | `~/pmo-trial/setup` | `pmo/config.yaml`, `pmo/house-rules.md`, `pmo/documents/.gitkeep`, the starter registers under `pmo/registers/`, `pmo/views/` (one view per register plus the catalogue), `pmo/bin/pmo` | Files match the reference. The agent asked for the project name and manager, and did not overwrite anything. |
 | 2 | track | `acme` | Two turns. Turn 1 ("mark T-1 done"): asks for QA evidence and changes nothing. Turn 2 (give the evidence): only the `T-1` line in `pmo/registers/tasks.yaml` changes (`status: done`, `done_on` set); `pmo/views/tasks.md` is re-rendered. | No change before the evidence. Then only that line and that view change. |
 | 3 | render | `acme` | Hand-edit one status in `tasks.yaml`, then ask for a re-render. Only `pmo/views/tasks.md` changes. | `render_views.py --check` exits 0 after the prompt. No view was edited by hand. |
-| 4 | draft | `acme` | One new draft under `pmo/documents/`, at the path `where.py weekly-status` gives. The 2026-03 report is untouched. No register changes. | `structure_check.py` passes on the new file. Its status is `draft`. |
+| 4 | draft | `acme` | One new draft under `pmo/documents/`, at the path `where.py status-report --week` gives. The 2026-03 report is untouched. No register changes. | `structure_check.py` passes on the new file. Its status is `draft`. |
 | 5 | finish | `acme` | Only `pmo/documents/2026-03 - Status report.md`: `status` becomes `finished`, the template version and hashes are recorded, template comments are removed. Acme has no `languages` block, so no translation question. | `structure_check.py` passes. The new draft from prompt 4 is still a draft. |
 
 The prompt texts for the agent:
@@ -93,7 +93,7 @@ The prompt texts for the agent:
 Run `where.py` to see the draft path for prompt 4 and the template for prompt 5. Do not give the agent the path; the skill should find it:
 
 ```
-python3 "$SKILL/scripts/where.py" weekly-status --hashes 2>&1 | tee -a "$LOG/where-draft.txt"
+python3 "$SKILL/scripts/where.py" status-report --week --hashes 2>&1 | tee -a "$LOG/where-draft.txt"
 ```
 
 `$SKILL` is the installed copy, `~/.agents/skills/pmo-docs`.
