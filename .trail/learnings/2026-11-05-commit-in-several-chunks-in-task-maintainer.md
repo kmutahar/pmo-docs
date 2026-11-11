@@ -6,11 +6,10 @@ standing: true
 ---
 
 ## Decided
-- Split commits into reviewable chunks that follow the order of the plan's packages, one topic per commit. Never one big commit. Propose the chunks and their subjects first.
-- Subjects are conventional (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`). A correction to something unreleased is a `refactor:`, so it stays out of the changelog.
-- The maintainer normally stages and the agent runs `git commit -- <paths>`. For one big task the maintainer may unstage everything and let the agent restage per commit. Then: build each commit's version of a shared file, stage it, export the index (`git checkout-index -a --prefix=<dir>/`), run the unit tests there, and only then commit. Every commit must pass its tests alone.
+- Split commits into reviewable chunks that follow the order of the plan's packages, one topic per commit. Propose the chunks and their subjects first.
+- A correction to something unreleased is a `refactor:`, so it stays out of the changelog.
 - Mark each plan package `Status: done` in the commit that completes it.
-- Pushing needs the maintainer's explicit OK each time.
+- For one big task the maintainer may let the agent restage per commit. Build each commit's version of a shared file from a pinned base commit, and compare the final tree with a saved copy of the working tree.
 
 ## Watch out
 - `git commit -- <paths>` commits the whole working-tree file, so a file shared by several packages needs hunk-level staging or an earlier version staged first.
