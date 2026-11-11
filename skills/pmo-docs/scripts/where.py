@@ -82,7 +82,11 @@ def main(argv=None):
         doc_exists = "yes" if (Path(args.project) / doc_rel).exists() else "no"
 
     tpl_name = info.get("template", f"{args.type}.md")
-    tpl_path, tpl_source = pc.find_asset(args.project, cfg, "templates", tpl_name)
+    try:
+        tpl_path, tpl_source = pc.find_asset(args.project, cfg, "templates", tpl_name)
+    except ValueError as e:
+        print(f"ERROR {e}", file=sys.stderr)
+        return 2
     if tpl_source == "project":
         template_str = tpl_path.relative_to(Path(args.project)).as_posix()
     else:

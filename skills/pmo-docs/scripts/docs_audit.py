@@ -238,8 +238,8 @@ def playbook_drift(root, cfg) -> list[str]:
             continue
         own_fm = pc.split_front_matter(pc.read(p))[0]
         def_fm = pc.split_front_matter(pc.read(default_file))[0]
-        expected_name = str(rel.with_suffix(""))
-        msg = _drift(str(rel), own_fm, def_fm, "playbook_version", expected_name, "playbook")
+        expected_name = rel.with_suffix("").as_posix()
+        msg = _drift(rel.as_posix(), own_fm, def_fm, "playbook_version", expected_name, "playbook")
         if msg:
             out.append(msg)
     return out

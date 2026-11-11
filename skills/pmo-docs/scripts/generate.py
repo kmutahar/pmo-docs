@@ -884,7 +884,11 @@ def main(argv=None) -> int:
         return 1
 
     tpl_name = info.get("template", f"{args.type}.md")
-    tpl_path, _ = pc.find_asset(root, cfg, "templates", tpl_name)
+    try:
+        tpl_path, _ = pc.find_asset(root, cfg, "templates", tpl_name)
+    except ValueError as e:
+        print(f"ERROR {e}", file=sys.stderr)
+        return 2
     if not tpl_path.exists():
         print(f"ERROR template {tpl_name} not found", file=sys.stderr)
         return 2

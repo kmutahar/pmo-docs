@@ -108,6 +108,17 @@ class Where(unittest.TestCase):
         self.assertEqual(f["template_source"], "skill")
         self.assertTrue(f["template"].endswith("assets/templates/status-report.md"))
 
+    def test_symlinked_template_leaving_the_project_is_an_error(self):
+        tpl = self.root / "pmo/templates/status-report.md"
+        tpl.parent.mkdir(parents=True, exist_ok=True)
+        outside = self.root.parent / "outside.md"
+        outside.write_text("x", encoding="utf-8")
+        tpl.symlink_to(outside)
+        code, out, err = run(self.root, "status-report", "2026-03")
+        self.assertEqual(code, 2)
+        self.assertIn("asset leaves project", err)
+        self.assertNotIn("Traceback", err)
+
     def test_project_template_wins(self):
         tpl = self.root / "pmo/templates/status-report.md"
         tpl.parent.mkdir(parents=True)

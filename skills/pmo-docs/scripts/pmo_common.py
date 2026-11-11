@@ -95,8 +95,16 @@ def load_config(root="."):
 def find_asset(root, cfg, kind, name):
     """(path, 'project' | 'skill') for a template or playbook: the project's file wins over the skill's default."""
     p = Path(name)
-    if p.is_absolute() or ".." in p.parts:
+    if "\\" in name or p.is_absolute() or ".." in p.parts:
         raise ValueError(f"invalid asset name {name!r}")
+    if p.parts and p.parts[0] == "stacks":
+        if len(p.parts) != 2 or not p.parts[1].endswith(".md"):
+            raise ValueError(f"invalid stack asset name {name!r}")
+        stack = p.parts[1][:-3]
+        if not re.fullmatch(r"[a-z0-9][a-z0-9-]*", stack):
+            raise ValueError(f"invalid stack asset name {name!r}")
+    if outside(root, cfg["paths"][kind], name):
+        raise ValueError(f"asset leaves project: {name!r}")
     mine = Path(root) / cfg["paths"][kind] / name
     if mine.exists():
         return mine, "project"

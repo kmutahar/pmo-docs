@@ -21,7 +21,10 @@ class PlaybookFrontMatter(unittest.TestCase):
                 self.assertIsNotNone(fm, f"{f} has no front matter")
                 self.assertIn("playbook_version", fm)
                 self.assertIsInstance(fm["playbook_version"], int)
-                self.assertTrue(body.lstrip().startswith("Reads:"), f"{f} body does not start with Reads:")
+                if f.parent.name == "stacks":
+                    self.assertTrue(body.lstrip().startswith("Detected by:"), f"{f} body does not start with Detected by:")
+                else:
+                    self.assertTrue(body.lstrip().startswith("Reads:"), f"{f} body does not start with Reads:")
 
     def test_find_asset_playbooks(self):
         tmp_dir = Path(tempfile.mkdtemp())

@@ -216,7 +216,10 @@ def check(root, cfg, text):
     dt = cfg["doc_types"].get(tid) if isinstance(tid, str) else None
     if not dt:
         return [f"front matter type `{tid}` is not a doc type in the config"], warns
-    tpl, _ = pc.find_asset(root, cfg, "templates", dt.get("template", f"{tid}.md"))
+    try:
+        tpl, _ = pc.find_asset(root, cfg, "templates", dt.get("template", f"{tid}.md"))
+    except ValueError as e:
+        return [str(e)], warns
     if not tpl.exists():
         return [f"template {dt.get('template', f'{tid}.md')} not found"], warns
     try:

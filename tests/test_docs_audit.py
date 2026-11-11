@@ -209,6 +209,14 @@ class Audit(unittest.TestCase):
         self.assertEqual(code, 0, out)
         self.assertIn("## Override drift (0)", out)
 
+    def test_new_project_stack_file_is_not_drift(self):
+        stacks_dir = self.p / "pmo/playbooks/stacks"
+        stacks_dir.mkdir(parents=True, exist_ok=True)
+        (stacks_dir / "cobol.md").write_text("---\nplaybook_version: 1\n---\n# COBOL\n", encoding="utf-8")
+        code, out = self.run_audit()
+        self.assertEqual(code, 0, out)
+        self.assertIn("## Override drift (0)", out)
+
 
 class Translations(unittest.TestCase):
     def setUp(self):
