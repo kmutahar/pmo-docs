@@ -16,7 +16,8 @@ Cut a release: check, bump the version, regenerate CHANGELOG.md, commit, tag, pu
 
 Steps: dirty check, version and tag check, dev/scrub.sh + tests +
 `claude plugin validate .` (warnings are printed, only a failure stops), write the version into SKILL.md
-(metadata.version) and skills/pmo-docs/.claude-plugin/plugin.json, `git-cliff -o CHANGELOG.md`,
+(metadata.version), skills/pmo-docs/.claude-plugin/plugin.json and the release tag in README.md and
+docs/INSTALL_FOR_AGENTS.md (install links and the agent prompt), `git-cliff -o CHANGELOG.md`,
 then confirmation 1 (default No) to commit + tag, confirmation 2 (default No)
 to push. There is no -y flag: commits and pushes need the maintainer's approval.
 EOF
@@ -56,7 +57,7 @@ if [ "$dry" = 0 ]; then
 fi
 
 branch=$(git symbolic-ref --short -q HEAD) || die "detached HEAD, check out a branch first"
-files=(skills/pmo-docs/SKILL.md skills/pmo-docs/.claude-plugin/plugin.json)
+files=(skills/pmo-docs/SKILL.md skills/pmo-docs/.claude-plugin/plugin.json README.md docs/INSTALL_FOR_AGENTS.md)
 commit_paths=(CHANGELOG.md "${files[@]}")
 memory_staged=0
 git ls-files --error-unmatch memory.md >/dev/null 2>&1 && memory_staged=1
@@ -68,7 +69,7 @@ if [ -n "$dirty" ]; then
     echo "$dirty" >&2
     die "uncommitted changes above (memory.md ignored); commit them or pass --allow-dirty"
   fi
-  # the release commit is path-limited, so these two files must hold nothing else
+  # the release commit is path-limited, so these files must hold nothing else
   bad=$(git status --porcelain -- "${files[@]}")
   [ -z "$bad" ] || { echo "$bad" >&2; die "the version files have uncommitted changes, even --allow-dirty refuses"; }
   echo "warning: continuing with uncommitted changes (they stay out of the release commit):" >&2
@@ -98,7 +99,7 @@ else
   fi
 fi
 
-# 4. write the version into SKILL.md and plugin.json (text edit, formatting kept)
+# 4. write the version into SKILL.md, plugin.json, README.md and docs/INSTALL_FOR_AGENTS.md (text edit, formatting kept)
 set_version() { # $1 = write | check
 python3 - "$1" "$version" <<'PY'
 import re, sys
@@ -132,7 +133,19 @@ def plugin(text):
         fail(f'plugin.json: expected one "version" key, found {n}')
     return new
 
-for path, fn in (("skills/pmo-docs/SKILL.md", skill), ("skills/pmo-docs/.claude-plugin/plugin.json", plugin)):
+def install_doc(text):
+    # release tag in links ("pmo-docs/v1.2.3/", "refs/tags/v1.2.3.tar.gz"), archive folder, "tag `v1.2.3`", "e.g. `1.2.3`", the README "**Status: v1.2.3 released"
+    v = r"\d+\.\d+\.\d+"
+    new, n = re.subn(rf"((?:pmo-docs|refs/tags)/)v{v}", rf"\1v{version}", text)
+    if n == 0:
+        fail("no release tag link found to update")
+    new = re.sub(rf"(pmo-docs-){v}(?=/skills)", rf"\g<1>{version}", new)
+    new = re.sub(rf"(tag `?)v{v}", rf"\1v{version}", new)
+    new = re.sub(rf"(e\.g\. `){v}", rf"\g<1>{version}", new)
+    return re.sub(rf"(\*\*Status: )v{v}( released)", rf"\1v{version}\2", new)
+
+for path, fn in (("skills/pmo-docs/SKILL.md", skill), ("skills/pmo-docs/.claude-plugin/plugin.json", plugin),
+                 ("README.md", install_doc), ("docs/INSTALL_FOR_AGENTS.md", install_doc)):
     with open(path, encoding="utf-8", newline="") as f:
         old = f.read()
     new = fn(old)

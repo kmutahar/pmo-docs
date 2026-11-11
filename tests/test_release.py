@@ -15,7 +15,7 @@ class ReleaseTest(unittest.TestCase):
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, self.tmp)
-        for rel in ("dev/release", "skills/pmo-docs/SKILL.md", "skills/pmo-docs/.claude-plugin/plugin.json"):
+        for rel in ("dev/release", "skills/pmo-docs/SKILL.md", "skills/pmo-docs/.claude-plugin/plugin.json", "README.md", "docs/INSTALL_FOR_AGENTS.md"):
             (self.tmp / rel).parent.mkdir(parents=True, exist_ok=True)
             shutil.copy(ROOT / rel, self.tmp / rel)
         self.git("init", "-q", "-b", "main")
@@ -126,9 +126,13 @@ class ReleaseTest(unittest.TestCase):
         self.assertIn('metadata:\n  version: "9.9.9"\n', skill)
         self.assertEqual(json.loads((self.tmp / "skills/pmo-docs/.claude-plugin/plugin.json").read_text(encoding="utf-8"))["version"], "9.9.9")
         self.assertEqual((self.tmp / "CHANGELOG.md").read_text(encoding="utf-8"), "# Changelog\n")
-        diff = self.git("diff", "--numstat").stdout.split()
-        self.assertEqual(diff[0::3], ["1", "1"], diff)  # one line added in each file
-        self.assertEqual(diff[1::3], ["1", "1"], diff)
+        names = self.git("diff", "--name-only").stdout.split()
+        self.assertEqual(sorted(names), ["README.md", "docs/INSTALL_FOR_AGENTS.md", "skills/pmo-docs/.claude-plugin/plugin.json", "skills/pmo-docs/SKILL.md"])
+        for rel in ("README.md", "docs/INSTALL_FOR_AGENTS.md"):
+            text = (self.tmp / rel).read_text(encoding="utf-8")
+            self.assertIn("v9.9.9", text, rel)
+            self.assertNotIn("v0.5.0", text, rel)
+        self.assertIn("**Status: v9.9.9 released.**", (self.tmp / "README.md").read_text(encoding="utf-8"))
 
     def test_changelog_links_without_owner_repo_stop_the_release(self):
         env = self.stub_non_dry()
