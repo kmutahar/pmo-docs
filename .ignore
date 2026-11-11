@@ -4,3 +4,4 @@
 graft/.cache/
 graft/.graph/
 !tmp/
+!.agy/
