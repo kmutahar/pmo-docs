@@ -68,7 +68,10 @@ def audit_translation(root, cfg, path, base, fm, text) -> list[tuple[str, str]]:
     if not orig_path.is_file():
         return [("front matter", f"`{rel}` - translation_of does not name a document")]
 
-    orig_text = pc.read(orig_path)
+    try:
+        orig_text = pc.read(orig_path)
+    except UnicodeDecodeError:
+        return [("front matter", f"`{rel}` - the original is not UTF-8 text")]
     orig_fm, _ = pc.split_front_matter(orig_text)
     orig_fm = orig_fm or {}
 
@@ -124,7 +127,10 @@ def audit_file(root, cfg, path, base, today):
     """[(check, message)] for one document."""
     rel = path.relative_to(base)
     out = []
-    text = pc.read(path)
+    try:
+        text = pc.read(path)
+    except UnicodeDecodeError:
+        return [("front matter", f"`{rel}` - not UTF-8 text")]
     fm, _ = pc.split_front_matter(text)
     if fm is None:
         return [("front matter", f"`{rel}` - no front matter")]
@@ -161,7 +167,8 @@ def audit_file(root, cfg, path, base, today):
                     out.append(("front matter", f"`{rel}` - finished but has no `last_updated`"))
             if stamp and t.get("stale_days") and (today - stamp).days > t["stale_days"]:
                 out.append(("old", f"`{rel}` - {(today - stamp).days} days old (limit {t['stale_days']})"))
-    for target in re.findall(r"\]\((?!https?://|#|mailto:)([^)\s]+)\)", text):
+    unfenced = re.sub(r"^ {0,3}(```|~~~).*?^ {0,3}\1[^\n]*$", "", text, flags=re.S | re.M)  # links in fenced code are examples
+    for target in re.findall(r"\]\((?!#|[A-Za-z][A-Za-z0-9+.-]*:)([^)\s]+)\)", unfenced):
         if not (path.parent / _unquote(target.split("#")[0])).exists():
             out.append(("broken links", f"`{rel}` -> `{target}`"))
     return out
@@ -216,7 +223,10 @@ def template_drift(root, cfg) -> list[str]:
         default_file = pc.SKILL / "assets" / "templates" / rel.name
         if not default_file.exists():
             continue
-        msg = _template_msg(str(rel), p, default_file)
+        try:
+            msg = _template_msg(str(rel), p, default_file)
+        except UnicodeDecodeError:
+            msg = f"`{rel}` - not UTF-8 text"
         if msg:
             out.append(msg)
     return out
@@ -236,8 +246,12 @@ def playbook_drift(root, cfg) -> list[str]:
         default_file = pc.SKILL / "references" / rel
         if not default_file.exists():
             continue
-        own_fm = pc.split_front_matter(pc.read(p))[0]
-        def_fm = pc.split_front_matter(pc.read(default_file))[0]
+        try:
+            own_fm = pc.split_front_matter(pc.read(p))[0]
+            def_fm = pc.split_front_matter(pc.read(default_file))[0]
+        except UnicodeDecodeError:
+            out.append(f"`{rel.as_posix()}` - not UTF-8 text")
+            continue
         expected_name = rel.with_suffix("").as_posix()
         msg = _drift(rel.as_posix(), own_fm, def_fm, "playbook_version", expected_name, "playbook")
         if msg:

@@ -277,7 +277,10 @@ def main(argv=None):
             print(f"ERROR {f}: not a file")
             bad += 1
             continue
-        errors, warns = check(root, cfg, pc.read(f))
+        try:
+            errors, warns = check(root, cfg, pc.read(f))
+        except UnicodeDecodeError:
+            errors, warns = ["not UTF-8 text"], []
         rel = f.resolve().relative_to(root) if root in f.resolve().parents else f
         print("\n".join([f"ERROR {rel}: {e}" for e in errors] + [f"warn  {rel}: {w}" for w in warns]) or f"ok    {rel}")
         bad += bool(errors)

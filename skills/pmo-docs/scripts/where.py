@@ -31,6 +31,8 @@ def main(argv=None):
     ap.add_argument("--lang", metavar="CODE", help="language code for a translation")
     args = ap.parse_args(argv)
 
+    if args.title is not None and not args.title.strip():
+        ap.error("title cannot be empty")
     if args.title is not None and "/" in args.title:
         ap.error("title cannot contain '/'")
 
@@ -70,7 +72,11 @@ def main(argv=None):
 
     doc_rel = pc.doc_rel_path(cfg, args.type, period, args.as_of, title=args.title)
     if args.lang:
-        trans_doc_rel = pc.translation_rel(doc_rel, args.lang)
+        try:
+            trans_doc_rel = pc.translation_rel(doc_rel, args.lang)
+        except ValueError as e:
+            print(f"ERROR {e}", file=sys.stderr)
+            return 2
         doc_rel_print = trans_doc_rel
         doc_exists = "yes" if (Path(args.project) / trans_doc_rel).exists() else "no"
         orig_exists = "yes" if (Path(args.project) / doc_rel).exists() else "no"

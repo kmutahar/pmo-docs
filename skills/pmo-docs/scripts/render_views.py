@@ -251,10 +251,10 @@ def read_registers(root, cfg):
         f = Path(root) / cfg["paths"]["registers"] / reg["file"]
         if not f.exists():
             continue
-        text = pc.read(f)
         try:
+            text = pc.read(f)
             entries = (pc.yaml.safe_load(text) or {}).get(name) or []
-        except (pc.yaml.YAMLError, AttributeError, ValueError) as e:  # ValueError: a date like 2026-02-30
+        except (pc.yaml.YAMLError, AttributeError, ValueError) as e:  # ValueError: a date like 2026-02-30, or text that is not UTF-8
             errors.append(f"{reg['file']}: not readable as `{name}:` followed by a list ({str(e).splitlines()[0]})")
             continue
         if not isinstance(entries, list) or not all(isinstance(e, dict) for e in entries):
@@ -510,7 +510,11 @@ def main(argv=None):
     if args.check:
         print("registers valid, views current")
         return 0
-    folder.mkdir(parents=True, exist_ok=True)
+    try:
+        folder.mkdir(parents=True, exist_ok=True)
+    except OSError as e:  # for example a file where the views folder should be
+        print(f"ERROR cannot write the views folder {cfg['paths']['views']}: {e}", file=sys.stderr)
+        return 2
     for n, t in views.items():
         pc.write(folder / n, t)
     for n in orphans:

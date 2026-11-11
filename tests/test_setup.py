@@ -165,6 +165,76 @@ class Setup(unittest.TestCase):
     def test_missing_project_folder_exits_2(self):
         self.assertEqual(tool("setup.py", self.root / "nope")[0], 2)
 
+    def test_existing_config_that_is_invalid_yaml_is_left_alone(self):
+        (self.root / "pmo").mkdir()
+        (self.root / "pmo/config.yaml").write_text("a: [\n", encoding="utf-8")
+        code, out, _ = tool("setup.py", self.root)
+        self.assertEqual(code, 0)
+        self.assertIn("already set up", out)
+        self.assertEqual((self.root / "pmo/config.yaml").read_text(encoding="utf-8"), "a: [\n")
+
+    def test_existing_config_schema_version_messages(self):
+        (self.root / "pmo").mkdir()
+        cfg = self.root / "pmo/config.yaml"
+        for text, expect, want in (
+            ("schema_version: 0\n", "a migration is due", 0),
+            ("schema_version: abc\n", "schema_version is current", 0),  # not an int counts as 1
+            ("- a list\n", "schema_version is current", 0),  # not a mapping counts as 1
+            ("", "schema_version is current", 0),
+            (f"schema_version: {pc.SCHEMA_VERSION}\n", "schema_version is current", 0),
+            (f"schema_version: {pc.SCHEMA_VERSION + 1}\n", "out of date", 2),
+        ):
+            with self.subTest(text=text):
+                cfg.write_text(text, encoding="utf-8")
+                code, out, err = tool("setup.py", self.root)
+                self.assertEqual(code, want, out + err)
+                self.assertIn(expect, out)
+                self.assertEqual(cfg.read_text(encoding="utf-8"), text)
+
+    def test_name_and_manager_with_quotes_unicode_and_hash_round_trip(self):
+        name, manager = 'مشروع: "x" # y', "O'Brien"
+        self.assertEqual(tool("setup.py", self.root, "--name", name, "--manager", manager)[0], 0)
+        cfg = pc.load_config(self.root)
+        self.assertEqual((cfg["project"]["name"], cfg["project"]["manager"]), (name, manager))
+
+    def test_bad_priority_order_exits_2_and_writes_nothing(self):
+        for bad in ("", "a,,b", "a, ,b", ","):
+            with self.subTest(value=bad):
+                code, _, err = tool("setup.py", self.root, "--priority-order", bad)
+                self.assertEqual(code, 2)
+                self.assertIn("--priority-order", err)
+                self.assertFalse((self.root / "pmo").exists())
+
+    def test_priority_order_is_trimmed(self):
+        tool("setup.py", self.root, "--priority-order", " urgent , normal ")
+        self.assertEqual(pc.load_config(self.root)["vocab"]["priority_order"], ["urgent", "normal"])
+
+    def test_week_start_is_case_sensitive(self):
+        self.assertEqual(tool("setup.py", self.root, "--week-start", "Monday")[0], 2)
+        self.assertFalse((self.root / "pmo").exists())
+
+    def test_existing_house_rules_and_gitkeep_are_kept(self):
+        (self.root / "pmo/documents").mkdir(parents=True)
+        (self.root / "pmo/house-rules.md").write_text("# Mine\n", encoding="utf-8")
+        (self.root / "pmo/documents/.gitkeep").write_text("", encoding="utf-8")
+        code, out, err = tool("setup.py", self.root, "--name", "Demo")
+        self.assertEqual(code, 0, err)
+        self.assertIn("kept: pmo/house-rules.md", out)
+        self.assertIn("kept: pmo/documents/.gitkeep", out)
+        self.assertEqual((self.root / "pmo/house-rules.md").read_text(encoding="utf-8"), "# Mine\n")
+
+    def test_launcher_flag_without_a_config_creates_only_the_launcher(self):
+        code, out, err = tool("setup.py", self.root, "--launcher")
+        self.assertEqual(code, 0, err)
+        self.assertTrue((self.root / "pmo/bin/pmo").is_file())
+        self.assertFalse((self.root / "pmo/config.yaml").exists())
+
+    def test_setup_is_repeatable_and_leaves_the_files_byte_identical(self):
+        tool("setup.py", self.root, "--name", "Demo")
+        snap = {p: p.read_bytes() for p in (self.root / "pmo").rglob("*") if p.is_file()}
+        self.assertEqual(tool("setup.py", self.root, "--name", "Other")[0], 0)
+        self.assertEqual(snap, {p: p.read_bytes() for p in (self.root / "pmo").rglob("*") if p.is_file()})
+
     def test_help(self):
         self.assertEqual(tool("setup.py", self.root, "--help")[0], 0)
 

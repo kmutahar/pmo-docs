@@ -109,7 +109,8 @@ class Common(unittest.TestCase):
         self.assertNotIn("roadmap", c["doc_types"])
 
     def test_config_that_is_not_a_map_exits_2(self):
-        for cfg in ("- a\n- b\n", "schema_version: 1\npaths: null\n", "schema_version: 1\nregisters: [x]\n"):
+        for cfg in ("- a\n- b\n", "schema_version: 1\npaths: null\n", "schema_version: 1\nregisters: [x]\n",
+                    "doc_types: null\n", "doc_types: [a]\n", "vocab: null\n", "vocab: text\n"):
             with self.assertRaises(SystemExit) as cm:
                 pc.load_config(self.project(cfg))
             self.assertEqual(cm.exception.code, 2, cfg)
@@ -246,6 +247,172 @@ class Helpers(unittest.TestCase):
     def test_rag_without_risk_levels_ignores_unrated_risks(self):
         cfg = {"vocab": {"risk_level": []}}
         self.assertEqual(pc.rag(cfg, datetime.date(2026, 3, 15), [], risks=[{"id": "R-1", "status": "open"}]), ("green", "all items on track"))
+
+    def test_week_and_period_helpers_refuse_a_start_outside_0_to_6(self):
+        for bad in (-1, 7):
+            with self.assertRaises(ValueError):
+                pc.week_of(datetime.date(2026, 3, 1), bad)
+            with self.assertRaises(ValueError):
+                pc.period_range("2026-03", bad)
+
+    def test_every_day_is_inside_its_own_week_for_every_start_day(self):
+        day = datetime.date(2024, 12, 1)
+        while day < datetime.date(2027, 2, 1):
+            for start in range(7):
+                first, last = pc.period_range(pc.week_of(day, start), start)
+                self.assertTrue(first <= day <= last, (day, start))
+                self.assertEqual((last - first).days, 6)
+                self.assertEqual(first.weekday(), start)
+            day += datetime.timedelta(days=1)
+
+    def test_week_53_exists_only_in_long_years(self):
+        self.assertEqual(pc.period_range("2026-W53", 0), (datetime.date(2026, 12, 28), datetime.date(2027, 1, 3)))
+        self.assertEqual(pc.week_of(datetime.date(2027, 1, 3), 0), "2026-W53")
+        self.assertEqual(pc.week_of(datetime.date(2027, 1, 4), 0), "2027-W01")
+        for start in range(7):
+            with self.assertRaises(ValueError):
+                pc.period_range("2025-W53", start)
+
+    def test_period_range_month_ends(self):
+        for period, last in (("2024-02", 29), ("2023-02", 28), ("2100-02", 28), ("2000-02", 29), ("2026-12", 31), ("2026-04", 30)):
+            self.assertEqual(pc.period_range(period, 0)[1], datetime.date(int(period[:4]), int(period[5:]), last), period)
+        self.assertEqual(pc.period_range("2026-01", 0)[0], datetime.date(2026, 1, 1))
+
+    def test_period_range_and_resolve_period_refuse_malformed_periods(self):
+        for bad in ("", "2026", "2026-1", "2026-00", "2026-13", "2026-W00", "2026-W54", "2026-w10", "2026-03-01", " 2026-03", "2026-03\n", "٢٠٢٦-٠٣", "٢٠٢٦-03", "٢٠٢٦-W10"):
+            with self.subTest(period=bad):
+                with self.assertRaises(ValueError):
+                    pc.period_range(bad, 0)
+                if bad:  # an empty period means "none given"
+                    with self.assertRaises(ValueError):
+                        pc.resolve_period(bad, False, datetime.date(2026, 3, 1), 0)
+
+    def test_resolve_period_week_follows_the_start_day(self):
+        sat = datetime.date(2026, 11, 7)
+        self.assertEqual(pc.resolve_period(None, True, sat, 0), "2026-W45")
+        self.assertEqual(pc.resolve_period(None, True, sat, 5), "2026-W46")
+        self.assertEqual(pc.resolve_period("", False, sat, 0), "2026-11")  # empty counts as not given
+        self.assertEqual(pc.resolve_period(None, False, datetime.date(2024, 2, 29), 0), "2024-02")
+
+    def test_week_start_values(self):
+        self.assertEqual(pc.week_start({}), 0)
+        self.assertEqual(pc.week_start({"project": None}), 0)
+        self.assertEqual(pc.week_start({"project": {"week_start": None}}), 0)
+        self.assertEqual(pc.week_start({"project": {"week_start": "SUNDAY"}}), 6)
+        for bad in (5, "someday", ""):
+            with self.assertRaises(ValueError):
+                pc.week_start({"project": {"week_start": bad}})
+
+    def test_person_edge_values(self):
+        self.assertEqual(pc.person(7, {"7": "Seven"}), "Seven")
+        self.assertEqual(pc.person(7, {}), "7")
+        self.assertEqual(pc.person("   ", {}), "not set")
+        self.assertEqual(pc.person([None, ""], {}), "not set")
+        self.assertEqual(pc.person([1, "a", None], {"a": "A"}), "1, A")
+
+    def test_md_table_cells(self):
+        t = pc.md_table(["A", "B"], [[None, True], [["x", "y|z"], {"k": "v"}], ["line\nbreak", datetime.date(2026, 1, 2)], ["مرحبا", "é"]])
+        self.assertEqual(t.splitlines()[2:], ["|  | True |", "| x, y\\|z | k: v |", "| line break | 2026-01-02 |", "| مرحبا | é |"])
+        self.assertTrue(t.endswith("\n"))
+
+    def test_statuses_shapes(self):
+        self.assertEqual(pc.statuses({"registers": {"tasks": {"closed": "done"}}}, "tasks", "closed"), ["done"])
+        self.assertEqual(pc.statuses({"registers": {"tasks": {"closed": [1, 2]}}}, "tasks", "closed"), [1, 2])
+        self.assertEqual(pc.statuses({"registers": {"tasks": {"closed": None}}}, "tasks", "closed"), [])
+        self.assertEqual(pc.statuses({"registers": {"tasks": "x"}}, "tasks", "closed"), [])
+        self.assertEqual(pc.statuses({"registers": []}, "tasks", "closed"), [])
+
+    def test_front_matter_edges(self):
+        self.assertEqual(pc.split_front_matter("---\n\n---\nbody"), ({}, "body"))
+        self.assertEqual(pc.split_front_matter("---\ntype: x\n---\n"), ({"type": "x"}, ""))
+        self.assertEqual(pc.split_front_matter("no front matter\n---\na: 1\n---\n"), (None, "no front matter\n---\na: 1\n---\n"))
+        fm, body = pc.split_front_matter("---\na: [\n---\nbody\n")
+        self.assertEqual((fm, body), ({}, "body\n"))
+        with self.assertRaises(Exception):
+            pc.split_front_matter("---\na: [\n---\nbody\n", strict=True)
+        with self.assertRaises(Exception):
+            pc.split_front_matter("---\n- a\n---\n", strict=True)
+
+    def test_rag_rules_each_fire_with_their_reason(self):
+        cfg = pc.load_config(Path(__file__).resolve().parents[1] / "examples/acme")
+        top = cfg["vocab"]["priority_order"][0]
+        d = datetime.date(2026, 3, 15)
+        t = lambda i, **kw: {"id": i, "priority": "low", "status": "todo", **kw}  # noqa: E731
+        # red: a top-priority task that is blocked (not overdue)
+        self.assertEqual(pc.rag(cfg, d, [t("T-1", priority=top, status="blocked")]), ("red", "top-priority task T-1 is blocked"))
+        # red: several top-priority tasks overdue -> plural
+        self.assertEqual(pc.rag(cfg, d, [t("T-1", priority=top, due="2026-03-01"), t("T-2", priority=top, due="2026-03-02")])[1], "top-priority tasks T-1, T-2 are overdue")
+        # a closed top-priority task counts for nothing
+        self.assertEqual(pc.rag(cfg, d, [t("T-1", priority=top, status="done", due="2026-03-01")])[0], "green")
+        # red: an overdue milestone
+        self.assertEqual(pc.rag(cfg, d, [], [{"id": "M-1", "status": "open", "due": "2026-03-14"}]), ("red", "milestone M-1 is overdue"))
+        # a closed milestone is not overdue
+        closed = cfg["registers"]["milestones"]["closed"][0]
+        self.assertEqual(pc.rag(cfg, d, [], [{"id": "M-1", "status": closed, "due": "2026-03-14"}])[0], "green")
+        # red: three late tasks, reason lists three ids at most
+        late = [t(f"T-{n}", due="2026-03-01") for n in range(1, 6)]
+        self.assertEqual(pc.rag(cfg, d, late), ("red", "3 or more tasks are blocked or overdue (T-1, T-2, T-3)"))
+        # amber: two late tasks, a task due today is not overdue
+        self.assertEqual(pc.rag(cfg, d, late[:2])[1], "tasks T-1, T-2 are overdue")
+        self.assertEqual(pc.rag(cfg, d, [t("T-1", due="2026-03-15")])[0], "green")
+        self.assertEqual(pc.rag(cfg, d, [t("T-1", due="2026-03-14")])[0], "amber")
+
+    def test_rag_issue_severity_and_risk_impact_rules(self):
+        cfg = pc.load_config(Path(__file__).resolve().parents[1] / "examples/acme")
+        d = datetime.date(2026, 3, 15)
+        sev = cfg["vocab"]["issue_severity"]
+        impact = cfg["vocab"]["risk_level"][-1]
+        closed_issue = cfg["registers"]["issues"]["closed"][0]
+        closed_risk = cfg["registers"]["risks"]["closed"][0]
+        self.assertEqual(pc.rag(cfg, d, [], issues=[{"id": "I-1", "status": "open", "severity": sev[-1]}]), ("amber", "open issue I-1 has high severity"))
+        self.assertEqual(pc.rag(cfg, d, [], issues=[{"id": "I-1", "status": "open", "severity": sev[-2]}])[0], "amber")
+        self.assertEqual(pc.rag(cfg, d, [], issues=[{"id": "I-1", "status": "open", "severity": sev[0]}])[0], "green")
+        self.assertEqual(pc.rag(cfg, d, [], issues=[{"id": "I-1", "status": closed_issue, "severity": sev[-1]}])[0], "green")
+        self.assertEqual(pc.rag(cfg, d, [], risks=[{"id": "R-1", "status": "open", "impact": impact}, {"id": "R-2", "status": "open", "impact": impact}]),
+                         ("amber", "open risks R-1, R-2 have high impact"))
+        self.assertEqual(pc.rag(cfg, d, [], risks=[{"id": "R-1", "status": closed_risk, "impact": impact}])[0], "green")
+
+    def test_rag_milestone_due_within_seven_days_boundaries(self):
+        cfg = pc.load_config(Path(__file__).resolve().parents[1] / "examples/acme")
+        d = datetime.date(2026, 3, 15)
+        for due, want in (("2026-03-15", "amber"), ("2026-03-22", "amber"), ("2026-03-23", "green"), ("2026-03-14", "red")):
+            with self.subTest(due=due):
+                self.assertEqual(pc.rag(cfg, d, [], [{"id": "M-1", "status": "open", "due": due}])[0], want)
+        self.assertEqual(pc.rag(cfg, d, [], [{"id": "M-1", "status": "open", "due": "2026-03-20"}])[1], "milestone M-1 is due within 7 days")
+        # a milestone with an unreadable or missing date is ignored
+        for due in ("not a date", None, 5):
+            self.assertEqual(pc.rag(cfg, d, [], [{"id": "M-1", "status": "open", "due": due}])[0], "green")
+
+    def test_rag_with_a_short_or_custom_vocabulary(self):
+        base = {"registers": {"tasks": {"closed": ["done"], "blocked": ["blocked"]}}, "vocab": {"priority_order": ["p1"]}}
+        d = datetime.date(2026, 3, 15)
+        red = [{"id": "T-1", "priority": "p1", "status": "blocked"}]
+        for rag_vocab, want in ((["G"], "red"), (["G", "A"], "red"), (["G", "A", "R"], "R"), (None, "red")):
+            cfg = {**base, "vocab": {**base["vocab"], **({"rag": rag_vocab} if rag_vocab else {})}}
+            self.assertEqual(pc.rag(cfg, d, red)[0], want if want != "red" else "red")
+        amber = [{"id": "T-1", "priority": "p2", "status": "blocked"}]
+        self.assertEqual(pc.rag({**base, "vocab": {**base["vocab"], "rag": ["G"]}}, d, amber)[0], "amber")
+        self.assertEqual(pc.rag({**base, "vocab": {**base["vocab"], "rag": ["G", "A", "R"]}}, d, amber)[0], "A")
+        self.assertEqual(pc.rag({**base, "vocab": {**base["vocab"], "rag": ["G", "A", "R"]}}, d, [])[0], "G")
+
+    def test_glossary_paths_shapes(self):
+        gp = lambda g, lang="xx": pc.glossary_paths({"languages": {"xx": {"glossary": g}}}, lang)  # noqa: E731
+        self.assertEqual(gp("a/b/g.txt"), ("a/b/g.txt", "a/b/g.proposed.txt"))
+        self.assertEqual(gp("g.txt"), ("g.txt", "g.proposed.txt"))
+        self.assertEqual(gp("g"), ("g", "g.proposed"))
+        for bad in (None, 5, "  ", ["a"]):
+            self.assertEqual(gp(bad), (None, None))
+        self.assertEqual(gp("g.md", "yy"), (None, None))
+        self.assertEqual(pc.glossary_paths({"languages": {"xx": "s"}}, "xx"), (None, None))
+        self.assertEqual(pc.glossary_paths({"languages": [1]}, "xx"), (None, None))
+        self.assertEqual(pc.glossary_paths([], "xx"), (None, None))
+
+    def test_languages_shapes(self):
+        self.assertEqual(pc.languages({"languages": "x"}), {"draft": "en", "translations": [], "info": {"en": {}}})
+        self.assertEqual(pc.languages(None)["draft"], "en")
+        got = pc.languages({"languages": {"draft": "", "translations": ["xx", 5, "yy"], "xx": {"dir": "rtl"}, "yy": "bad"}})
+        self.assertEqual(got, {"draft": "en", "translations": ["xx", "yy"], "info": {"en": {}, "xx": {"dir": "rtl"}, "yy": {}}})
+        self.assertEqual(pc.languages({"languages": {"draft": "fr", "translations": "xx"}})["translations"], [])
 
     def test_config_errors_reports_week_start(self):
         import render_views

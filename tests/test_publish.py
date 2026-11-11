@@ -398,5 +398,214 @@ class Publish(unittest.TestCase):
         self.assertTrue((self.root / "published/Decision log.xx.md").exists())
 
 
+    def write_finished(self, rel, text=None, ty="decision-log"):
+        """A finished decision log whose source hash is current (so it is not stale), at rel under the documents folder."""
+        f = self.docs / rel
+        f.parent.mkdir(parents=True, exist_ok=True)
+        h = da.register_hash(self.root, pc.load_config(self.root), "decisions")
+        f.write_text(text if text is not None else
+                     f"---\ntype: {ty}\nstatus: finished\nlast_updated: 2026-03-15\nsource_hashes:\n  decisions: \"{h}\"\n---\n# {rel}\n", encoding="utf-8")
+        return f
+
+    def test_invalid_mode_exits_2(self):
+        for mode in ("ftp", "Folder", "''", "[folder]"):
+            with self.subTest(mode=mode):
+                self.set_config(f"publish:\n  mode: {mode}\n  path: published\n")
+                code, _, err = run(self.root)
+                self.assertEqual(code, 2)
+                self.assertIn("invalid publish mode", err)
+
+    def test_missing_blank_or_non_string_path_exits_2(self):
+        for line in ("", "  path: null\n", "  path: ''\n", "  path: '   '\n", "  path: 5\n", "  path: [a]\n"):
+            for mode in ("folder", "repo"):
+                with self.subTest(path=line, mode=mode):
+                    (self.root / "pmo/config.yaml").write_text(f"publish:\n  mode: {mode}\n{line}", encoding="utf-8")
+                    code, _, err = run(self.root)
+                    self.assertEqual(code, 2)
+                    self.assertIn("publish.path must be a non-empty string", err)
+
+    def test_publish_null_or_missing_block_means_mode_none(self):
+        (self.root / "pmo/config.yaml").write_text("publish: null\n", encoding="utf-8")
+        code, out, _ = run(self.root, "--apply")
+        self.assertEqual((code, "mode is none" in out), (0, True))
+
+    def test_folder_path_that_contains_the_documents_folder_exits_2(self):
+        for path in ("pmo", ".", "./pmo/documents"):
+            with self.subTest(path=path):
+                (self.root / "pmo/config.yaml").write_text(f"publish:\n  mode: folder\n  path: '{path}'\n", encoding="utf-8")
+                code, _, err = run(self.root)
+                self.assertEqual(code, 2)
+                self.assertIn("ERROR", err)
+
+    def test_folder_path_absolute_or_into_dot_git_exits_2(self):
+        for path in (str(self.tmp / "elsewhere"), ".git/pub", "x/../../out"):
+            with self.subTest(path=path):
+                (self.root / "pmo/config.yaml").write_text(f"publish:\n  mode: folder\n  path: '{path}'\n", encoding="utf-8")
+                code, _, err = run(self.root)
+                self.assertEqual(code, 2)
+                self.assertIn("must be inside the project", err)
+
+    def test_repo_mode_folder_that_does_not_exist_exits_2(self):
+        self.set_config(f"publish:\n  mode: repo\n  path: '{self.tmp / 'nope'}'\n")
+        code, _, err = run(self.root)
+        self.assertEqual(code, 2)
+        self.assertIn("repo folder not found", err)
+
+    def test_repo_mode_relative_path_is_taken_from_the_project(self):
+        repo = self.root / "sibling"
+        repo.mkdir()
+        subprocess.run(["git", "init", str(repo)], check=True, capture_output=True)
+        self.set_config("publish:\n  mode: repo\n  path: sibling\n")
+        self.finish_decision_log()
+        code, out, err = run(self.root, "--apply")
+        self.assertEqual(code, 0, err)
+        self.assertTrue((repo / "Decision log.md").is_file())
+
+    def test_dry_run_prints_url_only_for_new_documents_and_trims_the_slash(self):
+        self.set_config("publish:\n  mode: folder\n  path: published\n  url: https://example.test/docs//\n")
+        self.finish_decision_log()
+        self.write_finished("Sub dir/Notes.md")
+        out = run(self.root)[1]
+        self.assertIn("new: Decision log.md\nurl: https://example.test/docs/Decision log.md", out)
+        self.assertIn("url: https://example.test/docs/Sub dir/Notes.md", out)
+        run(self.root, "--apply")
+        out = run(self.root)[1]
+        self.assertIn("unchanged: Decision log.md", out)
+        self.assertNotIn("url:", out)
+
+    def test_nested_documents_keep_their_folders_and_unicode_names_and_bytes(self):
+        self.set_config("publish:\n  mode: folder\n  path: published\n")
+        a = self.write_finished("مشاريع/تقرير شهري.md")
+        a.write_bytes(a.read_bytes() + "# تقرير\r\nline\xa0two\n".encode("utf-8"))
+        code, out, err = run(self.root, "--apply")
+        self.assertEqual(code, 0, err)
+        self.assertIn("copied: مشاريع/تقرير شهري.md", out)
+        self.assertEqual((self.root / "published/مشاريع/تقرير شهري.md").read_bytes(), a.read_bytes())
+
+    def test_finished_document_of_unknown_or_missing_type_is_not_listed_or_counted(self):
+        self.set_config("publish:\n  mode: folder\n  path: published\n")
+        self.write_finished("Unknown.md", "---\ntype: no-such-type\nstatus: finished\n---\n# x\n")
+        self.write_finished("Untyped.md", "---\nstatus: finished\n---\n# x\n")
+        self.write_finished("Plain.md", "# no front matter\n")
+        code, out, _ = run(self.root)
+        self.assertEqual(code, 0)
+        self.assertNotIn("Unknown.md", out)
+        self.assertNotIn("Untyped.md", out)
+        self.assertIn("drafts: 3", out)  # the plain file, the Acme status report and the Acme decision log
+        self.assertIn("excluded: 0", out)
+
+    def test_status_other_than_finished_is_a_draft(self):
+        self.set_config("publish:\n  mode: folder\n  path: published\n")
+        for n, st in enumerate(("Finished", "done", "", "null", "[finished]")):
+            self.write_finished(f"D{n}.md", f"---\ntype: decision-log\nstatus: {st or chr(39)*2}\n---\n# x\n")
+        out = run(self.root)[1]
+        self.assertNotIn("new:", out)
+        self.assertIn("drafts: 7", out)  # five here plus the two Acme drafts
+
+    def test_a_file_that_is_not_utf8_is_skipped_as_a_draft(self):
+        self.set_config("publish:\n  mode: folder\n  path: published\n")
+        (self.docs / "Binary.md").write_bytes(b"---\ntype: decision-log\nstatus: finished\n---\n\xff\xfe\n")
+        code, out, err = run(self.root)
+        self.assertEqual(code, 0, err)
+        self.assertNotIn("Binary.md", out)
+        self.assertNotIn("Traceback", err)
+
+    def test_front_matter_that_is_invalid_yaml_counts_as_a_draft(self):
+        self.set_config("publish:\n  mode: folder\n  path: published\n")
+        self.write_finished("Broken.md", "---\ntype: [\nstatus: finished\n---\n# x\n")
+        code, out, err = run(self.root)
+        self.assertEqual(code, 0, err)
+        self.assertNotIn("Broken.md", out)
+
+    def test_missing_documents_folder_lists_nothing(self):
+        self.set_config("publish:\n  mode: folder\n  path: published\n")
+        shutil.rmtree(self.docs)
+        code, out, _ = run(self.root, "--apply")
+        self.assertEqual((code, out), (0, ""))
+
+    def test_apply_with_nothing_to_publish_exits_0(self):
+        self.set_config("publish:\n  mode: folder\n  path: published\n")
+        code, out, _ = run(self.root, "--apply")
+        self.assertEqual(code, 0)
+        self.assertNotIn("copied", out)
+
+    def test_overwrite_of_a_new_document_just_copies_it(self):
+        self.set_config("publish:\n  mode: folder\n  path: published\n")
+        self.finish_decision_log()
+        code, out, _ = run(self.root, "--apply", "--overwrite", "Decision log.md", "--overwrite", "Decision log.md")
+        self.assertEqual(code, 0)
+        self.assertEqual(out.count("copied: Decision log.md"), 1)
+
+    def test_stale_document_rules_when_the_target_exists_and_differs(self):
+        self.set_config("publish:\n  mode: folder\n  path: published\n")
+        self.finish_decision_log()
+        dec = self.root / "pmo/registers/decisions.yaml"
+        dec.write_text(dec.read_text(encoding="utf-8") + "\n# change\n", encoding="utf-8")
+        target = self.root / "published/Decision log.md"
+        target.parent.mkdir()
+        target.write_text("Old target.\n", encoding="utf-8")
+        self.assertIn("stale: Decision log.md", run(self.root)[1])
+        # include alone does not overwrite a differing target
+        code, out, _ = run(self.root, "--apply", "--include", "Decision log.md")
+        self.assertEqual((code, target.read_text(encoding="utf-8")), (1, "Old target.\n"))
+        # overwrite alone does not publish a stale document
+        code, out, _ = run(self.root, "--apply", "--overwrite", "Decision log.md")
+        self.assertEqual((code, target.read_text(encoding="utf-8")), (1, "Old target.\n"))
+        # both do
+        code, out, _ = run(self.root, "--apply", "--include", "Decision log.md", "--overwrite", "Decision log.md")
+        self.assertEqual(code, 0)
+        self.assertIn("copied: Decision log.md", out)
+        self.assertNotEqual(target.read_text(encoding="utf-8"), "Old target.\n")
+
+    def test_apply_copies_what_it_can_and_exits_1_for_what_it_left(self):
+        self.set_config("publish:\n  mode: folder\n  path: published\n")
+        self.finish_decision_log()
+        self.write_finished("Other.md")
+        (self.root / "published").mkdir()
+        (self.root / "published/Other.md").write_text("different\n", encoding="utf-8")
+        code, out, _ = run(self.root, "--apply")
+        self.assertEqual(code, 1)
+        self.assertIn("copied: Decision log.md", out)
+        self.assertNotIn("copied: Other.md", out)
+        self.assertEqual((self.root / "published/Other.md").read_text(encoding="utf-8"), "different\n")
+
+    def test_old_document_is_not_stale_but_a_moved_as_of_does_not_change_the_state(self):
+        self.set_config("publish:\n  mode: folder\n  path: published\n")
+        self.finish_decision_log()
+        out = run(self.root, "--as-of", "2030-01-01")[1]
+        self.assertIn("new: Decision log.md", out)  # `old` is an audit finding, not a stale check
+
+    def test_as_of_must_be_a_real_date(self):
+        self.set_config("publish:\n  mode: folder\n  path: published\n")
+        for bad in ("2026-02-30", "soon", ""):
+            code, _, err = run(self.root, "--as-of", bad)
+            self.assertEqual(code, 2, bad)
+
+    def test_target_folder_that_is_a_file_exits_2_without_a_traceback(self):
+        self.set_config("publish:\n  mode: folder\n  path: published\n")
+        self.finish_decision_log()
+        (self.root / "published").write_text("i am a file\n", encoding="utf-8")
+        code, _, err = run(self.root, "--apply")
+        self.assertEqual(code, 2)
+        self.assertNotIn("Traceback", err)
+
+    def test_sub_folder_that_links_out_of_the_target_exits_2_and_copies_nothing(self):
+        self.set_config("publish:\n  mode: folder\n  path: published\n")
+        self.write_finished("sub/Notes.md")
+        outside = self.tmp / "outside"
+        outside.mkdir()
+        (self.root / "published").mkdir()
+        os.symlink(outside, self.root / "published/sub")
+        code, _, err = run(self.root, "--apply")
+        self.assertEqual(code, 2)
+        self.assertIn("escapes publish directory", err)
+        self.assertEqual(list(outside.iterdir()), [])
+
+    def test_help_and_usage_errors(self):
+        self.assertEqual(subprocess.run([sys.executable, str(TOOL), "--help"], capture_output=True).returncode, 0)
+        self.assertEqual(run(self.root, "--bogus")[0], 2)
+        self.assertEqual(run(self.root, "--overwrite")[0], 2)  # needs a value
+        self.assertEqual(subprocess.run([sys.executable, str(TOOL), "--project", str(self.tmp / "nope")], capture_output=True).returncode, 2)
+
 if __name__ == "__main__":
     unittest.main()

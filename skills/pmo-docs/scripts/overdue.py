@@ -87,6 +87,8 @@ def main(argv=None):
                     metavar="YYYY-MM-DD", help="date to compare against (default: today)")
     ap.add_argument("--days", type=int, default=14, help="milestone window in days (default: 14)")
     args = ap.parse_args(argv)
+    if args.days < 0:
+        ap.error("--days cannot be negative")
     if not Path(args.project).is_dir():
         ap.error(f"project folder not found: {args.project}")
     try:

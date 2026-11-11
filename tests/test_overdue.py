@@ -122,6 +122,116 @@ class Overdue(unittest.TestCase):
             od.main(["--as-of", "not-a-date"])
         self.assertEqual(e.exception.code, 2)
 
+    def test_due_on_the_as_of_date_is_not_overdue_and_the_day_before_is_one_day_late(self):
+        self.tasks("{id: T-1, title: a, status: blocked, due: 2026-03-15}", "{id: T-2, title: b, status: blocked, due: 2026-03-14}")
+        _, out = self.run_tool("--as-of", "2026-03-15")
+        self.assertNotIn("| T-1 |", out)
+        self.assertIn("| T-2 | b | not set | 2026-03-14 | 1 | not set |", out)
+
+    def test_as_of_before_every_due_date_lists_no_overdue_work(self):
+        _, out = self.run_tool("--as-of", "2020-01-01")
+        self.assertIn("Overdue tasks: 0, open actions past due: 0", out)
+
+    def test_days_late_across_a_leap_day(self):
+        self.tasks("{id: T-1, title: a, status: blocked, due: 2024-02-28}")
+        self.assertIn("| 2 |", self.run_tool("--as-of", "2024-03-01")[1])  # 28th, 29th
+        self.tasks("{id: T-1, title: a, status: blocked, due: 2023-02-28}")
+        self.assertIn("| 1 |", self.run_tool("--as-of", "2023-03-01")[1])
+        self.assertIn("as of 2024-02-29", self.run_tool("--as-of", "2024-02-29")[1])
+
+    def test_days_zero_keeps_only_milestones_due_by_the_as_of_date(self):
+        (self.p / "pmo/registers/milestones.yaml").write_text(
+            "milestones:\n  - {id: M-1, title: a, status: not-started, due: 2026-03-14}\n"
+            "  - {id: M-2, title: b, status: not-started, due: 2026-03-15}\n"
+            "  - {id: M-3, title: c, status: not-started, due: 2026-03-16}\n", encoding="utf-8")
+        _, out = self.run_tool("--as-of", "2026-03-15", "--days", "0")
+        self.assertIn("milestones due within 0 days or overdue: 2", out)
+        self.assertNotIn("M-3", out)
+
+    def test_days_must_be_an_integer(self):
+        for bad in ("x", "1.5", ""):
+            with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as e:
+                od.main(["--project", str(self.p), "--days", bad])
+            self.assertEqual(e.exception.code, 2)
+
+    def test_negative_days_is_a_usage_error(self):
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err), self.assertRaises(SystemExit) as e:
+            od.main(["--project", str(self.p), "--days", "-1"])
+        self.assertEqual(e.exception.code, 2)
+        self.assertIn("--days cannot be negative", err.getvalue())
+
+    def test_unicode_pipe_and_list_cells(self):
+        self.tasks("{id: T-1, title: \"عنوان | x\", status: blocked, due: 2026-03-01, owner: [alice, bob]}")
+        _, out = self.run_tool("--as-of", "2026-03-15")
+        self.assertIn("| T-1 | عنوان \\| x | alice, bob | 2026-03-01 | 14 | not set |", out)
+
+    def test_task_order_is_days_late_then_priority_then_id_and_unknown_priority_last(self):
+        self.tasks("{id: T-4, title: d, status: blocked, due: 2026-03-01}",
+                   "{id: T-3, title: c, status: blocked, due: 2026-03-01, priority: high}",
+                   "{id: T-2, title: b, status: blocked, due: 2026-03-01, priority: bogus}",
+                   "{id: T-1, title: a, status: blocked, due: 2026-03-01, priority: high}",
+                   "{id: T-0, title: z, status: blocked, due: 2026-02-01, priority: low}")
+        _, out = self.run_tool("--as-of", "2026-03-15")
+        ids = [out.index(f"| T-{n} |") for n in (0, 1, 3, 2, 4)]
+        self.assertEqual(ids, sorted(ids))
+
+    def test_unusable_due_values(self):
+        # falsy values mean "not set"; other values that do not parse are listed under Bad due dates
+        self.tasks("{id: T-1, title: a, status: blocked, due: \"\"}", "{id: T-2, title: b, status: blocked, due: 0}",
+                   "{id: T-3, title: c, status: blocked}", "{id: T-4, title: d, status: blocked, due: true}",
+                   "{id: T-5, title: e, status: blocked, due: \"2026-02-30\"}", "{id: T-6, title: f, status: blocked, due: \"15/03/2026\"}")
+        code, out = self.run_tool("--as-of", "2026-03-15")
+        self.assertEqual(code, 0)
+        bad = out[out.index("## Bad due dates"):]
+        for tid in ("T-4", "T-5", "T-6"):
+            self.assertIn(f"| tasks | {tid} |", bad)
+        for tid in ("T-1", "T-2", "T-3"):
+            self.assertNotIn(f"| tasks | {tid} |", bad)
+        self.assertIn("Overdue tasks: 0", out)
+
+    def test_no_bad_due_dates_section_when_all_dates_parse(self):
+        self.assertNotIn("Bad due dates", self.run_tool("--as-of", "2026-03-15")[1])
+
+    def test_entry_without_an_id_does_not_crash(self):
+        self.tasks("{title: a, status: blocked, due: 2026-03-01}")
+        code, out = self.run_tool("--as-of", "2026-03-15")
+        self.assertEqual(code, 0)
+        self.assertIn("| not set | a |", out)
+
+    def test_register_shapes_that_are_not_a_list_of_maps_exit_2(self):
+        for text in ("tasks: [a, b]\n", "tasks: {a: 1}\n", "tasks: x\n", "- a\n"):
+            with self.subTest(text=text):
+                (self.p / "pmo/registers/tasks.yaml").write_text(text, encoding="utf-8")
+                err = io.StringIO()
+                with contextlib.redirect_stderr(err):
+                    code, _ = self.run_tool("--as-of", "2026-03-15")
+                self.assertEqual(code, 2)
+                self.assertIn("not readable", err.getvalue())
+
+    def test_empty_register_file_counts_as_empty(self):
+        (self.p / "pmo/registers/tasks.yaml").write_text("", encoding="utf-8")
+        code, out = self.run_tool("--as-of", "2026-03-15")
+        self.assertEqual(code, 0)
+        self.assertIn("Overdue tasks: 0", out)
+
+    def test_issues_without_severity_or_without_severity_vocab_still_list(self):
+        (self.p / "pmo/registers/issues.yaml").write_text(
+            "issues:\n  - {id: I-2, title: b, status: open}\n  - {id: I-1, title: a, status: open, severity: high}\n"
+            "  - {id: I-0, title: z, status: open, severity: unheard-of}\n", encoding="utf-8")
+        _, out = self.run_tool("--as-of", "2026-03-15")
+        self.assertLess(out.index("| I-1 |"), out.index("| I-0 |"))  # a known severity sorts before an unknown one
+        self.assertLess(out.index("| I-0 |"), out.index("| I-2 |"))  # ties by id
+        (self.p / "pmo/config.yaml").write_text("schema_version: 1\nregisters: {issues: {enums: null}}\n", encoding="utf-8")
+        _, out = self.run_tool("--as-of", "2026-03-15")
+        self.assertLess(out.index("| I-0 |"), out.index("| I-1 |"))  # no vocab: plain id order
+
+    def test_help_exits_0_and_a_bad_flag_exits_2(self):
+        import subprocess
+        tool = str(ROOT / "skills/pmo-docs/scripts/overdue.py")
+        self.assertEqual(subprocess.run([sys.executable, tool, "--help"], capture_output=True).returncode, 0)
+        self.assertEqual(subprocess.run([sys.executable, tool, "--project", str(self.p), "--bogus"], capture_output=True).returncode, 2)
+
 
 if __name__ == "__main__":
     unittest.main()

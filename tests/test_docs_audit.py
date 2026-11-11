@@ -241,6 +241,161 @@ class Audit(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("the default playbook moved from v0 to v1", out)
 
+    def test_file_that_is_not_utf8_is_a_finding_not_a_traceback(self):
+        (self.docs / "Binary.md").write_bytes(b"---\ntype: decision-log\n---\n\xff\xfe\n")
+        code, out = self.run_audit()
+        self.assertEqual(code, 1)
+        self.assertIn("`Binary.md` - not UTF-8 text", out)
+
+    def test_documents_without_front_matter_or_with_empty_front_matter(self):
+        (self.docs / "Plain.md").write_text("# no front matter\n", encoding="utf-8")
+        (self.docs / "Empty.md").write_text("---\n\n---\nbody\n", encoding="utf-8")
+        out = self.run_audit()[1]
+        self.assertIn("`Plain.md` - no front matter", out)
+        self.assertIn("`Empty.md` - front matter has no `type`", out)
+
+    def test_old_boundary_is_exclusive_and_future_dates_are_fine(self):
+        self.finish()
+        stale = pc.load_config(self.p)["doc_types"]["status-report"]["stale_days"]
+        stamp = datetime.date(2026, 3, 14)
+        for days, want in ((stale, 0), (stale + 1, 1), (-30, 0)):
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                code = da.main(["--project", str(self.p), "--as-of", str(stamp + datetime.timedelta(days=days))])
+            self.assertEqual(code, want, days)
+
+    def test_old_check_across_a_leap_day(self):
+        self.finish()
+        f = self.docs / "2026-03 - Status report.md"
+        f.write_text(f.read_text(encoding="utf-8").replace("last_updated: 2026-03-14", "last_updated: 2024-02-28"), encoding="utf-8")
+        stale = pc.load_config(self.p)["doc_types"]["status-report"]["stale_days"]
+        last_ok = datetime.date(2024, 2, 28) + datetime.timedelta(days=stale)
+        self.assertEqual(da.audit_file(self.p, pc.load_config(self.p), f, self.docs, last_ok)[0:0], [])
+        old = [c for c, _ in da.audit_file(self.p, pc.load_config(self.p), f, self.docs, last_ok + datetime.timedelta(days=1))]
+        self.assertIn("old", old)
+        self.assertNotIn("old", [c for c, _ in da.audit_file(self.p, pc.load_config(self.p), f, self.docs, last_ok)])
+
+    def test_last_updated_that_is_not_a_date(self):
+        self.finish()
+        f = self.docs / "2026-03 - Status report.md"
+        f.write_text(f.read_text(encoding="utf-8").replace("2026-03-14", "14 March"), encoding="utf-8")
+        self.assertIn("last_updated is not a YYYY-MM-DD date", self.run_audit()[1])
+
+    def test_source_hashes_that_is_not_a_map_is_a_finding(self):
+        self.finish()
+        f = self.docs / "2026-03 - Status report.md"
+        f.write_text("---\ntype: status-report\nstatus: finished\nlast_updated: 2026-03-14\nsource_hashes: [a, b]\n---\n# x\n", encoding="utf-8")
+        out = self.run_audit()[1]
+        self.assertIn("source_hashes must be a map of register to hash", out)
+
+    def test_registers_in_generated_from_that_are_not_configured_are_skipped(self):
+        (self.p / "pmo/config.yaml").write_text(
+            (self.p / "pmo/config.yaml").read_text(encoding="utf-8") + "\ndoc_types:\n  status-report:\n    generated_from: [no-such-register]\n", encoding="utf-8")
+        self.finish(hashes={"no-such-register": "abcd1234"})
+        self.assertEqual(self.run_audit()[0], 0)
+
+    def test_link_forms(self):
+        (self.docs / "sub").mkdir()
+        (self.docs / "sub/Here.md").write_text("---\ntype: decision-log\nstatus: draft\n---\n", encoding="utf-8")
+        (self.docs / "Decision log.md").write_text(
+            "---\ntype: decision-log\nstatus: draft\n---\n"
+            "[a](https://x.test/nope) [b](http://x.test) [c](#section) [d](mailto:someone) [e](sub/Here.md#frag) [f](sub) [g](./sub/Here.md)\n"
+            "[h](gone.md) [i](sub/gone.md#frag) [j](Decision%20log.md)\n", encoding="utf-8")
+        out = self.run_audit()[1]
+        broken = out[out.index("## Broken links"):out.index("## Override drift")]
+        self.assertIn("(2)", broken)
+        self.assertIn("`gone.md`", broken)
+        self.assertIn("`sub/gone.md#frag`", broken)
+
+    def test_links_with_any_url_scheme_and_links_in_code_fences_are_not_checked(self):
+        (self.docs / "Decision log.md").write_text(
+            "---\ntype: decision-log\nstatus: draft\n---\n"
+            "[a](ftp://x.test/f) [b](tel:+100) [c](data:text/plain,hi) [d](file:///x) [e](git+ssh://h/r)\n"
+            "```\n[f](in-backticks.md)\n```\n~~~md\n[g](in-tildes.md)\n~~~\n[h](real-gone.md)\n", encoding="utf-8")
+        out = self.run_audit()[1]
+        broken = out[out.index("## Broken links"):out.index("## Override drift")]
+        self.assertIn("`real-gone.md`", broken)
+        self.assertIn("(1)", broken)
+        for skipped in ("ftp", "tel", "data", "file", "ssh", "backticks", "tildes"):
+            self.assertNotIn(skipped, broken)
+
+    def test_link_in_a_nested_document_is_resolved_from_its_own_folder(self):
+        (self.docs / "sub").mkdir()
+        (self.docs / "sub/A.md").write_text("---\ntype: decision-log\nstatus: draft\n---\n[up](../Decision log.md) [bad](Decision log.md)\n".replace(" log.md)", "%20log.md)"), encoding="utf-8")
+        out = self.run_audit()[1]
+        self.assertIn("`sub/A.md` -> `Decision%20log.md`", out)
+        self.assertNotIn("`../Decision%20log.md`", out)
+
+    def test_only_markdown_files_are_scanned_and_nested_ones_count(self):
+        (self.docs / "notes.txt").write_text("no front matter\n", encoding="utf-8")
+        (self.docs / "deep/er").mkdir(parents=True)
+        (self.docs / "deep/er/X.md").write_text("---\ntype: decision-log\nstatus: draft\n---\n", encoding="utf-8")
+        out = self.run_audit()[1]
+        self.assertIn("Scanned 3 Markdown files.", out)
+        self.assertNotIn("notes.txt", out)
+
+    def test_empty_documents_folder_scans_nothing_and_exits_0(self):
+        shutil.rmtree(self.docs)
+        self.docs.mkdir()
+        code, out = self.run_audit()
+        self.assertEqual(code, 0)
+        self.assertIn("Scanned 0 Markdown files.", out)
+
+    def test_as_of_must_be_a_real_date(self):
+        for bad in ("2026-02-30", "x", ""):
+            with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as e:
+                da.main(["--project", str(self.p), "--as-of", bad])
+            self.assertEqual(e.exception.code, 2)
+
+    def test_template_based_on_malformed_or_newer_than_the_default(self):
+        tpl_dir = self.p / "pmo/templates"
+        tpl_dir.mkdir(parents=True)
+        tpl = tpl_dir / "decision-log.md"
+        for based_on, expect in (("decision-log", "is not <type>@<number>"), ("decision-log@x", "is not <type>@<number>"),
+                                 ("decision-log@2", "newer than the default (v1)"), ("' '", "is not <type>@<number>"), ("5", "is not <type>@<number>")):
+            with self.subTest(based_on=based_on):
+                tpl.write_text(f"---\ntype: decision-log\nbased_on: {based_on}\n---\n# x\n", encoding="utf-8")
+                self.assertIn(expect, self.run_audit()[1])
+
+    def test_template_and_playbook_that_are_not_utf8_are_drift_not_a_crash(self):
+        for sub, name in (("pmo/templates", "decision-log.md"), ("pmo/playbooks", "draft.md")):
+            with self.subTest(sub=sub):
+                d = self.p / sub
+                d.mkdir(parents=True, exist_ok=True)
+                (d / name).write_bytes(b"---\ntype: x\n---\n\xff\xfe\n")
+                code, out = self.run_audit()
+                self.assertEqual(code, 1, out)
+                self.assertIn(f"`{name}` - not UTF-8 text", out)
+                self.assertNotIn("Traceback", out)
+                (d / name).unlink()
+
+    def test_template_and_playbook_folders_that_are_absent_or_unset(self):
+        shutil.rmtree(self.p / "pmo/templates", ignore_errors=True)
+        cfg = pc.load_config(self.p)
+        self.assertEqual((da.template_drift(self.p, cfg), da.playbook_drift(self.p, cfg)), ([], []))
+        cfg["paths"]["playbooks"] = None
+        self.assertEqual(da.playbook_drift(self.p, cfg), [])
+
+    def test_drift_state(self):
+        cfg = pc.load_config(self.p)
+        skill_tpl = pc.SKILL / "assets/templates/decision-log.md"
+        self.assertEqual(da.drift_state(self.p, cfg, skill_tpl, "skill"), "n/a")
+        tpl = self.p / "pmo/templates/decision-log.md"
+        tpl.parent.mkdir(parents=True)
+        tpl.write_text("---\ntype: decision-log\nbased_on: decision-log@1\n---\n", encoding="utf-8")
+        self.assertEqual(da.drift_state(self.p, cfg, tpl, "project"), "no")
+        tpl.write_text("---\ntype: decision-log\n---\n", encoding="utf-8")
+        self.assertEqual(da.drift_state(self.p, cfg, tpl, "project"), "yes")
+        own = tpl.with_name("custom-only.md")
+        own.write_text("x\n", encoding="utf-8")
+        self.assertEqual(da.drift_state(self.p, cfg, own, "project"), "n/a")
+
+    def test_unicode_document_names_and_content(self):
+        (self.docs / "تقرير ✓.md").write_text("---\ntype: decision-log\nstatus: draft\n---\n[x](مفقود.md)\n", encoding="utf-8")
+        code, out = self.run_audit()
+        self.assertEqual(code, 1)
+        self.assertIn("`تقرير ✓.md` -> `مفقود.md`", out)
+
 
 class Translations(unittest.TestCase):
     def setUp(self):
@@ -441,6 +596,26 @@ class Translations(unittest.TestCase):
         old_section = out.split("## Old")[1].split("##")[0]
         self.assertNotIn("Decision log.xx.md", old_section)
 
+
+    def test_translation_whose_original_is_not_utf8_or_leaves_the_folder(self):
+        tf.enable_languages(self.p, ("xx",))
+        _, orig_text = self.finish_decision_log()
+        trans = tf.make_translation(orig_text)
+        (self.docs / "Bin.md").write_bytes(b"---\ntype: decision-log\n---\n\xff\n")
+        (self.docs / "Decision log.xx.md").write_text(trans.replace("translation_of: Decision log.md", "translation_of: Bin.md"), encoding="utf-8")
+        self.assertIn("the original is not UTF-8 text", self.run_audit()[1])
+        for target in ("../Decision log.md", "/etc/hostname", "sub", ""):
+            with self.subTest(target=target):
+                (self.docs / "Decision log.xx.md").write_text(trans.replace("translation_of: Decision log.md", f"translation_of: '{target}'"), encoding="utf-8")
+                self.assertIn("translation_of does not name a document", self.run_audit()[1])
+
+    def test_translation_with_a_lang_that_is_not_text(self):
+        tf.enable_languages(self.p, ("xx",))
+        _, orig_text = self.finish_decision_log()
+        trans = tf.make_translation(orig_text).replace("lang: xx", "lang: [xx]")
+        (self.docs / "Decision log.xx.md").write_text(trans, encoding="utf-8")
+        out = self.run_audit()[1]
+        self.assertIn("is not a translation language in the config", out)
 
 if __name__ == "__main__":
     unittest.main()

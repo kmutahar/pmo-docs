@@ -185,6 +185,96 @@ class Where(unittest.TestCase):
         self.assertNotIn("source_hashes", run(self.root, "docs-audit-report", "--hashes")[1])
         self.assertNotIn("source_hashes", run(self.root, "overdue-report")[1])
 
+    def test_title_override_with_unicode_empty_and_slash(self):
+        f = fields(run(self.root, "status-report", "2026-03", "--title", "تقرير ✓")[1])
+        self.assertEqual(f["document"], "pmo/documents/2026-03 - تقرير ✓.md")
+        self.assertEqual(f["title"], "تقرير ✓")
+        code, _, err = run(self.root, "status-report", "2026-03", "--title", "a/b")
+        self.assertEqual(code, 2)
+        self.assertIn("title cannot contain '/'", err)
+        for empty in ("", "   "):  # an empty title would give a name like "2026-03 - .md"
+            code, _, err = run(self.root, "status-report", "2026-03", "--title", empty)
+            self.assertEqual(code, 2, repr(empty))
+            self.assertIn("title cannot be empty", err)
+
+    def test_as_of_must_be_a_real_date(self):
+        for bad in ("2026-02-30", "2026-13-01", "yesterday", "2026-3-1"):
+            code, _, err = run(self.root, "status-report", "--as-of", bad)
+            self.assertEqual(code, 2, bad)
+            self.assertIn("--as-of", err)
+
+    def test_as_of_boundaries_pick_the_period(self):
+        for args, doc, window in (
+            (("--as-of", "2024-02-29"), "2024-02", "2024-02-01..2024-02-29"),  # leap day, month
+            (("--as-of", "2026-12-31", "--week"), "2026-W53", "2026-12-28..2027-01-03"),
+            (("--as-of", "2027-01-03", "--week"), "2026-W53", "2026-12-28..2027-01-03"),
+            (("--as-of", "2027-01-04", "--week"), "2027-W01", "2027-01-04..2027-01-10"),
+            (("--as-of", "2026-12-31"), "2026-12", "2026-12-01..2026-12-31"),
+            (("--as-of", "2026-01-01"), "2026-01", "2026-01-01..2026-01-31"),
+        ):
+            with self.subTest(args=args):
+                f = fields(run(self.root, "status-report", *args)[1])
+                self.assertEqual(f["document"], f"pmo/documents/{doc} - Status report.md")
+                self.assertEqual(f["window"], window)
+
+    def test_explicit_period_wins_over_week_and_as_of(self):
+        f = fields(run(self.root, "status-report", "2026-04", "--week", "--as-of", "2026-12-31")[1])
+        self.assertEqual((f["document"], f["window"]), ("pmo/documents/2026-04 - Status report.md", "2026-04-01..2026-04-30"))
+        f = fields(run(self.root, "status-report", "2026-W10")[1])
+        self.assertEqual(f["window"], "2026-03-02..2026-03-08")
+
+    def test_bad_period_is_refused_even_for_a_type_without_period_in_its_name(self):
+        for bad in ("2026-13", "2026-W54", "2026-1", "٢٠٢٦-٠٣"):
+            code, _, err = run(self.root, "project-plan", bad)
+            self.assertEqual(code, 2, bad)
+            self.assertIn("invalid period", err)
+
+    def test_week_start_changes_the_week_window_and_period(self):
+        cfg_path = self.root / "pmo/config.yaml"
+        cfg_path.write_text(cfg_path.read_text(encoding="utf-8") + "\nproject:\n  week_start: sunday\n", encoding="utf-8")
+        f = fields(run(self.root, "status-report", "--week", "--as-of", "2026-12-27")[1])
+        self.assertEqual((f["document"], f["window"]), ("pmo/documents/2026-W53 - Status report.md", "2026-12-27..2027-01-02"))
+
+    def test_lang_with_a_document_name_that_does_not_end_in_md_exits_2(self):
+        tf.enable_languages(self.root, ("xx",))
+        cfg_file = self.root / "pmo/config.yaml"
+        cfg_file.write_text(cfg_file.read_text(encoding="utf-8") + "\ndoc_types:\n  decision-log:\n    name: '{title}.txt'\n", encoding="utf-8")
+        code, out, err = run(self.root, "decision-log", "--lang", "xx")
+        self.assertEqual(code, 2)
+        self.assertIn("must end in '.md'", err)
+        self.assertNotIn("Traceback", err)
+        self.assertEqual(run(self.root, "decision-log")[0], 0)  # without --lang the name is fine
+
+    def test_lang_with_missing_original_and_hashes_prints_none(self):
+        tf.enable_languages(self.root, ("xx",))
+        code, out, _ = run(self.root, "decision-log", "--lang", "xx", "--title", "Nothing here", "--hashes")
+        f = fields(out)
+        self.assertEqual((code, f["original_exists"], f["document_exists"], f["source_hash"]), (0, "no", "no", "none"))
+
+    def test_lang_without_glossary_or_dir_uses_defaults(self):
+        cfg_file = self.root / "pmo/config.yaml"
+        cfg_file.write_text(cfg_file.read_text(encoding="utf-8") + "\nlanguages:\n  draft: en\n  translations: [xx]\n", encoding="utf-8")
+        f = fields(run(self.root, "decision-log", "--lang", "xx")[1])
+        self.assertEqual((f["dir"], f["glossary"], f["glossary_proposed"]), ("ltr", "none", "none"))
+
+    def test_hashes_for_a_type_without_generated_from_prints_no_hash_line(self):
+        cfg_file = self.root / "pmo/config.yaml"
+        cfg_file.write_text(cfg_file.read_text(encoding="utf-8") + "\ndoc_types:\n  project-plan:\n    generated_from: []\n", encoding="utf-8")
+        code, out, _ = run(self.root, "project-plan", "--hashes")
+        self.assertEqual(code, 0)
+        self.assertNotIn("source_hash", out)
+
+    def test_template_name_that_leaves_the_project_exits_2(self):
+        cfg_file = self.root / "pmo/config.yaml"
+        cfg_file.write_text(cfg_file.read_text(encoding="utf-8") + "\ndoc_types:\n  decision-log:\n    template: ../x.md\n", encoding="utf-8")
+        code, _, err = run(self.root, "decision-log")
+        self.assertEqual(code, 2)
+        self.assertIn("ERROR", err)
+
+    def test_bad_flag_exits_2(self):
+        self.assertEqual(run(self.root, "status-report", "--bogus")[0], 2)
+        self.assertEqual(run(self.root)[0], 2)  # the type is required
+
     def test_help(self):
         self.assertEqual(run(self.root, "--help")[0], 0)
 

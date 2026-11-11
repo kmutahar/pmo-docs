@@ -69,7 +69,7 @@ def load_config(root="."):
             print(f"{f}: schema_version {v!r} is newer than this skill knows ({SCHEMA_VERSION}). Update the skill.", file=sys.stderr)
             sys.exit(2)  # 2, not 1: callers read 1 as "findings"
         cfg = merge(cfg, mine)
-    for key in ("paths", "registers"):  # `paths: null` removes the key, a list or text is not a map
+    for key in ("paths", "registers", "doc_types", "vocab"):  # `paths: null` removes the key, a list or text is not a map
         if not isinstance(cfg.get(key), dict):
             print(f"{f}: `{key}` must be a map", file=sys.stderr)
             sys.exit(2)
@@ -269,7 +269,7 @@ def period_range(period: str, start: int) -> tuple[datetime.date, datetime.date]
     """First and last day (inclusive) of 'YYYY-MM' or 'YYYY-Www'. ValueError for anything else, including a week 53 in a 52-week year."""
     if not 0 <= start <= 6:
         raise ValueError(f"start weekday must be 0..6, got {start}")
-    if m := re.fullmatch(r"(\d{4})-(0[1-9]|1[0-2])", period):
+    if m := re.fullmatch(r"([0-9]{4})-(0[1-9]|1[0-2])", period):
         year, month = int(m.group(1)), int(m.group(2))
         first = datetime.date(year, month, 1)
         if month == 12:
@@ -277,7 +277,7 @@ def period_range(period: str, start: int) -> tuple[datetime.date, datetime.date]
         else:
             last = datetime.date(year, month + 1, 1) - datetime.timedelta(days=1)
         return first, last
-    if m := re.fullmatch(r"(\d{4})-W(0[1-9]|[1-4][0-9]|5[0-3])", period):
+    if m := re.fullmatch(r"([0-9]{4})-W(0[1-9]|[1-4][0-9]|5[0-3])", period):
         year, week = int(m.group(1)), int(m.group(2))
         iso_weekday = ((start + 3) % 7) + 1
         fourth = datetime.date.fromisocalendar(year, week, iso_weekday)

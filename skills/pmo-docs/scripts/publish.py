@@ -216,7 +216,10 @@ def main(argv=None) -> int:
                 shutil.copyfile(src_f, tmp_f)
                 os.replace(tmp_f, target_f)  # a target is never left half written
             except OSError as e:
-                tmp_f.unlink(missing_ok=True)
+                try:
+                    tmp_f.unlink(missing_ok=True)
+                except OSError:  # the target folder itself is unusable (for example a file): report the copy error
+                    pass
                 print(f"ERROR cannot copy {rel!r} to {target_f}: {e}", file=sys.stderr)
                 return 2
             print(f"copied: {rel}")

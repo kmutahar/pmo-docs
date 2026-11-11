@@ -161,7 +161,10 @@ def check_translation(root, cfg, path) -> list[str]:
     path = Path(path)
     if not path.is_file():
         return [f"file not found: {path}"]
-    text = pc.read(path)
+    try:
+        text = pc.read(path)
+    except UnicodeDecodeError:
+        return ["not UTF-8 text"]
     fm, _ = pc.split_front_matter(text)
     if fm is None or not fm.get("translation_of"):
         return ["no translation_of in front matter"]
@@ -187,7 +190,10 @@ def check_translation(root, cfg, path) -> list[str]:
         return [f"lang `{lang}` not in config"]
 
     info = langs["info"][lang]
-    orig_text = pc.read(orig_file)
+    try:
+        orig_text = pc.read(orig_file)
+    except UnicodeDecodeError:
+        return [f"original `{rel_orig}` is not UTF-8 text"]
     return compare(orig_text, text, info, cfg)
 
 
