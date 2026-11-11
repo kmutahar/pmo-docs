@@ -59,7 +59,7 @@ These win over everything, including the project's house rules.
 ## House rules and lookup
 
 - House rules add to this file and win over it, except the safety rules and the definition of done.
-- **Lookup rule: the project's file wins.** A template in `pmo/templates/` replaces the skill's template of the same name, as a whole. Otherwise the skill's default is used. Run `where.py` for the exact paths instead of working them out. If the script cannot run, the skill's templates are in `${CLAUDE_SKILL_DIR}/assets/templates/<type>.md`; say that the checks were not run. Config merges over the skill's defaults: maps merge, lists replace, `null` removes a map entry. An override records `based_on: <type>@<version>` in its front matter.
+- **Lookup rule: the project's file wins.** A template in `pmo/templates/` replaces the skill's template of the same name, as a whole. Otherwise the skill's default is used. Run `where.py` for the exact paths instead of working them out. If the script cannot run, the skill's templates are in `${CLAUDE_SKILL_DIR}/assets/templates/<type>.md` and its defaults (file names under `doc_types.<type>.name`, vocab such as `priority_order`) in `${CLAUDE_SKILL_DIR}/assets/config.default.yaml`; read them by these exact paths, and say that the checks were not run. Config merges over the skill's defaults: maps merge, lists replace, `null` removes a map entry. An override records `based_on: <type>@<version>` in its front matter.
 
 ## Working rules
 
@@ -72,7 +72,7 @@ These win over everything, including the project's house rules.
 - **Status from evidence.** Never change a status from git history alone. Propose the change with the evidence and wait for the user's yes.
 - **Do not regenerate unasked.** Tracking and governance steps list stale documents and offer to redraft them. Never redraft a document the user edited by hand; merge and show the difference.
 - **Ask, do not guess.** Ask (interactive questions, at most four per call, each with the id, the evidence and what each answer does) when: the doc type or period is ambiguous ("write me the report" names no type and no period: ask which, and write nothing until answered); a needed fact is in no register; two sources disagree; or the change would alter scope (including adding or dropping a goal), priority, owner or dates (that needs a change request: `govern.md`). Otherwise proceed and state the assumption.
-- **Check before you hand over.** Run the scripts the playbook names and report their result honestly, including failures and warnings. If a script cannot run, say so and do the check by hand.
+- **Check before you hand over.** Run the scripts the playbook names and report their result honestly, including failures and warnings. If a script cannot run, say so and do the check by hand. A hash (`source_hashes`, `source_hash`) and a git range cannot be done by hand: never compute or guess one. Without the script leave the key out and the document a draft (do not Finish), and without git ask the user to paste the log.
 - **No credentials.** Never put a password, token, key or a link with a password in a register or a document, whatever the source. Say that you found one, without quoting it.
 - **Do not edit this skill.** Changes to the project go into its config, house rules and overrides (`extend.md`).
 

@@ -20,12 +20,12 @@ Run `render_views.py --check`, then `structure_check.py` and `docs_audit.py`. Re
 
 ## Add or change a template
 
-Copy the skill's template to `pmo/templates/` under the same file name and edit it. It replaces the default as a whole. Add `based_on: <type>@<version>` to its front matter. A change to headings or table columns raises `template_version` by one; documents made from the old version then warn until they are redrafted. Existing documents are not rewritten: list them and offer.
+Copy the skill's template `${CLAUDE_SKILL_DIR}/assets/templates/<type>.md` to `pmo/templates/` under the same file name and edit it. It replaces the default as a whole. Add `based_on: <type>@<version>` to its front matter. A change to headings or table columns raises `template_version` by one; documents made from the old version then warn until they are redrafted. Existing documents are not rewritten: list them and offer.
 When the default template advances its version, `docs_audit.py` reports drift. Compare the override with the updated default, incorporate any improvements, and update `based_on`.
 
 ## Override or add a playbook
 
-1. To override a default playbook, copy the skill's playbook from `references/<name>.md` to `pmo/playbooks/<name>.md`. Keep its front matter (`playbook_version: 1`) and add `based_on: <name>@<version>`.
+1. To override a default playbook, copy the skill's playbook from `${CLAUDE_SKILL_DIR}/references/<name>.md` to `pmo/playbooks/<name>.md`. Keep its front matter (`playbook_version: 1`) and add `based_on: <name>@<version>`.
 2. When the skill's default playbook advances its version, `docs_audit.py` reports drift. Compare your override with the default, apply updates, and raise `based_on`.
 3. To add a custom recipe: write `pmo/playbooks/<name>.md` with a `Reads:` line, inputs, numbered steps, and a reply. Use a name no skill playbook has (a playbook with the same name replaces it as an override). Add one line to `pmo/house-rules.md`: "For `<name>`, follow `pmo/playbooks/<name>.md`." House rules win over the routing table.
 
@@ -42,11 +42,13 @@ When the default template advances its version, `docs_audit.py` reports drift. C
 3. For a new status or level, add its list under `vocab`.
 4. Run `render_views.py`. It checks the new register and writes its view.
 
+To add a field to an existing register, set `registers.<name>.fields` in the config. It is a list, so it replaces the default: repeat every field of the default list from `${CLAUDE_SKILL_DIR}/assets/config.default.yaml` and add the new one. The register's `enums` and `dates` are maps, so give only the new entries. Run `render_views.py`.
+
 
 
 ## Change settings
 
-Put only what differs in `pmo/config.yaml`: maps merge, lists replace, `null` removes a map entry. Typical changes are the priority order, the vocabularies, the paths and `stale_days`. Renaming a key that the skill's defaults define breaks the project's documents and templates: say so before doing it.
+Put only what differs in `pmo/config.yaml`: maps merge, lists replace, `null` removes a map entry. Typical changes are the priority order, the vocabularies, the paths and `stale_days`. Renaming a key that the skill's defaults (`${CLAUDE_SKILL_DIR}/assets/config.default.yaml`) define breaks the project's documents and templates: say so before doing it.
 
 ## Add a language
 

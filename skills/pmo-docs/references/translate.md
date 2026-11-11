@@ -28,7 +28,7 @@ The rules for translations live in `SKILL.md` (Translations) and `references/con
    Read the approved glossary if it exists (a Markdown table `| Term | Translation | Note |`, first column in the draft language). Use its translation for every listed term, exactly. A domain term that is not listed: translate it consistently inside this document and append one row to the proposed file `| Term | Proposed translation | Seen in | Date |` unless the term is already there. Create the proposed file with its header and the folder if missing. Never write to the approved file.
 
 6. **Write the translation**
-   Front matter is the original's, minus `checks` and `source_hashes`, with `title` translated and `lang`, `dir`, `translation_of`, `source_hash` added (the values `where.py` printed); `status: draft`; `last_updated` today.
+   Front matter is the original's, minus `checks` and `source_hashes`, with `title` translated and `lang`, `dir`, `translation_of`, `source_hash` added (the values `where.py` printed; if it cannot run, leave `source_hash` out and say so); `status: draft`; `last_updated` today.
    Body: the same headings in the same order and levels, the same tables (same columns and rows, in the same order), the same ids (in backticks where the original has them), the same numbers (written with the language's digits when the config has `digits`), the same dates (`YYYY-MM-DD`), links, paths and code. Translate the words `not set`, `not provided`, `not recorded`, `None` and the `Open questions` section consistently with the glossary. Names from the roster stay as the roster has them. Add nothing the original does not say; leave nothing out. Keep the original's comments out of the translation.
 
 7. **Check**

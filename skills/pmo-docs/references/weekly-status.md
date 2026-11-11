@@ -31,7 +31,7 @@ Run as `weekly-status [--week YYYY-Www]`. Produces a draft `status-report` for o
 6. **Set the RAG** as defined in `references/conventions.md` (evaluated with `pmo_common.rag`) and state the rule in Notes on data. A house rule can replace this rule.
 
 7. **Draft**
-   If `doc_types.status-report.generator` is `true` (when a house rule replaces the RAG rule, recompute Overall and its reason by that rule and change the RAG line in Notes on data), run `python3 ${CLAUDE_SKILL_DIR}/scripts/generate.py status-report [YYYY-Www] --week` and fill only what was left (prose placeholders, `{{comment}}`-style cells, agent sections). Otherwise fill the status-report template from steps 3 to 6 and write it to the path from step 1 (`references/draft.md` steps 4 to 8). Blockers are the blocked tasks plus the open items that need someone's decision.
+   If `doc_types.status-report.generator` is `true` (when a house rule replaces the RAG rule, recompute Overall and its reason and the RAG column of Progress by priority by that rule, and change the RAG line in Notes on data), run `python3 ${CLAUDE_SKILL_DIR}/scripts/generate.py status-report [YYYY-Www] --week` and fill only what was left (prose placeholders, `{{comment}}`-style cells, agent sections). Otherwise fill the status-report template from steps 3 to 6 and write it to the path from step 1 (`references/draft.md` steps 4 to 8). Blockers are the blocked tasks plus the open items that need someone's decision.
 
 
 8. **Reply**
