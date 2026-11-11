@@ -38,10 +38,34 @@ def one_line_entries(text):
     return all(re.match(r"\s*- ", ln) for ln in lines[1:])
 
 
+def entry_lines(text: str) -> list[int]:
+    """1-based line numbers of entry lines (`- ` lines after the top `name:` key line, skipping blank and comment lines)."""
+    top_seen = False
+    result = []
+    for lineno, line in enumerate(text.splitlines(), 1):
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        if not top_seen:
+            top_seen = True
+            continue
+        if re.match(r"\s*- ", line):
+            result.append(lineno)
+    return result
+
+
 def config_errors(cfg, root=None):
     """Registers in the config that lack `file`, `view` or `fields`, bad week_start, or invalid blocked/active statuses."""
     errors = [f"config: register `{n}` needs `{k}`" for n, r in cfg["registers"].items() for k in ("file", "view", "fields")
               if not isinstance(r, dict) or not r.get(k)]
+    prefixes = {}
+    for n, r in cfg.get("registers", {}).items():
+        if isinstance(r, dict):
+            p = r.get("prefix")
+            if p and isinstance(p, str):
+                if p in prefixes:
+                    errors.append(f"config: registers {prefixes[p]} and {n} both use prefix {p}")
+                else:
+                    prefixes[p] = n
     for n, r in cfg.get("registers", {}).items():
         if isinstance(r, dict):
             refs = r.get("refs")
@@ -253,6 +277,19 @@ def read_registers(root, cfg):
             continue
         try:
             text = pc.read(f)
+        except (ValueError, OSError) as e:
+            errors.append(f"{reg['file']}: not readable as `{name}:` followed by a list ({str(e).splitlines()[0]})")
+            continue
+        rel_path = f"{cfg.get('paths', {}).get('registers', 'pmo/registers')}/{reg['file']}"
+        marker_line = None
+        for lineno, line in enumerate(text.splitlines(), 1):
+            if re.match(r"^(<{7}|={7}|>{7})( |$)", line):
+                marker_line = lineno
+                break
+        if marker_line is not None:
+            errors.append(f"{rel_path}:{marker_line}: merge conflict markers; resolve them first (references/git.md, Several writers)")
+            continue
+        try:
             entries = (pc.yaml.safe_load(text) or {}).get(name) or []
         except (pc.yaml.YAMLError, AttributeError, ValueError) as e:  # ValueError: a date like 2026-02-30, or text that is not UTF-8
             errors.append(f"{reg['file']}: not readable as `{name}:` followed by a list ({str(e).splitlines()[0]})")
@@ -313,10 +350,26 @@ def allowed(cfg, name):
     return node if isinstance(node, list) else []
 
 
-def validate(data, cfg):
-    errors, seen = [], {}
+def validate(data, cfg, root=None):
+    errors = []
     ids = {n: {e.get("id") for e in rows if isinstance(e.get("id"), (str, int))} for n, rows in data.items()}
     slugs = {r.get("slug") for r in data.get("roster", [])}
+    id_occurrences = {}
+    id_order = []
+    reg_lines = {}
+    if root is not None:
+        for name in data:
+            reg = cfg.get("registers", {}).get(name)
+            if isinstance(reg, dict) and reg.get("file"):
+                reg_file = reg["file"]
+                reg_dir = cfg.get("paths", {}).get("registers", "pmo/registers")
+                f = Path(root) / reg_dir / reg_file
+                if f.exists():
+                    try:
+                        text = pc.read(f)
+                        reg_lines[name] = entry_lines(text)
+                    except Exception:
+                        pass
     for name, rows in data.items():
         reg = cfg["registers"][name]
         allowed_fields, prefix = set(reg["fields"]), reg.get("prefix")
@@ -333,10 +386,24 @@ def validate(data, cfg):
                     errors.append(f"{who}: missing id")
                 elif not isinstance(rid, str):
                     errors.append(f"{who}: id {rid!r} must be text (quote it)")
-                elif rid in seen:
-                    errors.append(f"duplicate id {rid} ({name} and {seen[rid]})")
                 else:
-                    seen[rid] = name
+                    if rid not in id_occurrences:
+                        id_occurrences[rid] = []
+                        id_order.append(rid)
+                    lineno = reg_lines.get(name, [])[i - 1] if name in reg_lines and i - 1 < len(reg_lines[name]) else None
+                    if root is not None and lineno is not None:
+                        reg_file = reg.get("file", f"{name}.yaml")
+                        reg_dir = cfg.get("paths", {}).get("registers", "pmo/registers")
+                        pos = f"{reg_dir}/{reg_file}:{lineno}"
+                    else:
+                        pos = f"{name} entry {i}"
+                    label_val = None
+                    for k in ("title", "text", "name", "item"):
+                        if r.get(k) is not None and str(r.get(k)).strip():
+                            label_val = r[k]
+                            break
+                    desc = f'{pos} "{label_val}"' if label_val is not None else pos
+                    id_occurrences[rid].append(desc)
                 if rid and isinstance(rid, str) and prefix and not re.fullmatch(re.escape(prefix) + r"-\d+", str(rid)):
                     errors.append(f"{who}: id must look like {prefix}-1")
             for field, vname in reg.get("enums", {}).items():
@@ -366,6 +433,10 @@ def validate(data, cfg):
             for o in owners if isinstance(owners, list) else [owners]:
                 if o and slugs - {None} and not (isinstance(o, (str, int)) and o in slugs):  # a map or list is unhashable
                     errors.append(f"{who}: owner {o!r} is not in the roster")
+    for rid in id_order:
+        copies = id_occurrences[rid]
+        if len(copies) > 1:
+            errors.append(f"duplicate id {rid}: {', '.join(copies)}; run renumber.py")
     return errors
 
 
@@ -452,7 +523,7 @@ def view_tasks(rows, cfg, missing=None):
         for g in sorted({r.get("group") or "" for r in rows if (r.get("team") or "") == team}, key=str):
             out.append(f"**{g or 'no group'}**\n")
             sub = [r for r in rows if (r.get("team") or "") == team and (r.get("group") or "") == g]
-            sub.sort(key=lambda r: key(r.get("priority")))
+            sub.sort(key=lambda r: (key(r.get("priority")), _id_num(r.get("id"))))
             out.append(table(sub, ["id", "title", "priority", "owner", "status", "due"]))
     return "\n".join(out)
 
@@ -463,6 +534,9 @@ def render(data, cfg):
     missing = done_without_test(cfg, data) if tests_in_use(data) else None
     for name, rows in data.items():
         reg = cfg["registers"][name]
+        fields = reg.get("fields") or []
+        if "id" in fields:
+            rows = [r for _, r in sorted(enumerate(rows), key=lambda x: (_id_num(x[1].get("id")), x[0]))]
         body = view_tasks(rows, cfg, missing=missing) if name == "tasks" else f"# {name.capitalize()}\n\n" + table(rows, reg["fields"])
         views[reg["view"]] = HEADER.format(f=f"{cfg['paths']['registers']}/{reg['file']}") + body
     cat_headers = ["Doc type", "Title", "Made by", "When", "Regenerate", "Stale after", "Published"]
@@ -494,7 +568,7 @@ def main(argv=None):
         print("\n".join("ERROR " + e for e in bad))
         return 2
     data, errors = read_registers(args.project, cfg)
-    errors += validate(data, cfg)
+    errors += validate(data, cfg, root=args.project)
     views = render(data, cfg)
     folder = Path(args.project) / cfg["paths"]["views"]
     # a view whose register file is gone is left over

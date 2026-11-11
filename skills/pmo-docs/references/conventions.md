@@ -63,6 +63,8 @@ A translation is a file next to its original, named `<name>.<lang>.md` (for exam
 - Dates are `YYYY-MM-DD`. The fields that hold dates are listed per register in the config (`dates`); the statuses that mean an entry is closed are `closed`.
 - Every register has an optional `origin` field (`vocab.origin`): `stated` means the user or owner said it and `proposed` means the agent suggested it and it is not confirmed.
 - To edit an entry, find its line with `grep -nE 'id: T-014[,}]' <register file>` and change that line only.
+- Leftover git conflict markers in a register are reported before YAML parsing (`pmo/registers/<file>:<line>: merge conflict markers; resolve them first (references/git.md, Several writers)`).
+- Duplicate ids are reported with each copy's file, line, label and a hint to run `renumber.py` (`duplicate id <ID>: <file>:<line> "<label>", ...; run renumber.py`).
 - After any edit run `render_views.py`. Views are deterministic (sorted, no timestamps), so after a merge conflict in a view the fix is to render again.
 
 ## Config keys
@@ -91,7 +93,7 @@ A translation is a file next to its original, named `<name>.<lang>.md` (for exam
 
 ## Views and catalogue
 
-- Register views (`pmo/views/<name>.md`) summarize each register.
+- Register views (`pmo/views/<name>.md`) summarize each register, listing entries by id number (registers without ids keep file order; the tasks view sorts by priority, then id number).
 - The catalogue view (`pmo/views/catalogue.md`) is rendered by `render_views.py` from `doc_types` in `pmo/config.yaml`. It lists doc type, title, made by (`generator` or `agent`), when to make it, regenerate guidance, stale period, and publish status.
 
 ## RAG status

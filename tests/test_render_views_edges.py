@@ -43,6 +43,9 @@ class Base(unittest.TestCase):
 
 
 class ConfigErrors(Base):
+    def test_shared_prefix_is_config_error(self):
+        self.has({"registers": {"tests": {"prefix": "T"}}}, "registers tasks and tests both use prefix T")
+
     def test_domain_not_a_map(self):
         self.has({"domain": ["x"]}, "domain must be a map")
 
@@ -166,6 +169,12 @@ class Helpers(Base):
         self.assertTrue(rv.one_line_entries(""))
         self.assertFalse(rv.one_line_entries("risks:\n  - {id: R-1,\n    title: x}\n"))
 
+    def test_entry_lines(self):
+        text = "# Top comment\n\ntasks:\n\n  # Inner comment\n  - {id: T-1, title: a}\n\n  - {id: T-2, title: b}\n# Trailing\n"
+        self.assertEqual(rv.entry_lines(text), [6, 8])
+        self.assertEqual(rv.entry_lines(""), [])
+        self.assertEqual(rv.entry_lines("tasks:\n# only comments\n"), [])
+
     def test_id_num(self):
         self.assertEqual(rv._id_num("T-12"), 12)
         self.assertEqual(rv._id_num("none"), 0)
@@ -286,6 +295,10 @@ class Validate(Base):
         prefix = self.cfg["registers"]["risks"]["prefix"]
         errs = self.check("risks", [{"id": f"{prefix}-1"}, {"id": f"{prefix}-1"}])
         self.assertTrue(any("duplicate id" in e for e in errs), errs)
+
+    def test_validate_without_root_reports_entry_positions(self):
+        errs = rv.validate({"tasks": [{"id": "T-1", "title": "A"}, {"id": "T-1", "title": "B"}]}, self.cfg)
+        self.assertTrue(any('duplicate id T-1: tasks entry 1 "A", tasks entry 2 "B"; run renumber.py' in e for e in errs), errs)
 
     def test_x_fields_are_allowed_and_credentials_still_checked(self):
         prefix = self.cfg["registers"]["risks"]["prefix"]

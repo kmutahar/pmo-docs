@@ -103,6 +103,96 @@ class RenderViews(unittest.TestCase):
         self.append("actions", "  - {id: T-1, text: x, status: open}")
         self.assertIn("duplicate id T-1", run(self.root)[1])
 
+    def test_conflict_markers_reported_with_file_and_line_and_exit_1(self):
+        (self.reg / "tasks.yaml").write_text(
+            "tasks:\n<<<<<<< HEAD\n  - {id: T-1, title: a}\n=======\n  - {id: T-1, title: b}\n>>>>>>> branch\n",
+            encoding="utf-8",
+        )
+        code, out = run(self.root)
+        self.assertEqual(code, 1)
+        self.assertIn("pmo/registers/tasks.yaml:2: merge conflict markers; resolve them first (references/git.md, Several writers)", out)
+
+    def test_duplicate_id_reports_all_copies_with_positions_titles_and_hint(self):
+        self.append(
+            "tasks",
+            '  - {id: T-5, title: "Write release notes", status: not-started}\n  - {id: T-5, title: "Fix login timeout", status: not-started}',
+        )
+        code, out = run(self.root)
+        self.assertEqual(code, 1)
+        self.assertIn(
+            'duplicate id T-5: pmo/registers/tasks.yaml:6 "Write release notes", pmo/registers/tasks.yaml:7 "Fix login timeout"; run renumber.py',
+            out,
+        )
+
+    def test_duplicate_id_with_three_copies(self):
+        self.append(
+            "tasks",
+            '  - {id: T-5, title: "First", status: not-started}\n  - {id: T-5, title: "Second", status: not-started}\n  - {id: T-5, title: "Third", status: not-started}',
+        )
+        code, out = run(self.root)
+        self.assertEqual(code, 1)
+        self.assertIn(
+            'duplicate id T-5: pmo/registers/tasks.yaml:6 "First", pmo/registers/tasks.yaml:7 "Second", pmo/registers/tasks.yaml:8 "Third"; run renumber.py',
+            out,
+        )
+
+    def test_duplicate_id_with_text_label(self):
+        self.append(
+            "actions",
+            '  - {id: ACT-3, text: "First action", status: open}\n  - {id: ACT-3, text: "Second action", status: open}',
+        )
+        code, out = run(self.root)
+        self.assertEqual(code, 1)
+        self.assertIn(
+            'duplicate id ACT-3: pmo/registers/actions.yaml:4 "First action", pmo/registers/actions.yaml:5 "Second action"; run renumber.py',
+            out,
+        )
+
+    def test_shared_prefix_exits_2(self):
+        (self.root / "pmo/config.yaml").write_text(
+            "schema_version: 1\nregisters:\n  tasks: {file: tasks.yaml, view: tasks.md, fields: [id], prefix: T}\n  tests: {file: tests.yaml, view: tests.md, fields: [id], prefix: T}\n",
+            encoding="utf-8",
+        )
+        code, out = run(self.root)
+        self.assertEqual(code, 2)
+        self.assertIn("registers tasks and tests both use prefix T", out)
+
+    def test_register_out_of_order_renders_in_id_order_and_file_unchanged(self):
+        dec_file = self.reg / "decisions.yaml"
+        original = (
+            "decisions:\n"
+            "  - {id: DEC-3, title: Third decision, date: 2026-03-01, status: accepted}\n"
+            "  - {id: DEC-1, title: First decision, date: 2026-03-01, status: accepted}\n"
+            "  - {id: DEC-2, title: Second decision, date: 2026-03-01, status: accepted}\n"
+        )
+        dec_file.write_text(original, encoding="utf-8")
+        code, out = run(self.root)
+        self.assertEqual(code, 0, out)
+        view_text = (self.views / "decisions.md").read_text(encoding="utf-8")
+        dec1_idx = view_text.index("DEC-1")
+        dec2_idx = view_text.index("DEC-2")
+        dec3_idx = view_text.index("DEC-3")
+        self.assertLess(dec1_idx, dec2_idx)
+        self.assertLess(dec2_idx, dec3_idx)
+        self.assertEqual(dec_file.read_text(encoding="utf-8"), original)
+
+    def test_tasks_view_orders_ties_by_id(self):
+        tasks_file = self.reg / "tasks.yaml"
+        tasks_content = (
+            "tasks:\n"
+            "  - {id: T-1, title: Set up staging server, team: platform, group: infra, priority: high, owner: alice, status: in-progress, due: 2026-03-10, period: 2026-03, notes: Overdue on purpose}\n"
+            '  - {id: T-4, title: Fourth, team: web, group: ui, priority: medium, owner: bob, status: not-started, due: 2026-04-01, period: 2026-03}\n'
+            '  - {id: T-2, title: Second, team: web, group: ui, priority: medium, owner: bob, status: not-started, due: 2026-03-25, period: 2026-03}\n'
+            '  - {id: T-3, title: Write API outline, team: platform, group: docs, priority: low, owner: alice, status: done, due: 2026-03-05, period: 2026-03, tests: [TST-1]}\n'
+        )
+        tasks_file.write_text(tasks_content, encoding="utf-8")
+        code, out = run(self.root)
+        self.assertEqual(code, 0, out)
+        view_text = (self.views / "tasks.md").read_text(encoding="utf-8")
+        t2_idx = view_text.index("T-2")
+        t4_idx = view_text.index("T-4")
+        self.assertLess(t2_idx, t4_idx)
+
     def test_multi_line_entry_fails(self):
         self.append("tasks", "  - {id: T-9, title: x,\n      status: done}")
         code, out = run(self.root)

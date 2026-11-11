@@ -876,7 +876,7 @@ def main(argv=None) -> int:
         return 2
 
     data, read_errors = render_views.read_registers(root, cfg)
-    val_errors = render_views.validate(data, cfg)
+    val_errors = render_views.validate(data, cfg, root=root)
     all_errors = read_errors + val_errors
     if all_errors:
         for err in all_errors:
