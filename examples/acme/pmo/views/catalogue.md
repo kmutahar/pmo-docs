@@ -20,3 +20,5 @@
 | decision-log | Decision log | generator | after key technical or architecture decisions | when decisions register is updated | 30 days | yes |
 | stakeholder-update | Stakeholder update | agent | monthly or bi-weekly for executive stakeholders | when milestones or risks change | 30 days | yes |
 | release-notes | Release notes | agent | for each release or month end | when commits or changes are tagged | not set | yes |
+| functional-requirements | Functional requirements | agent | Once the requirements are agreed, and before design or test planning starts. | A requirement is added, accepted, changed or dropped. | 30 days | yes |
+| test-acceptance | Test acceptance | agent | Before each acceptance round, and again after it with the results. | A test is added or run, a requirement changes, or an environment changes. | 14 days | yes |

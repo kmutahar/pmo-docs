@@ -357,6 +357,22 @@ doc_types:
     generated_from: [tasks, changes]
     when: for each release or month end
     regenerate: when commits or changes are tagged
+  functional-requirements:
+    title: Functional requirements
+    template: functional-requirements.md
+    name: "{title}.md"
+    generated_from: [requirements]
+    stale_days: 30
+    when: Once the requirements are agreed, and before design or test planning starts.
+    regenerate: A requirement is added, accepted, changed or dropped.
+  test-acceptance:
+    title: Test acceptance
+    template: test-acceptance.md
+    name: "{period} - {title}.md"
+    generated_from: [tests, requirements, environments]
+    stale_days: 14
+    when: Before each acceptance round, and again after it with the results.
+    regenerate: A test is added or run, a requirement changes, or an environment changes.
 
 # Publishing: copies finished documents with /pmo-docs:publish only.
 # mode: none (default, nothing is published), folder (a folder inside this project) or repo (the top folder of
