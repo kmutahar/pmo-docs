@@ -1,4 +1,6 @@
 """Tests for stack files and lookup. Run from the repo root: python3 -m unittest discover tests"""
+import contextlib
+import io
 import re
 import shutil
 import sys
@@ -8,6 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "skills/pmo-docs/scripts"))
+import docs_audit as da  # noqa: E402
 import pmo_common as pc  # noqa: E402
 
 HEADINGS = (
@@ -111,3 +114,42 @@ class Lookup(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             pc.find_asset(self.p, self.cfg, "playbooks", "stacks/evil.md")
+
+
+class Override(unittest.TestCase):
+    def setUp(self):
+        self.d = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.d)
+        shutil.copytree(ROOT / "examples/acme", self.d / "p")
+        self.p = self.d / "p"
+
+    def run_audit(self):
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            code = da.main(["--project", str(self.p)])
+        return code, out.getvalue()
+
+    def test_override_without_based_on_is_drift(self):
+        stacks_dir = self.p / "pmo/playbooks/stacks"
+        stacks_dir.mkdir(parents=True, exist_ok=True)
+        (stacks_dir / "express.md").write_text("---\nplaybook_version: 1\n---\n# Custom Express\n", encoding="utf-8")
+        code, out = self.run_audit()
+        self.assertEqual(code, 1)
+        self.assertIn("no based_on; add based_on: stacks/express@1", out)
+
+    def test_override_up_to_date_is_clean(self):
+        stacks_dir = self.p / "pmo/playbooks/stacks"
+        stacks_dir.mkdir(parents=True, exist_ok=True)
+        (stacks_dir / "express.md").write_text("---\nplaybook_version: 1\nbased_on: stacks/express@1\n---\n# Custom Express\n", encoding="utf-8")
+        code, out = self.run_audit()
+        self.assertEqual(code, 0, out)
+        self.assertIn("## Override drift (0)", out)
+
+    def test_override_behind_the_default_is_drift(self):
+        stacks_dir = self.p / "pmo/playbooks/stacks"
+        stacks_dir.mkdir(parents=True, exist_ok=True)
+        (stacks_dir / "express.md").write_text("---\nplaybook_version: 1\nbased_on: stacks/express@0\n---\n# Custom Express\n", encoding="utf-8")
+        code, out = self.run_audit()
+        self.assertEqual(code, 1)
+        self.assertIn("the default playbook moved from v0 to v1", out)
+

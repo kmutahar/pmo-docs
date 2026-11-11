@@ -217,6 +217,30 @@ class Audit(unittest.TestCase):
         self.assertEqual(code, 0, out)
         self.assertIn("## Override drift (0)", out)
 
+    def test_override_without_based_on_is_drift(self):
+        stacks_dir = self.p / "pmo/playbooks/stacks"
+        stacks_dir.mkdir(parents=True, exist_ok=True)
+        (stacks_dir / "express.md").write_text("---\nplaybook_version: 1\n---\n# Custom Express\n", encoding="utf-8")
+        code, out = self.run_audit()
+        self.assertEqual(code, 1)
+        self.assertIn("no based_on; add based_on: stacks/express@1", out)
+
+    def test_override_up_to_date_is_clean(self):
+        stacks_dir = self.p / "pmo/playbooks/stacks"
+        stacks_dir.mkdir(parents=True, exist_ok=True)
+        (stacks_dir / "express.md").write_text("---\nplaybook_version: 1\nbased_on: stacks/express@1\n---\n# Custom Express\n", encoding="utf-8")
+        code, out = self.run_audit()
+        self.assertEqual(code, 0, out)
+        self.assertIn("## Override drift (0)", out)
+
+    def test_override_behind_the_default_is_drift(self):
+        stacks_dir = self.p / "pmo/playbooks/stacks"
+        stacks_dir.mkdir(parents=True, exist_ok=True)
+        (stacks_dir / "express.md").write_text("---\nplaybook_version: 1\nbased_on: stacks/express@0\n---\n# Custom Express\n", encoding="utf-8")
+        code, out = self.run_audit()
+        self.assertEqual(code, 1)
+        self.assertIn("the default playbook moved from v0 to v1", out)
+
 
 class Translations(unittest.TestCase):
     def setUp(self):
