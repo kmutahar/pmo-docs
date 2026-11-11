@@ -24,3 +24,5 @@
 | test-acceptance | Test acceptance | agent | Before each acceptance round, and again after it with the results. | A test is added or run, a requirement changes, or an environment changes. | 14 days | yes |
 | defect-gap-report | Defect and gap report | agent | At the end of a test round, and before a release decision. | A test result, an issue or a requirement changes. | 30 days | yes |
 | entity-lifecycle | Entity lifecycle | agent | After the first release that changes the entity, and when its rules are disputed. | A state, transition or permission changes in the code or the permissions register. | 60 days | yes |
+| api-reference | API reference | agent | When the API has a first consumer, and before each release that changes an endpoint. | An endpoint, a permission or an environment changes. | 30 days | yes |
+| integration-guide | Integration guide | agent | Before a new consumer connects. | A consumer is added, an endpoint or an environment changes. | 30 days | yes |

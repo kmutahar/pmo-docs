@@ -23,6 +23,8 @@ TYPES = {  # doc type: (template file, ordered ## headings, generated_from, code
     "test-acceptance": ("test-acceptance.md", ["Scope", "Test environment", "Test cases", "Results", "Requirements coverage", "Acceptance sign-off", "Open questions"], ["tests", "requirements", "environments"], False),
     "defect-gap-report": ("defect-gap-report.md", ["Summary", "Defects", "Open issues", "Gaps", "Recommendations", "Open questions"], ["tests", "issues", "requirements"], False),
     "entity-lifecycle": ("entity-lifecycle.md", ["Entity", "States", "Transitions", "Who can do what", "Rules and side effects", "Gaps", "Open questions"], ["permissions"], True),
+    "api-reference": ("api-reference.md", ["Overview", "Authentication and permissions", "Endpoints", "Errors", "Environments", "Open questions"], ["environments", "permissions"], True),
+    "integration-guide": ("integration-guide.md", ["Purpose and audience", "Before you start", "Authentication", "Consumers at a glance", "Consumers", "Environments", "Errors and retries", "Go-live checklist", "Open questions"], ["environments", "permissions"], True),
 }
 
 DRAFT_BODIES = {
@@ -142,6 +144,83 @@ Order entity description.
 
 ## Gaps
 - None
+
+## Open questions
+- None
+""",
+    "api-reference": """# API reference - Acme
+
+## Overview
+API description.
+v1
+Bearer token
+
+## Authentication and permissions
+| Resource | Action | Allowed roles | Condition |
+|---|---|---|---|
+| widgets | read | viewer | none |
+
+## Endpoints
+### GET /widgets
+- **Purpose:** List widgets
+- **Access:** viewer
+- **Request:** none
+- **Response:** list of widgets
+- **Errors:** 401 unauthorized
+- **Code:** src/routes/widgets.js:10
+
+## Errors
+| Status | Meaning | When it happens |
+|---|---|---|
+| 401 | Unauthorized | Missing token |
+
+## Environments
+| Environment | Base address | Notes |
+|---|---|---|
+| Production | api.example.com | Main live environment |
+
+## Open questions
+- None
+""",
+    "integration-guide": """# Integration guide - Acme
+
+## Purpose and audience
+Integration guide for external consumers.
+
+## Before you start
+- Request API access
+- Node.js 18+
+- API_KEY
+
+## Authentication
+1. Generate key.
+2. Send Authorization header.
+
+## Consumers at a glance
+| Consumer | Calls | Auth |
+|---|---|---|
+| Billing | Invoices API | API key |
+
+## Consumers
+### Billing
+- **What it calls:** Invoices API
+- **Endpoints used:** GET /invoices
+- **Roles it needs:** billing-service
+- **Differences by environment:** None
+- **Failure handling:** Retry 3 times
+
+## Environments
+| Environment | Base address | Differences |
+|---|---|---|
+| Staging | staging.api.example.com | Test keys |
+
+## Errors and retries
+| Situation | What the consumer does |
+|---|---|
+| 503 | Wait 5 seconds and retry |
+
+## Go-live checklist
+- [ ] Health check verified
 
 ## Open questions
 - None
@@ -267,6 +346,16 @@ class TechnicalDocs(unittest.TestCase):
         h1 = [title for lv, title, _ in sc.sections(body) if lv == 1]
         self.assertEqual(len(h1), 1)
         self.assertIn("{{entity}}", h1[0])
+
+    def test_integration_guide_checks_consumer_sections(self):
+        tpl_path = TEMPLATES / "integration-guide.md"
+        fm, _ = pc.split_front_matter(pc.read(tpl_path), strict=True)
+        checks = fm.get("checks", [])
+        lhs = [c for c in checks if c.get("kind") == "listed_have_sections"]
+        self.assertEqual(len(lhs), 1)
+        self.assertEqual(lhs[0].get("listed_in"), "Consumers at a glance")
+        self.assertEqual(lhs[0].get("sections_in"), "Consumers")
+        self.assertEqual(lhs[0].get("level"), 3)
 
 
 
