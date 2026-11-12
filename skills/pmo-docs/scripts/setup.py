@@ -138,6 +138,20 @@ def main(argv=None):
         pc.write(gitkeep, "")
         actions.append(f"created: {rel_gitkeep}")
 
+    gitignore_file = Path(args.project) / "pmo" / ".gitignore"
+    if not gitignore_file.exists():
+        pc.write(gitignore_file, ".me\n")
+        actions.append("created: pmo/.gitignore")
+    else:
+        existing = pc.read(gitignore_file)
+        lines = existing.splitlines()
+        if any(line.strip() == ".me" for line in lines):
+            actions.append("kept: pmo/.gitignore")
+        else:
+            sep = "" if (not existing or existing.endswith("\n")) else "\n"
+            pc.write(gitignore_file, existing + sep + ".me\n")
+            actions.append("updated: pmo/.gitignore")
+
     if launcher_dest.exists():
         actions.append("kept: pmo/bin/pmo")
     else:

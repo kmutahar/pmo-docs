@@ -11,11 +11,11 @@ Write one draft of one document from its template and the registers. Rules for f
 ## Steps
 
 1. **Identify the document**
-   A request to translate a document goes to `references/translate.md`. A generator writes English only (`references/conventions.md`). Take the doc type from `doc_types` in the config; ask if it is unclear. Take the period from the request. With none, use the current month (a weekly document, such as `weekly-plan`, uses the current week: pass `--week`). A type named by `{date}` needs the date of the event: ask.
+   A request to translate a document goes to `references/translate.md`. A generator writes English only (`references/conventions.md`). Take the doc type from `doc_types` in the config; ask if it is unclear. Take the period from the request. With none, use the current month (a weekly document, such as `weekly-plan`, uses the current week: pass `--week`). A type named by `{date}` needs the date of the event: ask. For an existing draft whose `editor` is someone else, see `SKILL.md` (Documents, Editor).
 
 2. **Find the paths**
    Run `python3 ${CLAUDE_SKILL_DIR}/scripts/where.py <type> [period] [--week] [--as-of YYYY-MM-DD]`. Note the document path, the template path, `template_version` and `generated_from`.
-   - Document exists and is a draft: do not overwrite. Ask whether to continue editing it or to refresh its register-derived parts. A refresh keeps the hand-written text and shows what changed.
+   - Document exists and is a draft: do not overwrite. If its `editor` is someone else, follow the Editor rule in `SKILL.md` (Documents). Ask whether to continue editing it or to refresh its register-derived parts. A refresh keeps the hand-written text and shows what changed.
    - Document exists and is finished: say so. If the user wants a new draft, set it back to `status: draft` and drop `source_hashes`, then continue as for a draft.
 
 3. **Check the registers**
@@ -36,7 +36,7 @@ Write one draft of one document from its template and the registers. Rules for f
 
 
 7. **Write the file**
-   Write the document to the path `where.py` printed, creating the folder if needed. A request to draft is consent to write that one file.
+   Write the document to the path `where.py` printed, creating the folder if needed. A new draft gets `editor: <slug>` from `pmo/.me` in its front matter (`SKILL.md`, Documents, Editor). A request to draft is consent to write that one file.
 
 8. **Check**
    Run `python3 ${CLAUDE_SKILL_DIR}/scripts/structure_check.py "<file>"`. The comments you kept are reported as errors: ignore those and nothing else. Fix every other error and run it again.

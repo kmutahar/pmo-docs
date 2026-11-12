@@ -1,6 +1,6 @@
 # Privacy Policy
 
-Last updated: 2026-11-11 (UTC)
+Last updated: 2026-11-12 (UTC)
 
 pmo-docs is a project-office and documentation workflow packaged as an Agent Skill. It is a folder of instructions, templates and Python scripts. An AI agent that you run (for example Claude Code) reads the instructions and runs the scripts on your own machine. This page explains what that means for your data.
 
@@ -14,7 +14,7 @@ pmo-docs is an open-source project maintained by kmutahar. The maintainer does n
 
 pmo-docs reads and writes only files on your machine:
 
-- **Your `pmo/` folder:** the registers (tasks, risks, decisions, changes and similar), the generated views, `config.yaml` and the documents you create from the templates.
+- **Your `pmo/` folder:** the registers (tasks, risks, decisions, changes and similar), the generated views, `config.yaml`, `pmo/.gitignore`, `pmo/.me` (a local, untracked file holding one roster slug) and the documents you create from the templates.
 - **Project documents you point it at:** for example when you ask the agent to audit or draft a document.
 - **Your project's source code:** when you ask the agent to draft a technical document (API reference, integration guide, architecture overview, user guide, entity lifecycle), it reads routes, data models, permission rules, configuration and test files to cite what they say. It records names (for example variable and setting names), never secret values. It runs read-only git on the project repository (`git rev-parse`, `git log`) to note which commit the code was read at and whether it has moved since. It runs a project command (for example listing the routes of a framework, or starting the app) only after you say yes, and never edits the code.
 - **Its own files:** the skill's instructions, templates and default configuration.

@@ -195,8 +195,8 @@ Seven stacks ship with the skill: Next.js (`nextjs`), Express (`express`), ASP.N
 
 ## What it reads and writes
 
-- It reads the project's `pmo/` folder, the skill's own files and, only as evidence, read-only git history. Drafting release notes with `--repo` also reads the git history of another local repository you name. Drafting a technical document reads your project's source code (routes, models, config and test files, names only) and runs read-only git on it.
-- It writes only inside the folders named in `pmo/config.yaml` (by default, under `pmo/`). Anything else is shown first and waits for your yes. The one exception you set up yourself: `/pmo-docs:publish` copies finished documents to `publish.path` and, in `repo` mode, commits there only after a second yes. It never pushes.
+- It reads the project's `pmo/` folder (including `pmo/.me`, a local untracked file holding your roster slug), the skill's own files and, only as evidence, read-only git history. Drafting release notes with `--repo` also reads the git history of another local repository you name. Drafting a technical document reads your project's source code (routes, models, config and test files, names only) and runs read-only git on it.
+- It writes only inside the folders named in `pmo/config.yaml` (by default, under `pmo/`, including `pmo/.gitignore` and `pmo/.me`). Anything else is shown first and waits for your yes. The one exception you set up yourself: `/pmo-docs:publish` copies finished documents to `publish.path` and, in `repo` mode, commits there only after a second yes. It never pushes.
 - It never overwrites a file you edited by hand.
 - The rules are in [`skills/pmo-docs/SKILL.md`](skills/pmo-docs/SKILL.md) (Safety rules).
 

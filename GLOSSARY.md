@@ -40,6 +40,10 @@ _Avoid_: tech guide, cheat sheet, framework guide
 The project script (`pmo/bin/pmo`) that finds the installed skill and runs one of its scripts with the project root set.
 _Avoid_: wrapper, runner, CLI, entrypoint
 
+**pmo/.me**:
+A local, untracked file holding the roster slug of the current writer.
+_Avoid_: user config, identity file
+
 ## People
 
 **Project manager**:
@@ -53,6 +57,10 @@ _Avoid_: assignee, responsible
 **Roster**:
 The register of the project's people: one entry per person with a slug, name and role.
 _Avoid_: members, people list, team (a team is a work stream)
+
+**Editor**:
+The roster slug named on a draft document, identifying who is currently editing it.
+_Avoid_: author, writer, assignee
 
 ## Facts
 

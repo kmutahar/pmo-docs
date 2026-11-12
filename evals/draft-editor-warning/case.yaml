@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: draft-editor-warning
+description: The status report draft has editor bob while pmo/.me has alice; the agent must warn that Bob is the editor and ask before editing, without modifying the draft.
+context:
+  scaffold_script: scaffold.sh

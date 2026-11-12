@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: draft-asks-who-you-are
+description: The roster has three people and pmo/.me is missing; the agent must ask which roster person the user is without guessing, and not write pmo/.me yet.
+context:
+  scaffold_script: scaffold.sh

@@ -34,6 +34,9 @@ class Setup(unittest.TestCase):
         self.assertTrue((self.root / "pmo/documents").is_dir())
         self.assertTrue((self.root / "pmo/bin/pmo").is_file())
         self.assertEqual((self.root / "pmo/bin/pmo").stat().st_mode & 0o777, 0o755)
+        self.assertTrue((self.root / "pmo/.gitignore").is_file())
+        self.assertEqual((self.root / "pmo/.gitignore").read_text(encoding="utf-8"), ".me\n")
+        self.assertIn("created: pmo/.gitignore", out)
         cfg = pc.load_config(self.root)
         self.assertEqual(cfg["project"]["name"], "Demo")
         self.assertEqual(cfg["project"]["manager"], "Pat Example")
@@ -234,6 +237,42 @@ class Setup(unittest.TestCase):
         snap = {p: p.read_bytes() for p in (self.root / "pmo").rglob("*") if p.is_file()}
         self.assertEqual(tool("setup.py", self.root, "--name", "Other")[0], 0)
         self.assertEqual(snap, {p: p.read_bytes() for p in (self.root / "pmo").rglob("*") if p.is_file()})
+
+    def test_setup_creates_gitignore_with_me(self):
+        code, out, err = tool("setup.py", self.root, "--name", "Demo")
+        self.assertEqual(code, 0, err)
+        self.assertIn("created: pmo/.gitignore", out)
+        gi = self.root / "pmo/.gitignore"
+        self.assertTrue(gi.is_file())
+        self.assertEqual(gi.read_text(encoding="utf-8"), ".me\n")
+
+    def test_setup_keeps_existing_gitignore_with_me(self):
+        (self.root / "pmo").mkdir(parents=True)
+        gi = self.root / "pmo/.gitignore"
+        gi.write_text("# local\n.me\n", encoding="utf-8")
+        code, out, err = tool("setup.py", self.root, "--name", "Demo")
+        self.assertEqual(code, 0, err)
+        self.assertIn("kept: pmo/.gitignore", out)
+        self.assertEqual(gi.read_text(encoding="utf-8"), "# local\n.me\n")
+
+    def test_setup_appends_me_to_existing_gitignore_without_me(self):
+        (self.root / "pmo").mkdir(parents=True)
+        gi = self.root / "pmo/.gitignore"
+        gi.write_text("local/\n*.tmp\n", encoding="utf-8")
+        code, out, err = tool("setup.py", self.root, "--name", "Demo")
+        self.assertEqual(code, 0, err)
+        self.assertIn("updated: pmo/.gitignore", out)
+        self.assertEqual(gi.read_text(encoding="utf-8"), "local/\n*.tmp\n.me\n")
+
+    def test_setup_run_again_keeps_gitignore(self):
+        code, out, err = tool("setup.py", self.root, "--name", "Demo")
+        self.assertEqual(code, 0, err)
+        self.assertIn("created: pmo/.gitignore", out)
+        gi = self.root / "pmo/.gitignore"
+        self.assertEqual(gi.read_text(encoding="utf-8"), ".me\n")
+        code, out, err = tool("setup.py", self.root, "--name", "Demo")
+        self.assertEqual(code, 0, err)
+        self.assertEqual(gi.read_text(encoding="utf-8"), ".me\n")
 
     def test_help(self):
         self.assertEqual(tool("setup.py", self.root, "--help")[0], 0)

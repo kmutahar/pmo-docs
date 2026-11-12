@@ -200,6 +200,10 @@ class StructureCheck(unittest.TestCase):
     def test_document_without_translation_of_checked_as_before(self):
         self.assertIn("heading `## Index` is missing", self.errs(GOOD.replace("## Index", "## Other")))
 
+    def test_draft_with_editor_passes(self):
+        draft = GOOD.replace("period: 2026-03\n", "period: 2026-03\neditor: alice\n")
+        self.assertEqual(self.run_check(draft), ([], []))
+
 
 if __name__ == "__main__":
     unittest.main()
