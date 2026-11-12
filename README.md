@@ -2,7 +2,7 @@
 
 A project office kept in plain files and run by your AI coding agent. A project keeps its facts in YAML **registers** (tasks, risks, issues, decisions, ...). Scripts render **views** from them, and the agent drafts **documents** (status reports, plans, charters, ...) from **templates** whose checks a script verifies.
 
-> **Status: v0.6.0 released.** Registers, views, documents, checks, generators, recipes, languages and stacks work today. Release history is in [`CHANGELOG.md`](CHANGELOG.md); the plan, decisions and later versions are in [`docs/PLAN.md`](docs/PLAN.md).
+> **Status: v0.7.0 released.** Registers, views, documents, checks, generators, recipes, languages and stacks work today. Release history is in [`CHANGELOG.md`](CHANGELOG.md); the plan, decisions and later versions are in [`docs/PLAN.md`](docs/PLAN.md).
 
 ## How it works
 
@@ -248,7 +248,7 @@ jobs:
 | v0.4 | Stacks, technical and domain templates, and their registers (released) |
 | v0.5 | Other agents and unattended runs: a launcher, schedules, a shared hook (released) |
 | v0.6 | Hardening: more eval cases, a wider unit-test suite and the fixes it found (released) |
-| v0.7 | Teams: a command that fixes duplicate ids, an editor named on each draft, written merge rules |
+| v0.7 | Teams: a command that fixes duplicate ids, an editor named on each draft, written merge rules (released) |
 | v0.8 | Format freeze: a test that a v0.1 project still works, a test that every config key is documented, the stability promise |
 | v0.9 | Verification: the evals, the security scan and the install check |
 | 1.0 | Final: a trial on a real project, then the release that declares the formats stable |

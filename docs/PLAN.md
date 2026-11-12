@@ -1,6 +1,6 @@
 # pmo-docs: plan hub
 
-Status: v0.6.0 released (2026-11-11 UTC). v0.7 to 1.0 planned, one file per version in `docs/plans/` from 0.7. Last updated 2026-11-11 (UTC). Repo rules and maintainer procedures: `AGENTS.md`. This file holds the settled decisions, how the skill works, the version index and the public-repo safeguards.
+Status: v0.7.0 released (2026-11-12 UTC). v0.8 to 1.0 planned, one file per version in `docs/plans/` from 0.7. Last updated 2026-11-12 (UTC). Repo rules and maintainer procedures: `AGENTS.md`. This file holds the settled decisions, how the skill works, the version index and the public-repo safeguards.
 
 `pmo-docs` is a project-office and documentation workflow for AI coding agents. A project keeps its facts in **registers**: YAML files for tasks, risks, issues, decisions and so on. Scripts render views from them. The agent drafts documents from **templates**, and tools check each document against its template's contract.
 
@@ -20,7 +20,7 @@ Effort: S = under an hour, M = one session, L = several sessions.
 | v0.4 | Stacks, technical and domain templates, their registers | git history up to tag `v0.4.0` | released 2026-11-11 (UTC) |
 | v0.5 | Other agents and unattended runs: launcher, schedule, shared hook | git history up to tag `v0.5.0` | released 2026-11-11 (UTC) |
 | v0.6 | Hardening: 28 eval cases, a unit-test sweep and the script fixes it found, exact skill paths and no-script rules in `SKILL.md`, `dev/run-evals` | git history up to tag `v0.6.0` | released 2026-11-11 (UTC) |
-| v0.7 | Teams: `renumber.py` for duplicate ids, an `editor` per draft, written merge rules | [`plans/v0.7.md`](plans/v0.7.md) | planned |
+| v0.7 | Teams: `renumber.py` for duplicate ids, an `editor` per draft, written merge rules | git history up to tag `v0.7.0` | released 2026-11-12 (UTC) |
 | v0.8 | Format freeze: upgrade test, config reference test, stability docs, a format smoke test on a copy of the source project | [`plans/v0.8.md`](plans/v0.8.md) | planned |
 | v0.9 | Verification: evals, SkillSpector, walkthrough check, install check and the Opus review, for every version up to it | [`plans/v0.9.md`](plans/v0.9.md) | planned |
 | 1.0 | Final: a trial on a copy of the source project, then the release that declares the formats stable (nothing new is built) | [`plans/v1.0.md`](plans/v1.0.md) | planned |
