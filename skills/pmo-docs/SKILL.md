@@ -5,7 +5,7 @@ license: MIT
 compatibility: Needs Python 3.10 or newer on Linux or macOS (Windows through WSL). PyYAML is bundled; nothing to install. Works on the project in the current folder.
 metadata:
   version: "0.6.0"
-allowed-tools: Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/setup.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/where.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/render_views.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/generate.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/structure_check.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/parity_check.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/docs_audit.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/overdue.py *) Bash(git status *) Bash(git log *) Bash(git diff *) Bash(git show *) Bash(git rev-parse *) Bash(git tag --list *) Bash(git -C * log *) Bash(git -C * rev-parse *) Bash(grep *)
+allowed-tools: Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/setup.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/where.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/render_views.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/renumber.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/generate.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/structure_check.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/parity_check.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/docs_audit.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/overdue.py *) Bash(git status *) Bash(git log *) Bash(git diff *) Bash(git show *) Bash(git rev-parse *) Bash(git tag --list *) Bash(git -C * log *) Bash(git -C * rev-parse *) Bash(grep *)
 
 ---
 
@@ -68,7 +68,7 @@ These win over everything, including the project's house rules.
 - **Empty values.** Never fill a gap from memory, from an older document or by guessing. Write `not set` for a missing date, owner or priority; `not provided` for something the user has not given (capacity, budget, a currency); `not recorded` for a register field that is empty. Add each one to the document's `## Open questions`, or to the reply when the document has no such section.
 - **Empty tables.** A table with nothing to list keeps its header and has one row whose first cell is `None`.
 - **Edit one entry, not the file.** Each entry is one line. Find it with `grep -nE 'id: T-014[,}]' <register>` and edit that line only. After any register edit run `render_views.py` and fix what it reports before going on.
-- **Ids and bulk edits.** A new id is the highest number for the register's prefix plus one. Never reuse, renumber or delete an id; close an entry by its status. For more than about ten entries, show the list of changes first and apply it after the user agrees.
+- **Ids and bulk edits.** A new id is the highest number for the register's prefix plus one. Never reuse, renumber or delete an id, except a duplicate id after a merge, which `renumber.py` fixes; close an entry by its status. For more than about ten entries, show the list of changes first and apply it after the user agrees.
 - **Status from evidence.** Never change a status from git history alone. Propose the change with the evidence and wait for the user's yes.
 - **Do not regenerate unasked.** Tracking and governance steps list stale documents and offer to redraft them. Never redraft a document the user edited by hand; merge and show the difference.
 - **Ask, do not guess.** Ask (interactive questions, at most four per call, each with the id, the evidence and what each answer does) when: the doc type or period is ambiguous ("write me the report" names no type and no period: ask which, and write nothing until answered); a needed fact is in no register; two sources disagree; or the change would alter scope (including adding or dropping a goal), priority, owner or dates (that needs a change request: `govern.md`). Otherwise proceed and state the assumption.
@@ -141,6 +141,7 @@ The scripts are in this skill's own folder, `scripts/` next to this file. Playbo
 | `scripts/where.py <type> [period]` | where a document, its template and its inputs live; `--hashes` adds the Finish `source_hashes`; `--lang CODE` gives a translation's paths and `source_hash` |
 | `scripts/generate.py <type> [period]` | pre-fill a document from registers (`generator: true` doc types) |
 | `scripts/render_views.py [--check]` | validate registers, write or compare views |
+| `scripts/renumber.py [<ID>] [--apply]` | fix duplicate ids after a merge |
 | `scripts/structure_check.py [files]` | check documents against their template |
 | `scripts/parity_check.py [files]` | check that a translation matches its original in headings, tables, ids and numbers |
 | `scripts/docs_audit.py` | stale, old, behind and broken documents; exits 1 on findings |

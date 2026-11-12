@@ -80,6 +80,10 @@ _Avoid_: enum, allowed values, lookup
 A rule every entry must meet, set by the vocabulary and the register's fields.
 _Avoid_: check, lint
 
+**Renumber**:
+Fixing duplicate ids after a merge with `renumber.py`: the first copy (or keeper) keeps the id, later copies get the next free numbers and move to the end of the list, and confirmed references are rewritten.
+_Avoid_: re-id, reassign, relabel
+
 **View**:
 A read-only summary rendered from registers, never edited by hand.
 _Avoid_: report, dashboard

@@ -11,7 +11,7 @@ FAKE = "import runpy, sys; sys.version_info = (3, 9, 0, 'final', 0); runpy.run_p
 
 class PythonVersion(unittest.TestCase):
     def test_every_script_stops_below_3_10(self):
-        for name in ("setup", "where", "generate", "render_views", "structure_check", "parity_check", "docs_audit", "overdue", "publish", "pmo_common"):
+        for name in ("setup", "where", "generate", "render_views", "renumber", "structure_check", "parity_check", "docs_audit", "overdue", "publish", "pmo_common"):
             with self.subTest(script=name):
                 p = subprocess.run([sys.executable, "-c", FAKE, str(SCRIPTS / f"{name}.py"), "--help"], capture_output=True, text=True, encoding="utf-8")
                 self.assertNotEqual(p.returncode, 0)

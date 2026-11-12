@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: renumber-batch-confirm
+description: Duplicate T-5 in tasks; the agent must propose matching CR-3 to T-6 and the dependency to T-5, ask one batch confirmation in plain English, and name the renumber.py --apply flags without editing registers.
+context:
+  scaffold_script: scaffold.sh

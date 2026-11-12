@@ -120,6 +120,10 @@ class Evals(unittest.TestCase):
         if scaffold.parent.name == "status-report-from-acme":
             self.assertFalse((tmp / "pmo/documents/2026-03 - Status report.md").exists())
         p = subprocess.run([sys.executable, str(REPO / "skills/pmo-docs/scripts/render_views.py"), "--check"], cwd=tmp, capture_output=True)
+        if scaffold.parent.name == "renumber-batch-confirm":
+            self.assertEqual(p.returncode, 1)
+            self.assertIn("duplicate id T-5", p.stdout.decode("utf-8"))
+            return
         self.assertEqual(p.returncode, 0)
 
 
