@@ -211,9 +211,31 @@ Seven stacks ship with the skill: Next.js (`nextjs`), Express (`express`), ASP.N
 
 The skill installs no hook. If you want one, call `pmo/bin/pmo render_views --check` from your own pre-commit hook: it writes nothing, stages nothing, and exits 1 when the registers are invalid or a view is stale. The recipe and the reasons are in [`skills/pmo-docs/references/git.md`](skills/pmo-docs/references/git.md) (Checking registers in your own hook).
 
+## Two writers
+
+Two or more people can work on the same project without a server or locks. Registers keep one entry per line, so diffs stay small. After a merge conflict in a register, keep both sides' new entries and resolve duplicates with `renumber.py`; views are rendered again with `render_views.py`. Merge rules for registers, views, drafts and finished documents are in [`skills/pmo-docs/references/git.md`](skills/pmo-docs/references/git.md) (Several writers).
+
+A GitHub Actions workflow can run the same check on pushes and pull requests:
+
+```yaml
+name: pmo check
+on:
+  push: { paths: ["pmo/**"] }
+  pull_request: { paths: ["pmo/**"] }
+permissions: { contents: read }
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: curl -fsSL https://github.com/kmutahar/pmo-docs/archive/refs/tags/v0.6.0.tar.gz | tar -xz
+      - run: pmo/bin/pmo render_views --check
+        env: { PMO_DOCS_SKILL: pmo-docs-0.6.0/skills/pmo-docs }
+```
+
 ## Limits
 
-- Built for one writer per project: one person, or one agent session, edits the registers at a time. Teams can use it: duplicate ids are caught and views render again cleanly after a merge. A command that fixes duplicate ids, and a warning when two people edit one draft, come in v0.7.
+- No locks: an editor on a draft is a warning, not a lock. Two people or agent sessions can edit the same project; duplicate ids after a merge are resolved with `renumber.py`.
 - Generators write English only; other languages are drafted by the agent. Parity checks compare structure, ids and numbers, not wording.
 
 ## Roadmap

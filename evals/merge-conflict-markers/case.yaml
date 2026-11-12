@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: merge-conflict-markers
+description: Git conflict markers in tasks.yaml around two T-5 lines; the agent must keep both tasks, remove the markers, and note that a duplicate id remains for renumber.py.
+context:
+  scaffold_script: scaffold.sh

@@ -124,6 +124,10 @@ class Evals(unittest.TestCase):
             self.assertEqual(p.returncode, 1)
             self.assertIn("duplicate id T-5", p.stdout.decode("utf-8"))
             return
+        if scaffold.parent.name == "merge-conflict-markers":
+            self.assertEqual(p.returncode, 1)
+            self.assertIn("merge conflict markers", p.stdout.decode("utf-8"))
+            return
         self.assertEqual(p.returncode, 0)
 
 

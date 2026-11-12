@@ -53,3 +53,13 @@ ROOT="$(git rev-parse --show-toplevel)"
 ```
 
 Make it executable. A hook in `.git/hooks` is not shared with teammates; to share one, keep it in a tracked folder (such as `.githooks/pre-commit`) and set `git config core.hooksPath <folder>` in each clone.
+
+
+## Several writers
+
+- **Registers:** for a conflict, keep both sides' new lines, keep one version of an entry changed on both sides, delete the marker lines, then run `render_views.py`. For a duplicate id, run `renumber.py` (`references/track.md`).
+- **Views:** never merged by hand; render again.
+- **Drafts:** resolve by hand, then `structure_check.py`.
+- **Finished documents:** never merged; a second finished version is a new draft.
+
+A GitHub Actions workflow can run the same check as the hook. It downloads the skill at the installed version (`metadata.version` in `SKILL.md`) from the release archive and sets `PMO_DOCS_SKILL` to its `skills/pmo-docs` folder. It runs `pmo/bin/pmo render_views --check` on pushes and pull requests that touch `pmo/**`, with `permissions: contents: read`. It never commits. The README has the full file.
