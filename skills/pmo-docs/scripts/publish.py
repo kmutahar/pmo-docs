@@ -6,7 +6,7 @@ Usage:
 
 Exit codes:
     0 success, or mode is none, or dry run clean
-    1 conflict or stale document left uncopied during --apply
+    1 conflict or stale document left uncopied during --apply, or an invalid document
     2 usage, config error, path outside project, unknown REL, or a file that could not be copied
 """
 import argparse
@@ -23,6 +23,7 @@ if sys.version_info < (3, 10):
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import docs_audit  # noqa: E402
 import pmo_common as pc  # noqa: E402
+import structure_check  # noqa: E402
 
 
 def main(argv=None) -> int:
@@ -143,22 +144,26 @@ def main(argv=None) -> int:
             print(f"ERROR target path for {rel!r} escapes publish directory", file=sys.stderr)
             return 2
 
+        text = pc.read(f)
+        errors, _ = structure_check.check(root, cfg, text)
+        if errors:
+            classified.append((rel, f, "invalid", errors))
+            continue
+
         audit_findings = docs_audit.audit_file(root, cfg, f, docs_base, args.as_of)
         is_stale = any(chk in docs_audit.STALE_CHECKS for chk, _ in audit_findings)
 
         if not target_f.exists():
-            state = "new"
+            state = "stale" if is_stale else "new"
         elif target_f.read_bytes() == f.read_bytes():
             state = "unchanged"
         else:
-            state = "conflict"
-        if is_stale and state != "unchanged":  # already published as is: nothing to ask about
-            state = "stale"
+            state = "stale, conflict" if is_stale else "conflict"
 
-        classified.append((rel, f, state))
+        classified.append((rel, f, state, []))
 
     # Validate flag arguments (dry run too)
-    cand_rels = {rel for rel, _, _ in classified}
+    cand_rels = {rel for rel, _, _, _ in classified}
     for r in args.overwrite:
         if r not in cand_rels:
             print(f"ERROR --overwrite {r!r} is not a candidate document", file=sys.stderr)
@@ -171,43 +176,42 @@ def main(argv=None) -> int:
     # Dry-run listing
     if not args.apply:
         url_base = pub.get("url")
-        for rel, _, state in classified:
+        for rel, _, state, errors in classified:
             print(f"{state}: {rel}")
-            if state == "new" and url_base:
+            if state == "invalid":
+                for err in errors[:3]:
+                    print(f"  {err}")
+                if len(errors) > 3:
+                    print(f"  ... and {len(errors) - 3} more")
+            elif state == "new" and url_base:
                 clean_url = str(url_base).rstrip("/")
                 print(f"url: {clean_url}/{rel}")
         print(f"drafts: {drafts_count}")
         print(f"excluded: {excluded_count}")
-        return 0
+        return 1 if any(st == "invalid" for _, _, st, _ in classified) else 0
 
     # Apply copies
     overwrite_set = set(args.overwrite)
     include_set = set(args.include)
     uncopied_issue = False
 
-    for rel, src_f, state in classified:
+    for rel, src_f, state, _ in classified:
         target_f = target_dir / rel
         to_copy = False
 
-        if state == "new":
+        if state == "unchanged":
+            continue
+        elif state == "new":
             to_copy = True
-        elif state == "conflict":
-            if rel in overwrite_set:
+        elif state == "invalid":
+            to_copy = False
+        else:
+            stale = state in ("stale", "stale, conflict")
+            conflict = state in ("conflict", "stale, conflict")
+            if (not stale or rel in include_set) and (not conflict or rel in overwrite_set):
                 to_copy = True
             else:
-                uncopied_issue = True
-        elif state == "stale":
-            conflicts = target_f.exists() and target_f.read_bytes() != src_f.read_bytes()
-            if rel in include_set:
-                if conflicts:
-                    if rel in overwrite_set:
-                        to_copy = True
-                    else:
-                        uncopied_issue = True
-                else:
-                    to_copy = True
-            else:
-                uncopied_issue = True
+                to_copy = False
 
         if to_copy:
             tmp_f = target_f.with_name(target_f.name + ".tmp")
@@ -223,6 +227,24 @@ def main(argv=None) -> int:
                 print(f"ERROR cannot copy {rel!r} to {target_f}: {e}", file=sys.stderr)
                 return 2
             print(f"copied: {rel}")
+        else:
+            uncopied_issue = True
+            if state == "invalid":
+                print(f"uncopied: {rel} (invalid: fix the errors listed by structure_check.py)")
+            else:
+                stale = state in ("stale", "stale, conflict")
+                conflict = state in ("conflict", "stale, conflict")
+                reasons = []
+                needed_flags = []
+                if stale and rel not in include_set:
+                    reasons.append("stale")
+                    needed_flags.append(f"--include {rel}")
+                if conflict and rel not in overwrite_set:
+                    reasons.append("conflict")
+                    needed_flags.append(f"--overwrite {rel}")
+                state_str = ", ".join(reasons)
+                flags_str = " and ".join(needed_flags)
+                print(f"uncopied: {rel} ({state_str}: pass {flags_str})")
 
     return 1 if uncopied_issue else 0
 

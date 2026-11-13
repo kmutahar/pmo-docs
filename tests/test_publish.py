@@ -20,6 +20,15 @@ import publish  # noqa: E402
 TOOL = SCRIPTS / "publish.py"
 
 
+def finished_text(h: str) -> str:
+    raw = (REPO / "examples/acme/pmo/documents/Decision log.md").read_text(encoding="utf-8")
+    return raw.replace(
+        "status: draft",
+        f"status: finished\nsource_hashes:\n  decisions: \"{h}\"",
+        1,
+    )
+
+
 def run(project, *args):
     p = subprocess.run([sys.executable, str(TOOL), "--project", str(project), *args],
                        capture_output=True, text=True, encoding="utf-8")
@@ -49,12 +58,7 @@ class Publish(unittest.TestCase):
         cfg = pc.load_config(self.root)
         h = da.register_hash(self.root, cfg, "decisions")
         f = self.docs / "Decision log.md"
-        f.write_text(
-            f"---\ntitle: \"Decision log - Acme Portal\"\ntype: decision-log\nproject: \"Acme Portal\"\n"
-            f"manager: \"Sam Example\"\ntemplate_version: 1\nstatus: finished\nlast_updated: 2026-03-15\n"
-            f"source_hashes:\n  decisions: \"{h}\"\n---\n# Decision log\n\nContent here.\n",
-            encoding="utf-8"
-        )
+        f.write_text(finished_text(h), encoding="utf-8")
         return f
 
     def finish_translation(self, orig_file, lang="xx", dir_="rtl"):
@@ -403,8 +407,7 @@ class Publish(unittest.TestCase):
         f = self.docs / rel
         f.parent.mkdir(parents=True, exist_ok=True)
         h = da.register_hash(self.root, pc.load_config(self.root), "decisions")
-        f.write_text(text if text is not None else
-                     f"---\ntype: {ty}\nstatus: finished\nlast_updated: 2026-03-15\nsource_hashes:\n  decisions: \"{h}\"\n---\n# {rel}\n", encoding="utf-8")
+        f.write_text(text if text is not None else finished_text(h), encoding="utf-8")
         return f
 
     def test_invalid_mode_exits_2(self):
@@ -476,7 +479,7 @@ class Publish(unittest.TestCase):
     def test_nested_documents_keep_their_folders_and_unicode_names_and_bytes(self):
         self.set_config("publish:\n  mode: folder\n  path: published\n")
         a = self.write_finished("مشاريع/تقرير شهري.md")
-        a.write_bytes(a.read_bytes() + "# تقرير\r\nline\xa0two\n".encode("utf-8"))
+        a.write_bytes(a.read_bytes() + "\r\nتقرير\r\nline\xa0two\n".encode("utf-8"))
         code, out, err = run(self.root, "--apply")
         self.assertEqual(code, 0, err)
         self.assertIn("copied: مشاريع/تقرير شهري.md", out)
@@ -544,7 +547,7 @@ class Publish(unittest.TestCase):
         target = self.root / "published/Decision log.md"
         target.parent.mkdir()
         target.write_text("Old target.\n", encoding="utf-8")
-        self.assertIn("stale: Decision log.md", run(self.root)[1])
+        self.assertIn("stale, conflict: Decision log.md", run(self.root)[1])
         # include alone does not overwrite a differing target
         code, out, _ = run(self.root, "--apply", "--include", "Decision log.md")
         self.assertEqual((code, target.read_text(encoding="utf-8")), (1, "Old target.\n"))
@@ -566,7 +569,8 @@ class Publish(unittest.TestCase):
         code, out, _ = run(self.root, "--apply")
         self.assertEqual(code, 1)
         self.assertIn("copied: Decision log.md", out)
-        self.assertNotIn("copied: Other.md", out)
+        self.assertNotIn("\ncopied: Other.md", "\n" + out)  # "uncopied:" contains "copied:"
+        self.assertIn("uncopied: Other.md", out)
         self.assertEqual((self.root / "published/Other.md").read_text(encoding="utf-8"), "different\n")
 
     def test_old_document_is_not_stale_but_a_moved_as_of_does_not_change_the_state(self):
@@ -600,6 +604,77 @@ class Publish(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertIn("escapes publish directory", err)
         self.assertEqual(list(outside.iterdir()), [])
+
+    def test_invalid_finished_document_is_listed_and_not_copied(self):
+        self.set_config("publish:\n  mode: folder\n  path: published\n")
+        f = self.finish_decision_log()
+        f.write_text(f.read_text(encoding="utf-8") + "\n{{placeholder}}\n", encoding="utf-8")
+
+        code, out, _ = run(self.root)
+        self.assertEqual(code, 1)
+        self.assertIn("invalid: Decision log.md\n  unreplaced {{placeholder}} left in text", out)
+
+        code, out, _ = run(self.root, "--apply")
+        self.assertEqual(code, 1)
+        self.assertIn("uncopied: Decision log.md (invalid: fix the errors listed by structure_check.py)", out)
+        self.assertFalse((self.root / "published/Decision log.md").exists())
+
+    def test_valid_finished_document_still_publishes(self):
+        self.set_config("publish:\n  mode: folder\n  path: published\n")
+        self.finish_decision_log()
+
+        code, out, _ = run(self.root)
+        self.assertEqual(code, 0)
+        self.assertIn("new: Decision log.md", out)
+
+        code, out, _ = run(self.root, "--apply")
+        self.assertEqual(code, 0)
+        self.assertIn("copied: Decision log.md", out)
+        self.assertTrue((self.root / "published/Decision log.md").exists())
+
+    def test_stale_and_conflict_show_both_words(self):
+        self.set_config("publish:\n  mode: folder\n  path: published\n")
+        self.finish_decision_log()
+        dec = self.root / "pmo/registers/decisions.yaml"
+        dec.write_text(dec.read_text(encoding="utf-8") + "\n# change\n", encoding="utf-8")
+        target = self.root / "published/Decision log.md"
+        target.parent.mkdir()
+        target.write_text("Old target.\n", encoding="utf-8")
+
+        code, out, _ = run(self.root)
+        self.assertEqual(code, 0)
+        self.assertIn("stale, conflict: Decision log.md", out)
+
+        code, out, _ = run(self.root, "--apply")
+        self.assertEqual(code, 1)
+        self.assertIn("uncopied: Decision log.md (stale, conflict: pass --include Decision log.md and --overwrite Decision log.md)", out)
+        self.assertEqual(target.read_text(encoding="utf-8"), "Old target.\n")
+
+        code, out, _ = run(self.root, "--apply", "--include", "Decision log.md")
+        self.assertEqual(code, 1)
+        self.assertIn("uncopied: Decision log.md (conflict: pass --overwrite Decision log.md)", out)
+        self.assertEqual(target.read_text(encoding="utf-8"), "Old target.\n")
+
+        code, out, _ = run(self.root, "--apply", "--include", "Decision log.md", "--overwrite", "Decision log.md")
+        self.assertEqual(code, 0)
+        self.assertIn("copied: Decision log.md", out)
+        self.assertNotEqual(target.read_text(encoding="utf-8"), "Old target.\n")
+
+    def test_each_left_document_gets_an_uncopied_line(self):
+        self.set_config("publish:\n  mode: folder\n  path: published\n")
+        self.finish_decision_log()
+        dec = self.root / "pmo/registers/decisions.yaml"
+        dec.write_text(dec.read_text(encoding="utf-8") + "\n# change\n", encoding="utf-8")
+        target = self.root / "published/Decision log.md"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text("Old target.\n", encoding="utf-8")
+
+        self.write_finished("Other.md")
+
+        code, out, _ = run(self.root, "--apply")
+        self.assertEqual(code, 1)
+        self.assertIn("copied: Other.md", out)
+        self.assertIn("uncopied: Decision log.md (stale, conflict: pass --include Decision log.md and --overwrite Decision log.md)", out)
 
     def test_help_and_usage_errors(self):
         self.assertEqual(subprocess.run([sys.executable, str(TOOL), "--help"], capture_output=True).returncode, 0)

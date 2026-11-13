@@ -179,7 +179,7 @@ Where `/pmo-docs:publish` copies finished documents, set by `publish.mode` in th
 _Avoid_: destination, remote, export folder
 
 **Publish conflict**:
-The state `publish.py` reports when a file already exists at the publish target with different content. It is overwritten only with the user's yes for that file.
+The state `publish.py` reports when a file already exists at the publish target with different content. It is overwritten only with the user's yes for that file. A finished document that fails the structure check is reported as invalid and is never copied.
 _Avoid_: collision, diff
 
 **Published copy**:

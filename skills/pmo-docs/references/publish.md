@@ -16,14 +16,16 @@ Run as `/pmo-docs:publish`. Copies finished documents to the configured folder o
 
 2. **Review candidates**
    Show the listing grouped by state:
+   - For each `invalid`, run `python3 ${CLAUDE_SKILL_DIR}/scripts/structure_check.py <path>` and show the errors; it is not published until it passes.
    - For each `conflict`, show the diff of target vs source (`git diff` or compare both files) and ask, per file, whether to overwrite.
    - For each `stale`, explain which registers changed since the document was finished (run `python3 ${CLAUDE_SKILL_DIR}/scripts/docs_audit.py`) and ask whether to publish anyway (`--include`) or redraft first.
+   - A `stale, conflict` document needs both: show the diff, then `--include` and `--overwrite` if the user agrees.
 
 3. **Confirm the copy**
    Show the final list of files to copy and wait for the user's explicit yes.
 
 4. **Apply changes**
-   Run `python3 ${CLAUDE_SKILL_DIR}/scripts/publish.py --apply` with the agreed `--overwrite <REL>` and `--include <REL>` flags. Report what was copied and what was left uncopied.
+   Run `python3 ${CLAUDE_SKILL_DIR}/scripts/publish.py --apply` with the agreed `--overwrite <REL>` and `--include <REL>` flags. Report what was copied and report the `uncopied:` lines as the left-over list.
 
 5. **Folder mode**
    If `publish.mode` is `folder`, tell the user the files are in place and that they commit them when ready (`references/git.md`). Stop.
