@@ -127,7 +127,7 @@ Finish turns a draft into a finished document. It is defined here once; recipes 
 3. Copy `template_version` from the winning template into the front matter.
 4. Record `source_hashes` in the front matter: copy the `source_hashes:` line `where.py --hashes` printed (format as today). If the draft already records `source_hashes` and a value differs from what `where.py` printed, the draft is behind its registers: ask whether to refresh it or to finish anyway, and replace the recorded value only after that answer.
 5. Remove every HTML comment and the `checks:` block from the document.
-6. Run `structure_check.py <file>`. Fix errors until it reports none; report warnings.
+6. Run `structure_check.py <file>`. Fix errors until it reports none; report warnings. The document is still a draft here, so a template-comment warning means step 5 missed a comment: remove it and run the check again.
 7. Set `status: finished` and `last_updated` to today.
 8. Translations. `where.py` prints `translations` and `translate` for the type. `after-close`: skip, and say translation waits until the period closes. `in-period`: ask once, "Translate into <codes> now?"; on yes, for each language follow `references/translate.md` and Finish the translation: the steps above, with `where.py --lang <code> --hashes`, `source_hash` in place of `source_hashes`, and `parity_check.py` before `structure_check.py`.
 

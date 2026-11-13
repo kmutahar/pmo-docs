@@ -402,15 +402,15 @@ class TechnicalDocs(unittest.TestCase):
             shutil.rmtree(root.parent)
 
     def test_a_draft_built_from_the_real_template_body(self):
-        # placeholders filled with text, comments kept: only the comments are reported; once removed, the draft passes
+        # placeholders filled with text, comments kept: reported as a warning; once removed, the draft passes
         for doc_type, (tpl_file, _, _, _) in TYPES.items():
             with self.subTest(doc_type):
                 tpl_path = TEMPLATES / tpl_file
                 head = build_draft_from_template(doc_type, tpl_path).split("\n---\n", 1)[0] + "\n---\n\n"
                 body = re.sub(r"\{\{[^}]*\}\}", "x", pc.split_front_matter(pc.read(tpl_path), strict=True)[1])
-                errors, _ = sc.check(REPO / "examples/acme", CFG, head + body)
-                self.assertEqual([e for e in errors if "HTML comment" not in e], [], errors)
-                self.assertTrue(any("HTML comment" in e for e in errors), doc_type)
+                errors, warns = sc.check(REPO / "examples/acme", CFG, head + body)
+                self.assertEqual(errors, [], errors)
+                self.assertTrue(any("template comments are kept in a draft" in w for w in warns), doc_type)
                 clean = re.sub(r"<!--.*?-->\n?", "", body, flags=re.S)
                 self.assertEqual(sc.check(REPO / "examples/acme", CFG, head + clean)[0], [], doc_type)
 

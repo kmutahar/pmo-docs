@@ -151,6 +151,14 @@ class StructureCheck(unittest.TestCase):
         self.assertIn("HTML comment", self.errs(GOOD + "\n<!-- note -->\n"))
         self.assertIn("duplicate IDs in one table: M-001", self.errs(GOOD.replace("| None | | |", "| M-001 | a | b |")))
 
+    def test_draft_keeps_its_comments(self):
+        draft = GOOD.replace("type: roadmap", "type: roadmap\nstatus: draft") + "\n<!-- note -->\n"
+        errors, warns = self.run_check(draft)
+        self.assertFalse(any("HTML comment" in e for e in errors))
+        self.assertTrue(any("template comments are kept in a draft" in w for w in warns))
+        finished = GOOD.replace("type: roadmap", "type: roadmap\nstatus: finished") + "\n<!-- note -->\n"
+        self.assertIn("HTML comment", self.errs(finished))
+
     def test_duplicate_ids_in_backticks(self):
         self.assertEqual(sc.duplicate_ids("| ID |\n|---|\n| `DEC-1` |\n| `DEC-1` |\n"), ["DEC-1"])
 
@@ -193,9 +201,16 @@ class StructureCheck(unittest.TestCase):
 
     def test_translation_with_leftover_comment_fails(self):
         dec_log = (REPO / "examples/acme/pmo/documents/Decision log.md").read_text(encoding="utf-8")
-        trans_text = tf.make_translation(dec_log) + "\n<!-- author comment -->\n"
+        trans_text = tf.make_translation(dec_log).replace("status: draft", "status: finished") + "\n<!-- author comment -->\n"
         errors, warns = self.run_check(trans_text)
         self.assertTrue(any("HTML comment" in e for e in errors))
+
+    def test_translation_draft_keeps_its_comments(self):
+        dec_log = (REPO / "examples/acme/pmo/documents/Decision log.md").read_text(encoding="utf-8")
+        trans_text = tf.make_translation(dec_log) + "\n<!-- author comment -->\n"
+        errors, warns = self.run_check(trans_text)
+        self.assertEqual(errors, [])
+        self.assertTrue(any("template comments are kept in a draft" in w for w in warns))
 
     def test_document_without_translation_of_checked_as_before(self):
         self.assertIn("heading `## Index` is missing", self.errs(GOOD.replace("## Index", "## Other")))

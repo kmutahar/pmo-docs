@@ -18,7 +18,7 @@ Run as `docs-audit [--fix]` (`--fix` is a recipe flag, not a script flag: `docs_
    - `python3 ${CLAUDE_SKILL_DIR}/scripts/docs_audit.py`: front matter, stale, old, broken links, template and playbook drift (including stack files), translations behind their original, and translation parity.
    - `python3 ${CLAUDE_SKILL_DIR}/scripts/structure_check.py`: documents against their templates.
 
-   Each exits 1 on findings. A non-zero exit is a result to report, not a failure of the audit. The template comments a draft keeps are expected: report every other error.
+   Each exits 1 on findings. A non-zero exit is a result to report, not a failure of the audit. A draft keeps its template comments and `structure_check.py` reports them as a warning. Report every error.
 
 3. **Do the checks by reading**
    - Document against register: a checklist's ticks against `tasks` statuses, and a plan's goals, owners and dependencies against the registers. List the differences both ways.

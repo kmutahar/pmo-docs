@@ -39,7 +39,7 @@ Write one draft of one document from its template and the registers. Rules for f
    Write the document to the path `where.py` printed, creating the folder if needed. A new draft gets `editor: <slug>` from `pmo/.me` in its front matter (`SKILL.md`, Documents, Editor). A draft of a type with `generated_from` gets the `source_hashes:` line from `where.py <type> [period] --hashes` in its front matter (a generator writes it). A request to draft is consent to write that one file.
 
 8. **Check**
-   Run `python3 ${CLAUDE_SKILL_DIR}/scripts/structure_check.py "<file>"`. The comments you kept are reported as errors: ignore those and nothing else. Fix every other error and run it again.
+   Run `python3 ${CLAUDE_SKILL_DIR}/scripts/structure_check.py "<file>"`. The comments you kept are reported as a warning, not an error. Fix every error and run it again.
    Compare counts: every task, goal or entry the template promises appears once, and numbers in the prose equal the rows in the tables.
 
 9. **Reply**

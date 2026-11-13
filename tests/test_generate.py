@@ -70,7 +70,7 @@ class TestGenerate(unittest.TestCase):
         cfg = pc.load_config(self.root)
         errs, warns = structure_check.check(self.root, cfg, doc.read_text(encoding="utf-8"))
         # The only errors allowed are leftover-placeholder and HTML-comment errors
-        allowed_pats = [r"unreplaced \{\{placeholder\}\}", r"HTML comment"]
+        allowed_pats = [r"unreplaced \{\{placeholder\}\}"]
         disallowed = [e for e in errs if not any(re.search(p, e) for p in allowed_pats)]
         self.assertEqual(disallowed, [], f"Disallowed errors: {disallowed}")
 
@@ -308,7 +308,7 @@ class TestGenerate(unittest.TestCase):
     def test_both_pass_structure_check_except_placeholders(self):
         import structure_check
         cfg = pc.load_config(self.root)
-        allowed_pats = [r"unreplaced \{\{placeholder\}\}", r"HTML comment"]
+        allowed_pats = [r"unreplaced \{\{placeholder\}\}"]
 
         # 1. Project plan
         code, out, err = tool("generate.py", self.root, "project-plan", "--as-of", "2026-03-15", "--stdout")

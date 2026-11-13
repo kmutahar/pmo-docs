@@ -71,3 +71,9 @@ class SkillRules(unittest.TestCase):
         self.assertNotIn("or log a decision", text)
         self.assertIn("follow `SKILL.md`, Definition of done", text)
 
+    def test_playbooks_do_not_tell_the_agent_to_ignore_errors(self):
+        self.assertNotIn("ignore those", self._playbook("draft.md"))
+        self.assertNotIn("are expected: report every other error", self._playbook("docs-audit.md"))
+        _, text = self._skill()
+        self.assertIn("a template-comment warning means step 5 missed a comment", text)
+

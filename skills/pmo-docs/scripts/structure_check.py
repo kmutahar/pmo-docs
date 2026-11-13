@@ -15,9 +15,9 @@ Always checked, from the template:
   ERROR  a required heading is missing or out of order (the `#` title is free; a heading that
          starts with {{x}} is an optional repeatable slot; {{x}} inside other words matches any words)
   ERROR  a table's columns differ from the template's table in that section
-  ERROR  an unreplaced {{placeholder}} or any HTML comment left in the text
+  ERROR  an unreplaced {{placeholder}}, or an HTML comment in a document whose status is not draft
   ERROR  the same ID (T-001) twice in one table
-  WARN   no front matter; template_version missing or different; extra `##` sections; empty table
+  WARN   no front matter; template_version missing or different; extra `##` sections; empty table; an HTML comment in a draft
 
 Declared checks: the template's front matter may carry a `checks:` list. A section is named by its
 heading text (case-insensitive, no markup); it covers the heading and everything below it. A check
@@ -182,12 +182,15 @@ def check_head(tfm, fm, errors, warns):
         warns.append(f"template_version {dv} differs from template v{tv}" if dv is not None else f"no template_version (template is v{tv})")
 
 
-def check_tail(text, body, errors):
-    """Placeholders, HTML comments and duplicate ids left in a document."""
+def check_tail(text, body, errors, warns, draft):
+    """Placeholders, HTML comments (a warning in a draft) and duplicate ids left in a document."""
     if re.search(r"\{\{.*?\}\}", re.sub(r"```.*?```", "", text, flags=re.S)):
         errors.append("unreplaced {{placeholder}} left in text")
     if "<!--" in body:
-        errors.append("HTML comment `<!--` left in document (remove template/author notes)")
+        if draft:
+            warns.append("template comments are kept in a draft; Finish removes them")
+        else:
+            errors.append("HTML comment `<!--` left in document (remove template/author notes)")
     if dups := duplicate_ids(body):
         errors.append("duplicate IDs in one table: " + ", ".join(dups[:8]))
 
@@ -199,7 +202,7 @@ def check_translation_light(tfm, fm, text, body):
     dsec = sections(body)
     if sum(1 for lv, _, _ in dsec if lv == 1) != 1:
         errors.append("document must have exactly one `#` title")
-    check_tail(text, body, errors)
+    check_tail(text, body, errors, warns, fm.get("status") == "draft")
     return errors, warns
 
 
@@ -257,7 +260,7 @@ def check(root, cfg, text):
         warns.append("extra sections: " + "; ".join(extra[:6]) + (" ..." if len(extra) > 6 else ""))
     warns += [f"`{t}`: empty table (keep the header and add one row: None)" for lv, t, txt in dsec if lv == 2 for _, rows in tables(txt) if not rows]
 
-    check_tail(text, body, errors)
+    check_tail(text, body, errors, warns, fm.get("status") == "draft")
     return errors + run_checks(tfm.get("checks"), dsec), warns
 
 
