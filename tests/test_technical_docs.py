@@ -16,7 +16,7 @@ sys.path.insert(0, str(SCRIPTS))
 import pmo_common as pc  # noqa: E402
 import structure_check as sc  # noqa: E402
 
-CFG = pc.load_config(".")
+CFG = pc.load_config(".", must_exist=False)
 
 TYPES = {  # doc type: (template file, ordered ## headings, generated_from, code_ref)
     "functional-requirements": ("functional-requirements.md", ["Summary", "Requirements", "Quality and constraints", "Out of scope", "Open questions"], ["requirements"], False),

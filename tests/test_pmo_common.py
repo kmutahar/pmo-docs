@@ -18,6 +18,8 @@ class Common(unittest.TestCase):
         (d / "pmo/registers").mkdir(parents=True)
         if config is not None:
             (d / "pmo/config.yaml").write_text(config, encoding="utf-8")
+        else:
+            (d / "pmo/config.yaml").write_text("schema_version: 1\n", encoding="utf-8")
         if register:
             (d / "pmo/registers/tasks.yaml").write_text(register, encoding="utf-8")
         return d
@@ -561,6 +563,135 @@ class EveryTool(unittest.TestCase):
 
         for f in SCRIPTS.glob("*.py"):
             self.assertEqual(bad_lines(f.read_text(encoding="utf-8")), [], f.name)
+
+
+class ConfigGuards(unittest.TestCase):
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.tmp)
+        self.root = self.tmp / "acme"
+        shutil.copytree(Path(__file__).resolve().parents[1] / "examples/acme", self.root)
+        self.cfg_file = self.root / "pmo/config.yaml"
+
+    def cfg_run(self, text, append=True):
+        if append:
+            with open(self.cfg_file, "a", encoding="utf-8") as f:
+                f.write(text)
+        else:
+            self.cfg_file.write_text(text, encoding="utf-8")
+        p = subprocess.run(
+            [sys.executable, str(pc.SKILL / "scripts/render_views.py"), "--check", "--project", str(self.root)],
+            capture_output=True, text=True, encoding="utf-8"
+        )
+        return p.returncode, p.stdout, p.stderr
+
+    def test_bad_yaml_exits_2(self):
+        code, stdout, stderr = self.cfg_run("project: [unclosed", append=False)
+        self.assertEqual(code, 2)
+        self.assertIn(str(self.cfg_file), stderr)
+        self.assertIn("not valid YAML", stderr)
+        self.assertNotIn("Traceback", stderr)
+        with self.assertRaises(SystemExit) as cm:
+            pc.load_config(self.root)
+        self.assertEqual(cm.exception.code, 2)
+
+    def test_non_utf8_config_exits_2(self):
+        self.cfg_file.write_bytes(b"project: caf\xe9\n")
+        with self.assertRaises(SystemExit) as cm:
+            pc.load_config(self.root)
+        self.assertEqual(cm.exception.code, 2)
+        p = subprocess.run(
+            [sys.executable, str(pc.SKILL / "scripts/render_views.py"), "--check", "--project", str(self.root)],
+            capture_output=True, text=True, encoding="utf-8"
+        )
+        self.assertEqual(p.returncode, 2)
+        self.assertIn("not valid UTF-8", p.stderr)
+        self.assertNotIn("Traceback", p.stderr)
+
+    def test_missing_config_exits_2(self):
+        empty = self.tmp / "empty"
+        empty.mkdir()
+        p = subprocess.run(
+            [sys.executable, str(pc.SKILL / "scripts/render_views.py"), "--check", "--project", str(empty)],
+            capture_output=True, text=True, encoding="utf-8"
+        )
+        self.assertEqual(p.returncode, 2)
+        self.assertIn("no pmo/config.yaml here", p.stderr)
+        self.assertNotIn("Traceback", p.stderr)
+        import io
+        from unittest.mock import patch
+        with patch("sys.stderr", new_callable=io.StringIO) as mock_stderr:
+            with self.assertRaises(SystemExit) as cm:
+                pc.load_config(empty)
+            self.assertEqual(cm.exception.code, 2)
+            self.assertIn("no pmo/config.yaml here", mock_stderr.getvalue())
+        defaults = pc.load_config(empty, must_exist=False)
+        self.assertEqual(defaults["schema_version"], 1)
+
+    def test_bad_values_exit_2(self):
+        cases = [
+            ("registers: {tasks: {fields: 5}}\n", "registers.tasks.fields", True),
+            ("registers: {tasks: {prefix: 5}}\n", "registers.tasks.prefix", True),
+            ("registers: {tasks: {enums: [a]}}\n", "registers.tasks.enums", True),
+            ("registers: {tasks: {dates: 7}}\n", "registers.tasks.dates", True),
+            ("registers: {tasks: {closed: 5}}\n", "registers.tasks.closed", True),
+            ("vocab: {task_status: 5}\n", "vocab.task_status", True),
+            ("project: just text\n", "project", True),
+            ("doc_types: {decision-log: {name: 5}}\n", "doc_types.decision-log.name", True),
+            ("doc_types: {decision-log: {stale_days: '30'}}\n", "doc_types.decision-log.stale_days", True),
+            ("paths: {templates: null}\n", "paths.templates is missing", False),
+        ]
+        acme_text = (Path(__file__).resolve().parents[1] / "examples/acme/pmo/config.yaml").read_text(encoding="utf-8")
+        for text, key, is_type_error in cases:
+            with self.subTest(snippet=text.strip()):
+                code, stdout, stderr = self.cfg_run(acme_text + "\n" + text, append=False)
+                self.assertEqual(code, 2)
+                self.assertNotIn("Traceback", stderr)
+                self.assertIn(key, stderr)
+                if is_type_error:
+                    self.assertIn("ERROR config:", stderr)
+
+    def test_doc_type_name_outside_project_is_refused(self):
+        acme_text = (Path(__file__).resolve().parents[1] / "examples/acme/pmo/config.yaml").read_text(encoding="utf-8")
+        code, stdout, stderr = self.cfg_run(acme_text + '\ndoc_types: {decision-log: {name: "../../../escaped-{title}.md"}}\n', append=False)
+        self.assertEqual(code, 2)
+        self.assertIn("doc_types.decision-log.name", stderr)
+        self.assertNotIn("Traceback", stderr)
+        with self.assertRaises(SystemExit) as cm:
+            pc.load_config(self.root)
+        self.assertEqual(cm.exception.code, 2)
+
+    def test_safe_write_refuses_a_symlink_out(self):
+        outside_file = self.tmp / "outside.md"
+        outside_file.write_text("keep", encoding="utf-8")
+        link = self.root / "pmo/views/out.md"
+        link.symlink_to(outside_file)
+        with self.assertRaises(SystemExit) as cm:
+            pc.safe_write(self.root, "pmo/views/out.md", "x")
+        self.assertEqual(cm.exception.code, 2)
+        self.assertEqual(outside_file.read_text(encoding="utf-8"), "keep")
+        pc.safe_write(self.root, "pmo/views/new.md", "hello")
+        self.assertEqual((self.root / "pmo/views/new.md").read_text(encoding="utf-8"), "hello")
+
+    def test_register_wrong_top_key(self):
+        cfg = pc.load_config(self.root)
+        risks_file = self.root / "pmo/registers/risks.yaml"
+        risks_file.write_text("risk:\n  - id: R-1\n", encoding="utf-8")
+        with self.assertRaises(ValueError) as cm:
+            pc.load_register(self.root, cfg, "risks")
+        self.assertIn("top key must be risks:", str(cm.exception))
+
+        risks_file.write_text("", encoding="utf-8")
+        self.assertEqual(pc.load_register(self.root, cfg, "risks"), [])
+
+        risks_file.write_text("risks: []\n", encoding="utf-8")
+        self.assertEqual(pc.load_register(self.root, cfg, "risks"), [])
+
+    def test_roster_names_survives_a_wrong_top_key(self):
+        cfg = pc.load_config(self.root)
+        roster_file = self.root / "pmo/registers/roster.yaml"
+        roster_file.write_text("team:\n  - slug: alice\n    name: Alice\n", encoding="utf-8")
+        self.assertEqual(pc.roster_names(self.root, cfg), {})
 
 
 if __name__ == "__main__":

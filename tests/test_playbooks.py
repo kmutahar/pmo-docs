@@ -30,7 +30,8 @@ class PlaybookFrontMatter(unittest.TestCase):
         tmp_dir = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, tmp_dir)
         root = tmp_dir / "project"
-        root.mkdir()
+        (root / "pmo").mkdir(parents=True)
+        (root / "pmo/config.yaml").write_text("schema_version: 1\n", encoding="utf-8")
         cfg = pc.load_config(root)
 
         # Default returns skill file

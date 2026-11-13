@@ -77,7 +77,7 @@ def main(argv=None):
         print("pmo/bin/pmo already exists and differs: delete it to replace", file=sys.stderr)
         return 1
 
-    cfg = pc.load_config(args.project)
+    cfg = pc.load_config(args.project, must_exist=False)
     paths = cfg["paths"]
     reg_dir = Path(args.project) / paths["registers"]
     house_rules_file = Path(args.project) / paths["house_rules"]

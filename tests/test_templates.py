@@ -14,7 +14,7 @@ import pmo_common as pc  # noqa: E402
 import structure_check as sc  # noqa: E402
 
 TEMPLATES = REPO / "skills/pmo-docs/assets/templates"
-CFG = pc.load_config(".")
+CFG = pc.load_config(".", must_exist=False)
 REQUIRED = {"title", "type", "project", "manager", "template_version", "status", "last_updated"}
 FORBIDDEN = {"owner", "scope", "lang", "dir"}  # fix 20: manager, not owner; English only in v0.1
 KINDS = {

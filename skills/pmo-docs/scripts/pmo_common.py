@@ -18,6 +18,7 @@ SCHEMA_VERSION = 1
 CONFIG = Path("pmo/config.yaml")
 WEEKDAYS = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
 LANG_CODE = re.compile(r"[a-z]{2,3}(-[A-Za-z0-9]{2,8})?")
+BACKSLASH = chr(92)
 
 
 def add_project_arg(parser):
@@ -55,12 +56,86 @@ def outside(root, *parts):
     return ".git" in rel.parts
 
 
-def load_config(root="."):
-    """Skill defaults merged with the project's pmo/config.yaml. Exits 2 on a newer schema_version or on paths that leave the project."""
+def check_inside(root, rel):
+    if outside(root, rel):
+        print(f"{rel}: must stay inside the project", file=sys.stderr)
+        sys.exit(2)
+
+
+def safe_write(root, rel, text):
+    check_inside(root, rel)
+    write(Path(root) / rel, text)
+
+
+def config_type_errors(cfg) -> list[str]:
+    """Type checks on cfg: project, registers, vocab, doc_types. Returns list of messages without prefix."""
+    errors = []
+    if "project" in cfg and not isinstance(cfg["project"], dict):
+        errors.append("project must be a map")
+
+    for name, r in cfg.get("registers", {}).items():
+        if not isinstance(r, dict):
+            continue
+        if "prefix" in r and not isinstance(r["prefix"], str):
+            errors.append(f"registers.{name}.prefix must be text")
+        for k in ("fields", "dates", "months", "closed", "done", "blocked", "active", "accepted"):
+            if k in r:
+                val = r[k]
+                if not isinstance(val, list) or not all(isinstance(x, str) for x in val):
+                    errors.append(f"registers.{name}.{k} must be a list of text")
+        if "enums" in r:
+            val = r["enums"]
+            if not isinstance(val, dict) or not all(isinstance(v, str) for v in val.values()):
+                errors.append(f"registers.{name}.enums must be a map of text")
+
+    for k, v in cfg.get("vocab", {}).items():
+        if not isinstance(v, list):
+            errors.append(f"vocab.{k} must be a list")
+
+    for dtype, dt in cfg.get("doc_types", {}).items():
+        if not isinstance(dt, dict):
+            errors.append(f"doc_types.{dtype} must be a map")
+            continue
+        for k in ("name", "title", "template"):
+            if k in dt:
+                val = dt[k]
+                if not isinstance(val, str):
+                    errors.append(f"doc_types.{dtype}.{k} must be text")
+                elif k in ("name", "title"):
+                    if "/" in val or BACKSLASH in val or val == "..":
+                        errors.append(f"doc_types.{dtype}.{k} must not contain a slash or a backslash")
+        if "stale_days" in dt:
+            val = dt["stale_days"]
+            if isinstance(val, bool) or not isinstance(val, (int, float)):
+                errors.append(f"doc_types.{dtype}.stale_days must be a number")
+
+    return errors
+
+
+def load_config(root=".", must_exist=True):
+    """Skill defaults merged with the project's pmo/config.yaml. Exits 2 on a newer schema_version, missing/invalid config, or paths that leave the project."""
     cfg = yaml.safe_load(read(SKILL / "assets" / "config.default.yaml"))
+    required_paths = list(cfg["paths"])
     f = Path(root) / CONFIG
-    if f.exists():
-        mine = yaml.safe_load(read(f)) or {}
+    if not f.exists():
+        if must_exist:
+            print(f"{root}: no pmo/config.yaml here; run setup.py first, or pass --project", file=sys.stderr)
+            sys.exit(2)
+    else:
+        try:
+            text = read(f)
+            mine = yaml.safe_load(text) or {}
+        except UnicodeDecodeError:
+            print(f"{f}: not valid UTF-8 text", file=sys.stderr)
+            sys.exit(2)
+        except yaml.YAMLError as e:
+            first_line = str(e).splitlines()[0] if str(e).splitlines() else str(e)
+            print(f"{f}: not valid YAML ({first_line})", file=sys.stderr)
+            sys.exit(2)
+        except OSError as e:
+            first_line = str(e).splitlines()[0] if str(e).splitlines() else str(e)
+            print(f"{f}: cannot be read ({first_line})", file=sys.stderr)
+            sys.exit(2)
         if not isinstance(mine, dict):
             print(f"{f}: must be a YAML map of keys, got {type(mine).__name__}", file=sys.stderr)
             sys.exit(2)
@@ -73,6 +148,17 @@ def load_config(root="."):
         if not isinstance(cfg.get(key), dict):
             print(f"{f}: `{key}` must be a map", file=sys.stderr)
             sys.exit(2)
+
+    for key in required_paths:
+        if key not in cfg["paths"]:
+            print(f"{f}: paths.{key} is missing", file=sys.stderr)
+            sys.exit(2)
+
+    errs = config_type_errors(cfg)
+    if errs:
+        for err in errs:
+            print(f"ERROR config: {err}", file=sys.stderr)
+        sys.exit(2)
 
     def is_outside(*parts):
         return outside(root, *parts)
@@ -222,7 +308,14 @@ def load_register(root, cfg, name):
     f = Path(root) / cfg["paths"]["registers"] / reg["file"] if reg else None
     if not f or not f.exists():
         return []
-    return (yaml.safe_load(read(f)) or {}).get(name) or []
+    data = yaml.safe_load(read(f))
+    if data is None:
+        return []
+    if not isinstance(data, dict) or name not in data:
+        msg = f"{f.name}: top key must be {name}:"
+        raise ValueError(msg)
+    entries = data.get(name)
+    return entries or []
 
 
 def to_date(v):
@@ -317,7 +410,10 @@ def md_table(headers: list[str], rows: list[list]) -> str:
 
 def roster_names(root, cfg) -> dict[str, str]:
     """slug -> name from the roster register; {} when there is none."""
-    entries = load_register(root, cfg, "roster")
+    try:
+        entries = load_register(root, cfg, "roster")
+    except ValueError:
+        return {}
     return {r["slug"]: r["name"] for r in entries if isinstance(r, dict) and r.get("slug") and r.get("name")}
 
 
