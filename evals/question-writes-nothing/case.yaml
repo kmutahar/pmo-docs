@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: question-writes-nothing
+description: Ask who owns T-4 and what its status is; the agent must answer from the registers and write nothing under pmo/.
+context:
+  scaffold_script: scaffold.sh

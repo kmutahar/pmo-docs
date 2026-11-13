@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: no-pmo-no-setup
+description: A folder with code and no pmo/ folder; the user asks to add a task. The skill needs a project office, so the agent must say so and ask once instead of setting one up.
+context:
+  scaffold_script: scaffold.sh
