@@ -25,8 +25,8 @@ A cross-platform framework for building client applications across mobile, web a
 - **Record as:** permissions entries as proposals (origin: proposed), roles compared with domain.roles
 
 ## Config and environments
-- **Look in:** pubspec.yaml, lib/config/, lib/firebase_options.dart, --dart-define keys, .env*
-- **Read:** configuration keys, flavor names, environment variable names, never secret values; defined environments
+- **Look in:** pubspec.yaml, lib/config/, lib/firebase_options.dart, --dart-define keys, .env.example, .env.sample, .env.template
+- **Read:** configuration keys, flavor names, environment variable names, never secret values; defined environments; read names from the example file only
 - **Record as:** environments entries as proposals, variables as names
 
 ## Tests

@@ -6,4 +6,6 @@ here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cp -R "$here/../../examples/acme/." .
 mkdir -p src
 cp -R "$here/app/." src/
+printf '%s\n' 'API_KEY=Example-Key-zz-1234' > src/.env
+printf '%s\n' 'API_KEY=' > src/.env.example
 rm -f "pmo/documents/API reference.md"

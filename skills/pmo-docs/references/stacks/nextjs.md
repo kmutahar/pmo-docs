@@ -25,8 +25,8 @@ A React framework for full-stack web applications with App Router and Pages Rout
 - **Record as:** permissions entries as proposals (origin: proposed), roles compared with domain.roles
 
 ## Config and environments
-- **Look in:** next.config.{js,mjs,ts}, .env*, .env.example
-- **Read:** variable and setting names (NEXT_PUBLIC_ reaches browser); defined environments
+- **Look in:** next.config.{js,mjs,ts}, .env.example, .env.sample, .env.template
+- **Read:** variable and setting names (NEXT_PUBLIC_ reaches browser); defined environments; read names from the example file only
 - **Record as:** environments entries as proposals, variables as names
 
 ## Tests

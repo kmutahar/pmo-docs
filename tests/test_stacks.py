@@ -73,6 +73,25 @@ class StackFiles(unittest.TestCase):
             {"nextjs", "express", "aspnet-core", "spring-boot", "fastapi", "django", "flutter"},
         )
 
+    def test_no_stack_file_names_env_wildcard(self):
+        stacks_dir = pc.SKILL / "references" / "stacks"
+        files = sorted(stacks_dir.glob("*.md")) if stacks_dir.exists() else []
+        self.assertTrue(files, "no stack files found")
+        for f in files:
+            text = f.read_text(encoding="utf-8")
+            self.assertNotIn(".env*", text, f"{f.name} contains .env*")
+            self.assertNotIn("user secrets", text, f"{f.name} contains user secrets")
+
+    def test_example_env_files_only(self):
+        stacks_dir = pc.SKILL / "references" / "stacks"
+        files = sorted(stacks_dir.glob("*.md")) if stacks_dir.exists() else []
+        self.assertTrue(files, "no stack files found")
+        pattern = re.compile(r"(?<![A-Za-z0-9_])\.env(?!\.(example|sample|template))\b")
+        for f in files:
+            text = f.read_text(encoding="utf-8")
+            match = pattern.search(text)
+            self.assertIsNone(match, f"{f.name} contains unexpected .env reference: {match.group(0) if match else None}")
+
 
 class Lookup(unittest.TestCase):
     def setUp(self):

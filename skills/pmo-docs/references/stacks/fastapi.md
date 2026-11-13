@@ -28,8 +28,8 @@ A modern Python web framework for building APIs with type hints. Covers FastAPI 
 - **Flask:** Flask-Login (@login_required, current_user), Flask-JWT-Extended (@jwt_required), custom role decorators
 
 ## Config and environments
-- **Look in:** core/config.py, config.py, .env*, .env.example
-- **Read:** pydantic-settings BaseSettings classes, os.getenv calls; defined environments
+- **Look in:** core/config.py, config.py, .env.example, .env.sample, .env.template
+- **Read:** pydantic-settings BaseSettings classes, os.getenv calls; defined environments; read names from the example file only
 - **Record as:** environments entries as proposals, variables as names
 - **Flask:** config.py, app.config.from_object/from_envvar, instance/config.py, from_prefixed_env, FLASK_DEBUG (FLASK_ENV was removed in Flask 2.3)
 

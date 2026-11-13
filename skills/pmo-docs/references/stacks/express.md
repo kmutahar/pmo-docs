@@ -25,8 +25,8 @@ A minimalist web framework for Node.js routing and middleware.
 - **Record as:** permissions entries as proposals (origin: proposed), roles compared with domain.roles
 
 ## Config and environments
-- **Look in:** config/, .env*, .env.example, process.env references, dotenv loading
-- **Read:** environment variable names and config keys; defined environments (NODE_ENV)
+- **Look in:** config/, .env.example, .env.sample, .env.template, process.env references, dotenv loading
+- **Read:** environment variable names and config keys; defined environments (NODE_ENV); read names from the example file only
 - **Record as:** environments entries as proposals, variables as names
 
 ## Tests

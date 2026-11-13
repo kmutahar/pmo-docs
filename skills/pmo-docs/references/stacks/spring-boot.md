@@ -26,7 +26,7 @@ An opinionated framework for building production-ready applications on the JVM.
 
 ## Config and environments
 - **Look in:** src/main/resources/application.properties, application.yaml or application.yml, application-*.yaml
-- **Read:** property names, profile names (SPRING_PROFILES_ACTIVE); defined environments
+- **Read:** property names, profile names (SPRING_PROFILES_ACTIVE); defined environments; key names only; stop reading a file if a value looks like a credential, and note it by file and line
 - **Record as:** environments entries as proposals, variables as names
 
 ## Tests
