@@ -256,7 +256,7 @@ where.py: error: doc type 'docs-audit-report' has no translations configured
 [exit 2]
 ```
 
-`parity_check.py` compares each translation with its original: the same headings, tables, ids and numbers. Acme has no translation yet:
+`parity_check.py` compares each translation with its original: the same headings, tables, ids, numbers, list items and ticked boxes. Acme has no translation yet:
 
 ```
 $ python3 "$SKILL/scripts/parity_check.py"

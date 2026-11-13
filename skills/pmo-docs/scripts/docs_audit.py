@@ -11,7 +11,7 @@ be a doc type in the config. Checks:
   stale         a document with `status: finished` is stale when the hash recorded in its front matter for any
                 register in the type's `generated_from` differs from the register's current hash
   translation behind a finished translation whose source_hash differs from body_hash of its original
-  parity        a translation differing in headings, tables, ids or numbers from its original
+  parity        a translation differing in headings, tables, ids, numbers, list items and ticked boxes from its original
   old           a finished document is older than its type's `stale_days` (front-matter
                 `last_updated`; a finished document without it is a front-matter finding)
   broken links  relative Markdown links that point at a missing file

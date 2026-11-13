@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check that translations match their original documents (headings, tables, ids, numbers).
+"""Check that translations match their original documents (headings, tables, ids, numbers, list items and ticked boxes).
 
 Usage:
     python3 parity_check.py [--project ROOT] [FILE ...]
@@ -81,6 +81,22 @@ def text_outside_tables(text: str) -> str:
     return "\n".join(out)
 
 
+def list_counts(text: str) -> tuple[int, int, int]:
+    """Count list items, ticked checkboxes ([x]/[X]) and unticked checkboxes ([ ]) outside tables."""
+    items = ticked = unticked = 0
+    for line in text_outside_tables(text).splitlines():
+        m = re.match(r"^\s*(?:[-*+]|\d+[.)])\s+", line)
+        if not m:
+            continue
+        items += 1
+        rest = line[m.end():]
+        if rest.startswith(("[x]", "[X]")):
+            ticked += 1
+        elif rest.startswith("[ ]"):
+            unticked += 1
+    return items, ticked, unticked
+
+
 def compare(original: str, translation: str, info: dict, cfg) -> list[str]:
     """Differences, [] when they match. Uses structure_check.sections and structure_check.tables."""
     errors = []
@@ -142,6 +158,15 @@ def compare(original: str, translation: str, info: dict, cfg) -> list[str]:
                         tn = numbers(tc, info, idrx)
                         if on != tn:
                             errors.append(f"`{otitle}` table {t_idx} row {r_idx} cell {c_idx}: numbers differ: {tn} != {on}")
+
+        oi, ox, ou = list_counts(otext)
+        ti, tx, tu = list_counts(ttext)
+        if oi != ti:
+            msg = f"`{otitle}`: list item count differs: original has {oi}, translation has {ti}"
+            errors.append(msg)
+        if (ox, ou) != (tx, tu):
+            msg = f"`{otitle}`: checkbox counts differ: original has {ox} [x] and {ou} [ ], translation has {tx} [x] and {tu} [ ]"
+            errors.append(msg)
 
         oids = sorted(idrx.findall(f"{otitle}\n{otext}"))
         tids = sorted(idrx.findall(f"{ttitle}\n{ttext}"))

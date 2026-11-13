@@ -201,11 +201,11 @@ The document a translation is made from.
 _Avoid_: master, source document
 
 **Translation**:
-A document in another language, next to its original as `<name>.<lang>.md`, with the same headings, tables, ids and numbers.
+A document in another language, next to its original as `<name>.<lang>.md`, with the same headings, tables, ids, numbers, list items and ticked boxes.
 _Avoid_: localisation, version
 
 **Parity**:
-The state of a translation that has the same headings, tables, ids and numbers as its original (`parity_check.py`).
+The state of a translation that has the same headings, tables, ids, numbers, list items and ticked boxes as its original (`parity_check.py`).
 _Avoid_: match, sync
 
 **Translation glossary**:

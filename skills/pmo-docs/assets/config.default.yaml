@@ -39,12 +39,12 @@ technical:
 #   glossary: approved term list, a Markdown file inside the project; the proposed list sits next to it
 #   digits: the ten characters for 0 to 9, when the language does not write 0123456789
 #   connectors: the words for of, to and and between two numbers, as in 3 of 5
-#   separators: characters used as a decimal or thousands mark between digits
+#   separators: characters used as a decimal or thousands mark between digits (en has the comma; another draft language declares its own)
 # Quote a code that YAML would read as something else (no, on, off, yes).
 languages:
   draft: en
   translations: []
-  en: { label: EN, dir: ltr }
+  en: { label: EN, dir: ltr, separators: "," }
 
 # Vocabulary: the values each entry field may take. An empty list means any value is accepted.
 vocab:

@@ -107,7 +107,7 @@ A template is the contract: its front matter declares the checks, `structure_che
 
 A translation is a document in another language, next to its original as `<name>.<lang>.md` (`references/conventions.md`). It is made with `references/translate.md`, never unasked.
 
-- It keeps the original's headings, tables, ids and numbers. `parity_check.py` reports no difference before Finish.
+- It keeps the original's headings, tables, ids, numbers, list items and ticked boxes. `parity_check.py` reports no difference before Finish.
 - Ids, paths, dates and code stay as they are. Add nothing to the original's facts and drop nothing.
 - The approved glossary of a language is read only. New terms go to the proposed file next to it; moving a row to the approved file is the user's step.
 - A translation records `source_hash`, not `source_hashes`. It is behind its original when the original's text changed afterwards (`docs_audit.py` compares the hash).
@@ -144,7 +144,7 @@ The scripts are in this skill's own folder, `scripts/` next to this file. Playbo
 | `scripts/render_views.py [--check]` | validate registers, write or compare views |
 | `scripts/renumber.py [<ID>] [--apply]` | fix duplicate ids after a merge |
 | `scripts/structure_check.py [files]` | check documents against their template |
-| `scripts/parity_check.py [files]` | check that a translation matches its original in headings, tables, ids and numbers |
+| `scripts/parity_check.py [files]` | check that a translation matches its original in headings, tables, ids, numbers, list items and ticked boxes |
 | `scripts/docs_audit.py` | stale, old, behind and broken documents; exits 1 on findings |
 | `scripts/overdue.py` | overdue tasks, actions, risks, issues and milestones |
 

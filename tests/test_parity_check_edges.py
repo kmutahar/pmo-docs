@@ -152,6 +152,39 @@ class Compare(unittest.TestCase):
         o = "# T\n## A\n| a |\n|---|\n| 1 |\n"
         self.assertEqual(self.cmp(o, o.replace("\n", "\r\n")), [])
 
+    def test_thousands_mark_with_the_default_separators(self):
+        orig = "# T\n\nBudget 1,234.5\n"
+        digits = "".join(chr(0x660 + n) for n in range(10))
+        num = digits[1] + chr(0x66C) + digits[2] + digits[3] + digits[4] + chr(0x66B) + digits[5]
+        trans = f"# T\n\nBudget {num}\n"
+        info = {"digits": digits, "separators": chr(0x66C) + chr(0x66B)}
+        with tempfile.TemporaryDirectory() as tmp:
+            cfg = pc.load_config(tmp, must_exist=False)
+        self.assertEqual(self.cmp(orig, trans, info, cfg), [])
+        cfg_no_sep = pc.merge(cfg, {"languages": {"en": {"separators": None}}})
+        errs = self.cmp(orig, trans, info, cfg_no_sep)
+        self.assertEqual(len(errs), 1)
+        self.assertIn("numbers differ", errs[0])
+
+    def test_added_list_item_is_reported(self):
+        o = "# T\n\n- A\n- B\n"
+        t = "# T\n\n- A\n- B\n- C\n"
+        errs = self.cmp(o, t)
+        self.assertEqual(len(errs), 1)
+        self.assertIn("list item count differs: original has 2, translation has 3", errs[0])
+
+    def test_changed_tick_is_reported(self):
+        o = "# T\n\n- [x] A\n"
+        t = "# T\n\n- [ ] A\n"
+        errs = self.cmp(o, t)
+        self.assertEqual(len(errs), 1)
+        self.assertIn("checkbox counts differ: original has 1 [x] and 0 [ ], translation has 0 [x] and 1 [ ]", errs[0])
+
+    def test_list_items_inside_code_and_tables_are_not_counted(self):
+        o = "# T\n\n| A | B |\n|---|---|\n| - item | ok |\n"
+        t = "# T\n\n| A | B |\n|---|---|\n| - item | ok |\n\n```\n- [ ] x\n```\n"
+        self.assertEqual(self.cmp(o, t), [])
+
 
 class Files(unittest.TestCase):
     def setUp(self):
