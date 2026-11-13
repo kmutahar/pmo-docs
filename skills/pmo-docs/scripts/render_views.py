@@ -35,6 +35,8 @@ def real_date(v):
 def one_line_entries(text):
     """True when every entry sits on one line: after the single top `name:` key line, every line is a `- ` entry (or blank/comment)."""
     lines = [ln for ln in text.splitlines() if ln.strip() and not ln.lstrip().startswith("#")]
+    if lines and lines[0].rstrip() == "---":
+        lines = lines[1:]
     return all(re.match(r"\s*- ", ln) for ln in lines[1:])
 
 
@@ -66,6 +68,29 @@ def config_errors(cfg, root=None):
                     errors.append(f"config: registers {prefixes[p]} and {n} both use prefix {p}")
                 else:
                     prefixes[p] = n
+    files = {}
+    views = {}
+    for n, r in cfg.get("registers", {}).items():
+        if isinstance(r, dict):
+            f = r.get("file")
+            if f and isinstance(f, str):
+                if f in files:
+                    errors.append(f"config: registers {files[f]} and {n} both use file {f}")
+                else:
+                    files[f] = n
+            v = r.get("view")
+            if v and isinstance(v, str):
+                if v == "catalogue.md":
+                    errors.append(f"config: registers.{n}.view `catalogue.md` is reserved for the catalogue")
+                elif v in views:
+                    errors.append(f"config: registers {views[v]} and {n} both use view {v}")
+                else:
+                    views[v] = n
+            fields = r.get("fields")
+            if isinstance(fields, list) and "id" in fields:
+                p = r.get("prefix")
+                if not p or not isinstance(p, str) or not p.strip():
+                    errors.append(f"config: register `{n}` has an id field and needs a prefix")
     for n, r in cfg.get("registers", {}).items():
         if isinstance(r, dict):
             refs = r.get("refs")
@@ -148,6 +173,7 @@ def config_errors(cfg, root=None):
                 if pb_dir.is_dir():
                     for p in pb_dir.glob("*.md"):
                         known_recipes.add(p.stem)
+            known_recipes.discard("release-notes")
             for item in sched:
                 if not isinstance(item, dict):
                     errors.append("config: schedule entry must be a map")
@@ -155,6 +181,8 @@ def config_errors(cfg, root=None):
                 r = item.get("recipe")
                 if not r or not isinstance(r, str):
                     errors.append("config: schedule entry needs recipe")
+                elif r == "release-notes":
+                    errors.append("config: schedule recipe `release-notes` cannot be scheduled: it needs a person present")
                 elif r not in known_recipes:
                     errors.append(f"config: schedule recipe `{r}` is unknown; known recipes: {', '.join(sorted(known_recipes))}")
                 w = item.get("when")
@@ -289,8 +317,17 @@ def read_registers(root, cfg):
         if marker_line is not None:
             errors.append(f"{rel_path}:{marker_line}: merge conflict markers; resolve them first (references/git.md, Several writers)")
             continue
+        sep_chars = chr(0x2028) + chr(0x2029) + chr(0x85)
+        bad_sep_line = None
+        for lineno, line in enumerate(text.split("\n"), 1):
+            if any(ch in line for ch in sep_chars):
+                bad_sep_line = lineno
+                break
+        if bad_sep_line is not None:
+            errors.append(f"{rel_path}:{bad_sep_line}: remove the line separator character")
+            continue
         try:
-            parsed = pc.yaml.safe_load(text)
+            parsed = pc.load_yaml(text)
             if isinstance(parsed, dict) and parsed and name not in parsed:
                 errors.append(f"{reg['file']}: top key must be {name}:")
                 continue
@@ -357,10 +394,21 @@ def allowed(cfg, name):
 def validate(data, cfg, root=None):
     errors = []
     ids = {n: {e.get("id") for e in rows if isinstance(e.get("id"), (str, int))} for n, rows in data.items()}
-    slugs = {r.get("slug") for r in data.get("roster", [])}
+    slugs = {r.get("slug") for r in data.get("roster", []) if isinstance(r.get("slug"), (str, int))}
+    roster_slugs = {}
     id_occurrences = {}
     id_order = []
     reg_lines = {}
+
+    def entry_pos(reg_name, entry_index):
+        lineno = reg_lines.get(reg_name, [])[entry_index - 1] if reg_name in reg_lines and entry_index - 1 < len(reg_lines[reg_name]) else None
+        if root is not None and lineno is not None:
+            r_info = cfg.get("registers", {}).get(reg_name, {})
+            reg_file = r_info.get("file", f"{reg_name}.yaml") if isinstance(r_info, dict) else f"{reg_name}.yaml"
+            reg_dir = cfg.get("paths", {}).get("registers", "pmo/registers")
+            return f"{reg_dir}/{reg_file}:{lineno}"
+        return f"{reg_name} entry {entry_index}"
+
     if root is not None:
         for name in data:
             reg = cfg.get("registers", {}).get(name)
@@ -391,25 +439,39 @@ def validate(data, cfg, root=None):
                 elif not isinstance(rid, str):
                     errors.append(f"{who}: id {rid!r} must be text (quote it)")
                 else:
-                    if rid not in id_occurrences:
-                        id_occurrences[rid] = []
-                        id_order.append(rid)
-                    lineno = reg_lines.get(name, [])[i - 1] if name in reg_lines and i - 1 < len(reg_lines[name]) else None
-                    if root is not None and lineno is not None:
-                        reg_file = reg.get("file", f"{name}.yaml")
-                        reg_dir = cfg.get("paths", {}).get("registers", "pmo/registers")
-                        pos = f"{reg_dir}/{reg_file}:{lineno}"
-                    else:
-                        pos = f"{name} entry {i}"
+                    key = (name, rid)
+                    if key not in id_occurrences:
+                        id_occurrences[key] = []
+                        id_order.append(key)
+                    pos = entry_pos(name, i)
                     label_val = None
                     for k in ("title", "text", "name", "item"):
                         if r.get(k) is not None and str(r.get(k)).strip():
                             label_val = r[k]
                             break
                     desc = f'{pos} "{label_val}"' if label_val is not None else pos
-                    id_occurrences[rid].append(desc)
+                    id_occurrences[key].append(desc)
                 if rid and isinstance(rid, str) and prefix and not re.fullmatch(re.escape(prefix) + r"-\d+", str(rid)):
                     errors.append(f"{who}: id must look like {prefix}-1")
+            if name == "roster":
+                slug_val = r.get("slug")
+                if slug_val is None or (isinstance(slug_val, str) and not slug_val.strip()):
+                    errors.append(f"{who}: missing slug")
+                elif isinstance(slug_val, (str, int)):
+                    pos_this = entry_pos(name, i)
+                    if slug_val in roster_slugs:
+                        pos_first = roster_slugs[slug_val]
+                        errors.append(f"duplicate slug {slug_val}: {pos_first}, {pos_this}")
+                    else:
+                        roster_slugs[slug_val] = pos_this
+            single_value_fields = ["status"]
+            if name == "tasks":
+                single_value_fields.extend(["priority", "team", "group", "period"])
+            elif name == "roster":
+                single_value_fields.append("slug")
+            for field in single_value_fields:
+                if isinstance(r.get(field), (list, dict)):
+                    errors.append(f"{who}: {field} must be one value, not a list")
             for field, vname in reg.get("enums", {}).items():
                 values = r.get(field)  # null is allowed (never guess), except for status
                 ok = allowed(cfg, vname)
@@ -442,9 +504,10 @@ def validate(data, cfg, root=None):
             for o in owners if isinstance(owners, list) else [owners]:
                 if o and slugs - {None} and not (isinstance(o, (str, int)) and o in slugs):  # a map or list is unhashable
                     errors.append(f"{who}: owner {o!r} is not in the roster")
-    for rid in id_order:
-        copies = id_occurrences[rid]
+    for key in id_order:
+        copies = id_occurrences[key]
         if len(copies) > 1:
+            rid = key[1]
             errors.append(f"duplicate id {rid}: {', '.join(copies)}; run renumber.py")
     return errors
 
@@ -578,14 +641,17 @@ def main(argv=None):
         return 2
     data, errors = read_registers(args.project, cfg)
     errors += validate(data, cfg, root=args.project)
-    views = render(data, cfg)
     folder = Path(args.project) / cfg["paths"]["views"]
-    # a view whose register file is gone is left over
-    orphans = [r["view"] for r in cfg["registers"].values() if r["view"] not in views and (folder / r["view"]).exists()]
-    if args.check and not errors:
-        errors = [f"stale view: {cfg['paths']['views']}/{n}" for n, t in views.items()
-                  if not (folder / n).exists() or pc.read(folder / n) != t]
-        errors += [f"stale view: {cfg['paths']['views']}/{n} (register file is gone)" for n in orphans]
+    views = {}
+    orphans = []
+    if not errors:
+        views = render(data, cfg)
+        # a view whose register file is gone is left over
+        orphans = [r["view"] for r in cfg["registers"].values() if r["view"] not in views and (folder / r["view"]).exists()]
+        if args.check:
+            errors = [f"stale view: {cfg['paths']['views']}/{n}" for n, t in views.items()
+                      if not (folder / n).exists() or pc.read(folder / n) != t]
+            errors += [f"stale view: {cfg['paths']['views']}/{n} (register file is gone)" for n in orphans]
     for e in errors:
         print("ERROR", e)
     if errors:

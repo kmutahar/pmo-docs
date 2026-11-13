@@ -92,6 +92,7 @@ registers:
     fields: [id, title, goals, output, depends_on, blocks, owner, acceptance, accepted_by, accepted_on, status, note, due, origin]
     enums: {status: task_status, origin: origin}
     dates: [due, accepted_on]
+    refs: {depends_on: priorities, blocks: priorities}
     closed: [done, dropped]
   milestones:
     file: milestones.yaml
@@ -100,6 +101,7 @@ registers:
     fields: [id, title, period, due, status, owner, exit_criteria, depends_on, origin]
     enums: {status: task_status, origin: origin}
     dates: [due]
+    refs: {depends_on: milestones}
     months: [period]
     closed: [done, dropped]
   risks:
@@ -117,6 +119,7 @@ registers:
     fields: [id, title, description, severity, owner, status, origin, raised, resolved, related_tasks]
     enums: {status: issue_status, severity: issue_severity, origin: origin}
     dates: [raised, resolved]
+    refs: {related_tasks: tasks}
     closed: [resolved, closed]
   assumptions:
     file: assumptions.yaml
@@ -138,6 +141,7 @@ registers:
     fields: [id, title, context, decision, options, consequences, decided_by, date, status, supersedes, related, origin]
     enums: {status: decision_status, origin: origin}
     dates: [date]
+    refs: {supersedes: decisions, related: decisions}
     closed: [accepted, superseded]
   actions:
     file: actions.yaml
@@ -154,6 +158,7 @@ registers:
     fields: [id, title, requested_by, date, description, impact, status, decided_by, decided_on, related_tasks, origin]
     enums: {status: change_status, origin: origin}
     dates: [date, decided_on]
+    refs: {related_tasks: tasks}
     closed: [approved, rejected, implemented]
     # accepted: statuses that count as agreed scope changes (project-plan change log)
     accepted: [approved, implemented]

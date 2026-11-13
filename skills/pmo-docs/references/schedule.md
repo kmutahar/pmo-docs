@@ -15,6 +15,8 @@ A scheduled run drafts only: it must never Finish, publish, or commit. The skill
 1. **Ask which recipe and when**
    Ask which recipe to schedule and when it should run (for example `weekly-status` at `Mon 08:00`).
    Known recipes: `weekly-status`, `monthly-status`, `month-start`, `overdue-report`, `docs-audit`, plus any custom playbook under `paths.playbooks` (`pmo/playbooks/<name>.md`).
+   `release-notes` cannot be scheduled: it needs a person present.
+   A scheduled `month-start` run stops after listing the carry-over and changes no register.
 
 2. **Record in config**
    Show the planned entry under `schedule:` in `pmo/config.yaml`:

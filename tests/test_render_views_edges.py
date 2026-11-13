@@ -152,6 +152,14 @@ class ConfigErrors(Base):
         cfg = pc.merge(self.cfg, {"schedule": [{"recipe": "weekly-status", "when": "Mondays"}]})
         self.assertEqual(rv.config_errors(cfg), [])
 
+    def test_view_and_file_clashes_and_catalogue_reserved(self):
+        self.has({"registers": {"risks": {"view": "tasks.md"}}}, "registers tasks and risks both use view tasks.md")
+        self.has({"registers": {"issues": {"file": "tasks.yaml"}}}, "registers tasks and issues both use file tasks.yaml")
+        self.has({"registers": {"issues": {"view": "catalogue.md"}}}, "registers.issues.view `catalogue.md` is reserved for the catalogue")
+
+    def test_register_with_id_needs_prefix(self):
+        self.has({"registers": {"vendors": {"file": "vendors.yaml", "view": "vendors.md", "fields": ["id", "title"]}}}, "register `vendors` has an id field and needs a prefix")
+
 
 class Helpers(Base):
     def test_real_date(self):
@@ -167,6 +175,7 @@ class Helpers(Base):
     def test_one_line_entries(self):
         self.assertTrue(rv.one_line_entries("risks:\n  - {id: R-1}\n# c\n\n  - {id: R-2}\n"))
         self.assertTrue(rv.one_line_entries(""))
+        self.assertTrue(rv.one_line_entries("---\nrisks:\n  - {id: R-1}\n"))
         self.assertFalse(rv.one_line_entries("risks:\n  - {id: R-1,\n    title: x}\n"))
 
     def test_entry_lines(self):
@@ -334,6 +343,22 @@ class Validate(Base):
         errs = self.check("tasks", rows, {refs[field]: []})
         self.assertEqual(sum("must be an id or a list of ids" in e for e in errs), 1, errs)
 
+    def test_roster_slug_duplicate_and_missing(self):
+        roster_path = self.reg / "roster.yaml"
+        orig = roster_path.read_text(encoding="utf-8")
+        roster_path.write_text(orig + "  - {slug: alice, name: Other Example, role: Tester}\n", encoding="utf-8")
+        code, out, _ = cli("--project", str(self.root))
+        self.assertEqual(code, 1)
+        self.assertIn("duplicate slug alice: pmo/registers/roster.yaml:3, pmo/registers/roster.yaml:5", out)
+        roster_path.write_text(orig + "  - {name: No Slug}\n", encoding="utf-8")
+        code, out, _ = cli("--project", str(self.root))
+        self.assertEqual(code, 1)
+        self.assertIn("roster #4: missing slug", out)
+
+    def test_two_registers_with_same_id_give_no_duplicate(self):
+        errs = rv.validate({"tasks": [{"id": "T-1"}], "actions": [{"id": "T-1"}]}, self.cfg)
+        self.assertFalse(any("duplicate id" in e for e in errs), errs)
+
 
 class Files(Base):
     def write_reg(self, name, text):
@@ -474,6 +499,102 @@ class Files(Base):
         for entry, text in (("x", "must be a map"), ({"when": "w"}, "needs recipe"), ({"recipe": 5, "when": "w"}, "needs recipe"), ({"recipe": "docs-audit"}, "needs when"), ({"recipe": "docs-audit", "when": 3}, "needs when")):
             errs = rv.config_errors(pc.merge(self.cfg, {"schedule": [entry]}), root=self.root)
             self.assertTrue(any(text in e for e in errs), (entry, errs))
+
+    def test_register_repeated_key_exits_1(self):
+        self.write_reg("risks", "risks:\n  - {id: R-1, title: A, status: open, status: closed}\n")
+        code, out, _ = cli("--project", str(self.root))
+        self.assertEqual(code, 1)
+        self.assertIn("risks.yaml", out)
+        self.assertIn("repeated key", out)
+
+    def test_register_nested_aliases_refused_quickly(self):
+        import time
+        lines = ["a0: &a0 " + str(["x"] * 9)]
+        for i in range(1, 8):
+            lines.append(f"a{i}: &a{i} " + "[" + ", ".join([f"*a{i-1}"] * 9) + "]")
+        lines.append("risks:")
+        lines.append("  - {id: R-1, title: *a7}\n")
+        self.write_reg("risks", "\n".join(lines))
+        t0 = time.monotonic()
+        code, out, _ = cli("--project", str(self.root))
+        self.assertLess(time.monotonic() - t0, 5.0)
+        self.assertEqual(code, 1)
+        self.assertIn("anchors and aliases are not allowed", out)
+
+    def test_lists_where_one_value_required(self):
+        tasks_file = self.reg / "tasks.yaml"
+        orig_tasks = tasks_file.read_text(encoding="utf-8")
+        # 1. priority: [high, medium]
+        tasks_file.write_text(orig_tasks.replace("priority: high", "priority: [high, medium]"), encoding="utf-8")
+        code, out, err = cli("--project", str(self.root))
+        self.assertEqual(code, 1)
+        self.assertIn("ERROR tasks T-1: priority must be one value, not a list", out)
+        self.assertNotIn("Traceback", out + err)
+
+        # 2. team: [web]
+        tasks_file.write_text(orig_tasks.replace("id: T-1, title: Set up staging server, team: platform", "id: T-1, title: Set up staging server, team: [web]"), encoding="utf-8")
+        code, out, err = cli("--project", str(self.root))
+        self.assertEqual(code, 1)
+        self.assertIn("ERROR tasks T-1: team must be one value, not a list", out)
+        self.assertNotIn("Traceback", out + err)
+        tasks_file.write_text(orig_tasks, encoding="utf-8")
+
+        # 3. roster alice slug: [alice, al]
+        roster_file = self.reg / "roster.yaml"
+        orig_roster = roster_file.read_text(encoding="utf-8")
+        roster_file.write_text(orig_roster.replace("slug: alice", "slug: [alice, al]"), encoding="utf-8")
+        code, out, err = cli("--project", str(self.root))
+        self.assertEqual(code, 1)
+        self.assertIn("ERROR roster #2: slug must be one value, not a list", out)
+        self.assertNotIn("Traceback", out + err)
+        roster_file.write_text(orig_roster, encoding="utf-8")
+
+        # 4. T-1 priority: [high, medium] and T-2 due: someday prints both errors and returns 1 (render never ran)
+        replaced = orig_tasks.replace("priority: high", "priority: [high, medium]").replace("due: 2026-03-25", "due: someday")
+        tasks_file.write_text(replaced, encoding="utf-8")
+        code, out, err = cli("--project", str(self.root))
+        self.assertEqual(code, 1)
+        self.assertIn("ERROR tasks T-1: priority must be one value, not a list", out)
+        self.assertIn("ERROR tasks T-2: due 'someday' is not a YYYY-MM-DD date", out)
+        self.assertNotIn("Traceback", out + err)
+
+    def test_view_clash_cli_run_exits_2(self):
+        cfg = self.root / "pmo/config.yaml"
+        cfg.write_text(cfg.read_text(encoding="utf-8") + "registers:\n  risks:\n    view: tasks.md\n", encoding="utf-8")
+        code, out, _ = cli("--project", str(self.root))
+        self.assertEqual(code, 2)
+        self.assertIn("config: registers tasks and risks both use view tasks.md", out)
+
+    def test_leading_dashes_line_in_register_passes_check(self):
+        tasks_file = self.reg / "tasks.yaml"
+        tasks_file.write_text("---\n" + tasks_file.read_text(encoding="utf-8"), encoding="utf-8")
+        code, out, err = cli("--project", str(self.root), "--check")
+        self.assertEqual(code, 0, (out, err))
+
+    def test_line_separator_character_in_title_exits_1(self):
+        tasks_file = self.reg / "tasks.yaml"
+        lines = tasks_file.read_text(encoding="utf-8").splitlines(keepends=True)
+        lines[2] = lines[2].replace("title: Design login page", f"title: Design{chr(0x2028)}login page")
+        tasks_file.write_text("".join(lines), encoding="utf-8")
+        code, out, _ = cli("--project", str(self.root))
+        self.assertEqual(code, 1)
+        self.assertIn("ERROR pmo/registers/tasks.yaml:3: remove the line separator character", out)
+
+    def test_reference_fields_issues_and_milestones(self):
+        issues_file = self.reg / "issues.yaml"
+        orig_issues = issues_file.read_text(encoding="utf-8")
+        issues_file.write_text(orig_issues.replace("related_tasks: [T-2]", "related_tasks: [T-999]"), encoding="utf-8")
+        code, out, _ = cli("--project", str(self.root))
+        self.assertEqual(code, 1)
+        self.assertIn("ERROR issues I-1: related_tasks 'T-999' is not an id in tasks", out)
+        issues_file.write_text(orig_issues, encoding="utf-8")
+
+        milestones_file = self.reg / "milestones.yaml"
+        orig_m = milestones_file.read_text(encoding="utf-8")
+        milestones_file.write_text(orig_m.replace("depends_on: []", "depends_on: [M-77]"), encoding="utf-8")
+        code, out, _ = cli("--project", str(self.root))
+        self.assertEqual(code, 1)
+        self.assertIn("ERROR milestones M-1: depends_on 'M-77' is not an id in milestones", out)
 
 
 class Cli(Base):

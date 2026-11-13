@@ -323,7 +323,7 @@ class Odd(unittest.TestCase):
         self.assertIn("| No team | 0 / 2 | 0 | 0 |", report)
 
     def test_team_without_tasks_is_left_out_of_the_checklist(self):
-        self.put("tasks", "tasks:\n  - {id: T-1, title: A, team: platform, status: not-started, period: 2026-03}\n")
+        self.put("tasks", "tasks:\n  - {id: T-1, title: A, team: platform, status: not-started, period: 2026-03}\n  - {id: T-2, title: B, team: platform, status: not-started, period: 2026-03}\n")
         for t in ("project-plan", "team-checklist"):
             out, _ = self.gen(t, "2026-03")
             self.assertIn("Platform", out)
@@ -386,6 +386,7 @@ class Odd(unittest.TestCase):
 
     def test_decision_shapes(self):
         self.put("decisions", "decisions:\n"
+                 "  - {id: DEC-0, status: accepted, date: 2026-02-01}\n"
                  "  - {id: DEC-1, status: accepted, options: one, supersedes: DEC-0, related: [DEC-2, null], date: 2026-03-01}\n"
                  "  - {id: DEC-2, status: proposed, options: [], consequences: x, supersedes: [DEC-1], date: 2026-03-02}\n"
                  "  - {id: DEC-3, status: proposed}\n")
@@ -409,10 +410,10 @@ class Odd(unittest.TestCase):
 
     def test_roster_entries_without_role_or_name(self):
         with open(self.reg / "roster.yaml", "a", encoding="utf-8") as f:
-            f.write("  - {slug: a-b}\n  - {role: Lead}\n")
+            f.write("  - {slug: a-b}\n  - {slug: lead, role: Lead}\n")
         out, _ = self.gen("project-plan")
         self.assertIn("| not set | a-b |", out)
-        self.assertIn("| Lead | not set |", out)
+        self.assertIn("| Lead | lead |", out)
 
     def test_changes_and_decisions_outside_the_week_are_left_out(self):
         self.put("changes", "changes:\n  - {id: CR-1, title: In, status: proposed, date: 2026-03-09}\n  - {id: CR-2, title: Out, status: proposed, date: 2026-03-16}\n  - {id: CR-3, title: No date, status: proposed}\n")

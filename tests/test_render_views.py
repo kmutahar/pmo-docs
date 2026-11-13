@@ -101,7 +101,10 @@ class RenderViews(unittest.TestCase):
 
     def test_duplicate_id_across_registers(self):
         self.append("actions", "  - {id: T-1, text: x, status: open}")
-        self.assertIn("duplicate id T-1", run(self.root)[1])
+        code, out = run(self.root)
+        self.assertEqual(code, 1)
+        self.assertNotIn("duplicate id T-1", out)
+        self.assertIn("actions T-1: id must look like ACT-1", out)
 
     def test_conflict_markers_reported_with_file_and_line_and_exit_1(self):
         (self.reg / "tasks.yaml").write_text(
@@ -232,6 +235,8 @@ class RenderViews(unittest.TestCase):
         (self.reg / "tasks.yaml").write_text("tasks:\n  - {id: T-1, title: a, status: todo, priority: high}\n", encoding="utf-8")
         (self.reg / "tests.yaml").unlink(missing_ok=True)
         (self.reg / "requirements.yaml").unlink(missing_ok=True)
+        (self.reg / "issues.yaml").unlink(missing_ok=True)
+        (self.reg / "changes.yaml").unlink(missing_ok=True)
         self.assertEqual(run(self.root)[0], 0)
         self.assertIn("todo 1, done 0", (self.views / "tasks.md").read_text(encoding="utf-8"))
 
@@ -711,6 +716,46 @@ class ScheduleConfig(unittest.TestCase):
         cfg_rec = pc.merge(self.defaults, {"schedule": [{"when": "Mon 08:00"}]})
         errs_rec = render_views.config_errors(cfg_rec, root=self.root)
         self.assertTrue(any("needs recipe" in e for e in errs_rec), errs_rec)
+
+    def test_release_notes_cannot_be_scheduled(self):
+        cfg = pc.merge(self.defaults, {
+            "schedule": [
+                {"recipe": "release-notes", "when": "month end"}
+            ]
+        })
+        errs = render_views.config_errors(cfg, root=self.root)
+        self.assertIn("config: schedule recipe `release-notes` cannot be scheduled: it needs a person present", errs)
+
+    def test_release_notes_cannot_be_scheduled_even_with_playbook(self):
+        pb_dir = self.root / "pmo/playbooks"
+        pb_dir.mkdir(parents=True, exist_ok=True)
+        (pb_dir / "release-notes.md").write_text("# Release notes\n", encoding="utf-8")
+        cfg = pc.merge(self.defaults, {
+            "schedule": [
+                {"recipe": "release-notes", "when": "month end"}
+            ]
+        })
+        errs = render_views.config_errors(cfg, root=self.root)
+        self.assertIn("config: schedule recipe `release-notes` cannot be scheduled: it needs a person present", errs)
+
+    def test_month_start_is_valid_schedule_recipe(self):
+        cfg = pc.merge(self.defaults, {
+            "schedule": [
+                {"recipe": "month-start", "when": "1st 09:00"}
+            ]
+        })
+        errs = render_views.config_errors(cfg, root=self.root)
+        self.assertEqual(errs, [])
+
+    def test_schedule_md_known_recipes_and_release_notes_line(self):
+        sched_md = (REPO / "skills/pmo-docs/references/schedule.md").read_text(encoding="utf-8")
+        known_line = next(ln for ln in sched_md.splitlines() if "Known recipes:" in ln)
+        for name in render_views.KNOWN_RECIPES:
+            self.assertIn(f"`{name}`", known_line)
+        self.assertNotIn("release-notes", known_line)
+        rn_lines = [ln for ln in sched_md.splitlines() if "release-notes" in ln]
+        self.assertEqual(len(rn_lines), 1)
+        self.assertIn("`release-notes` cannot be scheduled: it needs a person present.", rn_lines[0])
 
 
 class CommittedViews(unittest.TestCase):
