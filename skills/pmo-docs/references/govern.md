@@ -15,7 +15,7 @@ Trigger: anything that changes the scope, priority, owner or date of committed w
 1. **Record it**
    Add a `CR-` entry to `changes` with `status: proposed`, `title`, `requested_by`, `date`, `description`, `impact` and `related_tasks` (`references/track.md`).
 2. **Draft it**
-   Draft `change-request` (`where.py change-request --as-of <date>` gives the path). Fill the impact from the registers, offer one to three options including "do not change", and give a recommendation.
+   Draft `change-request` (`where.py change-request --as-of <date> --title "Change request <CR-id>"` gives the path (the id keeps two requests of one day apart)). Fill the impact from the registers, offer one to three options including "do not change", and give a recommendation.
 3. **Wait for the decision**
    The user, or the person they name, decides. Never mark a request approved or rejected yourself. When told the outcome: set `status`, `decided_by` and `decided_on`; add a `DEC-` entry; apply the change in the registers; then set the request to `implemented`.
 4. **List stale documents**
@@ -34,7 +34,7 @@ A goal's acceptance criteria are in `priorities` (`acceptance`, `accepted_by`, `
 
 1. Take the notes or transcript the user gives. Extract decisions, actions (owner and due) and open questions. Mark a missing owner or date and ask; never guess.
 2. Register them: a `MTG-` entry, the `DEC-` entries and the `ACT-` entries (`references/track.md`). Link the minutes in `minutes_doc` once drafted.
-3. Draft `meeting-minutes` (`references/draft.md`; `where.py meeting-minutes --as-of <meeting date>` gives the path). Every decision and action carries its id.
+3. Draft `meeting-minutes` (`references/draft.md`; `where.py meeting-minutes --as-of <meeting date> --title "Meeting minutes <MTG-id>"` gives the path). Every decision and action carries its id.
 
 ## Retrospective
 

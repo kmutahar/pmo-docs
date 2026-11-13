@@ -123,7 +123,7 @@ A translation is a document in another language, next to its original as `<name>
 Finish turns a draft into a finished document. It is defined here once; recipes and playbooks say "Finish". Do these in order, on one document:
 
 1. Run `render_views.py --check`. Stop on validation errors and report them.
-2. Run `where.py <type> [period] [--week] [--as-of DATE] --hashes`, with the period the document was drafted for (see Documents), and read `template_version`, `generated_from`, the template path and `source_hashes`.
+2. Run `where.py <type> [period] [--week] [--as-of DATE] [--title TEXT] --hashes`, with the period the document was drafted for (see Documents), with the same title the draft was made with, and read `template_version`, `generated_from`, the template path and `source_hashes`.
 3. Copy `template_version` from the winning template into the front matter.
 4. Record `source_hashes` in the front matter: copy the `source_hashes:` line `where.py --hashes` printed (format as today). If the draft already records `source_hashes` and a value differs from what `where.py` printed, the draft is behind its registers: ask whether to refresh it or to finish anyway, and replace the recorded value only after that answer.
 5. Remove every HTML comment and the `checks:` block from the document.

@@ -80,3 +80,25 @@ class PlaybookFrontMatter(unittest.TestCase):
         text = (pc.SKILL / "references/govern.md").read_text(encoding="utf-8")
         self.assertIn("say it needs a change request and ask before recording one", text)
 
+    def test_weekly_status_runs_the_generator_first(self):
+        text = (pc.SKILL / "references/weekly-status.md").read_text(encoding="utf-8")
+        self.assertIn("generate.py status-report", text)
+        self.assertIn("Count only tasks whose", text)
+        self.assertLess(text.index("generate.py status-report"), text.index("Count only tasks whose"))
+        self.assertIn("do not recount them by hand", text)
+
+    def test_monthly_status_follows_weekly_steps(self):
+        text = (pc.SKILL / "references/monthly-status.md").read_text(encoding="utf-8")
+        self.assertIn("steps 2 and 4", text)
+
+    def test_draft_technical_lists_shipped_stacks(self):
+        stacks = sorted(p.stem for p in (pc.SKILL / "references/stacks").glob("*.md"))
+        self.assertGreater(len(stacks), 0)
+        text = (pc.SKILL / "references/draft-technical.md").read_text(encoding="utf-8")
+        for stack in stacks:
+            with self.subTest(stack):
+                self.assertIn(stack, text)
+
+
+if __name__ == "__main__":
+    unittest.main()

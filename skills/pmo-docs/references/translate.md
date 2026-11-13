@@ -35,7 +35,7 @@ The rules for translations live in `SKILL.md` (Translations) and `references/con
    Run `python3 ${CLAUDE_SKILL_DIR}/scripts/parity_check.py "<file>"` and `python3 ${CLAUDE_SKILL_DIR}/scripts/structure_check.py "<file>"`. Fix every difference by changing the translation, never the original. Do not finish while parity reports anything.
 
 8. **Finish**
-   Finish only when the user says so, or when Finish asked and was told yes (`SKILL.md`, Finish, step 8). The original must be finished. Set `source_hash` to the value `where.py --lang --hashes` prints now, remove comments, run `python3 ${CLAUDE_SKILL_DIR}/scripts/docs_audit.py`, set `status: finished` and `last_updated`.
+   Finish only when the user says so, or says yes when you ask. Do it as `SKILL.md` defines it for a translation (Finish, step 8). The original must be finished first.
 
 9. **Reply**
    Path, parity and structure results, the terms added to the proposed glossary (count and file), what is left for the user (move terms to the approved glossary, review the translation), and that the user commits it.

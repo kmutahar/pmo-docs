@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: technical-stack-detected
+description: Draft the API reference from a small fake Express app when technical.stacks is empty; the agent must detect Express from the code, read stacks/express.md, and list the endpoints.
+context:
+  scaffold_script: scaffold.sh

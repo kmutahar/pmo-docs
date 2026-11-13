@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: change-requests-same-day
+description: "Two change requests on the same day get separate files with their ids (CR-3 and CR-4), both proposed, without changing T-2 or the task list."
+context:
+  scaffold_script: scaffold.sh

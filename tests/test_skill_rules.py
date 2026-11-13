@@ -77,3 +77,11 @@ class SkillRules(unittest.TestCase):
         _, text = self._skill()
         self.assertIn("a template-comment warning means step 5 missed a comment", text)
 
+    def test_finish_step_2_takes_a_title(self):
+        _, text = self._skill()
+        self.assertIn("[--title TEXT] --hashes", text)
+
+    def test_translate_finish_follows_skill_md(self):
+        text = self._playbook("translate.md")
+        self.assertIn("Do it as `SKILL.md` defines it for a translation", text)
+
