@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: move-date-asks-first
+description: "Moving a task's due date asks whether to record a change request before editing tasks or changes."
+context:
+  scaffold_script: scaffold.sh

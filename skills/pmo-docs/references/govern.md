@@ -10,7 +10,7 @@ Change control, sign-off, definition of done, minutes, retrospectives, the decis
 
 ## Change request
 
-Trigger: anything that changes the scope, priority, owner or date of committed work.
+Trigger: anything that changes the scope, priority, owner or date of committed work. When the user asked for something else (move a date, change an owner), say it needs a change request and ask before recording one. When the user asked for a change request, record it.
 
 1. **Record it**
    Add a `CR-` entry to `changes` with `status: proposed`, `title`, `requested_by`, `date`, `description`, `impact` and `related_tasks` (`references/track.md`).
@@ -49,5 +49,4 @@ Every decision is a `DEC-` entry with title, context, decision, `decided_by`, `d
 
 ## Do not
 
-- Approve, reject or sign anything on the user's behalf.
-- Redraft a document the user edited by hand over their edits.
+- Break a rule in `SKILL.md`: Working rules "Never sign for a person", "Existing documents are hand-edited", "Do not regenerate unasked".

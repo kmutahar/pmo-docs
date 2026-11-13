@@ -63,3 +63,20 @@ class PlaybookFrontMatter(unittest.TestCase):
         with self.assertRaises(ValueError):
             pc.find_asset(root, cfg, "playbooks", "../x.md")
 
+    def test_do_not_lists_point_to_skill_md(self):
+        for name in ("intake", "draft", "govern", "plan", "track", "translate", "docs-audit"):
+            with self.subTest(name):
+                text = (pc.SKILL / "references" / f"{name}.md").read_text(encoding="utf-8")
+                _, after = text.split("## Do not", 1)
+                self.assertIn("Break a rule in `SKILL.md`", after)
+
+    def test_extend_and_schedule_cite_rule_3(self):
+        for name in ("extend", "schedule"):
+            with self.subTest(name):
+                text = (pc.SKILL / "references" / f"{name}.md").read_text(encoding="utf-8")
+                self.assertIn("a change to the config, a template or a playbook is always shown first", text)
+
+    def test_govern_trigger_covers_both_cases(self):
+        text = (pc.SKILL / "references/govern.md").read_text(encoding="utf-8")
+        self.assertIn("say it needs a change request and ask before recording one", text)
+

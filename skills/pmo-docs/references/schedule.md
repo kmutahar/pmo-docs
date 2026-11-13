@@ -24,7 +24,7 @@ A scheduled run drafts only: it must never Finish, publish, or commit. The skill
    schedule:
      - { recipe: <recipe>, when: "<when>" }
    ```
-   Wait for the user's yes before writing (`SKILL.md`, Ask before writing beyond the request).
+   Wait for the user's yes before writing (`SKILL.md`, Safety rule 3: a change to the config, a template or a playbook is always shown first).
 
 3. **Print the cron line or scheduler call**
    Map `when` to standard 5-field cron syntax (`minute hour day-of-month month day-of-week`), using the machine's local time:

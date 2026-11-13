@@ -42,6 +42,7 @@ The rules for translations live in `SKILL.md` (Translations) and `references/con
 
 ## Do not
 
+- Break a rule in `SKILL.md`: Working rules "Finish only when asked", "Existing documents are hand-edited".
 - Translate unasked.
 - Edit the original.
 - Invent or drop a fact.

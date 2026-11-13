@@ -6,7 +6,7 @@ Reads: pmo/config.yaml, pmo/house-rules.md, the skill's `assets/config.default.y
 
 # Extend
 
-Change what the project produces without editing the skill. Every change below is a file in the project's `pmo/` folder. The lookup and merge rules are in `SKILL.md` (House rules and lookup). Show the planned change and wait for a yes before writing (`SKILL.md`, Safety rules).
+Change what the project produces without editing the skill. Every change below is a file in the project's `pmo/` folder. The lookup and merge rules are in `SKILL.md` (House rules and lookup). Show the planned change and wait for a yes before writing (`SKILL.md`, Safety rule 3: a change to the config, a template or a playbook is always shown first).
 
 ## Check after any change
 

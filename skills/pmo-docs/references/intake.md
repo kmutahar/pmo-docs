@@ -40,9 +40,4 @@ The rules on consent, credentials, origin and definition of done live in `SKILL.
 ## Do not
 
 - Write anything before the user confirmed the rows.
-- Quote chat text.
-- Copy the export into the project.
-- Store phone numbers, emails or credentials from a chat.
-- Change an existing entry's status from a chat.
-- Add people to the roster.
-- Mark work done without the QA answer.
+- Break a rule in `SKILL.md`: Working rules "Chat text stays out", "Status from evidence", "No credentials" and the Definition of done.

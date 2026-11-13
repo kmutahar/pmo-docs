@@ -58,6 +58,5 @@ A chat export or a long conversation goes to `references/intake.md`. For a short
 
 ## Do not
 
-- Delete or renumber an entry, or reuse an id (`SKILL.md`, Working rules).
-- Change a status from git history alone.
+- Break a rule in `SKILL.md`: Working rules "Ids and bulk edits", "Status from evidence".
 - Put long text in a register; it belongs in a document, referenced by id.

@@ -47,6 +47,5 @@ Write one draft of one document from its template and the registers. Rules for f
 
 ## Do not
 
-- Finish the document.
+- Break a rule in `SKILL.md`: Working rules "Finish only when asked", "Never sign for a person", "Existing documents are hand-edited".
 - Edit registers, unless the user gave new facts (then follow `references/track.md` first).
-- Fill test results, sign-offs or approvals; leave them for the people who give them.

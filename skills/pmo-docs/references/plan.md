@@ -38,5 +38,5 @@ Where each planning document gets its content and what to ask. Producing the doc
 
 ## Do not
 
-- Fill budget amounts or approvals the registers or the user have not given.
+- Break a rule in `SKILL.md`: Working rules "Never sign for a person", "Empty values".
 - Edit registers while drafting, unless the user gave new facts (then `references/track.md` first).

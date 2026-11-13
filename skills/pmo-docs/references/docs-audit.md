@@ -37,5 +37,6 @@ Run as `docs-audit [--fix]` (`--fix` is a recipe flag, not a script flag: `docs_
 
 ## Do not
 
-- Edit anything outside `paths.documents`, or any document the user edited by hand.
-- Finish, publish, send or commit.
+- Edit anything outside `paths.documents`.
+- Break a rule in `SKILL.md`: Working rules "Existing documents are hand-edited", "Finish only when asked".
+- Publish, send or commit.
