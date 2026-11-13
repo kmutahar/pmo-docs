@@ -287,7 +287,7 @@ class TestGenerate(unittest.TestCase):
         self.assertIn("{{delta}}", out)
 
         # Notes on data has the RAG line
-        self.assertIn("- RAG rule: weekly-status, as computed by pmo_common.rag, as of 2026-03-15.", out)
+        self.assertIn("- RAG rule: weekly-status; overdue measured at 2026-03-15; registers read on 2026-03-15.", out)
 
     def test_status_report_week(self):
         code, out, err = tool("generate.py", self.root, "status-report", "2026-W11", "--stdout")

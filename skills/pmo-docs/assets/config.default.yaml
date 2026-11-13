@@ -143,6 +143,8 @@ registers:
     dates: [date]
     refs: {supersedes: decisions, related: decisions}
     closed: [accepted, superseded]
+    # pending: statuses that need a decision (the Blockers table of the status report)
+    pending: [proposed]
   actions:
     file: actions.yaml
     view: actions.md
@@ -162,6 +164,8 @@ registers:
     closed: [approved, rejected, implemented]
     # accepted: statuses that count as agreed scope changes (project-plan change log)
     accepted: [approved, implemented]
+    # pending: statuses that need a decision (the Blockers table of the status report)
+    pending: [proposed]
   meetings:
     file: meetings.yaml
     view: meetings.md

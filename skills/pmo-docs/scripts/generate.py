@@ -87,7 +87,10 @@ def id_number(v):
 
 def partition_tasks_by_team(tasks, teams_reg):
     """(teams in order, {team id: [tasks]}, tasks without a known team). A task's team matches a team id or heading, ignoring case."""
-    teams_sorted = sorted(teams_reg, key=lambda tm: (tm.get("order") if tm.get("order") is not None else 999, id_number(tm.get("id"))))
+    def team_key(tm):
+        o = tm.get("order")
+        return (o if type(o) in (int, float) else 999, id_number(tm.get("id")))
+    teams_sorted = sorted(teams_reg, key=team_key)
     team_tasks = {tm.get("id"): [] for tm in teams_sorted}
     no_team_tasks = []
     for t in tasks:
@@ -285,13 +288,13 @@ def generate_decision_log(ctx: Ctx) -> Filled:
 
         title = d.get("title") or "not recorded"
         dec_blocks.append(
-            f"### {did} - {title}\n"
-            f"- **Status:** {status} - **Date:** {date_str} - **Decided by:** {decided_by}\n"
-            f"- **Context:** {context}\n"
-            f"- **Decision:** {decision_text}\n"
-            f"- **Options considered:** {opts_str}\n"
-            f"- **Consequences:** {consequences}\n"
-            f"- **Supersedes / related:** {sr_str}"
+            f"### {did} - {pc.inline(title)}\n"
+            f"- **Status:** {pc.inline(status)} - **Date:** {date_str} - **Decided by:** {pc.inline(decided_by)}\n"
+            f"- **Context:** {pc.inline(context)}\n"
+            f"- **Decision:** {pc.inline(decision_text)}\n"
+            f"- **Options considered:** {pc.inline(opts_str)}\n"
+            f"- **Consequences:** {pc.inline(consequences)}\n"
+            f"- **Supersedes / related:** {pc.inline(sr_str)}"
         )
 
     summary_table = pc.md_table(["ID", "Decision", "Status", "Date", "Decided by"], sum_rows)
@@ -343,19 +346,19 @@ def generate_team_checklist(ctx: Ctx) -> Filled:
             g = t.get("group") or "no group"
             groups.setdefault(g, []).append(t)
 
-        sorted_group_names = sorted(groups.keys(), key=lambda g: (g == "no group", g))
-        lines = [f"## {heading} - {lead}"]
+        sorted_group_names = sorted(groups.keys(), key=lambda g: (g == "no group", str(g)))
+        lines = [f"## {pc.inline(heading)} - {pc.inline(lead)}"]
         for g in sorted_group_names:
-            lines.append(f"\n**{g}**")
+            lines.append(f"\n**{pc.inline(g)}**")
             for t in sorted(groups[g], key=task_sort_key):
                 box = "[x]" if t.get("status") in task_done else "[ ]"
                 title = t.get("title") or "not recorded"
                 tid = t.get("id", "")
                 prio = t.get("priority") or "not set"
                 due = str(t.get("due")) if t.get("due") else "not set"
-                lines.append(f"- {box} {title} `{tid}` - {prio} - {due}")
+                lines.append(f"- {box} {pc.inline(title)} `{tid}` - {pc.inline(prio)} - {due}")
 
-        lines.append(f"\n**Output:** {output_desc}")
+        lines.append(f"\n**Output:** {pc.inline(output_desc)}")
         team_blocks.append("\n".join(lines))
 
     if no_team_tasks:
@@ -363,17 +366,17 @@ def generate_team_checklist(ctx: Ctx) -> Filled:
         for t in no_team_tasks:
             g = t.get("group") or "no group"
             groups.setdefault(g, []).append(t)
-        sorted_group_names = sorted(groups.keys(), key=lambda g: (g == "no group", g))
+        sorted_group_names = sorted(groups.keys(), key=lambda g: (g == "no group", str(g)))
         lines = ["## No team - not set"]
         for g in sorted_group_names:
-            lines.append(f"\n**{g}**")
+            lines.append(f"\n**{pc.inline(g)}**")
             for t in sorted(groups[g], key=task_sort_key):
                 box = "[x]" if t.get("status") in task_done else "[ ]"
                 title = t.get("title") or "not recorded"
                 tid = t.get("id", "")
                 prio = t.get("priority") or "not set"
                 due = str(t.get("due")) if t.get("due") else "not set"
-                lines.append(f"- {box} {title} `{tid}` - {prio} - {due}")
+                lines.append(f"- {box} {pc.inline(title)} `{tid}` - {pc.inline(prio)} - {due}")
         lines.append("\n**Output:** not recorded")
         team_blocks.append("\n".join(lines))
 
@@ -385,8 +388,9 @@ def generate_team_checklist(ctx: Ctx) -> Filled:
     for m in all_ms:
         mp = m.get("period")
         due = m.get("due")
-        if mp == window_month:
-            matching_ms.append(m)
+        if mp:
+            if mp == window_month:
+                matching_ms.append(m)
         elif due:
             try:
                 d = pc.to_date(due)
@@ -402,7 +406,7 @@ def generate_team_checklist(ctx: Ctx) -> Filled:
             box = "[x]" if m.get("status") in ms_closed else "[ ]"
             title = m.get("title") or "not recorded"
             mid = m.get("id", "")
-            ms_lines.append(f"- {box} {title} `{mid}`")
+            ms_lines.append(f"- {box} {pc.inline(title)} `{mid}`")
         ms_body = "\n".join(ms_lines)
     else:
         ms_body = "- None"
@@ -446,9 +450,9 @@ def generate_project_plan(ctx: Ctx) -> Filled:
         if isinstance(goals, (list, tuple)):
             for g in goals:
                 if g:
-                    goal_lines.append(f"- {g}")
+                    goal_lines.append(f"- {pc.inline(g)}")
         elif goals:
-            goal_lines.append(f"- {goals}")
+            goal_lines.append(f"- {pc.inline(goals)}")
         if not goal_lines:
             goal_lines.append("- not recorded")
         goals_text = "\n".join(goal_lines)
@@ -461,13 +465,13 @@ def generate_project_plan(ctx: Ctx) -> Filled:
         due = str(p.get("due")) if p.get("due") else "not set"
 
         block = (
-            f"### {pid} - {title}\n"
+            f"### {pid} - {pc.inline(title)}\n"
             f"{goals_text}\n\n"
-            f"**Output:** {output}\n"
+            f"**Output:** {pc.inline(output)}\n"
             f"**Depends on:** {dep_str}\n"
-            f"**Owner:** {owner}\n"
-            f"**Acceptance criteria:** {acceptance}\n"
-            f"**Status:** {status} - **Due:** {due}"
+            f"**Owner:** {pc.inline(owner)}\n"
+            f"**Acceptance criteria:** {pc.inline(acceptance)}\n"
+            f"**Status:** {pc.inline(status)} - **Due:** {due}"
         )
         goal_blocks.append(block)
     goals_body = "\n\n".join(goal_blocks) if goal_blocks else "- None"
@@ -495,15 +499,15 @@ def generate_project_plan(ctx: Ctx) -> Filled:
             g = t.get("group") or "no group"
             groups.setdefault(g, []).append(t)
 
-        sorted_group_names = sorted(groups.keys(), key=lambda g: (g == "no group", g))
-        lines = [f"### {heading} - {lead}"]
+        sorted_group_names = sorted(groups.keys(), key=lambda g: (g == "no group", str(g)))
+        lines = [f"### {pc.inline(heading)} - {pc.inline(lead)}"]
         for g in sorted_group_names:
-            lines.append(f"\n**{g}**")
+            lines.append(f"\n**{pc.inline(g)}**")
             for t in sorted(groups[g], key=task_sort_key):
                 title = t.get("title") or "not recorded"
                 tid = t.get("id", "")
-                lines.append(f"- {title} `{tid}`")
-        lines.append(f"\n**Output:** {output_desc}")
+                lines.append(f"- {pc.inline(title)} `{tid}`")
+        lines.append(f"\n**Output:** {pc.inline(output_desc)}")
         team_blocks.append("\n".join(lines))
 
     if no_team_tasks:
@@ -511,14 +515,14 @@ def generate_project_plan(ctx: Ctx) -> Filled:
         for t in no_team_tasks:
             g = t.get("group") or "no group"
             groups.setdefault(g, []).append(t)
-        sorted_group_names = sorted(groups.keys(), key=lambda g: (g == "no group", g))
+        sorted_group_names = sorted(groups.keys(), key=lambda g: (g == "no group", str(g)))
         lines = ["### No team - not set"]
         for g in sorted_group_names:
-            lines.append(f"\n**{g}**")
+            lines.append(f"\n**{pc.inline(g)}**")
             for t in sorted(groups[g], key=task_sort_key):
                 title = t.get("title") or "not recorded"
                 tid = t.get("id", "")
-                lines.append(f"- {title} `{tid}`")
+                lines.append(f"- {pc.inline(title)} `{tid}`")
         lines.append("\n**Output:** not recorded")
         team_blocks.append("\n".join(lines))
 
@@ -571,7 +575,7 @@ def generate_project_plan(ctx: Ctx) -> Filled:
     for a in assumptions:
         txt = a.get("text") or "not recorded"
         aid = a.get("id", "")
-        asm_lines.append(f"- {txt} `{aid}`")
+        asm_lines.append(f"- {pc.inline(txt)} `{aid}`")
     assumptions_body = "\n".join(asm_lines) if asm_lines else "- None"
 
     # 8. Change log
@@ -643,6 +647,17 @@ def generate_status_report(ctx: Ctx) -> Filled:
     all_milestones = ctx.data.get("milestones", [])
     all_issues = ctx.data.get("issues", [])
     all_risks = ctx.data.get("risks", [])
+
+    if ctx.as_of > window[1]:
+        def keep_raised(entry):
+            try:
+                d = pc.to_date(entry.get("raised"))
+                return d is None or d <= window[1]
+            except (ValueError, TypeError):
+                return True
+
+        all_issues = [i for i in all_issues if keep_raised(i)]
+        all_risks = [r for r in all_risks if keep_raised(r)]
 
     rag_color, rag_reason = pc.rag(ctx.cfg, at, counted, all_milestones, all_issues, all_risks)
 
@@ -721,7 +736,7 @@ def generate_status_report(ctx: Ctx) -> Filled:
             tid = t.get("id", "")
             owner = pc.person(t.get("owner"), ctx.names)
             due = str(t.get("due")) if t.get("due") else "not set"
-            pn_lines.append(f"- {title} `{tid}` - {owner} - {due}")
+            pn_lines.append(f"- {pc.inline(title)} `{tid}` - {pc.inline(owner)} - {due}")
         planned_next_body = "\n".join(pn_lines)
     else:
         planned_next_body = "- None"
@@ -736,17 +751,17 @@ def generate_status_report(ctx: Ctx) -> Filled:
         by_when = str(t.get("due")) if t.get("due") else "not set"
         blocker_rows.append([tid, item, needed_from, by_when])
 
-    first_dec_status = (ctx.cfg.get("vocab", {}).get("decision_status") or ["proposed"])[0]
+    dec_pending = pc.statuses(ctx.cfg, "decisions", "pending")
     for d in ctx.data.get("decisions", []):
-        if d.get("status") == first_dec_status:
+        if d.get("status") in dec_pending:
             did = d.get("id") or "not set"
             item = d.get("title") or d.get("decision") or "not recorded"
             needed_from = pc.person(d.get("decided_by"), ctx.names)
             blocker_rows.append([did, item, needed_from, "not set"])
 
-    first_change_status = (ctx.cfg.get("vocab", {}).get("change_status") or ["proposed"])[0]
+    change_pending = pc.statuses(ctx.cfg, "changes", "pending")
     for c in ctx.data.get("changes", []):
-        if c.get("status") == first_change_status:
+        if c.get("status") in change_pending:
             cid = c.get("id") or "not set"
             item = c.get("title") or "not recorded"
             needed_from = pc.person(c.get("decided_by"), ctx.names)
@@ -803,7 +818,7 @@ def generate_status_report(ctx: Ctx) -> Filled:
 
     # 7. Notes on data
     notes_on_data_lines = [
-        f"- RAG rule: weekly-status, as computed by pmo_common.rag, as of {at}.",
+        f"- RAG rule: weekly-status; overdue measured at {at}; registers read on {ctx.as_of}.",
         f"- Tasks counted: period {window_month}; completed before {window_month}: {completed_before_count}.",
         "- No git evidence used.",
     ]
@@ -842,7 +857,7 @@ def main(argv=None) -> int:
 
     cfg = pc.load_config(root)
     draft_lang = pc.languages(cfg)["draft"]
-    if draft_lang != "en":
+    if draft_lang.split("-")[0] != "en":
         print(f"generators write English only; this project's draft language is {draft_lang}. Set generator: null for each doc type in pmo/config.yaml and draft with references/draft.md.", file=sys.stderr)
         return 2
 
@@ -876,7 +891,7 @@ def main(argv=None) -> int:
         month_period = args.as_of.strftime("%Y-%m")
         window = pc.period_range(month_period, w_start)
 
-    if bad := render_views.config_errors(cfg):
+    if bad := render_views.config_errors(cfg, root=root):
         print("\n".join("ERROR " + e for e in bad), file=sys.stderr)
         return 2
 

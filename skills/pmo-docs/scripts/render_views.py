@@ -121,6 +121,13 @@ def config_errors(cfg, root=None):
     for s in pc.statuses(cfg, "changes", "accepted"):
         if change_statuses and s not in change_statuses:
             errors.append(f"config: registers.changes.accepted status `{s}` not in vocab.change_status")
+    decision_statuses = cfg.get("vocab", {}).get("decision_status") or []
+    for s in pc.statuses(cfg, "decisions", "pending"):
+        if decision_statuses and s not in decision_statuses:
+            errors.append(f"config: registers.decisions.pending status `{s}` not in vocab.decision_status")
+    for s in pc.statuses(cfg, "changes", "pending"):
+        if change_statuses and s not in change_statuses:
+            errors.append(f"config: registers.changes.pending status `{s}` not in vocab.change_status")
 
     dom = cfg.get("domain")
     if dom is not None:

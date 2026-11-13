@@ -63,7 +63,7 @@ Staging is late and the vendor choice is blocked. The API outline is done. Next 
 | M-1 | Staging ready | 2026-03-20 | in-progress |
 
 ## Notes on data
-- RAG rule: weekly-status, as computed by pmo_common.rag, as of 2026-03-15: red because the top-priority task T-1 is overdue.
+- RAG rule: weekly-status; overdue measured at 2026-03-15; registers read on 2026-03-15: red because the top-priority task T-1 is overdue.
 
 ## Open questions
 - Who approves the budget for the vendor?

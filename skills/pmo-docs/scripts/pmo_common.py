@@ -391,6 +391,11 @@ def cell(v):
     return re.sub(r"(\\*)\|", lambda m: m.group(1) * 2 + "\\|", s)
 
 
+def inline(v):
+    """A value as one line of text: any run of white space becomes one space."""
+    return " ".join(str(v).split())
+
+
 def week_start(cfg) -> int:
     """0 for Monday ... 6 for Sunday, from project.week_start (default monday). ValueError on an unknown name."""
     ws = cfg.get("project", {}).get("week_start", "monday") if isinstance(cfg.get("project"), dict) else "monday"
@@ -487,7 +492,7 @@ def person(value, names: dict[str, str]) -> str:
 
 
 def statuses(cfg, register: str, key: str) -> list[str]:
-    """registers.<register>.<key> (closed, blocked, active) as a list; [] when absent."""
+    """registers.<register>.<key> (closed, blocked, active, pending) as a list; [] when absent."""
     reg = cfg.get("registers", {}).get(register, {}) if isinstance(cfg.get("registers"), dict) else {}
     if not isinstance(reg, dict):
         return []

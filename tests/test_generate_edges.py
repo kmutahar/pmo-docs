@@ -423,6 +423,82 @@ class Odd(unittest.TestCase):
         self.assertNotIn("CR-2", section)
         self.assertNotIn("CR-3", section)
 
+    def test_schedule_naming_project_playbook_passes_config_errors(self):
+        playbooks = self.root / "pmo/playbooks"
+        playbooks.mkdir(parents=True, exist_ok=True)
+        (playbooks / "team-review.md").write_text("# Team review\n", encoding="utf-8")
+        cfg_file = self.root / "pmo/config.yaml"
+        cfg_text = cfg_file.read_text(encoding="utf-8")
+        cfg_file.write_text(cfg_text + '\nschedule:\n  - {recipe: team-review, when: "Fri 16:00"}\n', encoding="utf-8")
+        out, _ = self.gen("decision-log")
+        self.assertIn("Decision log", out)
+
+    def test_mixed_group_and_team_order_values_sort_cleanly(self):
+        tasks = (self.reg / "tasks.yaml").read_text(encoding="utf-8")
+        (self.reg / "tasks.yaml").write_text(tasks.replace("group: infra", "group: 2026"), encoding="utf-8")
+        teams = (self.reg / "teams.yaml").read_text(encoding="utf-8")
+        (self.reg / "teams.yaml").write_text(teams.replace("order: 2", 'order: "2"'), encoding="utf-8")
+        out_chk, _ = self.gen("team-checklist", "2026-03")
+        self.assertIn("**2026**", out_chk)
+        out_rep, _ = self.gen("status-report", "2026-03")
+        self.assertIn("Platform", out_rep)
+
+    def test_line_breaks_in_register_text_inlined_outside_tables(self):
+        tasks = (self.reg / "tasks.yaml").read_text(encoding="utf-8")
+        injected = r'"Design login\n## Injected heading {{x}} <!-- c -->"'
+        (self.reg / "tasks.yaml").write_text(tasks.replace("Design login page", injected), encoding="utf-8")
+        for doc in ("status-report", "team-checklist", "project-plan"):
+            out, _ = self.gen(doc, "2026-03")
+            for line in out.splitlines():
+                self.assertFalse(line.startswith("## Injected"), f"{doc} has line starting with '## Injected': {line}")
+            self.assertIn("Design login ## Injected heading {{x}} <!-- c -->", out)
+
+    def test_draft_language_region_code(self):
+        cfg_file = self.root / "pmo/config.yaml"
+        orig_cfg = cfg_file.read_text(encoding="utf-8")
+        cfg_file.write_text(orig_cfg + "\nlanguages:\n  draft: en-GB\n  en-GB: {label: EN, dir: ltr}\n", encoding="utf-8")
+        out, _ = self.gen("decision-log")
+        self.assertIn("Decision log", out)
+
+        cfg_file.write_text(orig_cfg + "\nlanguages:\n  draft: ar\n  ar: {label: AR, dir: rtl}\n", encoding="utf-8")
+        code, _, err = run(self.root, "decision-log", "--stdout")
+        self.assertEqual(code, 2)
+        self.assertIn("generators write English only; this project's draft language is ar", err)
+
+    def test_blockers_use_pending_status_not_first_vocab_value(self):
+        cfg_file = self.root / "pmo/config.yaml"
+        cfg_text = cfg_file.read_text(encoding="utf-8")
+        reordered = cfg_text + "\nvocab:\n  decision_status: [accepted, proposed, superseded]\n"
+        cfg_file.write_text(reordered, encoding="utf-8")
+        out, _ = self.gen("status-report", "2026-03")
+        blockers = out.split("## Blockers and decisions needed")[1].split("## ")[0]
+        self.assertIn("DEC-2", blockers)
+        self.assertNotIn("DEC-1", blockers)
+
+    def test_milestone_period_takes_precedence_over_due(self):
+        ms = (self.reg / "milestones.yaml").read_text(encoding="utf-8")
+        ms_mod = ms.replace("due: 2026-04-30", "due: 2026-03-30").replace("period: 2026-03, ", "")
+        (self.reg / "milestones.yaml").write_text(ms_mod, encoding="utf-8")
+        out, _ = self.gen("team-checklist", "2026-03")
+        target_check = out.split("## End-of-period target check")[1]
+        self.assertNotIn("M-2", target_check)
+        self.assertIn("M-1", target_check)
+
+    def test_closed_period_report_drops_later_raised_issues_and_risks(self):
+        out, _ = self.gen("status-report", "2026-02", "--as-of", "2026-03-15")
+        self.assertNotIn("I-3", out)
+        self.assertIn("**Overall:** amber - open risk R-1 has high impact", out)
+        self.assertIn("overdue measured at 2026-02-28; registers read on 2026-03-15", out)
+
+        issues = (self.reg / "issues.yaml").read_text(encoding="utf-8")
+        (self.reg / "issues.yaml").write_text(issues.replace("raised: 2026-03-08", "raised: 2026-02-20"), encoding="utf-8")
+        out2, _ = self.gen("status-report", "2026-02", "--as-of", "2026-03-15")
+        self.assertIn("open issue I-3 has high severity", out2)
+
+        (self.reg / "issues.yaml").write_text(issues.replace("raised: 2026-03-08", "raised: null"), encoding="utf-8")
+        out3, _ = self.gen("status-report", "2026-02", "--as-of", "2026-03-15")
+        self.assertIn("open issue I-3 has high severity", out3)
+
 
 if __name__ == "__main__":
     unittest.main()

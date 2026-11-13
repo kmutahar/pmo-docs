@@ -86,6 +86,8 @@ class ConfigErrors(Base):
         self.has({"registers": {"tasks": {"active": ["nope"]}}}, "registers.tasks.active status `nope`")
         self.has({"registers": {"tasks": {"done": ["nope"]}}}, "registers.tasks.done status `nope`")
         self.has({"registers": {"changes": {"accepted": ["nope"]}}}, "registers.changes.accepted status `nope`")
+        self.has({"registers": {"decisions": {"pending": ["nope"]}}}, "registers.decisions.pending status `nope` not in vocab.decision_status")
+        self.has({"registers": {"changes": {"pending": ["nope"]}}}, "registers.changes.pending status `nope` not in vocab.change_status")
 
     def test_register_must_be_a_map(self):
         self.has({"registers": {"risks": "x"}}, "register `risks` needs `file`")
