@@ -122,7 +122,7 @@ In Claude Code, two slash commands automate setup and publishing:
 - `/pmo-docs:init`: interactive project office setup.
 - `/pmo-docs:publish`: review and publish finished documents to a configured folder or documentation repository.
 
-Skill-only installs can run the corresponding scripts (`setup.py` and `publish.py`) directly from the terminal.
+Skill-only installs can run the corresponding scripts (`setup.py` and `publish.py`) directly from the terminal, or ask the agent: it shows the publish dry run and copies only after you say yes.
 
 ## Running outside a session
 
@@ -170,7 +170,7 @@ Ask the agent to take tasks, finished work or decisions from a chat export. It r
 
 ## Publishing
 
-Finished documents can be published to a publish target folder inside the project or to another local repository using `/pmo-docs:publish` (or `publish.py` directly).
+Finished documents can be published to a publish target folder inside the project or to another local repository using `/pmo-docs:publish`, or `publish.py` (the agent shows the dry run and copies after your yes).
 - `mode: none` (default): nothing is published.
 - `mode: folder`: copies finished documents into a folder inside your project.
 - `mode: repo`: copies finished documents to another local repository. The command asks before committing in that repository and never pushes.
@@ -196,13 +196,13 @@ Seven stacks ship with the skill: Next.js (`nextjs`), Express (`express`), ASP.N
 ## What it reads and writes
 
 - It reads the project's `pmo/` folder (including `pmo/.me`, a local untracked file holding your roster slug), the skill's own files and, only as evidence, read-only git history. Drafting release notes with `--repo` also reads the git history of another local repository you name. Drafting a technical document reads your project's source code (routes, models, config and test files, names only) and runs read-only git on it.
-- It writes only inside the folders named in `pmo/config.yaml` (by default, under `pmo/`, including `pmo/.gitignore` and `pmo/.me`). Anything else is shown first and waits for your yes. The one exception you set up yourself: `/pmo-docs:publish` copies finished documents to `publish.path` and, in `repo` mode, commits there only after a second yes. It never pushes.
+- It writes only inside the folders named in `pmo/config.yaml` (by default, under `pmo/`, including `pmo/.gitignore` and `pmo/.me`). Anything else is shown first and waits for your yes. The one exception you set up yourself: publishing (`/pmo-docs:publish`, or the dry run and your yes without the plugin) copies finished documents to `publish.path` and, in `repo` mode, commits there only after a second yes. It never pushes.
 - It never overwrites a file you edited by hand.
 - The rules are in [`skills/pmo-docs/SKILL.md`](skills/pmo-docs/SKILL.md) (Safety rules).
 
 ## Safety
 
-- Its scripts send nothing over the network. Nothing is posted or published except through `/pmo-docs:publish`, which never pushes.
+- Its scripts send nothing over the network. Nothing is posted or published unless you ask: you type `/pmo-docs:publish`, or you say yes to the dry-run listing. Publishing never pushes.
 - It never runs `git add`, commit or push unless you ask. You commit when you choose; git is the backup. The commit model is in [`skills/pmo-docs/references/git.md`](skills/pmo-docs/references/git.md).
 - `pmo/` holds people's names (the roster and the owners of entries). If your project's repo is public, so are they.
 - In Claude Code, the scripts are allowed by the skill for the turn that loads it. Later turns may ask for your permission again; that is expected.

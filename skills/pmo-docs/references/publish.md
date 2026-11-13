@@ -4,9 +4,13 @@ playbook_version: 1
 
 Reads: pmo/config.yaml (publish, doc_types), `publish.py` output, `docs_audit.py` output.
 
-# Recipe: publish
+# Publish
 
-Run as `/pmo-docs:publish`. Copies finished documents to the configured folder or git repository.
+Copies finished documents to the configured folder or git repository. With the plugin the user types `/pmo-docs:publish`; without it the steps are the same and the user's yes comes from step 3.
+
+## Without the plugin
+
+Use the launcher: `pmo/bin/pmo publish [--as-of YYYY-MM-DD]` is the dry run. Show its listing and explain each line in plain words (copied, skipped, stale, conflict, invalid). Ask one question: "Copy these now?". Only on a yes, run the same command with `--apply` (and `--overwrite REL` or `--include REL` for the paths the user named). Never run `--apply` without a yes to that listing in this conversation.
 
 ## Steps
 
@@ -45,4 +49,4 @@ Run as `/pmo-docs:publish`. Copies finished documents to the configured folder o
 
 ## Limits
 
-The Safety rules in `${CLAUDE_SKILL_DIR}/SKILL.md` apply: rule 1 for the `repo`-mode commit, rule 3 for overwrites. Only finished documents are copied, the source documents are never changed, and `--apply` runs only after the user agrees to the list.
+The Safety rules in `${CLAUDE_SKILL_DIR}/SKILL.md` apply: rule 1 for the `repo`-mode commit, rule 3 for overwrites. Only finished documents are copied, the source documents are never changed, and `--apply` runs only after the user says yes to the dry-run listing, in this conversation.

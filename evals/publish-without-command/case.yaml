@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: publish-without-command
+description: A finished document, folder publish configured, and the pmo/bin/pmo launcher present on a skill-only install without slash commands; the user asks to publish, so the agent names pmo/bin/pmo publish as the dry run and runs --apply only after a yes to its listing.
+context:
+  scaffold_script: scaffold.sh

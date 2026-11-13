@@ -89,3 +89,13 @@ class SkillRules(unittest.TestCase):
         _, text = self._skill()
         self.assertIn("The user guide carries no `path:line` in its body", text)
 
+    def test_publish_rule_has_one_form(self):
+        _, text = self._skill()
+        self.assertIn("only after the user says yes to that listing", text)
+        self.assertNotIn("publishing happens only through the", text)
+
+    def test_publish_playbook_has_a_launcher_section(self):
+        text = self._playbook("publish.md")
+        self.assertIn("## Without the plugin", text)
+        self.assertIn("pmo/bin/pmo publish", text)
+

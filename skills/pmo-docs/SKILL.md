@@ -27,7 +27,7 @@ Work from the project root (the folder that holds `pmo/`). From a subfolder, go 
 | a stakeholder update | `references/draft.md` |
 | to draft release notes, or when commits change documents | `references/release-notes.md` |
 | to finish a draft ("ready", "finish it") | `references/finish.md` |
-| to publish documents | tell the user to type `/pmo-docs:publish`; do not publish from this skill |
+| to publish documents | references/publish.md (with the plugin, the user types `/pmo-docs:publish`) |
 | to add, change or close tasks, risks, issues, assumptions, dependencies, actions, meetings, objectives, budget, milestones, capacity, people, goals, teams, requirements, tests, environments or permissions; "mark X done"; a pasted message with tasks | `references/track.md` |
 | to translate a document, bring a translation back in step, or find where a translation lives | `references/translate.md` |
 | to take tasks, finished work or decisions from a chat export or a long pasted conversation | `references/intake.md` |

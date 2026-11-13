@@ -167,11 +167,11 @@ The step that marks a draft finished: version recorded, comments removed, checks
 _Avoid_: finalise, finalize, close, complete
 
 **Command**:
-A slash command the user types to start a fixed task, `/pmo-docs:init` or `/pmo-docs:publish`. The agent never runs one on its own.
+A slash command the user types to start a fixed task, `/pmo-docs:init` or `/pmo-docs:publish`. The agent never starts one on its own.
 _Avoid_: recipe, skill, macro
 
 **Publish**:
-The process of copying finished documents to the configured folder or repository via `/pmo-docs:publish`.
+The process of copying finished documents to the configured folder or repository with `publish.py`: the user types `/pmo-docs:publish`, or the agent shows the dry-run listing and copies after the user says yes.
 _Avoid_: deploy, push, export, sync
 
 **Publish target**:
