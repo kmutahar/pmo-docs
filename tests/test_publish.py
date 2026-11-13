@@ -471,8 +471,8 @@ class Publish(unittest.TestCase):
         self.finish_decision_log()
         self.write_finished("Sub dir/Notes.md")
         out = run(self.root)[1]
-        self.assertIn("new: Decision log.md\nurl: https://example.test/docs/Decision log.md", out)
-        self.assertIn("url: https://example.test/docs/Sub dir/Notes.md", out)
+        self.assertIn("new: Decision log.md\nurl: https://example.test/docs/Decision%20log.md", out)
+        self.assertIn("url: https://example.test/docs/Sub%20dir/Notes.md", out)
         run(self.root, "--apply")
         out = run(self.root)[1]
         self.assertIn("unchanged: Decision log.md", out)

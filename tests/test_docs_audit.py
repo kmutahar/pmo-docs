@@ -1,6 +1,7 @@
 """Tests for scripts/docs_audit.py on the Acme fixture. Run from the repo root: python3 -m unittest discover tests"""
 import contextlib
 import datetime
+import hashlib
 import io
 import re
 import shutil
@@ -153,7 +154,7 @@ class Audit(unittest.TestCase):
         code, out = self.run_audit()
         self.assertEqual(code, 1)
         self.assertIn("`a.md` - type `['x']` is not a doc type", out)
-        self.assertIn("`b.md` - front matter has no `type`", out)
+        self.assertIn("`b.md` - front matter is not valid YAML", out)
 
     def test_missing_project_is_a_usage_error(self):
         with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as e:
@@ -419,6 +420,50 @@ class Audit(unittest.TestCase):
         code, out = self.run_audit()
         self.assertEqual(code, 1)
         self.assertIn("`تقرير ✓.md` -> `مفقود.md`", out)
+
+    def test_status_typo_is_a_finding(self):
+        f = self.docs / "Decision log.md"
+        f.write_text(f.read_text(encoding="utf-8").replace("status: draft", "status: Finished", 1), encoding="utf-8")
+        code, out = self.run_audit()
+        self.assertEqual(code, 1)
+        self.assertIn("## Front matter (1)", out)
+        self.assertIn("status `Finished` is not draft or finished", out)
+
+    def test_invalid_front_matter_yaml_is_a_finding(self):
+        (self.docs / "Decision log.md").write_text("---\ntype: [\n---\n# x\n", encoding="utf-8")
+        code, out = self.run_audit()
+        self.assertEqual(code, 1)
+        self.assertIn("## Front matter (1)", out)
+        self.assertIn("`Decision log.md` - front matter is not valid YAML", out)
+
+    def test_link_forms_angles_titles_root_and_inline_code(self):
+        (self.docs / "2026-03 - Status report.md").write_text(
+            "---\ntype: status-report\nstatus: draft\n---\n"
+            '[a](<no such file.md>) [b](missing.md "title")\n'
+            "[c](/etc/hostname) [d](/docs/guide.md)\n"
+            "`[e](in-code.md)` [f](<Decision log.md>)\n",
+            encoding="utf-8",
+        )
+        code, out = self.run_audit()
+        self.assertEqual(code, 1)
+        broken = out[out.index("## Broken links"):out.index("## Override drift")]
+        self.assertIn("(2)", broken)
+        self.assertIn("`no such file.md`", broken)
+        self.assertIn("`missing.md`", broken)
+        for skipped in ("/etc/hostname", "/docs/guide.md", "in-code.md", "Decision log.md"):
+            self.assertNotIn(skipped, broken)
+
+    def test_register_hash_ignores_line_endings(self):
+        cfg = pc.load_config(self.p)
+        reg = self.p / "pmo/registers/tasks.yaml"
+        lf_bytes = reg.read_bytes().replace(b"\r\n", b"\n")
+        self.assertIn(b"\n", lf_bytes)
+        reg.write_bytes(lf_bytes)
+        lf_hash = da.register_hash(self.p, cfg, "tasks")
+        self.assertEqual(lf_hash, hashlib.sha256(lf_bytes).hexdigest()[:8])
+        reg.write_bytes(lf_bytes.replace(b"\n", b"\r\n"))
+        crlf_hash = da.register_hash(self.p, cfg, "tasks")
+        self.assertEqual(crlf_hash, lf_hash)
 
 
 class Translations(unittest.TestCase):

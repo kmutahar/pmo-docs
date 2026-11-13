@@ -15,6 +15,7 @@ import os
 import shutil
 import subprocess
 import sys
+import urllib.parse
 from pathlib import Path
 
 if sys.version_info < (3, 10):
@@ -185,7 +186,7 @@ def main(argv=None) -> int:
                     print(f"  ... and {len(errors) - 3} more")
             elif state == "new" and url_base:
                 clean_url = str(url_base).rstrip("/")
-                print(f"url: {clean_url}/{rel}")
+                print(f"url: {clean_url}/{urllib.parse.quote(rel)}")
         print(f"drafts: {drafts_count}")
         print(f"excluded: {excluded_count}")
         return 1 if any(st == "invalid" for _, _, st, _ in classified) else 0

@@ -18,8 +18,9 @@ be a doc type in the config. Checks:
 
 Recorded hashes (written by the Finish step) live in front matter as
     source_hashes: {tasks: "ab12cd34", risks: "0f9e8d7c"}
-Each value is the first 8 hex characters of the SHA-256 of the register file's bytes
-(see register_hash); a register file that does not exist hashes to "none". Quote the values: an
+Each value is the first 8 hex characters of the SHA-256 of the register file's bytes, with CRLF
+line endings read as LF (see register_hash); a register file that does not exist hashes to "none".
+Quote the values: an
 all-digit hash such as 12345678 would be read as a number and is reported as "quote the hash".
 Docs-vs-code drift is not mechanical: the docs-audit playbook covers it.
 """
@@ -46,9 +47,9 @@ STALE_CHECKS = ("stale", "translation behind")
 
 
 def register_hash(root, cfg, name):
-    """8 hex characters of the SHA-256 of a register's file, or "none" when the file is missing."""
+    """8 hex characters of the SHA-256 of a register's file (with CRLF line endings read as LF), or "none" when the file is missing."""
     f = Path(root) / cfg["paths"]["registers"] / cfg["registers"][name]["file"]
-    return hashlib.sha256(f.read_bytes()).hexdigest()[:8] if f.exists() else "none"
+    return hashlib.sha256(f.read_bytes().replace(b"\r\n", b"\n")).hexdigest()[:8] if f.exists() else "none"
 
 
 def audit_translation(root, cfg, path, base, fm, text) -> list[tuple[str, str]]:
@@ -131,7 +132,12 @@ def audit_file(root, cfg, path, base, today):
         text = pc.read(path)
     except UnicodeDecodeError:
         return [("front matter", f"`{rel}` - not UTF-8 text")]
-    fm, _ = pc.split_front_matter(text)
+    try:
+        fm, _ = pc.split_front_matter(text, strict=True)
+    except pc.yaml.YAMLError as e:
+        lines = str(e).splitlines()
+        first_line = lines[0] if lines else str(e)
+        return [("front matter", f"`{rel}` - front matter is not valid YAML ({first_line})")]
     if fm is None:
         return [("front matter", f"`{rel}` - no front matter")]
     ty = fm.get("type")
@@ -140,6 +146,9 @@ def audit_file(root, cfg, path, base, today):
     t = cfg["doc_types"].get(ty) if isinstance(ty, str) else None
     if ty and not t:
         out.append(("front matter", f"`{rel}` - type `{fm['type']}` is not a doc type in the config"))
+    if "status" in fm and fm["status"] not in ("draft", "finished"):
+        bad_status = fm["status"]
+        out.append(("front matter", f"`{rel}` - status `{bad_status}` is not draft or finished"))
     if "translation_of" in fm:
         out.extend(audit_translation(root, cfg, path, base, fm, text))
     else:
@@ -176,7 +185,11 @@ def audit_file(root, cfg, path, base, today):
                     if reg in recorded and recorded[reg] != register_hash(root, cfg, reg):
                         out.append(("stale", f"`{rel}` - draft is behind: register `{reg}` changed since the draft was made"))
     unfenced = re.sub(r"^ {0,3}(```|~~~).*?^ {0,3}\1[^\n]*$", "", text, flags=re.S | re.M)  # links in fenced code are examples
-    for target in re.findall(r"\]\((?!#|[A-Za-z][A-Za-z0-9+.-]*:)([^)\s]+)\)", unfenced):
+    cleaned = re.sub(r"(`+)[^\n]+?\1", "", unfenced)
+    for m in re.finditer(r"""\]\(\s*(?:<([^>\n]*)>|([^)\s]+))(?:\s+(?:"[^"\n]*"|'[^'\n]*'))?\s*\)""", cleaned):
+        target = m.group(1) if m.group(1) is not None else m.group(2)
+        if not target or target.startswith(("#", "/")) or re.match(r"^[A-Za-z][A-Za-z0-9+.-]*:", target):
+            continue
         if not (path.parent / _unquote(target.split("#")[0])).exists():
             out.append(("broken links", f"`{rel}` -> `{target}`"))
     return out
