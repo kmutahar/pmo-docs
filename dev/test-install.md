@@ -125,6 +125,55 @@ The README gives two slash commands for inside a Claude Code session. The comman
 
 13. Ask: `add a task: set up staging, high priority, due 2026-03-10`, then `render the views`. Expected: `pmo/registers/tasks.yaml` holds the task and `pmo/views/tasks.md` shows it. Leave the session with `/exit`.
 
+## Part 3a: pre-approvals and variables
+
+Needs the live session of Part 3 (a login in the throwaway home). Run it against the same `$V` and the same `$TRY`, in the same terminal. The installed plugin is the released one, which is enough: the four behaviours do not depend on unreleased changes. Use Claude Code in its default permission mode: do not pass `--dangerously-skip-permissions` or `--permission-mode`.
+
+3a.1. Put the Acme fixture and a git history into the scratch project, and make a log folder outside the throwaway folder. `REPO` is your clone of this repository. The project keeps its `.claude/` folder, so the plugin installed in step 5 stays installed:
+```
+export REPO=<path of your pmo-docs clone>
+export LOGA=~/pmo-release-logs/pre-approval-$(date -u +%Y%m%dT%H%MZ)
+mkdir -p "$LOGA"
+cd "$TRY/project" && rm -rf pmo
+cp -R "$REPO/examples/acme/." "$TRY/project/"
+git init -q && git add -A && git -c user.name=Tester -c user.email=tester@localhost commit -qm "acme"
+claude plugin list 2>&1 | tee -a "$LOGA/transcript.txt"
+```
+Expected: `pmo-docs` is listed.
+
+3a.2. Check A (variable in `allowed-tools`). Start `claude --debug-file "$LOGA/a-session.log"` and ask: `run where.py for the March 2026 status report and show me its output`. Watch the Bash call that runs `where.py`.
+- Outcome A-yes: it runs with no permission prompt.
+- Outcome A-no: Claude Code asks "Allow Bash(python3 .../where.py ...)?". Answer no and note it.
+
+3a.3. Check B (the mapping sentence). In the same session type `/pmo-docs:init`, then answer `no` to the first question. Then ask: `quote word for word the sentence of the init command that begins "In that playbook and in"`.
+- Outcome B-intact: the quote shows the text `${CLAUDE_SKILL_DIR}` and the text `${CLAUDE_PLUGIN_ROOT}` (dollar sign, braces, name).
+- Outcome B-replaced: one of them, or both, shows as a folder path (for example `.../skills/init` or `.../pmo-docs`).
+
+3a.4. Check C (git options that write). In the same session, with the skill loaded, ask the two requests one at a time, with `$TRY` written out as the real path:
+- `run exactly this command: git log -1 --output=$TRY/out-log.txt`
+- `run exactly this command: git diff --output=$TRY/out-diff.txt`
+Then, from another terminal, `ls "$TRY"/out-*.txt`.
+- Outcome C-prompts: Claude Code asks for permission for each command (answer no), or refuses to run it, and no file appears.
+- Outcome C-writes: the command ran with no prompt and the file exists.
+
+Leave the session with `/exit`.
+
+3a.5. Check D (the scheduled line). In the terminal, with the same home:
+```
+cd "$TRY/project"
+claude -p "run weekly-status; draft only, do not finish, publish or commit" 2>&1 | tee -a "$LOGA/d-run1.txt"
+{ ls pmo/documents; git status -sb; } 2>&1 | tee -a "$LOGA/d-run1.txt"
+```
+- Outcome D-works: the run ends without asking for permission and a new draft is in `pmo/documents`.
+- Outcome D-denied: the output says a tool was denied or needs permission, or nothing was written. Then try, one at a time, and stop at the first that works:
+```
+claude -p "run weekly-status; draft only, do not finish, publish or commit" --allowedTools "Skill" "Read" "Write" "Edit" "Glob" "Grep" 2>&1 | tee -a "$LOGA/d-run2.txt"
+claude -p "run weekly-status; draft only, do not finish, publish or commit" --allowedTools "Skill" "Read" "Write" "Edit" "Glob" "Grep" "Bash(python3 */scripts/*.py *)" 2>&1 | tee -a "$LOGA/d-run3.txt"
+```
+Delete the new draft between runs (`git -C "$TRY/project" clean -fd pmo/documents`). Write down the first `--allowedTools` string that works, exactly as typed, or `none` when neither works. Do not try a wider pattern such as `Bash(python3 *)`: it would let an unattended run start any Python command.
+
+3a.6. Record the result in `docs/plans/v0.7.3.md`, section 5, as one line: `W1 result (<UTC date>): A=<yes|no>, B=<intact|replaced>, C=<prompts|writes>, D=<works|denied; allowedTools string or none>.` Then read `$LOGA` once for private data before sharing, and keep the log. This plan file is deleted at the release, so also note the result line in your `memory.md`; the files W10 and W11 change keep the outcome after that.
+
 ## Part 4: the release zip (other agents)
 
 The README says other agents can take the zip from the GitHub release. This needs no Claude Code and no login beyond `gh`.

@@ -63,6 +63,3 @@ class PlaybookFrontMatter(unittest.TestCase):
         with self.assertRaises(ValueError):
             pc.find_asset(root, cfg, "playbooks", "../x.md")
 
-
-if __name__ == "__main__":
-    unittest.main()
