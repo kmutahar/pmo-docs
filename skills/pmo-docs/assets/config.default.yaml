@@ -76,6 +76,8 @@ registers:
     fields: [id, title, team, group, priority, owner, status, due, done_on, period, notes, origin, tests]
     enums: {status: task_status, priority: priority_order, origin: origin}
     dates: [due, done_on]
+    # months: fields that hold a month, YYYY-MM
+    months: [period]
     refs: {tests: tests}
     closed: [done, dropped]
     # done: statuses that mean finished work (the definition of done; the tasks view lists done tasks with no linked test)
@@ -98,6 +100,7 @@ registers:
     fields: [id, title, period, due, status, owner, exit_criteria, depends_on, origin]
     enums: {status: task_status, origin: origin}
     dates: [due]
+    months: [period]
     closed: [done, dropped]
   risks:
     file: risks.yaml

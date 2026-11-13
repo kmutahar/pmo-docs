@@ -42,7 +42,7 @@ def entry_lines(text: str) -> list[int]:
     """1-based line numbers of entry lines (`- ` lines after the top `name:` key line, skipping blank and comment lines)."""
     top_seen = False
     result = []
-    for lineno, line in enumerate(text.splitlines(), 1):
+    for lineno, line in enumerate(text.split("\n"), 1):
         if not line.strip() or line.lstrip().startswith("#"):
             continue
         if not top_seen:
@@ -290,7 +290,11 @@ def read_registers(root, cfg):
             errors.append(f"{rel_path}:{marker_line}: merge conflict markers; resolve them first (references/git.md, Several writers)")
             continue
         try:
-            entries = (pc.yaml.safe_load(text) or {}).get(name) or []
+            parsed = pc.yaml.safe_load(text)
+            if isinstance(parsed, dict) and parsed and name not in parsed:
+                errors.append(f"{reg['file']}: top key must be {name}:")
+                continue
+            entries = (parsed or {}).get(name) or []
         except (pc.yaml.YAMLError, AttributeError, ValueError) as e:  # ValueError: a date like 2026-02-30, or text that is not UTF-8
             errors.append(f"{reg['file']}: not readable as `{name}:` followed by a list ({str(e).splitlines()[0]})")
             continue
@@ -417,6 +421,11 @@ def validate(data, cfg, root=None):
             for field in reg.get("dates", []):
                 if r.get(field) and not real_date(r[field]):
                     errors.append(f"{who}: {field} {r[field]!r} is not a YYYY-MM-DD date")
+            for field in reg.get("months", []):
+                val = r.get(field)
+                if val not in (None, ""):
+                    if not isinstance(val, str) or not re.match(r"^[0-9]{4}-(0[1-9]|1[0-2])$", val):
+                        errors.append(f"{who}: {field} {val!r} is not a YYYY-MM month")
             for field, target in reg.get("refs", {}).items():
                 if field not in allowed_fields or target not in data:
                     continue                      # a field the project dropped, or a target register file that does not exist
@@ -584,13 +593,15 @@ def main(argv=None):
     if args.check:
         print("registers valid, views current")
         return 0
+    root = args.project
+    pc.check_inside(root, cfg["paths"]["views"])
     try:
         folder.mkdir(parents=True, exist_ok=True)
     except OSError as e:  # for example a file where the views folder should be
         print(f"ERROR cannot write the views folder {cfg['paths']['views']}: {e}", file=sys.stderr)
         return 2
     for n, t in views.items():
-        pc.write(folder / n, t)
+        pc.safe_write(root, f"{cfg['paths']['views']}/{n}", t)
     for n in orphans:
         (folder / n).unlink()
     print(f"registers valid; wrote {len(views)} views to {cfg['paths']['views']}")

@@ -503,5 +503,72 @@ class Cli(Base):
         self.assertNotIn("Traceback", out + err)
 
 
+class RegisterGuards(Base):
+    def test_wrong_top_key_is_an_error(self):
+        risks_file = self.reg / "risks.yaml"
+        original_text = risks_file.read_text(encoding="utf-8")
+        view_file = self.views / "risks.md"
+        before_bytes = view_file.read_bytes()
+
+        lines = original_text.splitlines(keepends=True)
+        lines[0] = lines[0].replace("risks:", "risk:", 1)
+        risks_file.write_text("".join(lines), encoding="utf-8")
+
+        code, out, err = cli("--project", str(self.root))
+        self.assertEqual(code, 1)
+        self.assertIn("risks.yaml: top key must be risks:", out)
+        self.assertEqual(view_file.read_bytes(), before_bytes)
+
+        risks_file.write_text("", encoding="utf-8")
+        code, out, _ = cli("--project", str(self.root))
+        self.assertEqual(code, 0)
+
+        risks_file.write_text("risks: []\n", encoding="utf-8")
+        code, out, _ = cli("--project", str(self.root))
+        self.assertEqual(code, 0)
+
+    def test_bad_period_is_an_error(self):
+        code, _, _ = cli("--project", str(self.root))
+        self.assertEqual(code, 0)
+
+        tasks_file = self.reg / "tasks.yaml"
+        text = tasks_file.read_text(encoding="utf-8")
+        lines = text.splitlines(keepends=True)
+        lines[1] = lines[1].replace("period: 2026-03", "period: March")
+        lines[2] = lines[2].replace("period: 2026-03", "period: 2026-3")
+        tasks_file.write_text("".join(lines), encoding="utf-8")
+
+        code, out, err = cli("--project", str(self.root))
+        self.assertEqual(code, 1)
+        self.assertIn("is not a YYYY-MM month", out)
+        self.assertIn("tasks T-1: period 'March' is not a YYYY-MM month", out)
+        self.assertIn("tasks T-2: period '2026-3' is not a YYYY-MM month", out)
+
+        text_without_period = "".join(lines).replace("period: March, ", "").replace("period: 2026-3, ", "")
+        tasks_file.write_text(text_without_period, encoding="utf-8")
+        code, out, _ = cli("--project", str(self.root))
+        self.assertEqual(code, 0)
+
+    def test_catalogue_symlink_out_is_refused(self):
+        outside_file = self.root.parent / "outside_catalogue.md"
+        outside_file.write_text("keep this content", encoding="utf-8")
+        cat_file = self.views / "catalogue.md"
+        if cat_file.exists():
+            cat_file.unlink()
+        cat_file.symlink_to(outside_file)
+
+        code, out, err = cli("--project", str(self.root))
+        self.assertEqual(code, 2)
+        self.assertIn("must stay inside the project", err)
+        self.assertEqual(outside_file.read_text(encoding="utf-8"), "keep this content")
+
+    def test_form_feed_does_not_shift_entry_lines(self):
+        ff = chr(12)
+        text_ff = f"tasks:\n  - {{id: T-1, title: hello{ff}world}}\n  - {{id: T-2, title: next}}\n"
+        text_sp = "tasks:\n  - {id: T-1, title: hello world}\n  - {id: T-2, title: next}\n"
+        self.assertEqual(rv.entry_lines(text_ff), rv.entry_lines(text_sp))
+        self.assertEqual(rv.entry_lines(text_ff), [2, 3])
+
+
 if __name__ == "__main__":
     unittest.main()
