@@ -35,6 +35,7 @@ def main(argv=None):
     launcher_dest = Path(args.project) / "pmo" / "bin" / "pmo"
 
     if args.launcher:
+        pc.check_inside(args.project, "pmo/bin/pmo")
         if launcher_dest.exists():
             if launcher_dest.read_bytes() != launcher_src.read_bytes():
                 print("pmo/bin/pmo already exists and differs: delete it to replace", file=sys.stderr)
@@ -56,11 +57,13 @@ def main(argv=None):
 
     cfg_file = Path(args.project) / pc.CONFIG
     if cfg_file.exists():
-        print("already set up: pmo/config.yaml exists, nothing written")
         try:
             mine = pc.yaml.safe_load(pc.read(cfg_file)) or {}
-        except Exception:
-            mine = {}
+        except (pc.yaml.YAMLError, UnicodeDecodeError, OSError) as e:
+            err_line = str(e).splitlines()[0] if str(e).splitlines() else str(e)
+            print(f"pmo/config.yaml is not readable ({err_line}); fix or delete it", file=sys.stderr)
+            return 2
+        print("already set up: pmo/config.yaml exists, nothing written")
         v = mine.get("schema_version", 1) if isinstance(mine, dict) else 1
         if not isinstance(v, int):
             v = 1
@@ -73,15 +76,31 @@ def main(argv=None):
             return 2
         return 0
 
-    if launcher_dest.exists() and launcher_dest.read_bytes() != launcher_src.read_bytes():
-        print("pmo/bin/pmo already exists and differs: delete it to replace", file=sys.stderr)
-        return 1
-
     cfg = pc.load_config(args.project, must_exist=False)
     paths = cfg["paths"]
     reg_dir = Path(args.project) / paths["registers"]
     house_rules_file = Path(args.project) / paths["house_rules"]
     docs_dir = Path(args.project) / paths["documents"]
+
+    targets = [
+        pc.CONFIG.as_posix(),
+        paths["house_rules"],
+        f"{paths['documents']}/.gitkeep",
+        "pmo/.gitignore",
+        "pmo/bin/pmo",
+    ]
+    starter_dir = pc.SKILL / "assets" / "starter" / "registers"
+    for r in cfg.get("registers", {}).values():
+        rf = r.get("file")
+        if rf and (starter_dir / rf).exists():
+            targets.append(f"{paths['registers']}/{rf}")
+
+    for rel in targets:
+        pc.check_inside(args.project, rel)
+
+    if launcher_dest.exists() and launcher_dest.read_bytes() != launcher_src.read_bytes():
+        print("pmo/bin/pmo already exists and differs: delete it to replace", file=sys.stderr)
+        return 1
 
     actions = []
 
@@ -98,10 +117,9 @@ def main(argv=None):
     if priority_order is not None:
         mine["vocab"] = {"priority_order": priority_order}
 
-    pc.write(cfg_file, pc.yaml.safe_dump(mine, sort_keys=False))
+    pc.safe_write(args.project, pc.CONFIG.as_posix(), pc.yaml.safe_dump(mine, sort_keys=False))
     actions.append(f"created: {pc.CONFIG.as_posix()}")
 
-    starter_dir = pc.SKILL / "assets" / "starter" / "registers"
     reg_dir.mkdir(parents=True, exist_ok=True)
     for name, r in cfg.get("registers", {}).items():
         rf = r["file"]
@@ -126,7 +144,7 @@ def main(argv=None):
             "Rules defined here take precedence over the skill's rules,\n"
             "except for the safety rules in the skill's SKILL.md.\n"
         )
-        pc.write(house_rules_file, content)
+        pc.safe_write(args.project, rel_hr, content)
         actions.append(f"created: {rel_hr}")
 
     docs_dir.mkdir(parents=True, exist_ok=True)
@@ -135,12 +153,12 @@ def main(argv=None):
     if gitkeep.exists():
         actions.append(f"kept: {rel_gitkeep}")
     else:
-        pc.write(gitkeep, "")
+        pc.safe_write(args.project, rel_gitkeep, "")
         actions.append(f"created: {rel_gitkeep}")
 
     gitignore_file = Path(args.project) / "pmo" / ".gitignore"
     if not gitignore_file.exists():
-        pc.write(gitignore_file, ".me\n")
+        pc.safe_write(args.project, "pmo/.gitignore", ".me\n")
         actions.append("created: pmo/.gitignore")
     else:
         existing = pc.read(gitignore_file)
@@ -149,7 +167,7 @@ def main(argv=None):
             actions.append("kept: pmo/.gitignore")
         else:
             sep = "" if (not existing or existing.endswith("\n")) else "\n"
-            pc.write(gitignore_file, existing + sep + ".me\n")
+            pc.safe_write(args.project, "pmo/.gitignore", existing + sep + ".me\n")
             actions.append("updated: pmo/.gitignore")
 
     if launcher_dest.exists():

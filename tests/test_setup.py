@@ -168,13 +168,34 @@ class Setup(unittest.TestCase):
     def test_missing_project_folder_exits_2(self):
         self.assertEqual(tool("setup.py", self.root / "nope")[0], 2)
 
-    def test_existing_config_that_is_invalid_yaml_is_left_alone(self):
+    def test_unreadable_config_is_reported(self):
         (self.root / "pmo").mkdir()
-        (self.root / "pmo/config.yaml").write_text("a: [\n", encoding="utf-8")
-        code, out, _ = tool("setup.py", self.root)
-        self.assertEqual(code, 0)
-        self.assertIn("already set up", out)
-        self.assertEqual((self.root / "pmo/config.yaml").read_text(encoding="utf-8"), "a: [\n")
+        text = "project: [unclosed\n"
+        (self.root / "pmo/config.yaml").write_text(text, encoding="utf-8")
+        code, out, err = tool("setup.py", self.root)
+        self.assertEqual(code, 2, out + err)
+        self.assertIn("is not readable", out + err)
+        self.assertNotIn("schema_version is current", out + err)
+        self.assertEqual((self.root / "pmo/config.yaml").read_text(encoding="utf-8"), text)
+
+    def test_launcher_symlink_out_is_refused(self):
+        outside = self.root.parent / "outside-launcher"
+        (self.root / "pmo/bin").mkdir(parents=True)
+        (self.root / "pmo/bin/pmo").symlink_to(outside)
+        code, out, err = tool("setup.py", self.root, "--launcher")
+        self.assertEqual(code, 2, out + err)
+        self.assertIn("must stay inside the project", out + err)
+        self.assertFalse(outside.exists())
+
+    def test_gitignore_symlink_out_is_refused(self):
+        outside = self.root.parent / "outside-gitignore"
+        (self.root / "pmo").mkdir(parents=True)
+        (self.root / "pmo/.gitignore").symlink_to(outside)
+        code, out, err = tool("setup.py", self.root, "--name", "X", "--manager", "Y")
+        self.assertEqual(code, 2, out + err)
+        self.assertIn("must stay inside the project", out + err)
+        self.assertFalse(outside.exists())
+        self.assertFalse((self.root / "pmo/config.yaml").exists())
 
     def test_existing_config_schema_version_messages(self):
         (self.root / "pmo").mkdir()
