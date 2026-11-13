@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: done-links-a-test
+description: Marking T-1 done when QA passed and a tests register is in use asks for the TST- id to link instead of writing no test evidence recorded.
+context:
+  scaffold_script: scaffold.sh

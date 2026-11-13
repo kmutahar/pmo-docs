@@ -61,3 +61,13 @@ class SkillRules(unittest.TestCase):
         ):
             self.assertIn(expected, text)
 
+    def test_definition_of_done_asks_for_the_test(self):
+        _, text = self._skill()
+        self.assertIn("ask for the test id to link", text)
+        self.assertIn("only when the user says there is no evidence", text)
+
+    def test_track_has_no_second_done_rule(self):
+        text = self._playbook("track.md")
+        self.assertNotIn("or log a decision", text)
+        self.assertIn("follow `SKILL.md`, Definition of done", text)
+

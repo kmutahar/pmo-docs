@@ -26,7 +26,7 @@ The rules on consent, credentials, origin and definition of done live in `SKILL.
    One table: register, proposed id, title, owner, status, date, evidence, and `origin: proposed` for all rows. Count rows. More than about ten: show the list first and apply it after a yes (`SKILL.md`, Ids and bulk edits). Finished work is shown with `status: done`, the date it was finished in `done_on` and `period` the month of that date; `due` stays empty unless a message states a deadline. Ask once for the batch: was this work tested (QA passed), or may it be recorded with the note `no test evidence recorded` (`SKILL.md`, Definition of done)? Wait for the answer.
 
 6. **Write what was confirmed**
-   Only the confirmed rows, one line each, new ids as the highest number for the prefix plus one, `origin: stated` for confirmed rows, `notes` saying `from chat export, intake <YYYY-MM-DD>`; add `no test evidence recorded` where the user agreed to it. Fields the user did not confirm stay empty.
+   Only the confirmed rows, one line each, new ids as the highest number for the prefix plus one, `origin: stated` for confirmed rows, the source in the field the register has for it: `notes` on tasks, `source` on actions, `context` on decisions, `description` on risks and issues, each ending with `from chat export, intake <YYYY-MM-DD>`. Use only the fields the register lists in the config; add `no test evidence recorded` where the user agreed to it. Fields the user did not confirm stay empty.
 
 7. **Validate**
    Run `python3 ${CLAUDE_SKILL_DIR}/scripts/render_views.py`; fix what it reports. A credential error means a line was copied by mistake: remove it.

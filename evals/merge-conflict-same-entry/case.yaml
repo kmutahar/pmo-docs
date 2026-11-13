@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: merge-conflict-same-entry
+description: A merge conflict changing T-2 on both sides shows both versions and asks which to keep instead of picking one silently.
+context:
+  scaffold_script: scaffold.sh

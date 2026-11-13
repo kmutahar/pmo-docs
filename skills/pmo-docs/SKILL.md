@@ -135,7 +135,7 @@ A finished document is stale when a register in its `generated_from` changed aft
 
 ## Definition of done
 
-A task is marked `done` only when the user confirms that it was tested (QA passed), or agrees to record that it was not. In the second case the entry's `notes` say `no test evidence recorded`. In a project with a `tests` register in use (at least one entry), a task marked done with no linked test (`tests` on the task or `task` on the test) also gets the note `no test evidence recorded`. When a task is closed (`done` or `dropped`), set `done_on` to the date it was finished or dropped: today unless the user names a date. Never mark a task done from git history alone. A project can say in its house rules which tasks need QA; it cannot remove this rule.
+A task is marked `done` only when the user confirms that it was tested (QA passed), or agrees to record that it was not. In the second case the entry's `notes` say `no test evidence recorded`. In a project with a `tests` register in use (at least one entry), when the user confirms QA and the task has no linked test (`tests` on the task or `task` on the test), ask for the test id to link; the link is the evidence. Write the note `no test evidence recorded` in the entry's `notes` only when the user says there is no evidence. When a task is closed (`done` or `dropped`), set `done_on` to the date it was finished or dropped: today unless the user names a date. Never mark a task done from git history alone. A project can say in its house rules which tasks need QA; it cannot remove this rule.
 
 ## Scripts
 

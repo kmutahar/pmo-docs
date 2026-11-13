@@ -57,7 +57,7 @@ Make it executable. A hook in `.git/hooks` is not shared with teammates; to shar
 
 ## Several writers
 
-- **Registers:** for a conflict, keep both sides' new lines, keep one version of an entry changed on both sides, delete the marker lines, then run `render_views.py`. For a duplicate id, run `renumber.py` (`references/track.md`).
+- **Registers:** for a conflict, keep both sides' new lines and delete the marker lines; for an entry changed on both sides, show both lines and ask which to keep (`SKILL.md`, Working rules "Ask, do not guess") before deleting the marker lines around it; then run `render_views.py`. For a duplicate id, run `renumber.py` (`references/track.md`).
 - **Views:** never merged by hand; render again.
 - **Drafts:** resolve by hand, then `structure_check.py`.
 - **Finished documents:** never merged; a second finished version is a new draft.
