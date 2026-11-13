@@ -411,8 +411,10 @@ class Publish(unittest.TestCase):
         return f
 
     def test_invalid_mode_exits_2(self):
+        self.base_config = (self.root / "pmo/config.yaml").read_text(encoding="utf-8")
         for mode in ("ftp", "Folder", "''", "[folder]"):
             with self.subTest(mode=mode):
+                (self.root / "pmo/config.yaml").write_text(self.base_config, encoding="utf-8")
                 self.set_config(f"publish:\n  mode: {mode}\n  path: published\n")
                 code, _, err = run(self.root)
                 self.assertEqual(code, 2)

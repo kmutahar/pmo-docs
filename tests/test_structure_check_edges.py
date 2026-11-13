@@ -267,6 +267,15 @@ class Cli(unittest.TestCase):
         self.assertEqual(code, 0, out)
         self.assertIn("warn  pmo/documents/تقرير.md: no front matter", out)
 
+    def test_bom_document_is_checked_as_its_type(self):
+        text = (REPO / "examples/acme/pmo/documents/Decision log.md").read_text(encoding="utf-8")
+        (self.docs / "Decision log.md").write_text(text, encoding="utf-8")
+        code1, out1 = main("--project", str(self.root))
+        (self.docs / "Decision log.md").write_text(chr(0xFEFF) + text, encoding="utf-8")
+        code2, out2 = main("--project", str(self.root))
+        self.assertNotIn("no front matter", out2)
+        self.assertEqual(code1, code2)
+
 
 if __name__ == "__main__":
     unittest.main()

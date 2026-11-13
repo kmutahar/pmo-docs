@@ -1,10 +1,13 @@
 """Tests for scripts/pmo_common.py. Run from the repo root: python3 -m unittest discover tests"""
+import contextlib
 import datetime
+import io
 import re
 import shutil
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from pathlib import Path
 
@@ -120,6 +123,41 @@ class Common(unittest.TestCase):
     def test_newer_schema_refused(self):
         with self.assertRaises(SystemExit):
             pc.load_config(self.project("schema_version: 99\n"))
+
+    def test_load_config_repeated_key_and_bad_yaml_exit_2(self):
+        for cfg in (
+            "schema_version: 1\nproject: {name: A}\nproject: {name: B}\n",
+            "schema_version: 1\nproject: {name: [\n",
+        ):
+            d = self.project(cfg)
+            err = io.StringIO()
+            with contextlib.redirect_stderr(err):
+                with self.assertRaises(SystemExit) as cm:
+                    pc.load_config(d)
+            self.assertEqual(cm.exception.code, 2)
+            self.assertIn("not valid YAML", err.getvalue())
+
+    def test_schema_version_values(self):
+        for bad in (True, 0, -5, '"1"', 1.0):
+            d = self.project(f"schema_version: {bad}\n")
+            err = io.StringIO()
+            with contextlib.redirect_stderr(err):
+                with self.assertRaises(SystemExit) as cm:
+                    pc.load_config(d)
+            self.assertEqual(cm.exception.code, 2, f"for bad={bad!r}")
+            self.assertIn("schema_version must be a whole number of 1 or more", err.getvalue(), f"for bad={bad!r}")
+
+        d2 = self.project("schema_version: 2\n")
+        err2 = io.StringIO()
+        with contextlib.redirect_stderr(err2):
+            with self.assertRaises(SystemExit) as cm2:
+                pc.load_config(d2)
+        self.assertEqual(cm2.exception.code, 2)
+        self.assertIn("newer than this skill knows", err2.getvalue())
+
+        d_ok = self.project("schema_version: 1\n")
+        cfg = pc.load_config(d_ok)
+        self.assertEqual(cfg["schema_version"], 1)
 
     def test_missing_register_is_empty(self):
         d = self.project()
@@ -423,6 +461,99 @@ class Helpers(unittest.TestCase):
         errs = render_views.config_errors(cfg)
         self.assertTrue(any("week_start" in e and "someday" in e for e in errs))
 
+    def test_read_strips_a_bom(self):
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", delete=False) as f:
+            f.write(chr(0xFEFF) + "---\ntype: x\n---\nbody\n")
+            path = f.name
+        try:
+            text = pc.read(path)
+            self.assertTrue(text.startswith("---"))
+        finally:
+            Path(path).unlink(missing_ok=True)
+
+    def test_front_matter_edge_forms(self):
+        fm1, b1 = pc.split_front_matter("---\n---\nbody\n")
+        self.assertEqual(fm1, {})
+        self.assertEqual(b1, "body\n")
+
+        fm2, b2 = pc.split_front_matter("---\ntype: x\n---")
+        self.assertEqual(fm2, {"type": "x"})
+        self.assertEqual(b2, "")
+
+        fm3, b3 = pc.split_front_matter("---\ntype: x\n--- \nbody\n")
+        self.assertEqual(fm3, {"type": "x"})
+        self.assertEqual(b3, "body\n")
+
+        fm4, b4 = pc.split_front_matter("type: x\n---\n")
+        self.assertIsNone(fm4)
+        self.assertEqual(b4, "type: x\n---\n")
+
+        fm5, b5 = pc.split_front_matter("---\nnote: a---\ntype: x\n---\n")
+        self.assertEqual(fm5, {"note": "a---", "type": "x"})
+
+    def test_front_matter_impossible_date(self):
+        fm, body = pc.split_front_matter("---\ntype: x\nlast_updated: 2026-02-30\n---\nbody\n")
+        self.assertEqual((fm, body), ({}, "body\n"))
+        with self.assertRaises(pc.yaml.YAMLError):
+            pc.split_front_matter("---\ntype: x\nlast_updated: 2026-02-30\n---\nbody\n", strict=True)
+
+    def test_load_yaml_refuses_a_repeated_key(self):
+        with self.assertRaises(pc.yaml.YAMLError):
+            pc.load_yaml("a: 1\na: 2\n")
+        with self.assertRaises(pc.yaml.YAMLError):
+            pc.load_yaml("risks:\n- {id: R-1, status: open, status: closed}\n")
+        self.assertEqual(pc.load_yaml("a: [1, 2]\nb: {c: 1}\n"), {"a": [1, 2], "b": {"c": 1}})
+        self.assertIsNone(pc.load_yaml(""))
+
+    def test_load_yaml_refuses_aliases_quickly(self):
+        lines = ["a0: &a0 " + str(["x"] * 9)]
+        for i in range(1, 8):
+            lines.append(f"a{i}: &a{i} " + "[" + ", ".join([f"*a{i-1}"] * 9) + "]")
+        lines.append("title: *a7\n")
+        nested_alias_text = "\n".join(lines)
+
+        t0 = time.monotonic()
+        with self.assertRaises(pc.yaml.YAMLError):
+            pc.load_yaml(nested_alias_text)
+        elapsed = time.monotonic() - t0
+        self.assertLess(elapsed, 5.0)
+
+        with self.assertRaises(pc.yaml.YAMLError):
+            pc.load_yaml("a: &x 1\nb: *x\n")
+
+        with self.assertRaises(pc.yaml.YAMLError):
+            pc.load_yaml("a: &x 1\n")
+
+        with self.assertRaises(pc.yaml.YAMLError) as cm:
+            pc.load_yaml("a: {x: 1, <<: {y: 2}}\n")
+        self.assertIn("merge keys", str(cm.exception))
+
+    def test_to_date_strict(self):
+        with self.assertRaises(ValueError):
+            pc.to_date("20260301")
+        with self.assertRaises(ValueError):
+            pc.to_date(20260301)
+        with self.assertRaises(ValueError):
+            pc.to_date("2026-W10-1")
+        self.assertEqual(pc.to_date("2026-03-01"), datetime.date(2026, 3, 1))
+        d = datetime.date(2026, 3, 1)
+        self.assertEqual(pc.to_date(d), d)
+        dt = datetime.datetime(2026, 3, 1, 10, 30)
+        self.assertEqual(pc.to_date(dt), d)
+        self.assertIsNone(pc.to_date(None))
+        self.assertIsNone(pc.to_date(""))
+
+    def test_cell_backslashes_and_carriage_return(self):
+        self.assertEqual(pc.cell("a\\|b"), r"a\\\|b")
+        self.assertEqual(pc.cell("a|b"), r"a\|b")
+        self.assertEqual(pc.cell("x\\"), "x\\")
+        self.assertEqual(pc.cell(r"C:\Users"), r"C:\Users")
+        self.assertEqual(pc.cell("p\rq"), "p q")
+        self.assertEqual(pc.cell("p\r\nq"), "p q")
+        tbl = pc.md_table(["a", "b"], [["a\\|b", "y"]])
+        lines = tbl.splitlines()
+        self.assertEqual(lines[2], r"| a\\\|b | y |")
+
 
 class Languages(unittest.TestCase):
     def test_missing_block_is_english_only(self):
@@ -515,6 +646,14 @@ class Languages(unittest.TestCase):
         self.assertEqual(approved, "pmo/data/glossary-xx.md")
         self.assertEqual(proposed, "pmo/data/glossary-xx.proposed.md")
         self.assertEqual(pc.glossary_paths(base, "en"), (None, None))
+
+    def test_languages_drops_repeats_and_bad_codes(self):
+        got1 = pc.languages({"languages": {"draft": "en", "translations": ["ar", "ar", "en"]}})
+        self.assertEqual(got1["translations"], ["ar"])
+
+        got2 = pc.languages({"languages": {"draft": "en", "translations": ["/../../../x", "AR", "fr-CA", 5]}})
+        self.assertEqual(got2["translations"], ["fr-CA"])
+        self.assertEqual(sorted(got2["info"].keys()), ["en", "fr-CA"])
 
 
 SCRIPTS = Path(__file__).resolve().parents[1] / "skills/pmo-docs/scripts"
@@ -644,7 +783,8 @@ class ConfigGuards(unittest.TestCase):
         acme_text = (Path(__file__).resolve().parents[1] / "examples/acme/pmo/config.yaml").read_text(encoding="utf-8")
         for text, key, is_type_error in cases:
             with self.subTest(snippet=text.strip()):
-                code, stdout, stderr = self.cfg_run(acme_text + "\n" + text, append=False)
+                base = re.sub(r"^project:\n(?:[ \t].*\n)*", "", acme_text, flags=re.M) if text.startswith("project:") else acme_text
+                code, stdout, stderr = self.cfg_run(base + "\n" + text, append=False)
                 self.assertEqual(code, 2)
                 self.assertNotIn("Traceback", stderr)
                 self.assertIn(key, stderr)

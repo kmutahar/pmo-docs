@@ -12,13 +12,16 @@ from pathlib import Path
 
 SKILL = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SKILL / "scripts" / "_vendor"))
-import yaml  # noqa: E402  (vendored, loaded only with safe_load)
+import yaml  # noqa: E402  (vendored, loaded only with safe_load and the SafeLoader subclass below)
+import yaml.composer  # noqa: E402
+import yaml.constructor  # noqa: E402
 
 SCHEMA_VERSION = 1
 CONFIG = Path("pmo/config.yaml")
 WEEKDAYS = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
 LANG_CODE = re.compile(r"[a-z]{2,3}(-[A-Za-z0-9]{2,8})?")
 BACKSLASH = chr(92)
+FRONT_MATTER = re.compile(r"\A---[ \t]*\n(?:(.*?)\n)?---[ \t]*(?:\n|\Z)", re.S)
 
 
 def add_project_arg(parser):
@@ -26,7 +29,8 @@ def add_project_arg(parser):
 
 
 def read(path):
-    return Path(path).read_text(encoding="utf-8")
+    """Read a UTF-8 text file. A BOM is dropped when a document is read and written back."""
+    return Path(path).read_text(encoding="utf-8-sig")
 
 
 def write(path, text):
@@ -112,6 +116,39 @@ def config_type_errors(cfg) -> list[str]:
     return errors
 
 
+class _StrictLoader(yaml.SafeLoader):
+    def compose_node(self, parent, index):
+        event = self.peek_event()
+        if getattr(event, "anchor", None) is not None:
+            raise yaml.composer.ComposerError(None, None, "anchors and aliases are not allowed", event.start_mark)
+        return super().compose_node(parent, index)
+
+    def construct_mapping(self, node, deep=False):
+        if isinstance(node, yaml.MappingNode):
+            seen = set()
+            for key_node, _ in node.value:
+                if key_node.tag == "tag:yaml.org,2002:merge":
+                    raise yaml.constructor.ConstructorError(None, None, "merge keys (<<) are not allowed", key_node.start_mark)
+                key = self.construct_object(key_node, deep=True)
+                try:
+                    hash(key)
+                except TypeError:
+                    continue
+                if key in seen:
+                    raise yaml.constructor.ConstructorError(None, None, f"found a repeated key {key!r}", key_node.start_mark)
+                seen.add(key)
+        return super().construct_mapping(node, deep=deep)
+
+
+def load_yaml(text):
+    """Parse YAML with _StrictLoader: repeated keys, anchors, aliases and merge keys (<<) are refused."""
+    loader = _StrictLoader(text)
+    try:
+        return loader.get_single_data()
+    finally:
+        loader.dispose()
+
+
 def load_config(root=".", must_exist=True):
     """Skill defaults merged with the project's pmo/config.yaml. Exits 2 on a newer schema_version, missing/invalid config, or paths that leave the project."""
     cfg = yaml.safe_load(read(SKILL / "assets" / "config.default.yaml"))
@@ -124,13 +161,13 @@ def load_config(root=".", must_exist=True):
     else:
         try:
             text = read(f)
-            mine = yaml.safe_load(text) or {}
+            mine = load_yaml(text) or {}
         except UnicodeDecodeError:
             print(f"{f}: not valid UTF-8 text", file=sys.stderr)
             sys.exit(2)
-        except yaml.YAMLError as e:
+        except (yaml.YAMLError, ValueError) as e:
             first_line = str(e).splitlines()[0] if str(e).splitlines() else str(e)
-            print(f"{f}: not valid YAML ({first_line})", file=sys.stderr)
+            print(f"{f}: not valid YAML: {first_line}", file=sys.stderr)
             sys.exit(2)
         except OSError as e:
             first_line = str(e).splitlines()[0] if str(e).splitlines() else str(e)
@@ -140,7 +177,10 @@ def load_config(root=".", must_exist=True):
             print(f"{f}: must be a YAML map of keys, got {type(mine).__name__}", file=sys.stderr)
             sys.exit(2)
         v = mine.get("schema_version", 1)
-        if not isinstance(v, int) or v > SCHEMA_VERSION:
+        if type(v) is not int or v < 1:
+            print(f"{f}: schema_version must be a whole number of 1 or more (got {v!r})", file=sys.stderr)
+            sys.exit(2)
+        elif v > SCHEMA_VERSION:
             print(f"{f}: schema_version {v!r} is newer than this skill knows ({SCHEMA_VERSION}). Update the skill.", file=sys.stderr)
             sys.exit(2)  # 2, not 1: callers read 1 as "findings"
         cfg = merge(cfg, mine)
@@ -202,31 +242,39 @@ def find_asset(root, cfg, kind, name):
 def split_front_matter(text, strict=False):
     """(front matter dict or None when absent, body). Invalid YAML, or YAML that is not a map, gives {}, or raises yaml.YAMLError when strict."""
     # shortcut: pc.read() uses Path.read_text(), which normalises \r\n to \n across all callers
-    m = re.match(r"\A---\n(.*?)\n---\n", text, flags=re.S)
+    m = FRONT_MATTER.match(text)
     if not m:
         return None, text
     try:
-        fm = yaml.safe_load(m.group(1)) or {}
+        fm = yaml.safe_load(m.group(1) or "") or {}
         if not isinstance(fm, dict):
             raise yaml.YAMLError("front matter is not a map of keys")
         return fm, text[m.end():]
-    except yaml.YAMLError:
+    except (yaml.YAMLError, ValueError) as e:
         if strict:
-            raise
+            if isinstance(e, yaml.YAMLError):
+                raise e
+            raise yaml.YAMLError(str(e))
         return {}, text[m.end():]
 
 
 def languages(cfg) -> dict:
-    """{'draft': 'en', 'translations': ['xx'], 'info': {code: block}} from cfg['languages']. A missing or empty block gives English only; 'info' holds the draft code and every translation code (an absent block is {})."""
+    """{'draft': 'en', 'translations': ['xx'], 'info': {code: block}} from cfg['languages']. A missing or empty block gives English only; translations holds valid, non-repeated language codes different from draft; 'info' holds the draft code and every translation code (an absent block is {})."""
     block = cfg.get("languages") if isinstance(cfg, dict) else None
     if not isinstance(block, dict):
         block = {}
     draft = block.get("draft")
     if not isinstance(draft, str) or not draft:
         draft = "en"
-    trans = block.get("translations")
-    translations = [t for t in trans if isinstance(t, str)] if isinstance(trans, list) else []
-    codes = [draft] + [t for t in translations if t != draft]
+    raw_trans = block.get("translations")
+    translations = []
+    seen = set()
+    if isinstance(raw_trans, list):
+        for t in raw_trans:
+            if isinstance(t, str) and LANG_CODE.fullmatch(t) and t != draft and t not in seen:
+                translations.append(t)
+                seen.add(t)
+    codes = [draft] + translations
     info = {}
     for c in codes:
         val = block.get(c)
@@ -308,7 +356,7 @@ def load_register(root, cfg, name):
     f = Path(root) / cfg["paths"]["registers"] / reg["file"] if reg else None
     if not f or not f.exists():
         return []
-    data = yaml.safe_load(read(f))
+    data = load_yaml(read(f))
     if data is None:
         return []
     if not isinstance(data, dict) or name not in data:
@@ -323,18 +371,24 @@ def to_date(v):
         return None
     if isinstance(v, datetime.datetime):
         return v.date()
-    return v if isinstance(v, datetime.date) else datetime.date.fromisoformat(str(v))
+    if isinstance(v, datetime.date):
+        return v
+    s = str(v)
+    if not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", s):
+        raise ValueError(f"not a YYYY-MM-DD date: {v!r}")
+    return datetime.date.fromisoformat(s)
 
 
 def cell(v):
-    """A value as one Markdown table cell: lists joined, pipes escaped, newlines flattened."""
+    """A value as one Markdown table cell: lists joined, pipes escaped (and the backslashes right before one), carriage returns and newlines flattened."""
     if v is None or v == "":
         return ""
     if isinstance(v, (list, tuple)):
         return ", ".join(cell(x) for x in v)
     if isinstance(v, dict):
         return "; ".join(f"{k}: {cell(x)}" for k, x in v.items())
-    return str(v).replace("|", "\\|").replace("\n", " ")
+    s = str(v).replace("\r\n", " ").replace("\r", " ").replace("\n", " ")
+    return re.sub(r"(\\*)\|", lambda m: m.group(1) * 2 + "\\|", s)
 
 
 def week_start(cfg) -> int:

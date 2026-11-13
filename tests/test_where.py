@@ -231,7 +231,8 @@ class Where(unittest.TestCase):
 
     def test_week_start_changes_the_week_window_and_period(self):
         cfg_path = self.root / "pmo/config.yaml"
-        cfg_path.write_text(cfg_path.read_text(encoding="utf-8") + "\nproject:\n  week_start: sunday\n", encoding="utf-8")
+        cfg_text = cfg_path.read_text(encoding="utf-8")
+        cfg_path.write_text(cfg_text.replace("project:\n", "project:\n  week_start: sunday\n", 1), encoding="utf-8")
         f = fields(run(self.root, "status-report", "--week", "--as-of", "2026-12-27")[1])
         self.assertEqual((f["document"], f["window"]), ("pmo/documents/2026-W53 - Status report.md", "2026-12-27..2027-01-02"))
 

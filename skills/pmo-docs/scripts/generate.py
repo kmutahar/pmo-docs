@@ -148,12 +148,12 @@ def extract_comments(text: str) -> str:
 
 def fill(template_text: str, filled: Filled) -> str:
     """Apply a Filled to a template. Raises MissingSection(heading) for a section or slot not in the template."""
-    m = re.match(r"\A---\n(.*?)\n---\n", template_text, flags=re.S)
+    m = pc.FRONT_MATTER.match(template_text)
     if not m:
         fm_text = ""
         body = template_text
     else:
-        fm_text = m.group(1)
+        fm_text = m.group(1) or ""
         body = template_text[m.end():]
 
     # Replace placeholders in front matter text
