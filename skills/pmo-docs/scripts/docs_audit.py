@@ -167,6 +167,14 @@ def audit_file(root, cfg, path, base, today):
                     out.append(("front matter", f"`{rel}` - finished but has no `last_updated`"))
             if stamp and t.get("stale_days") and (today - stamp).days > t["stale_days"]:
                 out.append(("old", f"`{rel}` - {(today - stamp).days} days old (limit {t['stale_days']})"))
+        elif t and fm.get("status") == "draft":
+            recorded = fm.get("source_hashes")
+            if isinstance(recorded, dict):
+                for reg in t.get("generated_from") or []:
+                    if reg not in cfg["registers"]:
+                        continue
+                    if reg in recorded and recorded[reg] != register_hash(root, cfg, reg):
+                        out.append(("stale", f"`{rel}` - draft is behind: register `{reg}` changed since the draft was made"))
     unfenced = re.sub(r"^ {0,3}(```|~~~).*?^ {0,3}\1[^\n]*$", "", text, flags=re.S | re.M)  # links in fenced code are examples
     for target in re.findall(r"\]\((?!#|[A-Za-z][A-Za-z0-9+.-]*:)([^)\s]+)\)", unfenced):
         if not (path.parent / _unquote(target.split("#")[0])).exists():

@@ -48,7 +48,7 @@ Every document starts with YAML front matter.
 | `status` | `draft` or `finished` |
 | `last_updated` | `YYYY-MM-DD` |
 | `checks` | the template's checks; present in drafts, removed by Finish |
-| `source_hashes` | written by Finish: register name to a quoted 8-character hash |
+| `source_hashes` | written when a draft is made; replaced by Finish only after the user chose to refresh or to finish anyway |
 | `code_ref` | documents read from code: the commit hash the code was read at (quoted) |
 | `based_on` | in a template override only: `<type>@<version>` |
 | `lang`, `dir`, `translation_of`, `source_hash` | a translation only: its language code, `ltr` or `rtl`, the original's path relative to `paths.documents`, and the 8-character hash of the original's body when it was translated (quoted). A translation has no `checks` and no `source_hashes`. |

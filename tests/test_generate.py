@@ -98,6 +98,38 @@ class TestGenerate(unittest.TestCase):
         self.assertEqual(code2, 0)
         self.assertEqual(out1, out2)
 
+    def test_generated_draft_records_source_hashes(self):
+        doc = self.root / "pmo/documents/Decision log.md"
+        if doc.exists():
+            doc.unlink()
+
+        code, out, err = tool("generate.py", self.root, "decision-log", "--stdout", "--as-of", "2026-03-15")
+        self.assertEqual(code, 0, err)
+        w_code, w_out, w_err = tool("where.py", self.root, "decision-log", "--hashes")
+        self.assertEqual(w_code, 0, w_err)
+        where_sh = [line for line in w_out.splitlines() if line.startswith("source_hashes:")][0]
+        fm_lines = [line for line in out.split("---")[1].splitlines() if line.startswith("source_hashes:")]
+        self.assertEqual(len(fm_lines), 1)
+        self.assertEqual(fm_lines[0], where_sh)
+
+        code, out, err = tool("generate.py", self.root, "decision-log", "--as-of", "2026-03-15")
+        self.assertEqual(code, 0, err)
+        self.assertTrue(doc.exists())
+        clean_text = re.sub(r"<!--.*?-->\n*", "", doc.read_text(encoding="utf-8"))
+        doc.write_text(clean_text, encoding="utf-8")
+        sc_code, sc_out, sc_err = tool("structure_check.py", self.root, str(doc))
+        self.assertEqual(sc_code, 0, sc_out + sc_err)
+
+        if doc.exists():
+            doc.unlink()
+        cfg_file = self.root / "pmo/config.yaml"
+        cfg_file.write_text(cfg_file.read_text(encoding="utf-8") + "\ndoc_types:\n  decision-log:\n    generated_from: []\n", encoding="utf-8")
+        code, out, err = tool("generate.py", self.root, "decision-log", "--stdout", "--as-of", "2026-03-15")
+        self.assertEqual(code, 0, err)
+        fm, _ = pc.split_front_matter(out, strict=True)
+        self.assertNotIn("source_hashes", fm)
+        self.assertFalse(any(line.startswith("source_hashes:") for line in out.split("---")[1].splitlines()))
+
     def test_invalid_register_exits_1_and_writes_nothing(self):
         doc = self.root / "pmo/documents/Decision log.md"
         if doc.exists():

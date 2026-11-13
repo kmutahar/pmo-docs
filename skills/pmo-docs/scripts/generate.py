@@ -23,6 +23,7 @@ if sys.version_info < (3, 10):
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import pmo_common as pc  # noqa: E402
 import render_views  # noqa: E402
+import docs_audit  # noqa: E402
 
 GENERATORS = {}
 
@@ -930,6 +931,20 @@ def main(argv=None) -> int:
     except MissingSection as e:
         print(f"ERROR template missing section `{e}` required by generator; set `generator: null` in config to draft manually", file=sys.stderr)
         return 2
+
+    if info.get("generated_from"):
+        m = re.match(r"\A---\n(.*?)\n---\n", doc_text, flags=re.S)
+        if m:
+            fm_text = m.group(1)
+            if not re.search(r"^source_hashes:", fm_text, flags=re.M):
+                pairs = ", ".join(f'{r}: "{docs_audit.register_hash(root, cfg, r)}"' for r in info["generated_from"] if r in cfg.get("registers", {}))
+                hash_line = "source_hashes: {" + pairs + "}"
+
+                def _add_hashes(match):
+                    return match.group(0) + "\n" + hash_line
+
+                new_fm = re.sub(r"^status:.*$", _add_hashes, fm_text, count=1, flags=re.M)
+                doc_text = "---\n" + new_fm + "\n---\n" + doc_text[m.end():]
 
     rel_path = pc.doc_rel_path(cfg, args.type, period, args.as_of)
     pc.check_inside(root, rel_path)

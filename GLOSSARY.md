@@ -187,7 +187,7 @@ The copy of a finished document written to the publish target.
 _Avoid_: export, artifact, published file
 
 **Stale**:
-Said of a finished document when a register it was made from has changed since it was finished.
+Said of a finished document when a register it was made from has changed since it was finished. A draft is behind when the registers it records changed since it was made.
 _Avoid_: outdated, out of date
 
 ## Languages

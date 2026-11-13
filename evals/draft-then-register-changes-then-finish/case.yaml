@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: draft-then-register-changes-then-finish
+description: A draft made before a register changed must not be finished without asking.
+context:
+  scaffold_script: scaffold.sh

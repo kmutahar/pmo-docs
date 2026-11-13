@@ -15,13 +15,13 @@ Turn a draft the user has approved into a finished document. The Finish steps ar
    A document that is already finished: say so and stop, unless `docs_audit.py` reports it stale, in which case offer a new draft (`references/draft.md`).
 
 2. **Check the registers have not moved**
-   Compare the register hashes recorded in the document's front matter (`source_hashes`) against current hashes from `where.py --hashes`. If any recorded hash differs, tell the user what changed and ask whether to refresh the draft first. If the document has no recorded `source_hashes` (a draft being finished for the first time), do not compare file modification dates or git commit dates: a fresh clone or an older period draft always looks newer than its file dates. Finish records the registers as they are now. Never refresh over the user's edits.
+   Compare the `source_hashes` recorded in the draft with current hashes from `where.py --hashes`. If any differs, name the registers that changed and ask: refresh the draft first, or finish anyway. Only if the draft has no `source_hashes` (written by hand), record the current ones and do not compare file dates. Never refresh over the user's edits.
 
 3. **Look at the open questions**
    If the draft still has open questions, list them and ask whether to finish anyway. They stay in the document.
 
 4. **Finish**
-   Do the Finish steps in `SKILL.md`, in order, on the one document.
+   Do the Finish steps in `SKILL.md`, in order, on the one document (the recorded hashes are replaced only after the answer in step 2).
 
 5. **Translations**
    `where.py` prints `translations` and `translate` for the type. Follow `SKILL.md`, Finish, step 8: skip, or ask once. A translation is finished only after its original.

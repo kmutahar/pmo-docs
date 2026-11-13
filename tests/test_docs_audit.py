@@ -66,6 +66,30 @@ class Audit(unittest.TestCase):
         code, out = self.run_audit()  # the Acme status report is a draft
         self.assertEqual(code, 0, out)
 
+    def test_draft_behind_its_registers_is_reported(self):
+        self.finish()
+        dec_log = self.docs / "Decision log.md"
+        dec_log.write_text(
+            '---\ntype: decision-log\nstatus: draft\nsource_hashes:\n  decisions: "00000000"\n---\n# Decision log\n',
+            encoding="utf-8")
+        code, out = self.run_audit()
+        self.assertEqual(code, 1)
+        self.assertIn("## Stale", out)
+        self.assertIn("draft is behind", out)
+
+        cur_hash = da.register_hash(self.p, pc.load_config(self.p), "decisions")
+        dec_log.write_text(
+            f'---\ntype: decision-log\nstatus: draft\nsource_hashes:\n  decisions: "{cur_hash}"\n---\n# Decision log\n',
+            encoding="utf-8")
+        code, out = self.run_audit()
+        self.assertEqual(code, 0, out)
+
+        dec_log.write_text(
+            '---\ntype: decision-log\nstatus: draft\n---\n# Decision log\n',
+            encoding="utf-8")
+        code, out = self.run_audit()
+        self.assertEqual(code, 0, out)
+
     def test_front_matter_findings(self):
         (self.docs / "plain.md").write_text("# no front matter\n", encoding="utf-8")
         (self.docs / "odd.md").write_text("---\ntype: nonsense\n---\n", encoding="utf-8")

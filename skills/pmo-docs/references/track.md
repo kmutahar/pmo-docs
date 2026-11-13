@@ -26,7 +26,7 @@ Add, change or close entries in the registers. Rules on status, consent and prop
    Run `python3 ${CLAUDE_SKILL_DIR}/scripts/render_views.py` and fix what it reports before going on. When validation reports a duplicate id, run `renumber.py`. With no references, run `--apply`. With references, match each reference to a copy by its title, owner and context, ask the user once for the whole batch in plain English, then run `--apply` with the flags. A line that mentions two duplicated ids needs one flag per id; the dry run prints them.
 
 6. **List stale documents**
-   Run `python3 ${CLAUDE_SKILL_DIR}/scripts/docs_audit.py`. Name the finished documents it reports as stale and offer to redraft them (`references/draft.md`). Redraft nothing unasked.
+   Run `python3 ${CLAUDE_SKILL_DIR}/scripts/docs_audit.py`. Name the finished documents the audit reports as stale and the drafts it reports as behind. Offer to redraft or refresh them (`references/draft.md`). Redraft nothing unasked.
 
 7. **Reply**
    List the entries changed as id, field, old value, new value. Then the stale documents and the one next step.
