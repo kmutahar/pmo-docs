@@ -124,3 +124,13 @@ class SkillRules(unittest.TestCase):
         self.assertIn("claude -p", text)
         self.assertNotIn("dangerously", text)
 
+    def test_privacy_covers_chats_docs_and_patterns(self):
+        text = (REPO / "PRIVACY.md").read_text(encoding="utf-8")
+        self.assertIn("Chat exports and pasted messages", text)
+        self.assertIn("public framework documentation", text)
+        self.assertIn("the command patterns the agent may run without asking", text)
+        self.assertNotIn("the exact commands the agent may run", text)
+
+
+if __name__ == "__main__":
+    unittest.main()
