@@ -234,6 +234,56 @@ class Cli(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("ERROR", err)
 
+    def test_dropped_task_is_not_done(self):
+        tasks_file = self.root / "pmo/registers/tasks.yaml"
+        tasks_text = tasks_file.read_text(encoding="utf-8")
+        tasks_file.write_text(tasks_text.replace("status: not-started", "status: dropped", 1), encoding="utf-8")
+
+        code, out, err = run(self.root, "status-report", "2026-03", "--stdout")
+        self.assertEqual(code, 0, err)
+        self.assertIn("1/3 tasks done (33%)", out)
+        self.assertIn("**Progress:** 1/3 tasks done (33%)", out)
+        self.assertIn("| medium | 0 / 1 |", out)
+        self.assertIn("| Web | 0 / 1 |", out)
+
+        code_chk, out_chk, err_chk = run(self.root, "team-checklist", "2026-03", "--stdout")
+        self.assertEqual(code_chk, 0, err_chk)
+        t2_lines = [ln for ln in out_chk.splitlines() if "`T-2`" in ln]
+        self.assertTrue(t2_lines)
+        self.assertFalse(any(ln.strip().startswith("- [x]") for ln in t2_lines))
+        self.assertTrue(any(ln.strip().startswith("- [ ]") for ln in t2_lines))
+
+    def test_blocked_task_of_an_earlier_period_is_listed(self):
+        code, out, err = run(self.root, "status-report", "--week", "--as-of", "2026-03-31", "--stdout")
+        self.assertEqual(code, 0, err)
+        blockers_section = out.split("## Blockers and decisions needed")[1].split("## ")[0]
+        self.assertIn("T-4", blockers_section)
+        progress_line = [ln for ln in out.splitlines() if ln.startswith("**Progress:**")][0]
+        self.assertIn("0/0 tasks done (0%)", progress_line)
+        priority_section = out.split("## Progress by priority")[1].split("## Planned next")[0]
+        self.assertNotIn("T-4", priority_section)
+
+    def test_name_with_dotdot_exits_2(self):
+        self.add_config("\ndoc_types:\n  decision-log:\n    name: '../../../escaped-{title}.md'\n")
+        escaped_file = self.root.parent / "escaped-Decision log.md"
+        code, _, err = run(self.root, "decision-log")
+        self.assertEqual(code, 2)
+        self.assertIn("ERROR config", err)
+        self.assertFalse(escaped_file.exists())
+
+    def test_dangling_symlink_document_is_refused(self):
+        target = self.docs / "Decision log.md"
+        if target.exists():
+            target.unlink()
+        outside_target = self.root.parent / "outside_decision_log.md"
+        if outside_target.exists():
+            outside_target.unlink()
+        target.symlink_to(outside_target)
+        code, out, err = run(self.root, "decision-log")
+        self.assertEqual(code, 2)
+        self.assertIn("must stay inside the project", err)
+        self.assertFalse(outside_target.exists())
+
 
 class Odd(unittest.TestCase):
     """Registers with entries the Acme data does not have: missing fields, odd shapes, dates outside the period."""

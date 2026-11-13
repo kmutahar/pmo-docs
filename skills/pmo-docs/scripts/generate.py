@@ -310,11 +310,13 @@ def generate_decision_log(ctx: Ctx) -> Filled:
 @generator("team-checklist")
 def generate_team_checklist(ctx: Ctx) -> Filled:
     tasks, notes = period_tasks(ctx)
+    task_done = pc.statuses(ctx.cfg, "tasks", "done")
     task_closed = pc.statuses(ctx.cfg, "tasks", "closed")
+    task_dropped = set(task_closed) - set(task_done)
     task_blocked = pc.statuses(ctx.cfg, "tasks", "blocked")
 
-    total = len(tasks)
-    done = sum(1 for t in tasks if t.get("status") in task_closed)
+    total = sum(1 for t in tasks if t.get("status") not in task_dropped)
+    done = sum(1 for t in tasks if t.get("status") in task_done)
     pct = round(100 * done / total) if total else 0
     blocked = sum(1 for t in tasks if t.get("status") in task_blocked)
 
@@ -345,7 +347,7 @@ def generate_team_checklist(ctx: Ctx) -> Filled:
         for g in sorted_group_names:
             lines.append(f"\n**{g}**")
             for t in sorted(groups[g], key=task_sort_key):
-                box = "[x]" if t.get("status") in task_closed else "[ ]"
+                box = "[x]" if t.get("status") in task_done else "[ ]"
                 title = t.get("title") or "not recorded"
                 tid = t.get("id", "")
                 prio = t.get("priority") or "not set"
@@ -365,7 +367,7 @@ def generate_team_checklist(ctx: Ctx) -> Filled:
         for g in sorted_group_names:
             lines.append(f"\n**{g}**")
             for t in sorted(groups[g], key=task_sort_key):
-                box = "[x]" if t.get("status") in task_closed else "[ ]"
+                box = "[x]" if t.get("status") in task_done else "[ ]"
                 title = t.get("title") or "not recorded"
                 tid = t.get("id", "")
                 prio = t.get("priority") or "not set"
@@ -615,14 +617,16 @@ def generate_status_report(ctx: Ctx) -> Filled:
     window_month = majority_month(window)
 
     counted, notes = period_tasks(ctx)
+    task_done = pc.statuses(ctx.cfg, "tasks", "done")
     task_closed = pc.statuses(ctx.cfg, "tasks", "closed")
+    task_dropped = set(task_closed) - set(task_done)
     task_active = pc.statuses(ctx.cfg, "tasks", "active")
     task_blocked = pc.statuses(ctx.cfg, "tasks", "blocked")
 
     all_tasks = ctx.data.get("tasks", [])
     completed_before_count = 0
     for t in all_tasks:
-        if t.get("status") in task_closed:
+        if t.get("status") in task_done:
             p = t.get("period")
             due = t.get("due")
             if p and p < window_month:
@@ -641,8 +645,8 @@ def generate_status_report(ctx: Ctx) -> Filled:
 
     rag_color, rag_reason = pc.rag(ctx.cfg, at, counted, all_milestones, all_issues, all_risks)
 
-    total = len(counted)
-    done = sum(1 for t in counted if t.get("status") in task_closed)
+    total = sum(1 for t in counted if t.get("status") not in task_dropped)
+    done = sum(1 for t in counted if t.get("status") in task_done)
     pct = round(100 * done / total) if total else 0
 
     values = {
@@ -660,8 +664,8 @@ def generate_status_report(ctx: Ctx) -> Filled:
         lvl_tasks = [t for t in counted if t.get("priority") == level]
         if not lvl_tasks:
             continue
-        l_total = len(lvl_tasks)
-        l_done = sum(1 for t in lvl_tasks if t.get("status") in task_closed)
+        l_total = sum(1 for t in lvl_tasks if t.get("status") not in task_dropped)
+        l_done = sum(1 for t in lvl_tasks if t.get("status") in task_done)
         l_active = sum(1 for t in lvl_tasks if t.get("status") in task_active)
         l_blocked = sum(1 for t in lvl_tasks if t.get("status") in task_blocked)
         l_rag, _ = pc.rag(ctx.cfg, at, lvl_tasks, [], [], [])
@@ -669,8 +673,8 @@ def generate_status_report(ctx: Ctx) -> Filled:
 
     not_set_tasks = [t for t in counted if not t.get("priority") or t.get("priority") not in prio_order]
     if not_set_tasks:
-        ns_total = len(not_set_tasks)
-        ns_done = sum(1 for t in not_set_tasks if t.get("status") in task_closed)
+        ns_total = sum(1 for t in not_set_tasks if t.get("status") not in task_dropped)
+        ns_done = sum(1 for t in not_set_tasks if t.get("status") in task_done)
         ns_active = sum(1 for t in not_set_tasks if t.get("status") in task_active)
         ns_blocked = sum(1 for t in not_set_tasks if t.get("status") in task_blocked)
         ns_rag, _ = pc.rag(ctx.cfg, at, not_set_tasks, [], [], [])
@@ -687,15 +691,15 @@ def generate_status_report(ctx: Ctx) -> Filled:
         if not t_list:
             continue
         heading = tm.get("heading") or tm.get("id") or "Team"
-        t_total = len(t_list)
-        t_done = sum(1 for t in t_list if t.get("status") in task_closed)
+        t_total = sum(1 for t in t_list if t.get("status") not in task_dropped)
+        t_done = sum(1 for t in t_list if t.get("status") in task_done)
         t_active = sum(1 for t in t_list if t.get("status") in task_active)
         t_blocked = sum(1 for t in t_list if t.get("status") in task_blocked)
         team_rows.append([heading, f"{t_done} / {t_total}", str(t_active), str(t_blocked), "{{changes}}"])
 
     if no_team_tasks:
-        nt_total = len(no_team_tasks)
-        nt_done = sum(1 for t in no_team_tasks if t.get("status") in task_closed)
+        nt_total = sum(1 for t in no_team_tasks if t.get("status") not in task_dropped)
+        nt_done = sum(1 for t in no_team_tasks if t.get("status") in task_done)
         nt_active = sum(1 for t in no_team_tasks if t.get("status") in task_active)
         nt_blocked = sum(1 for t in no_team_tasks if t.get("status") in task_blocked)
         team_rows.append(["No team", f"{nt_done} / {nt_total}", str(nt_active), str(nt_blocked), "{{changes}}"])
@@ -723,7 +727,7 @@ def generate_status_report(ctx: Ctx) -> Filled:
 
     # 4. Blockers and decisions needed
     blocker_rows = []
-    blocked_tasks = [t for t in counted if t.get("status") in task_blocked]
+    blocked_tasks = [t for t in all_tasks if t.get("status") in task_blocked and t.get("status") not in task_closed]
     for t in blocked_tasks:
         tid = t.get("id") or "not set"
         item = t.get("title") or "not recorded"
@@ -928,6 +932,7 @@ def main(argv=None) -> int:
         return 2
 
     rel_path = pc.doc_rel_path(cfg, args.type, period, args.as_of)
+    pc.check_inside(root, rel_path)
     target_path = root / rel_path
 
     if not args.stdout and target_path.exists():
@@ -938,7 +943,7 @@ def main(argv=None) -> int:
         sys.stdout.write(doc_text)
     else:
         target_path.parent.mkdir(parents=True, exist_ok=True)
-        pc.write(target_path, doc_text)
+        pc.safe_write(root, rel_path, doc_text)
         print(f"wrote {rel_path}")
 
     for note in filled.notes:
