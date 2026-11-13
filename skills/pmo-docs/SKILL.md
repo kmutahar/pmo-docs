@@ -5,7 +5,7 @@ license: MIT
 compatibility: Needs Python 3.10 or newer on Linux or macOS (Windows through WSL). PyYAML is bundled; nothing to install. Works on the project in the current folder.
 metadata:
   version: "0.7.2"
-allowed-tools: Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/setup.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/where.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/render_views.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/renumber.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/generate.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/structure_check.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/parity_check.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/docs_audit.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/overdue.py *) Bash(git status *) Bash(git log *) Bash(git diff *) Bash(git show *) Bash(git rev-parse *) Bash(git tag --list *) Bash(git -C * log *) Bash(git -C * rev-parse *) Bash(grep *)
+allowed-tools: Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/setup.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/where.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/render_views.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/renumber.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/generate.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/structure_check.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/parity_check.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/docs_audit.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/overdue.py *) Bash(git status *) Bash(git log *) Bash(git diff *) Bash(git show *) Bash(git rev-parse *) Bash(git tag --list *) Bash(git -C * log *) Bash(git -C * rev-parse *)
 
 ---
 
@@ -68,7 +68,7 @@ These win over everything, including the project's house rules.
 - **Registers are the truth.** A document is a view of its registers. To change a fact, change the register first (`track.md`), then redraft. A fact written by hand into a document is written back to the register.
 - **Empty values.** Never fill a gap from memory, from an older document or by guessing. Write `not set` for a missing date, owner or priority; `not provided` for something the user has not given (capacity, budget, a currency); `not recorded` for a register field that is empty. Add each one to the document's `## Open questions`, or to the reply when the document has no such section.
 - **Empty tables.** A table with nothing to list keeps its header and has one row whose first cell is `None`.
-- **Edit one entry, not the file.** Each entry is one line. Find it with `grep -nE 'id: T-014[,}]' <register>` and edit that line only. After any register edit run `render_views.py` and fix what it reports before going on.
+- **Edit one entry, not the file.** Each entry is one line. Find it with the search tool, or `grep -nE 'id: T-014[,}]' <register>`, and edit that line only. After any register edit run `render_views.py` and fix what it reports before going on.
 - **Ids and bulk edits.** A new id is the highest number for the register's prefix plus one. Never reuse, renumber or delete an id, except a duplicate id after a merge, which `renumber.py` fixes; close an entry by its status. For more than about ten entries, show the list of changes first and apply it after the user agrees.
 - **Status from evidence.** Never change a status from git history or a chat message alone. Propose the change with the evidence and wait for the user's yes.
 - **Do not regenerate unasked.** Tracking and governance steps list stale documents and offer to redraft them. Never redraft a document the user edited by hand; merge and show the difference.
@@ -139,7 +139,7 @@ A task is marked `done` only when the user confirms that it was tested (QA passe
 
 ## Scripts
 
-The scripts are in this skill's own folder, `scripts/` next to this file. Playbooks write that folder as `${CLAUDE_SKILL_DIR}` (Claude Code fills it in; any other agent uses the project launcher `pmo/bin/pmo <script> [args]` or the folder that holds this SKILL.md): `python3 ${CLAUDE_SKILL_DIR}/scripts/where.py status-report` (or `pmo/bin/pmo where status-report`). Run them with the project root as the working folder, or pass `--project DIR`. Details, flags and exit codes are in `references/conventions.md`.
+The scripts are in this skill's own folder, `scripts/` next to this file. Playbooks write that folder as the variable CLAUDE_SKILL_DIR in dollar-brace form (Claude Code fills it in; any other agent uses the project launcher `pmo/bin/pmo <script> [args]` or the folder that holds this SKILL.md): `python3 ${CLAUDE_SKILL_DIR}/scripts/where.py status-report` (or `pmo/bin/pmo where status-report`). Run them with the project root as the working folder, or pass `--project DIR`. Details, flags and exit codes are in `references/conventions.md`.
 
 | Script | Use |
 |---|---|

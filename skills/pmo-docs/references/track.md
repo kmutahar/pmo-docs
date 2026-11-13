@@ -14,7 +14,7 @@ Add, change or close entries in the registers. Rules on status, consent and prop
    Match the request to a row of the table below. If it names no register, or fits two, ask.
 
 2. **Find the entry**
-   For an existing entry run `grep -nE 'id: T-014[,}]' <register file>`. A register without ids is found by its keys (`grep -n 'slug: alice' ...`, or `person` and `period` for capacity). Read that one line.
+   For an existing entry search the register file for `id: T-014[,}]` (the search tool, or `grep -nE 'id: T-014[,}]' <register file>`). A register without ids is found by its keys (`grep -n 'slug: alice' ...`, or `person` and `period` for capacity). Read that one line.
 
 3. **Check for a scope change**
    Moving a date, owner or priority of committed work, or adding or dropping a goal, is a scope change: go to `references/govern.md` (change request) first, unless the user says it is the agreed new plan. Then apply it and log a decision there.

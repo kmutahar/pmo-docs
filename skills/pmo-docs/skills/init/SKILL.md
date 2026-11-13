@@ -7,8 +7,6 @@ allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/setup.py *) Bash(pytho
 
 # init
 
-Follow `${CLAUDE_PLUGIN_ROOT}/references/setup.md` step by step. Before reading that playbook, check if `pmo/playbooks/setup.md` exists; if it exists, read that file instead. In that playbook and in
-`${CLAUDE_PLUGIN_ROOT}/SKILL.md`, read `${CLAUDE_SKILL_DIR}` as `${CLAUDE_PLUGIN_ROOT}`: the scripts are in
-`${CLAUDE_PLUGIN_ROOT}/scripts/`. The rules in `${CLAUDE_PLUGIN_ROOT}/SKILL.md` apply; read its Safety rules first.
+Follow `${CLAUDE_PLUGIN_ROOT}/references/setup.md` step by step. Before reading that playbook, check if `pmo/playbooks/setup.md` exists; if it exists, read that file instead. In that playbook and in the main SKILL.md the scripts folder is written with the variable named CLAUDE_SKILL_DIR (dollar sign and braces). For this command the scripts folder is `${CLAUDE_PLUGIN_ROOT}/scripts/`. The rules in `${CLAUDE_PLUGIN_ROOT}/SKILL.md` apply; read its Safety rules first.
 
 Arguments, if any: $ARGUMENTS (a project name the user already gave).

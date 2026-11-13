@@ -99,3 +99,22 @@ class SkillRules(unittest.TestCase):
         self.assertIn("## Without the plugin", text)
         self.assertIn("pmo/bin/pmo publish", text)
 
+    def test_no_grep_pre_approval(self):
+        fm, _ = self._skill()
+        self.assertNotIn("Bash(grep", fm["allowed-tools"])
+
+    def test_publish_command_pre_approves_only_the_dry_run(self):
+        fm, _ = pc.split_front_matter(
+            (pc.SKILL / "skills/publish/SKILL.md").read_text(encoding="utf-8"),
+            strict=True,
+        )
+        allowed = fm["allowed-tools"]
+        self.assertIn("publish.py)", allowed)
+        self.assertNotIn("publish.py *)", allowed)
+
+    def test_command_skills_name_the_variable_in_words(self):
+        for name in ("init", "publish"):
+            text = (pc.SKILL / "skills" / name / "SKILL.md").read_text(encoding="utf-8")
+            self.assertNotIn("read `${CLAUDE_SKILL_DIR}` as", text)
+            self.assertIn("variable named CLAUDE_SKILL_DIR", text)
+

@@ -2,7 +2,7 @@
 name: publish
 description: Publish finished pmo-docs documents to the configured folder or docs repo. Runs only when the user types /pmo-docs:publish.
 disable-model-invocation: true
-allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/publish.py *) Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/docs_audit.py *) Bash(git -C * status *) Bash(git -C * diff *)
+allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/publish.py) Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/docs_audit.py *) Bash(git -C * status *) Bash(git -C * diff *)
 ---
 
 # publish
