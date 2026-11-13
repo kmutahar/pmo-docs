@@ -37,6 +37,9 @@ class TestRenumber(unittest.TestCase):
             text += "\n"
         f.write_text(text + f"  - {entry_text}\n", encoding="utf-8")
 
+    def task(self, id, title):
+        return f"{{id: {id}, title: {title}, team: web, group: ui, priority: low, owner: alice, status: not-started, due: 2026-03-28, period: 2026-03, notes: ''}}"
+
     def test_01_no_arguments_on_clean_acme(self):
         tasks_before = (self.reg / "tasks.yaml").read_bytes()
         code, out, err = self.run_tool()
@@ -292,6 +295,168 @@ class TestRenumber(unittest.TestCase):
         self.assertEqual(code, 1, out + err)
         self.assertIn("merge conflict markers; resolve them first (references/git.md, Several writers)", out + err)
         self.assertEqual(tasks_file.read_text(encoding="utf-8"), conflict_text)
+
+    def test_13_two_duplicated_ids_get_distinct_new_ids(self):
+        self.append_entry("tasks", self.task("T-901", "Task 1"))
+        self.append_entry("tasks", self.task("T-902", "Task 2"))
+        self.append_entry("tasks", self.task("T-901", "Task 1 dup"))
+        self.append_entry("tasks", self.task("T-902", "Task 2 dup"))
+        code, out, err = self.run_tool()
+        self.assertEqual(code, 1, out + err)
+        self.assertIn("gets  T-903", out)
+        self.assertIn("gets  T-904", out)
+        code_app, out_app, err_app = self.run_tool("--apply")
+        self.assertEqual(code_app, 0, out_app + err_app)
+        rv_check = subprocess.run([sys.executable, str(RV), "--project", str(self.root), "--check"],
+                                  capture_output=True, text=True, encoding="utf-8")
+        self.assertEqual(rv_check.returncode, 0, rv_check.stdout + rv_check.stderr)
+
+    def test_14_padding_is_kept(self):
+        self.append_entry("tasks", self.task("T-007", "First"))
+        self.append_entry("tasks", self.task("T-007", "Second"))
+        code, out, err = self.run_tool("T-007")
+        self.assertEqual(code, 1, out + err)
+        self.assertIn("gets  T-008", out)
+
+        self.append_entry("tasks", self.task("T-7", "Third"))
+        self.append_entry("tasks", self.task("T-7", "Fourth"))
+        code2, out2, err2 = self.run_tool("T-7")
+        self.assertEqual(code2, 1, out2 + err2)
+        self.assertIn("gets  T-8", out2)
+
+    def test_15_double_quoted_id_is_renamed_and_stays_quoted(self):
+        self.append_entry("tasks", '{id: "T-901", title: Task A, team: web, group: ui, priority: low, owner: alice, status: not-started, due: 2026-03-28, period: 2026-03, notes: \'\'}')
+        self.append_entry("tasks", '{id: "T-901", title: Task B, team: web, group: ui, priority: low, owner: alice, status: not-started, due: 2026-03-28, period: 2026-03, notes: \'\'}')
+        code, out, err = self.run_tool("T-901", "--apply")
+        self.assertEqual(code, 0, out + err)
+        tasks_lines = (self.reg / "tasks.yaml").read_text(encoding="utf-8").splitlines()
+        self.assertTrue(any('id: "T-901"' in ln for ln in tasks_lines))
+        self.assertTrue(any('id: "T-902"' in ln for ln in tasks_lines))
+
+        self.append_entry("tasks", "{id: 'T-903', title: Task C, team: web, group: ui, priority: low, owner: alice, status: not-started, due: 2026-03-28, period: 2026-03, notes: ''}")
+        self.append_entry("tasks", "{id: 'T-903', title: Task D, team: web, group: ui, priority: low, owner: alice, status: not-started, due: 2026-03-28, period: 2026-03, notes: ''}")
+        code2, out2, err2 = self.run_tool("T-903", "--apply")
+        self.assertEqual(code2, 0, out2 + err2)
+        tasks_lines2 = (self.reg / "tasks.yaml").read_text(encoding="utf-8").splitlines()
+        self.assertTrue(any("id: 'T-903'" in ln for ln in tasks_lines2))
+        self.assertTrue(any("id: 'T-904'" in ln for ln in tasks_lines2))
+
+    def test_16_earlier_key_ending_in_id_is_not_touched(self):
+        self.append_entry("tasks", '{notes: "valid: T-901 here", id: T-901, title: Task 1, team: web, group: ui, priority: low, owner: alice, status: not-started, due: 2026-03-28, period: 2026-03}')
+        self.append_entry("tasks", '{notes: "valid: T-901 here", id: T-901, title: Task 2, team: web, group: ui, priority: low, owner: alice, status: not-started, due: 2026-03-28, period: 2026-03}')
+        code, out, err = self.run_tool("T-901", "--apply")
+        self.assertEqual(code, 0, out + err)
+        tasks_lines = (self.reg / "tasks.yaml").read_text(encoding="utf-8").splitlines()
+        moved_line = tasks_lines[-1]
+        self.assertIn("id: T-902", moved_line)
+        self.assertIn('notes: "valid: T-901 here"', moved_line)
+
+    def test_17_unrenameable_line_leaves_every_file_untouched(self):
+        self.append_entry("tasks", '{"id": T-901, title: Task 1, team: web, group: ui, priority: low, owner: alice, status: not-started, due: 2026-03-28, period: 2026-03, notes: \'\'}')
+        self.append_entry("tasks", '{"id": T-901, title: Task 2, team: web, group: ui, priority: low, owner: alice, status: not-started, due: 2026-03-28, period: 2026-03, notes: \'\'}')
+        before_reg = {f: f.read_bytes() for f in self.reg.glob("*.yaml")}
+        before_docs = {f: f.read_bytes() for f in self.docs.glob("*.md")}
+        code, out, err = self.run_tool("T-901", "--apply")
+        self.assertEqual(code, 2)
+        self.assertIn("cannot rename the id on", err)
+        for f, b in before_reg.items():
+            self.assertEqual(f.read_bytes(), b)
+        for f, b in before_docs.items():
+            self.assertEqual(f.read_bytes(), b)
+
+    def test_18_two_ids_on_one_line_need_two_decisions(self):
+        self.append_entry("risks", "{id: R-9, title: Risk 1, description: d1, probability: high, impact: high, owner: bob, mitigation: m1, status: open, origin: kickoff, raised: 2026-02-10, closed: null}")
+        self.append_entry("risks", "{id: R-9, title: Risk 2, description: d2, probability: high, impact: high, owner: bob, mitigation: m2, status: open, origin: kickoff, raised: 2026-02-10, closed: null}")
+        self.append_entry("tasks", self.task("T-901", "Task 1"))
+        self.append_entry("tasks", self.task("T-901", "Task 2"))
+        self.append_entry("issues", "{id: I-9, title: Blocked by T-901 and R-9, description: desc, severity: low, owner: bob, status: open, origin: review, raised: 2026-03-02, resolved: null, related_tasks: []}")
+
+        code, out, err = self.run_tool()
+        self.assertEqual(code, 1, out + err)
+        m = re.search(r"--keep (pmo/registers/issues\.yaml:\d+)=T-901", out)
+        self.assertIsNotNone(m, out)
+        ref = m.group(1)
+        self.assertIn(f"--keep {ref}=R-9", out)
+
+        code_bare, out_bare, err_bare = self.run_tool("--apply", "--keep", ref)
+        self.assertEqual(code_bare, 2)
+        self.assertIn("mentions several duplicated ids", err_bare + out_bare)
+
+        code_one, out_one, err_one = self.run_tool("--apply", "--rewrite", f"{ref}=T-902")
+        self.assertEqual(code_one, 2)
+        self.assertIn("has no decision", err_one + out_one)
+
+        code_both, out_both, err_both = self.run_tool("--apply", "--rewrite", f"{ref}=T-902", "--rewrite", f"{ref}=R-10")
+        self.assertEqual(code_both, 0, out_both + err_both)
+
+        issues_text = (self.reg / "issues.yaml").read_text(encoding="utf-8")
+        self.assertIn("Blocked by T-902 and R-10", issues_text)
+        self.assertNotIn("Blocked by T-901", issues_text)
+        self.assertNotIn("and R-9", issues_text)
+
+    def test_19_changed_lines_print_when_another_duplicate_remains(self):
+        self.append_entry("tasks", self.task("T-901", "Task 1"))
+        self.append_entry("tasks", self.task("T-901", "Task 2"))
+        self.append_entry("risks", "{id: R-9, title: Risk 1, description: d1, probability: high, impact: high, owner: bob, mitigation: m1, status: open, origin: kickoff, raised: 2026-02-10, closed: null}")
+        self.append_entry("risks", "{id: R-9, title: Risk 2, description: d2, probability: high, impact: high, owner: bob, mitigation: m2, status: open, origin: kickoff, raised: 2026-02-10, closed: null}")
+        code, out, err = self.run_tool("T-901", "--apply")
+        self.assertEqual(code, 1, out + err)
+        self.assertIn("changed: pmo/registers/tasks.yaml:", out)
+        self.assertIn("next: renumber.py", out)
+
+    def test_20_rewrite_keeps_other_bytes(self):
+        self.append_entry("tasks", self.task("T-901", "Task 1"))
+        self.append_entry("tasks", self.task("T-901", "Task 2"))
+        notes_file = self.docs / "notes.md"
+        raw_bytes = (
+            b"---\r\n"
+            b"title: Notes\r\n"
+            b"type: status-report\r\n"
+            b"project: acme\r\n"
+            b"manager: alice\r\n"
+            b"period: 2026-03\r\n"
+            b"status: draft\r\n"
+            b"last_updated: 2026-03-15\r\n"
+            b"---\r\n"
+            b"\x0cSee T-901."
+        )
+        notes_file.write_bytes(raw_bytes)
+        code, out, err = self.run_tool()
+        self.assertEqual(code, 1, out + err)
+        m = re.search(r"--rewrite (pmo/documents/notes\.md:\d+)=T-902", out)
+        self.assertIsNotNone(m, out)
+        ref = m.group(1)
+        code_app, out_app, err_app = self.run_tool("--apply", "--rewrite", f"{ref}=T-902")
+        self.assertEqual(code_app, 0, out_app + err_app)
+        new_bytes = notes_file.read_bytes()
+        self.assertEqual(new_bytes.replace(b"T-902", b"T-901"), raw_bytes)
+        self.assertFalse(new_bytes.endswith(b"\n"))
+        self.assertIn(b"\r\n", new_bytes)
+        self.assertIn(b"\x0cSee T-902.", new_bytes)
+
+    def test_21_non_utf8_document_is_skipped(self):
+        self.append_entry("tasks", self.task("T-901", "Task 1"))
+        self.append_entry("tasks", self.task("T-901", "Task 2"))
+        notes_file = self.docs / "notes.md"
+        notes_file.write_bytes(b"caf\xe9")
+        code, out, err = self.run_tool()
+        self.assertEqual(code, 1, out + err)
+        self.assertEqual(out.count("skipped (not UTF-8 text): pmo/documents/notes.md"), 1)
+        self.assertNotIn("Traceback", err + out)
+
+    def test_22_document_symlink_out_is_not_written(self):
+        self.append_entry("tasks", self.task("T-901", "Task 1"))
+        self.append_entry("tasks", self.task("T-901", "Task 2"))
+        outside_file = self.tmp / "outside.md"
+        outside_content = "---\ntitle: Outside\nstatus: draft\n---\nMentions T-901\n"
+        outside_file.write_text(outside_content, encoding="utf-8")
+        linked = self.docs / "linked.md"
+        linked.symlink_to(outside_file)
+        code, out, err = self.run_tool()
+        self.assertIn("skipped (outside the project): pmo/documents/linked.md", out)
+        code_app, out_app, err_app = self.run_tool("--apply")
+        self.assertEqual(code_app, 0, out_app + err_app)
+        self.assertEqual(outside_file.read_text(encoding="utf-8"), outside_content)
 
 
 if __name__ == "__main__":

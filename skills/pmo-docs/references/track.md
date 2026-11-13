@@ -23,7 +23,7 @@ Add, change or close entries in the registers. Rules on status, consent and prop
    Edit that line only (new entries go at the end of the list). Before the first entry of `requirements`, `tests`, `environments` or `permissions`, copy its starter file from `${CLAUDE_SKILL_DIR}/assets/starter/optional-registers/` to `paths.registers/`. A new id is the highest number for the prefix plus one. Check that an owner is in the roster and that every value is in the vocabulary. Ask for a missing owner, date or priority; leave it `null` until answered.
 
 5. **Validate**
-   Run `python3 ${CLAUDE_SKILL_DIR}/scripts/render_views.py` and fix what it reports before going on. When validation reports a duplicate id, run `renumber.py`. With no references, run `--apply`. With references, match each reference to a copy by its title, owner and context, ask the user once for the whole batch in plain English, then run `--apply` with the flags.
+   Run `python3 ${CLAUDE_SKILL_DIR}/scripts/render_views.py` and fix what it reports before going on. When validation reports a duplicate id, run `renumber.py`. With no references, run `--apply`. With references, match each reference to a copy by its title, owner and context, ask the user once for the whole batch in plain English, then run `--apply` with the flags. A line that mentions two duplicated ids needs one flag per id; the dry run prints them.
 
 6. **List stale documents**
    Run `python3 ${CLAUDE_SKILL_DIR}/scripts/docs_audit.py`. Name the finished documents it reports as stale and offer to redraft them (`references/draft.md`). Redraft nothing unasked.
