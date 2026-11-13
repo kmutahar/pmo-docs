@@ -29,7 +29,7 @@ Draft a technical document from the codebase and registers. Applies to `entity-l
    Show facts that belong in registers (new roles not in `domain.roles`, environments, permissions, requirements) as proposals first; after a yes write them with `origin: proposed` (`references/track.md`). Record role and variable names (`SKILL.md`, Documents). Note a secret by file and line only (`SKILL.md`, No credentials).
 
 7. **Fill the template**
-   Follow `references/draft.md` steps 4 and 6. Set `code_ref` to `git rev-parse HEAD` output (`not set` without git). Every item carries `path:line`. Unseen details become `not recorded` in Open questions. Without user-provided output write "read from the code, not run".
+   Follow `references/draft.md` steps 4 and 6. Set `code_ref` to `git rev-parse HEAD` output (`not set` without git). Every item carries `path:line`, except in a user guide (`SKILL.md`, Documents). Unseen details become `not recorded` in Open questions. Without user-provided output write "read from the code, not run".
 
 8. **Live listing**
    Offer the stack file "List the API live" command. The user runs it, or approves the agent running it (`SKILL.md`, Documents). If output is provided, compare against code readings and list differences.

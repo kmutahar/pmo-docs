@@ -85,3 +85,7 @@ class SkillRules(unittest.TestCase):
         text = self._playbook("translate.md")
         self.assertIn("Do it as `SKILL.md` defines it for a translation", text)
 
+    def test_user_guide_rule(self):
+        _, text = self._skill()
+        self.assertIn("The user guide carries no `path:line` in its body", text)
+

@@ -325,6 +325,18 @@ class RenderViews(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("done_on '2026-13-01' is not a YYYY-MM-DD date", out)
 
+    def test_unknown_origin_is_an_error(self):
+        self.append("tasks", "  - {id: T-99, title: x, status: not-started, origin: kickoff}")
+        code, out = run(self.root, "--check")
+        self.assertEqual(code, 1)
+        self.assertIn("origin 'kickoff' not in ['stated', 'proposed']", out)
+
+    def test_stated_and_proposed_pass(self):
+        self.append("tasks", "  - {id: T-98, title: x, status: not-started, origin: stated}")
+        self.append("tasks", "  - {id: T-99, title: y, status: not-started, origin: proposed}")
+        code, out = run(self.root)
+        self.assertEqual(code, 0, out)
+
 
 class LanguageConfig(unittest.TestCase):
     def setUp(self):

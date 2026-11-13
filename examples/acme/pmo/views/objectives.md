@@ -4,5 +4,5 @@
 
 | id | title | kind | measure | target | due | status | origin |
 |---|---|---|---|---|---|---|---|
-| O-1 | Launch the portal | delivery | Beta users | 10 | 2026-04-30 | in-progress | kickoff |
-| O-2 | Keep the team informed | process | Weekly reports sent | 8 | 2026-04-30 | in-progress | kickoff |
+| O-1 | Launch the portal | delivery | Beta users | 10 | 2026-04-30 | in-progress | stated |
+| O-2 | Keep the team informed | process | Weekly reports sent | 8 | 2026-04-30 | in-progress | stated |

@@ -30,7 +30,7 @@ checks:
 2. {{Step 2 to get started}}
 
 ## How to
-<!-- Step-by-step instructions for key user tasks; one task per subsection with numbered steps; screens and UI labels are read from code and cited in comments only, not in the text the reader sees. -->
+<!-- Step-by-step instructions for key user tasks; one task per subsection with numbered steps; screens and UI labels are read from code; the guide carries no `path:line`, the reply lists the files you read. -->
 ### {{what the reader wants to do}}
 1. {{Step 1}}
 2. {{Step 2}}

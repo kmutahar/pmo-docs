@@ -4,5 +4,5 @@
 
 | id | text | owner | status | validate_by | origin |
 |---|---|---|---|---|---|
-| A-1 | The vendor offers a test account | bob | open | 2026-03-31 | kickoff |
-| A-2 | Users have modern browsers | alice | validated | 2026-03-01 | kickoff |
+| A-1 | The vendor offers a test account | bob | open | 2026-03-31 | stated |
+| A-2 | Users have modern browsers | alice | validated | 2026-03-01 | stated |

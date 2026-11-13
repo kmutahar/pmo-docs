@@ -231,7 +231,7 @@ class TestGenerate(unittest.TestCase):
     def test_project_plan_on_acme(self):
         risks_file = self.root / "pmo/registers/risks.yaml"
         risks_text = risks_file.read_text(encoding="utf-8")
-        risks_file.write_text(risks_text + "  - {id: R-99, title: Fake closed risk, probability: low, impact: low, owner: sam, mitigation: none, status: closed, origin: test, raised: 2026-02-10, closed: 2026-03-01}\n", encoding="utf-8")
+        risks_file.write_text(risks_text + "  - {id: R-99, title: Fake closed risk, probability: low, impact: low, owner: sam, mitigation: none, status: closed, origin: stated, raised: 2026-02-10, closed: 2026-03-01}\n", encoding="utf-8")
 
         code, out, err = tool("generate.py", self.root, "project-plan", "--as-of", "2026-03-15", "--stdout")
         self.assertEqual(code, 0, err)

@@ -4,5 +4,5 @@
 
 | id | title | description | probability | impact | owner | mitigation | status | origin | raised | closed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| R-1 | Vendor delay | Payment vendor may reply late | high | high | bob | Ask two vendors | open | kickoff | 2026-02-10 |  |
-| R-2 | Key person away | Alice may be on leave in April | low | medium | sam | Share the setup notes | closed | kickoff | 2026-02-10 | 2026-03-01 |
+| R-1 | Vendor delay | Payment vendor may reply late | high | high | bob | Ask two vendors | open | stated | 2026-02-10 |  |
+| R-2 | Key person away | Alice may be on leave in April | low | medium | sam | Share the setup notes | closed | stated | 2026-02-10 | 2026-03-01 |

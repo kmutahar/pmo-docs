@@ -365,11 +365,11 @@ class TestRenumber(unittest.TestCase):
             self.assertEqual(f.read_bytes(), b)
 
     def test_18_two_ids_on_one_line_need_two_decisions(self):
-        self.append_entry("risks", "{id: R-9, title: Risk 1, description: d1, probability: high, impact: high, owner: bob, mitigation: m1, status: open, origin: kickoff, raised: 2026-02-10, closed: null}")
-        self.append_entry("risks", "{id: R-9, title: Risk 2, description: d2, probability: high, impact: high, owner: bob, mitigation: m2, status: open, origin: kickoff, raised: 2026-02-10, closed: null}")
+        self.append_entry("risks", "{id: R-9, title: Risk 1, description: d1, probability: high, impact: high, owner: bob, mitigation: m1, status: open, origin: stated, raised: 2026-02-10, closed: null}")
+        self.append_entry("risks", "{id: R-9, title: Risk 2, description: d2, probability: high, impact: high, owner: bob, mitigation: m2, status: open, origin: stated, raised: 2026-02-10, closed: null}")
         self.append_entry("tasks", self.task("T-901", "Task 1"))
         self.append_entry("tasks", self.task("T-901", "Task 2"))
-        self.append_entry("issues", "{id: I-9, title: Blocked by T-901 and R-9, description: desc, severity: low, owner: bob, status: open, origin: review, raised: 2026-03-02, resolved: null, related_tasks: []}")
+        self.append_entry("issues", "{id: I-9, title: Blocked by T-901 and R-9, description: desc, severity: low, owner: bob, status: open, origin: stated, raised: 2026-03-02, resolved: null, related_tasks: []}")
 
         code, out, err = self.run_tool()
         self.assertEqual(code, 1, out + err)
@@ -397,8 +397,8 @@ class TestRenumber(unittest.TestCase):
     def test_19_changed_lines_print_when_another_duplicate_remains(self):
         self.append_entry("tasks", self.task("T-901", "Task 1"))
         self.append_entry("tasks", self.task("T-901", "Task 2"))
-        self.append_entry("risks", "{id: R-9, title: Risk 1, description: d1, probability: high, impact: high, owner: bob, mitigation: m1, status: open, origin: kickoff, raised: 2026-02-10, closed: null}")
-        self.append_entry("risks", "{id: R-9, title: Risk 2, description: d2, probability: high, impact: high, owner: bob, mitigation: m2, status: open, origin: kickoff, raised: 2026-02-10, closed: null}")
+        self.append_entry("risks", "{id: R-9, title: Risk 1, description: d1, probability: high, impact: high, owner: bob, mitigation: m1, status: open, origin: stated, raised: 2026-02-10, closed: null}")
+        self.append_entry("risks", "{id: R-9, title: Risk 2, description: d2, probability: high, impact: high, owner: bob, mitigation: m2, status: open, origin: stated, raised: 2026-02-10, closed: null}")
         code, out, err = self.run_tool("T-901", "--apply")
         self.assertEqual(code, 1, out + err)
         self.assertIn("changed: pmo/registers/tasks.yaml:", out)

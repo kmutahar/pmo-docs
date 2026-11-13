@@ -53,8 +53,8 @@ Add, change or close entries in the registers. Rules on status, consent and prop
 A chat export or a long conversation goes to `references/intake.md`. For a short paste:
 
 1. Read the text and list every task, risk, action or decision it contains.
-2. Show a table first: one row per proposed entry (register, title, owner, due, what the text said). Write inferred entries with `origin: proposed` (`SKILL.md`, Safety rules).
-3. Write only the rows the user confirms, then set `origin: stated` on those.
+2. Show a table first: one row per proposed entry (register, title, owner, due, what the text said), with `origin: proposed` on every row you inferred. Write nothing yet.
+3. Write only the rows the user confirms: `origin: stated` for what they confirmed as fact, `origin: proposed` for a row they want kept as unconfirmed.
 
 ## Do not
 

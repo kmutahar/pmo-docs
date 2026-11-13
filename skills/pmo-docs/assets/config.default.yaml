@@ -57,7 +57,7 @@ vocab:
   risk_level: [low, medium, high]
   issue_severity: [low, medium, high, critical]
   rag: [green, amber, red]
-  origin: []
+  origin: [stated, proposed]
   priority_order: [high, medium, low]   # sort order for priorities, first = most urgent
   requirement_status: [proposed, accepted, implemented, verified, dropped]
   requirement_kind: [functional, quality, constraint]

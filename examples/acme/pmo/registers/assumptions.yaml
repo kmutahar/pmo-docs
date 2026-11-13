@@ -1,3 +1,3 @@
 assumptions:
-  - {id: A-1, text: The vendor offers a test account, owner: bob, status: open, validate_by: 2026-03-31, origin: kickoff}
-  - {id: A-2, text: Users have modern browsers, owner: alice, status: validated, validate_by: 2026-03-01, origin: kickoff}
+  - {id: A-1, text: The vendor offers a test account, owner: bob, status: open, validate_by: 2026-03-31, origin: stated}
+  - {id: A-2, text: Users have modern browsers, owner: alice, status: validated, validate_by: 2026-03-01, origin: stated}
