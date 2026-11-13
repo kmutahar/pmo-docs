@@ -118,3 +118,9 @@ class SkillRules(unittest.TestCase):
             self.assertNotIn("read `${CLAUDE_SKILL_DIR}` as", text)
             self.assertIn("variable named CLAUDE_SKILL_DIR", text)
 
+    def test_schedule_line_is_tested(self):
+        text = self._playbook("schedule.md")
+        self.assertIn("Without --allowedTools", text)
+        self.assertIn("claude -p", text)
+        self.assertNotIn("dangerously", text)
+

@@ -34,9 +34,11 @@ A scheduled run drafts only: it must never Finish, publish, or commit. The skill
 
    Print the cron command line for the user to add to their crontab (`crontab -e`):
    ```sh
-   0 8 * * 1 cd /path/to/project && claude -p "run <recipe>; draft only, do not finish, publish or commit"
+   0 8 * * 1 cd /path/to/project && claude -p "run <recipe>; draft only, do not finish, publish or commit" --allowedTools "Skill" "Read" "Write" "Edit" "Glob" "Grep"
    ```
    The prompt explicitly states the draft-only limit because an unattended cron run does not read this playbook.
+   Replace /path/to/project with the absolute path of the project, and use the full path of `claude` if cron does not find it.
+   Without --allowedTools the headless run is denied the tools it needs and writes nothing. Do not widen this list.
    Never print permission-skipping flags.
 
    If the agent harness provides its own session-scheduling tool, show the equivalent call with the same prompt and timing.
