@@ -98,9 +98,14 @@ cp -r "$TRY/acme" "$LOG/acme-after"; diff -ru -x .claude "$LOG/acme-before" "$LO
 cp "$CLAUDE_CONFIG_DIR"/projects/*/*.jsonl "$LOG/"; ls -la "$LOG" | tee -a "$LOG/transcript.txt"
 ```
 
-Afterwards, these must pass on the final copy:
-- `render_views.py --check` on `$LOG/acme-after`;
-- `docs_audit.py --as-of 2026-03-15`.
+Afterwards, these must pass on the final copy (run before section 6 deletes `$TRY` and `$SKILL`):
+
+```sh
+cd "$LOG/acme-after" && {
+  python3 "$SKILL/scripts/render_views.py" --check
+  python3 "$SKILL/scripts/docs_audit.py" --as-of 2026-03-15
+} 2>&1 | tee -a "$LOG/transcript.txt"
+```
 
 The weekly draft keeps its template comments, so `structure_check.py` reports it, as it does any draft. Record the result in the version's plan.
 

@@ -1,29 +1,31 @@
 # Trial the skill in other agents
 
-A maintainer checklist, not shipped. Its results go into the agent table in the README and the hub's "Other agents" row. You run each agent yourself, in its own terminal session, and save what it did. The commands below are for zsh and write to `~/pmo-trial-logs/`.
+A maintainer checklist, not shipped. Its results go into the current plan's Results section, and into the README's agent table at release. You run each agent yourself, in its own terminal session, and save what it did. The commands below are for zsh and write to `~/pmo-trial-logs/`.
 
-Each trial works on a copy of the example project, `examples/acme`, in `~/pmo-trial/`. Nothing here touches your real projects.
+Each trial works on a copy of the example project, `examples/acme`, in `~/pmo-trial/`, and installs the skill temporarily in `~/.agents/skills/pmo-docs` until cleanup. Nothing here touches your real projects' files, though your agents will see the trial skill until you remove it in cleanup.
 
 Set these once per terminal, from the root of your clone:
 
 ```
 export CLONE=<path to your clone>
 export AGENT=<codex|gemini|cursor|copilot>
+export SKILL=~/.agents/skills/pmo-docs
 export LOG=~/pmo-trial-logs/$(date -u +%Y%m%dT%H%MZ)-$AGENT
 mkdir -p "$LOG" ~/pmo-trial
 ```
 
 ## 1. Install per agent
 
-All four agents read the shared folder `~/.agents/skills`, so one copy serves them all. Install that copy first:
+All four agents read the shared folder `~/.agents/skills`, so one temporary copy serves them all. Extract a clean copy from git into a temp folder first (so no `__pycache__` or untracked files come along), remove any prior trial copy, then install it:
 
 ```
-mkdir -p ~/.agents/skills
-cp -R "$CLONE/skills/pmo-docs" ~/.agents/skills/ 2>&1 | tee -a "$LOG/install.txt"
-ls ~/.agents/skills/pmo-docs/SKILL.md ~/.agents/skills/pmo-docs/scripts 2>&1 | tee -a "$LOG/install.txt"
+rm -rf ~/.agents/skills/pmo-docs ~/pmo-trial/skill-tmp
+mkdir -p ~/.agents/skills ~/pmo-trial/skill-tmp
+git -C "$CLONE" archive --prefix=pmo-docs/ HEAD:skills/pmo-docs | tar -x -C ~/pmo-trial/skill-tmp
+cp -R ~/pmo-trial/skill-tmp/pmo-docs ~/.agents/skills/ 2>&1 | tee -a "$LOG/install.txt"
+rm -rf ~/pmo-trial/skill-tmp
+ls "$SKILL/SKILL.md" "$SKILL/scripts" 2>&1 | tee -a "$LOG/install.txt"
 ```
-
-Copy from a clean clone. A `__pycache__` folder in the copy gives false results.
 
 The folders each agent searches, checked against its official docs on 2026-11-11 UTC:
 
@@ -65,14 +67,25 @@ cp -R "$CLONE/examples/acme" ~/pmo-trial/acme
 mkdir -p ~/pmo-trial/setup
 ```
 
-Run the five prompts in order, in the same session, on the folder named in the table. After each prompt, save the agent's transcript to `$LOG/<prompt>-transcript.txt` and list the files it changed:
+Run the five prompts in order, in the same session, on the folder named in the table. After prompt 1 (`setup` in an empty folder), list the created files; before prompt 2 (`track` in `~/pmo-trial/acme`), take a baseline hash snapshot, then after each prompt (`P=track`, `render`, `draft`, `finish`) save the agent's transcript to `$LOG/$P-transcript.txt` and diff the hashes:
 
 ```
+# After prompt 1 (setup):
+cd ~/pmo-trial/setup
+find pmo -type f | sort | tee "$LOG/setup-files.txt"
+
+# Before prompt 2 (baseline for prompts 2 to 5):
 cd ~/pmo-trial/acme
-find pmo -type f | sort | tee -a "$LOG/acme-files-after-<prompt>.txt"
+find pmo -type f -print0 | sort -z | xargs -0 shasum -a 256 > "$LOG/acme-prev.sha"
+
+# After each prompt in ~/pmo-trial/acme (set P=track|render|draft|finish):
+cd ~/pmo-trial/acme
+find pmo -type f -print0 | sort -z | xargs -0 shasum -a 256 > "$LOG/acme-after-$P.sha"
+diff -u "$LOG/acme-prev.sha" "$LOG/acme-after-$P.sha" | tee -a "$LOG/acme-changed-$P.txt"
+cp "$LOG/acme-after-$P.sha" "$LOG/acme-prev.sha"
 ```
 
-The expected files come from `docs/walkthrough.md` and the scripts. Compare each agent's result with the reference copy you get from one Claude Code run of the same five prompts, saved as `~/pmo-trial/reference`:
+The expected files come from `docs/walkthrough.md` and the scripts. To build the reference copy once, copy `examples/acme` to `~/pmo-trial/reference` (`rm -rf ~/pmo-trial/reference && cp -R "$CLONE/examples/acme" ~/pmo-trial/reference`) and run prompts 2 to 5 in Claude Code on it (plus prompt 1 in `~/pmo-trial/reference-setup` if you want a setup reference). Compare each agent's result with that reference:
 
 | # | Prompt | Folder | Expected file changes | Pass when |
 |---|---|---|---|---|
@@ -96,8 +109,6 @@ Run `where.py` to see the draft path for prompt 4 and the template for prompt 5.
 python3 "$SKILL/scripts/where.py" status-report --week --hashes 2>&1 | tee -a "$LOG/where-draft.txt"
 ```
 
-`$SKILL` is the installed copy, `~/.agents/skills/pmo-docs`.
-
 Compare the result with the reference copy:
 
 ```
@@ -110,7 +121,7 @@ Some files differ by date or by draft name. Note those, but a difference is a fa
 
 Also check the safety rules: no commit, no push, no password or token copied from the chat, no register edited without the evidence in prompt 2. Record any break in section 4.
 
-Clean up only after the logs are safe:
+Clean up only after the logs are safe (if you are stopping here and skipping section 4, also remove `~/.agents/skills/pmo-docs`):
 
 ```
 rm -rf ~/pmo-trial/acme ~/pmo-trial/setup
@@ -120,23 +131,28 @@ rm -rf ~/pmo-trial/acme ~/pmo-trial/setup
 
 Agent A sets up the project and edits it. Agent B then takes the install prompt (section 2) on the same project, and must write nothing to the project. Pass when B writes nothing and its render leaves the views unchanged.
 
-Agent A: run prompts 1 to 3 in `~/pmo-trial/switch` (copy Acme there first, and set up in a fresh folder if you want prompt 1 too). Then take a snapshot:
+1. Prepare `~/pmo-trial/switch` (copy Acme there first):
 
 ```
 rm -rf ~/pmo-trial/switch && cp -R "$CLONE/examples/acme" ~/pmo-trial/switch
-cd ~/pmo-trial/switch
-find pmo -type f | sort | xargs shasum -a 256 > "$LOG/before.sha" 2>&1
 ```
 
-Agent B: start a new session of the other agent in `~/pmo-trial/switch` and give it the install prompt from section 2. Tell it the project is already set up and that nothing in `pmo/` may change. Save its transcript to `$LOG/switch-B-transcript.txt`.
-
-Then compare:
+2. Agent A: run prompts 2 to 3 in `~/pmo-trial/switch` (and prompt 1 in a fresh folder if you want to test setup too). Then take a snapshot:
 
 ```
 cd ~/pmo-trial/switch
-find pmo -type f | sort | xargs shasum -a 256 > "$LOG/after.sha" 2>&1
+find pmo -type f -print0 | sort -z | xargs -0 shasum -a 256 > "$LOG/before.sha"
+```
+
+3. Agent B: start a new session of the other agent in `~/pmo-trial/switch` and give it the install prompt from section 2. Tell it the project is already set up and that nothing in `pmo/` may change. Save its transcript to `$LOG/switch-B-transcript.txt`.
+
+4. Compare:
+
+```
+cd ~/pmo-trial/switch
+find pmo -type f -print0 | sort -z | xargs -0 shasum -a 256 > "$LOG/after.sha"
 diff "$LOG/before.sha" "$LOG/after.sha" 2>&1 | tee -a "$LOG/switch-diff.txt"
-python3 ~/.agents/skills/pmo-docs/scripts/render_views.py --check --project ~/pmo-trial/switch 2>&1 | tee -a "$LOG/switch-check.txt"
+python3 "$SKILL/scripts/render_views.py" --check --project ~/pmo-trial/switch 2>&1 | tee -a "$LOG/switch-check.txt"
 ```
 
 Pass when `switch-diff.txt` is empty, the check exits 0, and B's transcript shows the verify step and no write under `pmo/`. A copy written to `~/.agents/skills` by B is allowed only when B asked for a yes first (the install prompt requires it).
@@ -144,12 +160,12 @@ Pass when `switch-diff.txt` is empty, the check exits 0, and B's transcript show
 Clean up after the logs are safe:
 
 ```
-rm -rf ~/pmo-trial/switch
+rm -rf ~/pmo-trial/switch ~/.agents/skills/pmo-docs
 ```
 
 ## 5. Fill the results table
 
-Open the plan of the version you are testing (`docs/plans/`), section 5, and add one row per agent. Use the UTC date in the Notes column. Each cell is one short word or a pass/fail:
+Open the plan of the version you are testing (`docs/plans/`), find its Results section ("Results and open questions"), and add one row per agent. Use the UTC date in the Notes column. Each cell is one short word or a pass/fail:
 
 - **Version:** the `metadata.version` the agent's copy reports (from `SKILL.md`).
 - **Skill found:** `yes` when the agent listed `pmo-docs` without a manual path.

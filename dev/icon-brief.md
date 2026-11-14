@@ -4,10 +4,16 @@ A maintainer document, not shipped with the skill. It tells a designer what to m
 
 ## What exists now
 
-A placeholder (drawn once by a script that is no longer in the repo): a white clipboard with a checklist (two ticked boxes, one empty) on a dark blue rounded square. It passes the validator. Replace it when a designer's version is ready. The file to replace is:
+The master artwork is `dev/icon.svg` (1024 x 1024, rounded corners with transparent outside): layered documents with task ticks, a board card, a target node, and a green progress arrow on a dark blue gradient rounded square. It passes the validator. Replace both the master and the rendered PNG when a designer's version is ready:
 
 ```
 skills/pmo-docs/.claude-plugin/icon.png
+```
+
+Render `dev/icon.svg` to PNG with:
+
+```
+google-chrome --headless --screenshot=skills/pmo-docs/.claude-plugin/icon.png --window-size=1024,1024 --default-background-color=00000000 "file://$(pwd)/dev/icon.svg"
 ```
 
 ## Hard requirements (checked by `claude plugin validate`)
@@ -33,21 +39,20 @@ The plugin keeps project facts in lists (tasks, risks, decisions), turns them in
 Rules:
 - One simple shape that reads at 32 x 32 pixels. If detail disappears at that size, remove it.
 - No text and no letters. The name is shown next to the icon, and text becomes unreadable when small.
-- No photographs, gradients that rely on subtle shades, or thin lines (under 3% of the width).
+- No photographs, gradients that rely on subtle shades to read (bold, high-contrast gradients are fine), or thin lines (under 3% of the width).
 - Do not copy or imitate the logo of Anthropic, Claude, GitHub or any other company.
 - Keep the artwork inside a safe area: leave at least 10% empty margin on every side, because listings may crop it into a circle or a rounded square.
 - Work on a flat square. Either fill the whole square with the background colour (listings may round the corners themselves), or give it rounded corners with a transparent outside. Say which you chose.
 - It must look good on both a white and a near-black page. A filled background square does that; a transparent icon needs a check on both.
 
-## Colours in the placeholder (a starting point, not a rule)
+## Colours in the current icon (`dev/icon.svg`, a starting point, not a rule)
 
 | Use | Colour |
 |---|---|
-| Background | `#1F4E79` (dark blue) |
-| Board | `#FFFFFF` |
-| Clip | `#9FC5E8` |
-| Tick | `#2E8B57` (green) |
-| Lines | `#B7C4D1` |
+| Background gradient | `#0E1726` to `#192A45` (dark blue) |
+| Documents | `#FFFFFF` to `#E2EDF8` |
+| Progress arrow | `#127C44` to `#00FFA2` (green) |
+| Milestone target | `#FF9500` to `#FFD60A` |
 
 Keep contrast high: the main shape against the background at least 4.5 to 1, so it is readable and accessible.
 
@@ -57,7 +62,7 @@ Keep contrast high: the main shape against the background at least 4.5 to 1, so 
 2. The editable source (SVG, Figma or similar), so the icon can be changed later.
 3. One line saying whether the corners are filled or rounded with transparency.
 4. A preview at 512, 128, 64 and 32 pixels on a white and on a dark background, to show it holds up when small.
-4. Confirmation that the artwork is original or licensed for use in an MIT-licensed open source project, with the licence of any font or stock element. The repository is public, so the icon is public too.
+5. Confirmation that the artwork is original or licensed for use in an MIT-licensed open source project, with the licence of any font or stock element. The repository is public, so the icon is public too.
 
 ## How to install the delivered file
 

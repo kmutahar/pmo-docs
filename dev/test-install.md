@@ -1,24 +1,24 @@
 # Test the README install commands in a throwaway session
 
-A maintainer checklist, not shipped to users. It checks that a stranger can follow the README's **Install** section against the **live** GitHub repo and release: add the marketplace, install the plugin (latest and pinned to a tag), get a working skill, and install from the release zip. Nothing here touches your real Claude Code setup if you follow Part 1. Run it after every release, and after any change to the manifests or the layout.
+A maintainer checklist, not shipped to users. It checks that a stranger can follow the README's **Install** section: add the marketplace, install the plugin (latest and pinned to a tag), get a working skill, and install from the release zip. Nothing here touches your real Claude Code setup if you follow Part 1. Run Parts 1 to 3 before the tag against a local marketplace (and after any change to the manifests or the layout); run Part 4 against the published zip after the tag.
 
-History: Parts 1 to 3 were first run on 2026-11-05 against a local copy of the marketplace (Claude Code 2.1.318, Linux). Parts 4 and 5 and the checks against the pushed `v0.1.0` are written for the first live run, which has not been done yet: record its result in `memory.md` when it is.
+Order and history: run this check before the tag against a local marketplace (first run 2026-11-05 on a local marketplace, Claude Code 2.1.318, Linux; live GitHub run not yet run). Record results in the current plan's Results section.
 
-You need: Claude Code (`claude --version` prints a version), `git`, `python3` 3.10 or newer, `gh` (for the zip, Part 4) and an internet connection (the install pulls the repo from GitHub). Time: about 20 minutes.
+You need: Claude Code (`claude --version` prints a version), `git`, `python3` 3.10 or newer, `gh` (for the zip, Part 4) and an internet connection (for the live GitHub check and zip). Time: about 20 minutes.
 
-Set `V` to the version under test (without the `v`) and use it in the steps below, for example `export V=0.1.0`. It must equal `version` in `skills/pmo-docs/.claude-plugin/plugin.json` at the tag.
+Set `V` to the version under test (without the `v`) and use it in the steps below, for example `export V=0.7.5`. It must equal `version` in `skills/pmo-docs/.claude-plugin/plugin.json` (in the local clone before the tag, or at the tag for the live check).
 
-Run the check against the **pushed** repo on GitHub, because that is what a user installs. Unpushed changes are not tested.
+Before the tag exists, pass `"$REPO"` (your clone) to `marketplace add` in Part 2. For the live GitHub check and Part 4, run against the **pushed** repo on GitHub, because that is what a user installs:
 
 ```
-cd ~/github/pmo-docs
+cd <your clone of pmo-docs>    # or: cd "$(git rev-parse --show-toplevel)" from inside the clone
 git fetch origin
 git status -sb          # the first line must read "## main...origin/main" with no "ahead"
 ```
 
 ## How the output is captured (so you can share it)
 
-Every command below is written as `... 2>&1 | tee -a "$LOG/transcript.txt"`. That prints the output on screen **and** appends it to one transcript file. The `claude --debug-file "$LOG/NAME.log"` form (the flag goes before `plugin`) also writes Claude Code's detailed debug log for that one command. At the end you share the folder `$LOG` (Part 5, step 20).
+Every command below is written as `... 2>&1 | tee -a "$LOG/transcript.txt"`. That prints the output on screen **and** appends it to one transcript file. The `claude --debug-file "$LOG/NAME.log"` form (the flag goes before `plugin`) also writes Claude Code's detailed debug log for that one command. At the end you share the folder `$LOG` (Part 5, step 18).
 
 The commands already print each stage on their own (cloning, validating, installing). For machine-readable output add `--json` to `claude plugin list`, `install`, `update` or `uninstall`.
 
@@ -26,14 +26,14 @@ The commands already print each stage on their own (cloning, validating, install
 
 Claude Code keeps its settings, marketplaces and installed plugins in one folder (`~/.claude` by default). The variable `CLAUDE_CONFIG_DIR` points it somewhere else. A temporary folder gives you a clean Claude Code that has never heard of `pmo-docs`, and deleting the folder undoes everything.
 
-1. Make the folders: a fake Claude home, a scratch project, and a folder for the logs.
+1. Make the folders: a fake Claude home, a scratch project, and a log folder outside the throwaway folder (so cleanup does not delete it).
    ```
    export TRY=$(mktemp -d -t pmo-install-XXXXXX)
-   mkdir -p "$TRY/claude-home" "$TRY/project" "$TRY/logs"
-   export LOG="$TRY/logs"
-   echo "$TRY"
+   export LOG=~/pmo-release-logs/install-$(date -u +%Y%m%dT%H%M%SZ)
+   mkdir -p "$TRY/claude-home" "$TRY/project" "$LOG"
+   echo "TRY=$TRY LOG=$LOG"
    ```
-   Keep this terminal open: `TRY` and `LOG` only exist in it. If you close it, the folder is still in `/tmp`: run `ls -d /tmp/pmo-install-*` and set `TRY` again by hand.
+   Keep this terminal open: `TRY` and `LOG` only exist in it. `echo $TRY` printed the path; note it in case you close the terminal.
 
 2. Point Claude Code at the throwaway home and go to the scratch project:
    ```
@@ -91,8 +91,8 @@ The README gives two slash commands for inside a Claude Code session. The comman
 
 8. Find the installed copy and list it:
    ```
-   SKILLDIR=$(ls -d "$CLAUDE_CONFIG_DIR"/plugins/cache/pmo-docs/pmo-docs/*/ | head -1)
-   echo "$SKILLDIR"; ls "$SKILLDIR" "$SKILLDIR/scripts" 2>&1 | tee -a "$LOG/transcript.txt"
+   SKILLDIR="$CLAUDE_CONFIG_DIR/plugins/cache/pmo-docs/pmo-docs/$V/"
+   test -d "$SKILLDIR" && echo "$SKILLDIR" && ls "$SKILLDIR" "$SKILLDIR/scripts" 2>&1 | tee -a "$LOG/transcript.txt"
    ```
    Expected: the folder name is the version `$V`, and it holds only what is in `skills/pmo-docs/` in the clone (compare with `ls -A skills/pmo-docs`). **No** `dev/`, `tests/`, `docs/`, `evals/` or `examples/` (the layout fix of 2026-11-05; their presence means `source` in the marketplace entry is wrong). The scripts match `ls skills/pmo-docs/scripts`; a `__pycache__` appears only when the marketplace is a local folder, never from GitHub or the zip.
 
@@ -172,7 +172,7 @@ claude -p "run weekly-status; draft only, do not finish, publish or commit" --al
 ```
 Delete the new draft between runs (`git -C "$TRY/project" clean -fd pmo/documents`). Write down the first `--allowedTools` string that works, exactly as typed, or `none` when neither works. Do not try a wider pattern such as `Bash(python3 *)`: it would let an unattended run start any Python command.
 
-3a.6. Record the result in the current plan's Results section as one line: `W1 result (<UTC date>): A=<yes|no>, B=<intact|replaced>, C=<prompts|writes>, D=<works|denied; allowedTools string or none>.` Then read `$LOGA` once for private data before sharing, and keep the log. This plan file is deleted at the release, so also note the result line in your `memory.md`; the files W10 and W11 change keep the outcome after that.
+3a.6. Record the result in the current plan's Results section ("Results and open questions") as one line: `Install check (<UTC date>): A=<yes|no>, B=<intact|replaced>, C=<prompts|writes>, D=<works|denied; allowedTools string or none>.` Then read `$LOGA` once for private data before sharing, and keep the log. Any fix goes into `skills/pmo-docs/SKILL.md` (`allowed-tools`), `skills/pmo-docs/references/schedule.md` or `PRIVACY.md`, which keep the outcome after the plan file is deleted at release.
 
 ## Part 4: the release zip (other agents)
 
@@ -209,15 +209,9 @@ The README says other agents can take the zip from the GitHub release. This need
     ```
     Expected: `✔ Successfully uninstalled plugin`, `✔ Successfully removed marketplace`, `No plugins installed.`
 
-18. Look through `$LOG/transcript.txt` once before sharing. The logs contain your machine's temp paths and your GitHub address, nothing secret, but read them anyway.
+18. Look through `$LOG/transcript.txt` once before sharing. The logs contain your machine's temp paths and your GitHub address, nothing secret, but read them anyway. `$LOG` stays in `~/pmo-release-logs/` when `$TRY` is removed.
 
-19. Make one file to share:
-    ```
-    tar -czf ~/pmo-install-check-logs.tgz -C "$TRY" logs
-    ls -l ~/pmo-install-check-logs.tgz
-    ```
-
-20. Delete the throwaway folder and unset the variables:
+19. Delete the throwaway folder and unset the variables:
     ```
     cd ~
     rm -rf "$TRY"
@@ -246,6 +240,6 @@ The README says other agents can take the zip from the GitHub release. This need
 | Step 11: the skill does not fire | `description` does not match the request, or a restart is missing | `SKILL.md` description |
 | Step 11: files written before your yes | a real behaviour bug | `SKILL.md` rule 3, then re-run the `setup-needs-consent` eval |
 
-Then send `~/pmo-install-check-logs.tgz` (or paste the failing step's output) to the agent, which fixes the README, the manifests or the skill and records the result in `memory.md` and `docs/PLAN.md`.
+Then share `$LOG` (or paste the failing step's output) with the agent, which fixes the README, the manifests or the skill and records the result in the current plan's Results section.
 
 Not covered here: running the skill inside other agents (Part 4 only checks that the zip works), Windows, and macOS. Those stay "untested" in the README.
