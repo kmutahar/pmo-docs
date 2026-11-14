@@ -16,7 +16,7 @@ Always checked, from the template:
          starts with {{x}} is an optional repeatable slot; {{x}} inside other words matches any words)
   ERROR  a table's columns differ from the template's table in that section
   ERROR  an unreplaced {{placeholder}}, or an HTML comment in a document whose status is not draft
-  ERROR  the same ID (T-001) twice in one table
+  ERROR  the same ID (T-1) twice in one table
   WARN   no front matter; template_version missing or different; extra `##` sections; empty table; an HTML comment in a draft
 
 Declared checks: the template's front matter may carry a `checks:` list. A section is named by its
@@ -45,6 +45,7 @@ import re
 import sys
 from pathlib import Path
 
+sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import pmo_common as pc  # noqa: E402
 
@@ -309,7 +310,7 @@ def check(root, cfg, text):
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description="Check documents against their template's structure and declared checks.")
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     pc.add_project_arg(ap)
     ap.add_argument("files", nargs="*", help="documents to check (default: every .md under paths.documents)")
     a = ap.parse_args(argv)
@@ -336,4 +337,4 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(pc.run(main))

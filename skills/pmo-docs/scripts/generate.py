@@ -20,6 +20,7 @@ from pathlib import Path
 if sys.version_info < (3, 10):
     sys.exit("pmo-docs needs Python 3.10 or newer (this is %d.%d)." % sys.version_info[:2])
 
+sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import pmo_common as pc  # noqa: E402
 import render_views  # noqa: E402
@@ -841,7 +842,7 @@ def generate_status_report(ctx: Ctx) -> Filled:
 
 
 def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(description="Generate a document from templates and registers.")
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     pc.add_project_arg(ap)
     ap.add_argument("type", help="document type (e.g. decision-log)")
     ap.add_argument("period", nargs="?", default=None, help="period string (e.g. 2026-03)")
@@ -983,4 +984,4 @@ def main(argv=None) -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(pc.run(main))

@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Set up the project's pmo/ folder deterministically."""
+"""Set up the project's pmo/ folder deterministically.
+
+Exit codes: 0 ok, 1 the new registers failed validation or pmo/bin/pmo exists and differs from the skill's, 2 usage, a schema_version newer than the skill, or config paths that leave the project.
+"""
 import argparse
 import contextlib
 import io
@@ -10,13 +13,14 @@ from pathlib import Path
 if sys.version_info < (3, 10):
     sys.exit("pmo-docs needs Python 3.10 or newer (this is %d.%d)." % sys.version_info[:2])
 
+sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import pmo_common as pc  # noqa: E402
 import render_views  # noqa: E402
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description="Set up the project's pmo/ folder deterministically.")
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     pc.add_project_arg(ap)
     ap.add_argument("--name", default=None, help="project name")
     ap.add_argument("--manager", default=None, help="project manager name")
@@ -204,4 +208,4 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(pc.run(main))

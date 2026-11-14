@@ -206,6 +206,33 @@ class Launcher(unittest.TestCase):
         ]
         self.assertEqual(bad, [])
 
+    def test_no_bytecode_is_written(self):
+        skill_copy = self.tmp / "skill"
+        shutil.copytree(REPO / "skills/pmo-docs", skill_copy, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+        acme = self.tmp / "acme"
+        shutil.copytree(REPO / "examples/acme", acme)
+        launcher = acme / "pmo/bin/pmo"
+        launcher.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(LAUNCHER_STARTER, launcher)
+        launcher.chmod(0o755)
+
+        env = {k: v for k, v in os.environ.items() if k != "PYTHONDONTWRITEBYTECODE"}
+        env["PMO_DOCS_SKILL"] = str(skill_copy)
+
+        p1 = subprocess.run(
+            [str(launcher), "where", "status-report"],
+            capture_output=True, text=True, encoding="utf-8", env=env, cwd=str(acme),
+        )
+        self.assertEqual(p1.returncode, 0, p1.stderr)
+        self.assertEqual(list(skill_copy.rglob("__pycache__")), [])
+
+        p2 = subprocess.run(
+            [sys.executable, str(skill_copy / "scripts/where.py"), "status-report", "--project", str(acme)],
+            capture_output=True, text=True, encoding="utf-8", env=env,
+        )
+        self.assertEqual(p2.returncode, 0, p2.stderr)
+        self.assertEqual(list(skill_copy.rglob("__pycache__")), [])
+
 
 if __name__ == "__main__":
     unittest.main()

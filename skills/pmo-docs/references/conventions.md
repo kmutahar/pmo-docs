@@ -107,12 +107,12 @@ Status reports show RAG (Red / Amber / Green) as `pmo_common.rag` computes it (a
 
 ## Scripts
 
-Run from the project root, or pass `--project DIR`. Every script answers `--help`, needs Python 3.10 or newer, and reads and writes UTF-8.
+Run from the project root, or pass `--project DIR`. Every script answers `--help`, needs Python 3.10 or newer, and reads and writes UTF-8. An unexpected error prints one `ERROR` line and exits 2; set `PMO_DEBUG=1` to see the traceback.
 
 | Command | What it does | Exit codes |
 |---|---|---|
 | `python3 ${CLAUDE_SKILL_DIR}/scripts/setup.py [--name TEXT] [--manager TEXT] [--priority-order LIST] [--week-start DAY]` | creates the config, house rules, empty registers and documents folder; never overwrites | 0 ok, 1 the new registers failed validation, or `pmo/bin/pmo` exists and differs from the skill's, 2 usage, a `schema_version` newer than the skill, or config paths that leave the project |
-| `python3 ${CLAUDE_SKILL_DIR}/scripts/where.py <type> [period] [--week] [--as-of DATE] [--hashes] [--title TEXT] [--lang CODE]` | paths and settings of one doc type; `--hashes` adds the `source_hashes` line Finish records; `--lang` gives a translation's paths and `source_hash` | 0 ok, 2 usage, or a config the skill refuses |
+| `python3 ${CLAUDE_SKILL_DIR}/scripts/where.py <type> [period] [--week] [--as-of DATE] [--hashes] [--title TEXT] [--lang CODE]` | paths and settings of one doc type; `--hashes` adds the `source_hashes` line Finish records; `--lang` gives a translation's paths and `source_hash` | 0 ok, 2 usage, a config the skill refuses, or a template that is not UTF-8 text |
 | `python3 ${CLAUDE_SKILL_DIR}/scripts/generate.py <type> [period] [--week] [--as-of DATE] [--stdout]` | pre-fills a document from registers for generator doc types; never overwrites | 0 ok, 1 validation errors, 2 usage, invalid doc type or a non-English draft language, or a config the skill refuses, 3 the document already exists |
 | `python3 ${CLAUDE_SKILL_DIR}/scripts/render_views.py [--check]` | validates every register and writes the views; with `--check` it writes nothing and also fails when a view on disk is stale | 0 valid and current, 1 validation errors or stale views, 2 usage, a `schema_version` newer than the skill, config paths that leave the project, or a views folder that cannot be written |
 | `python3 ${CLAUDE_SKILL_DIR}/scripts/renumber.py [<ID>] [--line FILE:N] [--apply] [--rewrite FILE:N=NEW-ID]... [--keep FILE:N[=OLD-ID]]...` | fixes duplicate ids after a merge; dry run shows keepers, new ids and references, `--apply` rewrites confirmed references and updates views | 0 no duplicates or views written, 1 duplicates remain or unreadable registers, 2 usage errors or unconfirmed references, or a config the skill refuses |

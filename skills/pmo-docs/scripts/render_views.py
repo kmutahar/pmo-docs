@@ -15,6 +15,7 @@ import re
 import sys
 from pathlib import Path
 
+sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import pmo_common as pc  # noqa: E402
 
@@ -179,7 +180,8 @@ def config_errors(cfg, root=None):
                 pb_dir = Path(root) / pb_path
                 if pb_dir.is_dir():
                     for p in pb_dir.glob("*.md"):
-                        known_recipes.add(p.stem)
+                        if p.is_file():
+                            known_recipes.add(p.stem)
             known_recipes.discard("release-notes")
             for item in sched:
                 if not isinstance(item, dict):
@@ -525,9 +527,7 @@ def table(rows, cols):
     return pc.md_table(cols, [[r.get(c) for c in cols] for r in rows])
 
 
-def _id_num(tid):
-    m = re.search(r"\d+", str(tid))
-    return int(m.group()) if m else 0
+_id_num = pc.id_num
 
 
 def tests_in_use(data) -> bool:
@@ -682,4 +682,4 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(pc.run(main))

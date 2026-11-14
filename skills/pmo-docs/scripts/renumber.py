@@ -23,6 +23,7 @@ from pathlib import Path
 if sys.version_info < (3, 10):
     sys.exit("pmo-docs needs Python 3.10 or newer (this is %d.%d)." % sys.version_info[:2])
 
+sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import pmo_common as pc  # noqa: E402
 import render_views  # noqa: E402
@@ -128,6 +129,8 @@ def collect_references(root, cfg, data, handled_dups):
     valid_docs = []
     if doc_dir.is_dir():
         for dpath in sorted(doc_dir.rglob("*.md")):
+            if not dpath.is_file():
+                continue
             try:
                 rel_doc = str(dpath.relative_to(Path(root))).replace("\\", "/")
             except ValueError:
@@ -583,4 +586,4 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(pc.run(main))

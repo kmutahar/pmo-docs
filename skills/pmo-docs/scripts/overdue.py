@@ -18,6 +18,7 @@ import datetime
 import sys
 from pathlib import Path
 
+sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import pmo_common as pc  # noqa: E402
 
@@ -45,7 +46,7 @@ def open_entries(root, cfg, name):
 def report(root, cfg, as_of, days):
     order = cfg["vocab"].get("priority_order") or []
     prio = lambda t: order.index(t["priority"]) if t.get("priority") in order else len(order)  # noqa: E731
-    by_id = lambda e: str(e.get("id"))  # noqa: E731
+    by_id = lambda e: (pc.id_num(e.get("id")), str(e.get("id")))  # noqa: E731
     tasks, acts, ms = (open_entries(root, cfg, n) for n in ("tasks", "actions", "milestones"))
     bad = [(n, e.get("id"), e["_bad"]) for n, es in (("tasks", tasks), ("actions", acts), ("milestones", ms)) for e in es if e["_bad"] is not None]
     tasks = sorted((t for t in tasks if t["_due"] and t["_due"] < as_of), key=lambda t: (t["_due"], prio(t), by_id(t)))
@@ -81,7 +82,7 @@ def report(root, cfg, as_of, days):
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description="Overdue tasks, actions and milestones from the registers.")
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     pc.add_project_arg(ap)
     ap.add_argument("--as-of", type=datetime.date.fromisoformat, default=datetime.date.today(),
                     metavar="YYYY-MM-DD", help="date to compare against (default: today)")
@@ -101,4 +102,4 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(pc.run(main))

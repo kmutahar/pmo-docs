@@ -232,6 +232,27 @@ class Overdue(unittest.TestCase):
         self.assertEqual(subprocess.run([sys.executable, tool, "--help"], capture_output=True).returncode, 0)
         self.assertEqual(subprocess.run([sys.executable, tool, "--project", str(self.p), "--bogus"], capture_output=True).returncode, 2)
 
+    def test_ids_sort_by_number(self):
+        risks_file = self.p / "pmo/registers/risks.yaml"
+        rtext = risks_file.read_text(encoding="utf-8")
+        r1_line = next(ln for ln in rtext.splitlines() if "id: R-1," in ln or "id: R-1}" in ln)
+        risks_file.write_text(
+            rtext.rstrip("\n") + "\n" + r1_line.replace("R-1", "R-10") + "\n" + r1_line.replace("R-1", "R-9") + "\n",
+            encoding="utf-8",
+        )
+        tasks_file = self.p / "pmo/registers/tasks.yaml"
+        ttext = tasks_file.read_text(encoding="utf-8")
+        tasks_file.write_text(
+            ttext.rstrip("\n") + "\n"
+            "  - {id: T-10, title: Task ten, priority: high, owner: alice, status: in-progress, due: 2026-03-01}\n"
+            "  - {id: T-9, title: Task nine, priority: high, owner: alice, status: in-progress, due: 2026-03-01}\n",
+            encoding="utf-8",
+        )
+        code, out = self.run_tool("--as-of", "2026-03-15")
+        self.assertEqual(code, 0)
+        self.assertLess(out.index("| R-9 |"), out.index("| R-10 |"))
+        self.assertLess(out.index("| T-9 |"), out.index("| T-10 |"))
+
 
 if __name__ == "__main__":
     unittest.main()

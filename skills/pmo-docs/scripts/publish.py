@@ -21,6 +21,7 @@ from pathlib import Path
 if sys.version_info < (3, 10):
     sys.exit("pmo-docs needs Python 3.10 or newer (this is %d.%d)." % sys.version_info[:2])
 
+sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import docs_audit  # noqa: E402
 import pmo_common as pc  # noqa: E402
@@ -28,7 +29,7 @@ import structure_check  # noqa: E402
 
 
 def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(description="Publish finished documents to a target folder or repo.")
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     pc.add_project_arg(ap)
     ap.add_argument("--apply", action="store_true", help="perform the copy; without this flag, print a dry-run listing")
     ap.add_argument("--overwrite", action="append", default=[], metavar="REL", help="overwrite a conflicting document")
@@ -104,7 +105,7 @@ def main(argv=None) -> int:
 
     # Candidates scan
     docs_base = root / cfg["paths"]["documents"]
-    files = sorted(docs_base.rglob("*.md")) if docs_base.exists() else []
+    files = [f for f in sorted(docs_base.rglob("*.md")) if f.is_file()] if docs_base.exists() else []
 
     doc_types = cfg.get("doc_types", {})
     candidates = []
@@ -251,4 +252,4 @@ def main(argv=None) -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(pc.run(main))

@@ -23,6 +23,8 @@ line endings read as LF (see register_hash); a register file that does not exist
 Quote the values: an
 all-digit hash such as 12345678 would be read as a number and is reported as "quote the hash".
 Docs-vs-code drift is not mechanical: the docs-audit playbook covers it.
+
+Exit codes: 0 clean, 1 findings, 2 usage or a config the skill refuses.
 """
 import argparse
 import datetime
@@ -31,6 +33,7 @@ import re
 import sys
 from pathlib import Path
 
+sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import parity_check as pcheck  # noqa: E402
@@ -240,6 +243,8 @@ def template_drift(root, cfg) -> list[str]:
         return []
     out = []
     for p in sorted(base.rglob("*.md")):
+        if not p.is_file():
+            continue
         rel = p.relative_to(base)
         default_file = pc.SKILL / "assets" / "templates" / rel.name
         if not default_file.exists():
@@ -263,6 +268,8 @@ def playbook_drift(root, cfg) -> list[str]:
         return []
     out = []
     for p in sorted(base.rglob("*.md")):
+        if not p.is_file():
+            continue
         rel = p.relative_to(base)
         default_file = pc.SKILL / "references" / rel
         if not default_file.exists():
@@ -293,7 +300,7 @@ def drift_state(root, cfg, tpl_path: Path, tpl_source: str) -> str:
 def audit(root, cfg, today):
     """(files scanned, {check: [message]})."""
     base = Path(root) / cfg["paths"]["documents"]
-    files = sorted(base.rglob("*.md")) if base.exists() else []
+    files = [p for p in sorted(base.rglob("*.md")) if p.is_file()] if base.exists() else []
     found = {c: [] for c in CHECKS}
     for p in files:
         for check, msg in audit_file(root, cfg, p, base, today):
@@ -305,7 +312,7 @@ def audit(root, cfg, today):
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description="Mechanical documentation audit; exits 1 on findings.")
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     pc.add_project_arg(ap)
     ap.add_argument("--as-of", type=datetime.date.fromisoformat, default=datetime.date.today(),
                     metavar="YYYY-MM-DD", help="date used for age checks (default: today)")
@@ -326,4 +333,4 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(pc.run(main))

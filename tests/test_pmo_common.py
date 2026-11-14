@@ -2,6 +2,7 @@
 import contextlib
 import datetime
 import io
+import os
 import re
 import shutil
 import subprocess
@@ -9,6 +10,7 @@ import sys
 import tempfile
 import time
 import unittest
+import unittest.mock
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "skills/pmo-docs/scripts"))
@@ -655,6 +657,29 @@ class Languages(unittest.TestCase):
         self.assertEqual(got2["translations"], ["fr-CA"])
         self.assertEqual(sorted(got2["info"].keys()), ["en", "fr-CA"])
 
+    def test_run_turns_an_exception_into_exit_2(self):
+        err = io.StringIO()
+        with unittest.mock.patch.dict(os.environ, {"PMO_DEBUG": ""}):
+            with contextlib.redirect_stderr(err):
+                self.assertEqual(pc.run(lambda: 1 / 0), 2)
+        self.assertIn("ZeroDivisionError", err.getvalue())
+        self.assertEqual(pc.run(lambda: 0), 0)
+        self.assertEqual(pc.run(lambda: 1), 1)
+
+        def boom():
+            raise SystemExit(3)
+
+        with self.assertRaises(SystemExit) as cm:
+            pc.run(boom)
+        self.assertEqual(cm.exception.code, 3)
+        with unittest.mock.patch.dict(os.environ, {"PMO_DEBUG": "1"}):
+            with self.assertRaises(ZeroDivisionError):
+                pc.run(lambda: 1 / 0)
+
+    def test_id_num(self):
+        self.assertEqual(pc.id_num("R-10"), 10)
+        self.assertEqual(pc.id_num("none"), 0)
+
 
 SCRIPTS = Path(__file__).resolve().parents[1] / "skills/pmo-docs/scripts"
 TOOLS = ["docs_audit.py", "generate.py", "overdue.py", "parity_check.py", "render_views.py", "setup.py", "structure_check.py", "where.py"]
@@ -666,10 +691,11 @@ class EveryTool(unittest.TestCase):
         return p.returncode, p.stdout + p.stderr
 
     def test_every_tool_answers_help(self):
-        for name in TOOLS:
+        for name in TOOLS + ["renumber.py", "publish.py"]:
             code, out = self.run_tool(name, "--help")
             self.assertEqual(code, 0, name)
             self.assertIn("usage", out.lower(), name)
+            self.assertIn("Exit codes", out, name)
 
     def test_newer_schema_is_refused_and_nothing_is_written(self):
         d = Path(tempfile.mkdtemp())

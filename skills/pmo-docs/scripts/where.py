@@ -2,7 +2,9 @@
 """Print where a document, its template and its inputs live.
 
 Usage:
-    python3 where.py <type> [period] [--week] [--as-of YYYY-MM-DD] [--hashes] [--project ROOT]
+    python3 where.py <type> [period] [--week] [--as-of YYYY-MM-DD] [--hashes] [--title TEXT] [--lang CODE] [--project ROOT]
+
+Exit codes: 0 ok, 2 usage, a config the skill refuses, or a template that is not UTF-8 text.
 """
 import argparse
 import datetime
@@ -12,13 +14,14 @@ from pathlib import Path
 if sys.version_info < (3, 10):
     sys.exit("pmo-docs needs Python 3.10 or newer (this is %d.%d)." % sys.version_info[:2])
 
+sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import pmo_common as pc  # noqa: E402
 from docs_audit import drift_state, register_hash  # noqa: E402
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description="Find where a document, its template and its inputs live.")
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     pc.add_project_arg(ap)
     ap.add_argument("type", help="document type (e.g. status-report)")
     ap.add_argument("period", nargs="?", default=None, help="period string (e.g. 2026-03)")
@@ -171,4 +174,4 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(pc.run(main))

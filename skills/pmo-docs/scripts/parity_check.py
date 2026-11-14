@@ -3,6 +3,8 @@
 
 Usage:
     python3 parity_check.py [--project ROOT] [FILE ...]
+
+Exit codes: 0 all match or none found, 1 a difference or a pair that cannot be compared, 2 usage or a config the skill refuses.
 """
 import sys
 
@@ -13,6 +15,7 @@ import argparse
 from pathlib import Path
 import re
 
+sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import pmo_common as pc  # noqa: E402
 import render_views  # noqa: E402
@@ -219,7 +222,7 @@ def check_translation(root, cfg, path) -> list[str]:
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description="Check that translations match their original documents.")
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     pc.add_project_arg(ap)
     ap.add_argument("files", nargs="*", help="translation files to check (default: all files with translation_of under paths.documents)")
     a = ap.parse_args(argv)
@@ -238,6 +241,8 @@ def main(argv=None):
         files = []
         if docs_dir.is_dir():
             for f in sorted(docs_dir.rglob("*.md")):
+                if not f.is_file():
+                    continue
                 try:
                     fm, _ = pc.split_front_matter(pc.read(f))
                     if fm and "translation_of" in fm:
@@ -264,4 +269,4 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(pc.run(main))

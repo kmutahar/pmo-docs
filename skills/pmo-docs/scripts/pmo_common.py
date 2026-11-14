@@ -4,9 +4,12 @@ import sys
 if sys.version_info < (3, 10):
     sys.exit("pmo-docs needs Python 3.10 or newer (this is %d.%d)." % sys.version_info[:2])
 
+sys.dont_write_bytecode = True
+
 import copy
 import datetime
 import hashlib
+import os
 import re
 from pathlib import Path
 
@@ -602,3 +605,20 @@ def rag(cfg, as_of: datetime.date, tasks, milestones=(), issues=(), risks=()) ->
         return amber_val, say("milestone", soon_ms, "is", "due within 7 days")
 
     return green_val, "all items on track"
+
+
+def id_num(tid):
+    """First number inside an id string, or 0 when there is none."""
+    m = re.search(r"\d+", str(tid))
+    return int(m.group()) if m else 0
+
+
+def run(main):
+    """Run a script's main(). An unexpected error prints one line and exits 2: 1 means findings."""
+    try:
+        return main()
+    except Exception as e:
+        if os.environ.get("PMO_DEBUG"):
+            raise
+        print(f"ERROR {Path(sys.argv[0]).name}: {type(e).__name__}: {e}", file=sys.stderr)
+        return 2

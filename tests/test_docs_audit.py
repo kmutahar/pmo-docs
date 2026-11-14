@@ -166,6 +166,16 @@ class Audit(unittest.TestCase):
             da.main(["--help"])
         self.assertEqual(e.exception.code, 0)
 
+    def test_a_folder_named_like_a_document_is_not_a_crash(self):
+        (self.docs / "x.md").mkdir()
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            code, out = self.run_audit()
+        self.assertIn(code, (0, 1))
+        self.assertIn("# Docs audit", out)
+        self.assertNotIn("Traceback", err.getvalue())
+        self.assertNotIn("IsADirectoryError", err.getvalue())
+
     def test_template_drift(self):
         tpl_dir = self.p / "pmo/templates"
         tpl_dir.mkdir(parents=True, exist_ok=True)
