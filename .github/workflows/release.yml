@@ -10,14 +10,22 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
       - name: Build zip and notes
         run: |
           v="${GITHUB_REF_NAME#v}"
+          test "$(python3 -c 'import json; print(json.load(open("skills/pmo-docs/.claude-plugin/plugin.json", encoding="utf-8"))["version"])')" = "$v" || { echo "plugin.json version is not $v"; exit 1; }
+          grep -qF "version: \"$v\"" skills/pmo-docs/SKILL.md || { echo "SKILL.md version is not $v"; exit 1; }
+          grep -qF "**Status: v$v released" README.md || { echo "README.md version is not $v"; exit 1; }
+          grep -qF "pmo-docs/v$v/" docs/INSTALL_FOR_AGENTS.md || { echo "INSTALL_FOR_AGENTS.md version is not $v"; exit 1; }
           git archive --format=zip --prefix=pmo-docs/ -o "pmo-docs-$v.zip" "$GITHUB_REF_NAME:skills/pmo-docs"
           # the section from "## [$v]" up to the next "## [" heading
           awk -v h="## [$v]" 'index($0,h)==1{f=1;next} /^## \[/{f=0} f' CHANGELOG.md > notes.md
           test -s notes.md || { echo "no section for $v in CHANGELOG.md"; exit 1; }
+      - name: Run unit tests
+        run: python3 -m unittest discover tests
       - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}

@@ -22,11 +22,12 @@ class ReleaseTest(unittest.TestCase):
         self.git("add", ".")
         self.git("commit", "-qm", "init")
 
-    def git(self, *args, check=True):
+    def git(self, *args, check=True, cwd=None):
         env = {**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t.t",
-               "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@t.t"}
+               "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@t.t",
+               "GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1"}
         r = subprocess.run(["git", "-c", "commit.gpgsign=false", "-c", "tag.gpgsign=false", *args],
-                           cwd=self.tmp, env=env, capture_output=True, text=True)
+                           cwd=cwd or self.tmp, env=env, capture_output=True, text=True)
         if check:
             self.assertEqual(r.returncode, 0, r.stderr)
         return r
@@ -34,7 +35,8 @@ class ReleaseTest(unittest.TestCase):
     def release(self, *args, **env):
         # no terminal and no stdin: a prompt could only read EOF, which counts as No
         env = {**{k: v for k, v in os.environ.items() if k not in ("DRY_RUN", "RELEASE_SKIP_CHECKS")},
-               "RELEASE_SKIP_CHECKS": "1", **env}
+               "GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1",
+               "RELEASE_SKIP_CHECKS": "1", "PYTHONDONTWRITEBYTECODE": "1", **env}
         return subprocess.run(["bash", "dev/release", *args], cwd=self.tmp, env=env, text=True,
                               capture_output=True, stdin=subprocess.DEVNULL, start_new_session=True)
 
@@ -73,6 +75,16 @@ class ReleaseTest(unittest.TestCase):
             f.write("\n")
         self.assertEqual(self.release("--dry-run", "--allow-dirty", "9.9.9").returncode, 1)
 
+    def test_dirty_changelog_refused_even_with_allow_dirty(self):
+        (self.tmp / "CHANGELOG.md").write_text("# Changelog\n", encoding="utf-8")
+        self.git("add", "CHANGELOG.md")
+        self.git("commit", "-qm", "changelog")
+        (self.tmp / "CHANGELOG.md").write_text("# Changelog\nedited\n", encoding="utf-8")
+        r = self.release("--dry-run", "--allow-dirty", "9.9.9")
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("CHANGELOG.md", r.stderr)
+        self.assertIn("release files", r.stderr)
+
     def test_dry_run_changes_nothing_and_never_asks(self):
         r = self.release("--dry-run", "v9.9.9", DRY_RUN="")
         self.assertEqual(r.returncode, 0, r.stderr)
@@ -99,7 +111,9 @@ class ReleaseTest(unittest.TestCase):
         bin_dir = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, bin_dir)
         (bin_dir / "git-cliff").write_text(
-            '#!/bin/sh\nif [ "$1" = "-o" ]; then echo "# Changelog" > "$2"; else echo "notes"; fi\n', encoding="utf-8")
+            "#!/bin/sh\n[ \"$1\" = \"-o\" ] && exec > \"$2\"\ncat <<'EOF'\n# Changelog\n\n## [9.9.9] - 2026-01-01\n\n- stub\nEOF\n",
+            encoding="utf-8",
+        )
         (bin_dir / "claude").write_text('#!/bin/sh\necho "warning: stub"\n', encoding="utf-8")
         for f in bin_dir.iterdir():
             f.chmod(0o755)
@@ -125,7 +139,8 @@ class ReleaseTest(unittest.TestCase):
         skill = (self.tmp / "skills/pmo-docs/SKILL.md").read_text(encoding="utf-8")
         self.assertIn('metadata:\n  version: "9.9.9"\n', skill)
         self.assertEqual(json.loads((self.tmp / "skills/pmo-docs/.claude-plugin/plugin.json").read_text(encoding="utf-8"))["version"], "9.9.9")
-        self.assertEqual((self.tmp / "CHANGELOG.md").read_text(encoding="utf-8"), "# Changelog\n")
+        self.assertEqual((self.tmp / "CHANGELOG.md").read_text(encoding="utf-8"), "# Changelog\n\n## [9.9.9] - 2026-01-01\n\n- stub\n")
+        self.assertIn("- stub", r.stdout)
         names = self.git("diff", "--name-only").stdout.split()
         self.assertEqual(sorted(names), ["README.md", "docs/INSTALL_FOR_AGENTS.md", "skills/pmo-docs/.claude-plugin/plugin.json", "skills/pmo-docs/SKILL.md"])
         for rel in ("README.md", "docs/INSTALL_FOR_AGENTS.md"):
@@ -149,6 +164,70 @@ class ReleaseTest(unittest.TestCase):
         self.assertEqual(r.returncode, 1)
         self.assertIn("validation failed", r.stderr)
         self.assertFalse((self.tmp / "CHANGELOG.md").exists())
+
+    def test_missing_changelog_section_stops_before_commit_and_tag(self):
+        env = self.stub_non_dry()
+        before = self.git("rev-parse", "HEAD").stdout
+        (Path(env["PATH"].split(os.pathsep)[0]) / "git-cliff").write_text(
+            "#!/bin/sh\n[ \"$1\" = \"-o\" ] && exec > \"$2\"\ncat <<'EOF'\n# Changelog\n\n## [0.7.4] - 2026-01-01\n\n- old\nEOF\n",
+            encoding="utf-8",
+        )
+        dry = self.release("--dry-run", "9.9.9", RELEASE_SKIP_CHECKS="0", **env)
+        self.assertEqual(dry.returncode, 1)
+        self.assertIn("no section for 9.9.9", dry.stderr)
+        r = self.release("9.9.9", **env)
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("no section for 9.9.9", r.stderr)
+        self.assertEqual(self.git("rev-parse", "HEAD").stdout, before)
+        self.assertEqual(self.git("tag").stdout, "")
+
+    def test_release_notes_preview_cut_from_written_changelog(self):
+        env = self.stub_non_dry()
+        (Path(env["PATH"].split(os.pathsep)[0]) / "git-cliff").write_text(
+            "#!/bin/sh\n"
+            "if [ \"$1\" = \"-o\" ]; then\n"
+            "  cat <<'EOF' > \"$2\"\n# Changelog\n\n## [9.9.9] - 2026-01-01\n\n- new change\n\n## [9.9.8] - 2025-12-01\n\n- old change\nEOF\n"
+            "else\n"
+            "  echo \"wrong-unreleased\"\n"
+            "fi\n",
+            encoding="utf-8",
+        )
+        r = self.release("9.9.9", **env)
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("Aborted.", r.stderr)
+        self.assertIn("- new change", r.stdout)
+        self.assertNotIn("- old change", r.stdout)
+        self.assertNotIn("wrong-unreleased", r.stdout)
+
+    def test_tag_on_origin_rejected_before_commit(self):
+        remote = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, remote)
+        self.git("init", "--bare", "-q", str(remote), cwd=remote)
+        self.git("remote", "add", "origin", str(remote))
+        self.git("push", "-q", "origin", "main")
+        self.git("tag", "v9.9.9")
+        self.git("push", "-q", "origin", "v9.9.9")
+        self.git("tag", "-d", "v9.9.9")
+        before = self.git("rev-parse", "HEAD").stdout
+        r = self.release("--dry-run", "9.9.9")
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("exists on origin", r.stderr)
+        self.assertEqual(self.git("rev-parse", "HEAD").stdout, before)
+        ok = self.release("--dry-run", "9.9.8")
+        self.assertEqual(ok.returncode, 0, ok.stderr)
+        self.assertNotIn("warning:", ok.stderr.lower())
+
+    def test_non_main_branch_rejected(self):
+        self.git("checkout", "-qb", "feature")
+        r = self.release("--dry-run", "9.9.9")
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("main", r.stderr)
+
+    def test_unreachable_origin_warns_and_continues(self):
+        self.git("remote", "add", "origin", str(self.tmp / "missing-remote.git"))
+        r = self.release("--dry-run", "9.9.9")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("warning:", r.stderr.lower())
 
 
 if __name__ == "__main__":

@@ -57,6 +57,7 @@ if [ "$dry" = 0 ]; then
 fi
 
 branch=$(git symbolic-ref --short -q HEAD) || die "detached HEAD, check out a branch first"
+[ "$branch" = "main" ] || die "releases must be cut from main, not $branch"
 files=(skills/pmo-docs/SKILL.md skills/pmo-docs/.claude-plugin/plugin.json README.md docs/INSTALL_FOR_AGENTS.md)
 commit_paths=(CHANGELOG.md "${files[@]}")
 memory_staged=0
@@ -70,8 +71,8 @@ if [ -n "$dirty" ]; then
     die "uncommitted changes above (memory.md ignored); commit them or pass --allow-dirty"
   fi
   # the release commit is path-limited, so these files must hold nothing else
-  bad=$(git status --porcelain -- "${files[@]}")
-  [ -z "$bad" ] || { echo "$bad" >&2; die "the version files have uncommitted changes, even --allow-dirty refuses"; }
+  bad=$(git status --porcelain -- "${commit_paths[@]}")
+  [ -z "$bad" ] || { echo "$bad" >&2; die "the release files have uncommitted changes, even --allow-dirty refuses"; }
   echo "warning: continuing with uncommitted changes (they stay out of the release commit):" >&2
   echo "$dirty" >&2
 fi
@@ -85,6 +86,11 @@ if [ "$bump" = 1 ]; then
 fi
 tag="v$version"
 git rev-parse -q --verify "refs/tags/$tag" >/dev/null && die "tag $tag already exists"
+if remote_tags=$(GIT_TERMINAL_PROMPT=0 git ls-remote --tags origin "refs/tags/$tag" 2>&1); then
+  [ -z "$remote_tags" ] || die "tag $tag already exists on origin"
+else
+  echo "warning: could not check origin for tag $tag ($remote_tags); continuing" >&2
+fi
 
 # 3. checks (RELEASE_SKIP_CHECKS only counts in a dry run; the tests use it)
 if [ "$dry" = 1 ] && [ "${RELEASE_SKIP_CHECKS:-0}" = 1 ]; then
@@ -157,6 +163,10 @@ PY
 
 if [ "$dry" = 1 ]; then
   set_version check
+  if [ "${RELEASE_SKIP_CHECKS:-0}" = 0 ] && command -v git-cliff >/dev/null 2>&1; then
+    cliff_out=$(git-cliff --tag "$tag") || die "git-cliff failed"
+    grep -q "^## \[${version//./\\.}\]" <<<"$cliff_out" || die "CHANGELOG.md has no section for $version (every commit since the last tag is skipped by cliff.toml); add a user-facing commit first"
+  fi
   cat <<EOF
 == dry run: nothing changed. Version $version (tag $tag) on branch $branch.
 Would: set version in ${files[*]}
@@ -182,8 +192,11 @@ trap undo EXIT
 set_version write
 git-cliff -o CHANGELOG.md --tag "$tag"
 ! grep -q 'github.com///' CHANGELOG.md || die "changelog links have no owner/repo (set an upstream branch)"
+grep -q "^## \[${version//./\\.}\]" CHANGELOG.md || die "CHANGELOG.md has no section for $version (every commit since the last tag is skipped by cliff.toml); add a user-facing commit first"
+notes=$(awk -v h="## [$version]" 'index($0,h)==1{f=1;next} /^## \[/{f=0} f' CHANGELOG.md)
+[ -n "${notes//[[:space:]]/}" ] || die "CHANGELOG.md has no section for $version (every commit since the last tag is skipped by cliff.toml); add a user-facing commit first"
 echo "== release notes for $tag"
-git-cliff --unreleased --tag "$tag" --strip header
+printf '%s\n' "$notes"
 
 confirm() { # default No; no terminal or EOF counts as No
   local ans
