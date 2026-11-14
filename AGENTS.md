@@ -30,6 +30,7 @@ A project-office and documentation workflow packaged as an Agent Skill (`skills/
 - `examples/acme/` is the one fake project, used by tests, evals and `docs/walkthrough.md`.
 - `PRIVACY.md` and `TERMS.md` are linked from `plugin.json`: update them when the skill starts reading or writing something new.
 - `.trail/learnings/` is committed (rules only); `.trail/cache/` is the generated repo graph.
+- `.trail/hook.cjs` and `.trail/README.md` are the trail tool's files, committed so a clone has them.
 - `CLAUDE.md` only imports `AGENTS.md` and `memory.md`.
 
 ## Memory (`memory.md`)

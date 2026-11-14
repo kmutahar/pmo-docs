@@ -84,7 +84,7 @@ class Plugin(unittest.TestCase):
         w, h = struct.unpack(">II", data[16:24])  # IHDR width and height
         self.assertEqual(w, h)
         self.assertTrue(512 <= w <= 2048, w)
-        self.assertLess(len(data), 2 * 1024 * 1024)
+        self.assertLess(len(data), 256 * 1024)
 
     def test_no_forbidden_folders(self):
         for name in ("hooks", "bin", "requirements.txt"):
