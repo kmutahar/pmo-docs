@@ -29,6 +29,10 @@ done
 out="${out:-$HOME/pmo-eval-runs/$(date -u +%Y%m%dT%H%M%SZ)}"
 mkdir -p "$out/cases" || exit 2
 out="$(cd "$out" && pwd)"
+: > "$out/.start"
+tmpdir="${TMPDIR:-/tmp}"
+tmpdir="${tmpdir%/}"
+[ -n "$tmpdir" ] || tmpdir="/"
 
 # The plugin root is skills/pmo-docs, but `claude plugin eval` needs evals/ inside the plugin and the cases copy
 # examples/acme, so the copy holds the skill folder plus evals/ and examples/acme.
@@ -40,7 +44,7 @@ cp -R "$repo/evals" "$plugin/evals" && rm -rf "$plugin/evals/results"
 cp -R "$repo/examples/acme" "$plugin/examples/acme"
 
 run_case() {
-  local c="$1" dir="$out/cases/$1" start rc n=0 k line
+  local c="$1" dir="$out/cases/$1" start rc n=0 k line abort_reason failed
   mkdir -p "$dir"; : > "$dir/.started"; start=$(date +%s)
   echo "start  $c"
   (cd "$plugin" && claude plugin eval . --case "$c" --scaffold --allow-tools Bash,Write,Edit --runs "$runs" --ablation none \
@@ -50,12 +54,63 @@ run_case() {
   # Move each kept sandbox into the case folder; the eval seals it read-only, so open it first.
   while IFS= read -r k; do
     [ -d "$k" ] || continue
-    n=$((n + 1)); chmod -R u+rwX "$k" && mv "$k" "$dir/sandbox-$n"
+    n=$((n + 1))
+    if ! (chmod -R u+rwX "$k" && mv "$k" "$dir/sandbox-$n"); then
+      echo "run-evals: could not move $k" >> "$dir/eval.log"
+    fi
   done < <(sed -n 's/^ *kept temp: //p' "$dir/eval.log")
-  line="$(grep -E "^(✓|✗) $c " "$dir/eval.log" | tail -1)"
-  [ -n "$line" ] || line="✗ $c  no result (exit $rc, see eval.log)"
+  abort_reason="$(python3 -c '
+import json, sys
+try:
+    with open(sys.argv[1], encoding="utf-8") as f:
+        data = json.load(f)
+except FileNotFoundError:
+    sys.exit(0)
+except Exception as e:
+    print(f"invalid aggregate-result.json: {e}")
+    sys.exit(0)
+def find_reason(obj):
+    if not isinstance(obj, dict):
+        return None
+    if obj.get("partialReason"):
+        return str(obj["partialReason"])
+    if obj.get("aborted"):
+        ab = obj["aborted"]
+        if isinstance(ab, str) and ab:
+            return ab
+        return str(obj.get("abortReason") or obj.get("reason") or "aborted")
+    if obj.get("error"):
+        err = obj["error"]
+        if isinstance(err, dict):
+            return str(err.get("message") or err.get("type") or err)
+        return str(err)
+    for key in ("runs", "results", "cases"):
+        items = obj.get(key)
+        if isinstance(items, list):
+            for item in items:
+                r = find_reason(item)
+                if r:
+                    return r
+    return None
+r = find_reason(data)
+if r:
+    print(" ".join(r.splitlines()).strip())
+' "$dir/aggregate-result.json" 2>/dev/null || true)"
+  if [ -n "$abort_reason" ]; then
+    line="✗ $c  aborted ($abort_reason)"
+  else
+    line="$(grep -E "^(✓|✗) $c " "$dir/eval.log" | tail -1 || true)"
+    if [ -n "$line" ] && [ "$rc" -ne 0 ] && [[ "$line" == ✓* ]]; then
+      if [ "$rc" -eq 2 ]; then
+        line="✗ $c  aborted (exit $rc)"
+      else
+        line="✗ $c  failed (exit $rc)"
+      fi
+    fi
+    [ -n "$line" ] || line="✗ $c  no result (exit $rc, see eval.log)"
+  fi
   failed="$(sed -n 's/^ *✗ \([^ ]*\) (weight.*/\1/p' "$dir/eval.log" | sort -u | paste -sd, -)"
-  echo "$line  $(( $(date +%s) - start ))s${failed:+  failed: $failed}" > "$dir/.done"
+  echo "$line  $(( $(date +%s) - start ))s${failed:+  failed: $failed}  exit $rc" > "$dir/.done"
   echo "done   $(cat "$dir/.done")   [$(ls "$out"/cases/*/.done 2>/dev/null | wc -l | tr -d " ")/$total]"
 }
 total=${#cases[@]}; t0=$(date +%s)
@@ -63,6 +118,24 @@ export -f run_case
 export out plugin runs total
 # shortcut: extra options are split on spaces, so an option value cannot hold a space; pass it through a file if ever needed.
 export EXTRA="${extra[*]:-}"
+
+checked_sandboxes=0
+check_leftover_sandboxes() {
+  [ "$checked_sandboxes" -eq 0 ] || return 0
+  checked_sandboxes=1
+  local d
+  while IFS= read -r -d '' d; do
+    chmod -R u+rwX "$d" 2>/dev/null || true
+    echo "run-evals: leftover sandbox in $tmpdir: $d"
+  done < <(find "$tmpdir" -maxdepth 1 -type d -name 'claude-eval-*' -newer "$out/.start" -print0 2>/dev/null)
+}
+cleanup() {
+  : > "$out/.stop"
+  check_leftover_sandboxes
+}
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 echo "run-evals: $total case(s), $runs run(s) each, $jobs at once, model sonnet, judge sonnet"
 echo "run folder: $out"
@@ -73,13 +146,15 @@ echo "run folder: $out"
     echo "...    $(ls "$out"/cases/*/.done 2>/dev/null | wc -l | tr -d " ")/$total done, $(( ($(date +%s) - t0) / 60 ))m$(( ($(date +%s) - t0) % 60 ))s, running:${running:- none}"
   done ) &
 beat=$!
-trap ': > "$out/.stop"' EXIT
 printf '%s\n' "${cases[@]}" | xargs -P "$jobs" -I{} bash -c 'extra=($EXTRA); run_case "$1"' _ {}
 : > "$out/.stop"; wait $beat
 
 for c in "${cases[@]}"; do cat "$out/cases/$c/.done" 2>/dev/null || echo "✗ $c  did not finish"; done > "$out/summary.log"
-pass=$(grep -c '^✓' "$out/summary.log")
+pass=$(grep -cE '^✓ .*  exit 0$' "$out/summary.log" || true)
+aborted=$(grep -cE '^✗ [^ ]+  aborted \(' "$out/summary.log" || true)
 cost=$(grep -o '\$[0-9.]*' "$out/summary.log" | tr -d '$' | awk '{s += $1} END {printf "%.2f", s}')
 echo "total: $pass/$total passed, \$${cost:-?} (as the eval CLI reports each case), $(( $(date +%s) - t0 ))s" >> "$out/summary.log"
+echo "aborted: $aborted" >> "$out/summary.log"
 echo; cat "$out/summary.log"; echo "summary: $out/summary.log"
+check_leftover_sandboxes
 [ "$pass" -eq "$total" ]
