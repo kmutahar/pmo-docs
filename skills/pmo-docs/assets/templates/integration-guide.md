@@ -18,7 +18,7 @@ checks:
 ---
 
 <!-- Reads: environments, permissions -->
-<!-- The consumers are the names in technical.consumers, in that order; if none configured, ask for the names and offer to write them to config only after a yes. -->
+<!-- The consumers are the names in technical.consumers, in that order; if none configured, ask for the names. -->
 
 # Integration guide - {{project}}
 

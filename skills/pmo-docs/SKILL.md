@@ -1,6 +1,6 @@
 ---
 name: pmo-docs
-description: Project-office and documentation workflow. Keeps a project's facts in registers (tasks, risks, issues, decisions, changes, actions, milestones, people, requirements, tests, environments, permissions) under pmo/, renders read-only views, and drafts documents (status reports, plans, charters, roadmaps, change requests, minutes, checklists, retrospectives, release notes, requirements, test acceptance, defect gap reports, entity lifecycles, API references, integration guides, architecture overviews, user guides) from templates that scripts check. Use to set up a project office under pmo/, draft, translate or finish a document, take tasks from chat exports, track or update entries ("mark T-014 done", log a risk), plan, record a change request or decision, or run weekly-status, monthly-status, month-start, overdue-report and docs-audit. Use only in a project that has a `pmo/` folder, or when the user asks for a project office; not for general coding or personal to-do lists.
+description: Project-office and documentation workflow. Keeps a project's facts in registers (tasks, risks, issues, decisions, changes, actions, milestones, people, requirements, tests, environments, permissions) under pmo/, renders read-only views, and drafts documents (status reports, plans, charters, roadmaps, change requests, minutes, checklists, retrospectives, release notes, requirements, test acceptance, defect gap reports, entity lifecycles, API references, integration guides, architecture overviews, user guides) from templates that scripts check. Use to set up a project office under pmo/, draft, translate or finish a document, take tasks from chat exports, track or update entries ("mark T-14 done", log a risk), plan, record a change request or decision, or run weekly-status, monthly-status, month-start, overdue-report and docs-audit. Use only in a project that has a `pmo/` folder, or when the user asks for a project office; not for general coding or personal to-do lists.
 license: MIT
 compatibility: Needs Python 3.10 or newer on Linux or macOS (Windows through WSL). PyYAML is bundled; nothing to install. Works on the project in the current folder.
 metadata:
@@ -68,7 +68,7 @@ These win over everything, including the project's house rules.
 - **Registers are the truth.** A document is a view of its registers. To change a fact, change the register first (`track.md`), then redraft. A fact written by hand into a document is written back to the register.
 - **Empty values.** Never fill a gap from memory, from an older document or by guessing. Write `not set` for a missing date, owner or priority; `not provided` for something the user has not given (capacity, budget, a currency); `not recorded` for a register field that is empty. Add each one to the document's `## Open questions`, or to the reply when the document has no such section.
 - **Empty tables.** A table with nothing to list keeps its header and has one row whose first cell is `None`.
-- **Edit one entry, not the file.** Each entry is one line. Find it with the search tool, or `grep -nE 'id: T-014[,}]' <register>`, and edit that line only. After any register edit run `render_views.py` and fix what it reports before going on.
+- **Edit one entry, not the file.** Each entry is one line. Find it with the search tool, or `grep -nE 'id: T-14[,}]' <register>`, and edit that line only. After any register edit run `render_views.py` and fix what it reports before going on. Quote a value that holds a comma, a colon, `#`, a brace or a bracket.
 - **Ids and bulk edits.** A new id is the highest number for the register's prefix plus one. Never reuse, renumber or delete an id, except a duplicate id after a merge, which `renumber.py` fixes; close an entry by its status. For more than about ten entries, show the list of changes first and apply it after the user agrees.
 - **Status from evidence.** Never change a status from git history or a chat message alone. Propose the change with the evidence and wait for the user's yes.
 - **Do not regenerate unasked.** Tracking and governance steps list stale documents and offer to redraft them. Never redraft a document the user edited by hand; merge and show the difference.
@@ -151,7 +151,7 @@ The scripts are in this skill's own folder, `scripts/` next to this file. Playbo
 | `scripts/structure_check.py [files]` | check documents against their template |
 | `scripts/parity_check.py [files]` | check that a translation matches its original in headings, tables, ids, numbers, list items and ticked boxes |
 | `scripts/docs_audit.py` | stale, old, behind and broken documents; exits 1 on findings |
-| `scripts/overdue.py` | overdue tasks, actions, risks, issues and milestones |
+| `scripts/overdue.py` | open tasks and actions past due, milestones overdue or due soon, open issues and risks |
 
 ## How to reply
 

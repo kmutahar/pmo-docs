@@ -23,13 +23,10 @@ Turn a draft the user has approved into a finished document. The Finish steps ar
 4. **Finish**
    Do the Finish steps in `SKILL.md`, in order, on the one document (the recorded hashes are replaced only after the answer in step 2).
 
-5. **Translations**
-   `where.py` prints `translations` and `translate` for the type. Follow `SKILL.md`, Finish, step 8: skip, or ask once. A translation is finished only after its original.
-
-6. **If a check fails**
+5. **If a check fails**
    Fix what is mechanical (a leftover comment, a placeholder, a heading's spelling). A failure that needs a decision or a fact goes back to the user. Do not set `status: finished` until `structure_check.py` reports no errors.
 
-7. **Reply**
+6. **Reply**
    Give the path, the result of the checks (warnings included), the registers whose hashes were recorded, the translations made or skipped, and that the user commits it when they choose.
 
 ## Do not

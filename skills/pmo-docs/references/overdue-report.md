@@ -21,7 +21,7 @@ Run as `overdue-report [--as-of YYYY-MM-DD]`. Produces a draft `overdue-report` 
    If most open tasks have no due date, say so first and recommend setting dates for the most urgent priority with the user (`references/track.md`). Never infer a date.
 
 4. **Suggest next steps**
-   At most five, each naming an id, a person and what to ask them ("ask <owner name> whether `T-004` is unblocked"). For a risk, the step is its mitigation.
+   At most five, each naming an id, a person and what to ask them ("ask <owner name> whether `T-4` is unblocked"). For a risk, the step is its mitigation.
 
 5. **Reply**
    Path, the counts (overdue, undated), the three most urgent items and the recommended action. The user says when it is ready to Finish.

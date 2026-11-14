@@ -62,4 +62,20 @@ Make it executable. A hook in `.git/hooks` is not shared with teammates; to shar
 - **Drafts:** resolve by hand, then `structure_check.py`.
 - **Finished documents:** never merged; a second finished version is a new draft.
 
-A GitHub Actions workflow can run the same check as the hook. It downloads the skill at the installed version (`metadata.version` in `SKILL.md`) from the release archive and sets `PMO_DOCS_SKILL` to its `skills/pmo-docs` folder. It runs `pmo/bin/pmo render_views --check` on pushes and pull requests that touch `pmo/**`, with `permissions: contents: read`. It never commits. The README has the full file.
+A GitHub Actions workflow can run the same check as the hook. It downloads the skill at the installed version (`metadata.version` in `SKILL.md`) from the release archive and sets `PMO_DOCS_SKILL` to its `skills/pmo-docs` folder. It runs `pmo/bin/pmo render_views --check` on pushes and pull requests that touch `pmo/**`, with `permissions: contents: read`. It never commits. The workflow (replace `<version>` with `metadata.version` from `SKILL.md`):
+
+```yaml
+name: pmo check
+on:
+  push: { paths: ["pmo/**"] }
+  pull_request: { paths: ["pmo/**"] }
+permissions: { contents: read }
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: curl -fsSL https://github.com/kmutahar/pmo-docs/archive/refs/tags/v<version>.tar.gz | tar -xz
+      - run: pmo/bin/pmo render_views --check
+        env: { PMO_DOCS_SKILL: pmo-docs-<version>/skills/pmo-docs }
+```

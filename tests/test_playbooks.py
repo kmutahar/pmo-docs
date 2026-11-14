@@ -1,4 +1,5 @@
 """Tests for playbooks and playbook overrides. Run from the repo root: python3 -m unittest discover tests"""
+import re
 import shutil
 import sys
 import tempfile
@@ -107,6 +108,36 @@ class PlaybookWording(unittest.TestCase):
         self.assertIn("pmo/.gitignore", editor_line)
         self.assertIn("except `pmo/.me`", (pc.SKILL / "references/git.md").read_text(encoding="utf-8"))
         self.assertIn(".gitignore", (pc.SKILL / "references/setup.md").read_text(encoding="utf-8"))
+
+    def test_no_padded_id_examples(self):
+        pat = re.compile(r"\b(?:T|R|I|A|D|DEC|ACT|CR|MTG|M|P|O|B|TM|REQ|TST|ENV|PERM)-0[0-9]+\b")
+        files = [pc.SKILL / "SKILL.md", *(pc.SKILL / "references").rglob("*.md")]
+        for f in files:
+            with self.subTest(f.relative_to(pc.SKILL)):
+                for lineno, line in enumerate(f.read_text(encoding="utf-8").splitlines(), 1):
+                    self.assertIsNone(pat.search(line), f"{f.name}:{lineno}: {line}")
+
+    def test_git_md_holds_the_workflow(self):
+        text = (pc.SKILL / "references/git.md").read_text(encoding="utf-8")
+        self.assertIn("name: pmo check", text)
+        self.assertIn("<version>", text)
+        self.assertNotIn("The README has the full file", text)
+
+    def test_finish_steps_and_publish_title(self):
+        publish = (pc.SKILL / "references/publish.md").read_text(encoding="utf-8")
+        self.assertNotIn("# Recipe: publish", publish)
+        finish = (pc.SKILL / "references/finish.md").read_text(encoding="utf-8")
+        self.assertFalse(any(line.startswith("5. **Translations**") for line in finish.splitlines()))
+
+    def test_conventions_front_matter_rows(self):
+        text = (pc.SKILL / "references/conventions.md").read_text(encoding="utf-8")
+        self.assertIn("| `editor` |", text)
+        self.assertIn("| `covers_from`, `covers_to` |", text)
+
+    def test_extend_md_explains_another_draft_language(self):
+        text = (pc.SKILL / "references/extend.md").read_text(encoding="utf-8")
+        self.assertIn("Draft in another language", text)
+        self.assertIn("generator: null", text)
 
 
 if __name__ == "__main__":

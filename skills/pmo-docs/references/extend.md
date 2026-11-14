@@ -38,7 +38,7 @@ When the default template advances its version, `docs_audit.py` reports drift. C
 ## Add a register
 
 1. Create `pmo/registers/<name>.yaml`: a header comment and one list named `<name>`, one entry per line (`references/conventions.md`).
-2. Add it under `registers` in the config: `file`, `view`, `prefix`, `fields`, and as needed `enums` (field to vocabulary name), `dates` and `closed`.
+2. Add it under `registers` in the config: `file`, `view`, `prefix`, `fields`, and as needed `enums` (field to vocabulary name, or a dotted config path such as `roles: domain.roles`), `dates` and `closed`.
 3. For a new status or level, add its list under `vocab`.
 4. Run `render_views.py`. It checks the new register and writes its view.
 
@@ -61,6 +61,12 @@ Put only what differs in `pmo/config.yaml`: maps merge, lists replace, `null` re
 2. `glossary` is a Markdown file inside the project; the proposed list sits next to it as `<name>.proposed.md`. `digits`, `connectors` and `separators` are optional (`references/conventions.md`).
 3. To change when or where a type is translated, set `doc_types.<type>.translate` (`in-period` or `after-close`) and `doc_types.<type>.translations` (a list that replaces `languages.translations`; `[]` means none).
 4. Run `render_views.py`; it checks the new keys. Then translate with `references/translate.md`.
+
+## Draft in another language
+
+1. Set `languages.draft` to its code and give the code a block in `languages` (as above).
+2. Set `generator: null` on the generator doc types (`status-report`, `project-plan`, `team-checklist`, `decision-log`): `generate.py` writes English only and stops otherwise.
+3. Copy each template you use from `${CLAUDE_SKILL_DIR}/assets/templates/` to `pmo/templates/` and translate its headings and table columns: `structure_check.py` matches them exactly.
 
 ## Do not
 

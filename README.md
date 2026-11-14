@@ -6,7 +6,7 @@ A project office kept in plain files and run by your AI coding agent. A project 
 
 ## How it works
 
-- **Registers are the only source of facts.** Each entry is one line with its own id (for example `T-014`). The agent never invents facts.
+- **Registers are the only source of facts.** Each entry is one line with its own id (for example `T-14`). The agent never invents facts.
 - **Views** are summaries rendered from the registers and never edited by hand.
 - **Documents** are drafted from a template, for one period (a week, a month) or once. A document is a draft until **Finish** records the template version, removes the template's comments, runs the checks and marks it finished.
 - **Checks** are rules a draft must pass, so correctness does not depend on the model remembering them.

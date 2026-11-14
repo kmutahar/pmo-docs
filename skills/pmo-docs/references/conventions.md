@@ -50,6 +50,8 @@ Every document starts with YAML front matter.
 | `checks` | the template's checks; present in drafts, removed by Finish |
 | `source_hashes` | written when a draft is made; replaced by Finish only after the user chose to refresh or to finish anyway |
 | `code_ref` | documents read from code: the commit hash the code was read at (quoted) |
+| `editor` | the roster slug of the person editing the draft (`SKILL.md`, Documents, Editor) |
+| `covers_from`, `covers_to` | release notes only: where the covered range starts and ends (`references/release-notes.md`) |
 | `based_on` | in a template override only: `<type>@<version>` |
 | `lang`, `dir`, `translation_of`, `source_hash` | a translation only: its language code, `ltr` or `rtl`, the original's path relative to `paths.documents`, and the 8-character hash of the original's body when it was translated (quoted). A translation has no `checks` and no `source_hashes`. |
 
@@ -57,17 +59,17 @@ A translation is a file next to its original, named `<name>.<lang>.md` (for exam
 
 ## Registers
 
-- A register file holds a single list named after it. Each entry is one line, a YAML flow mapping: `- { id: T-014, title: ..., owner: alice, status: in-progress, due: YYYY-MM-DD }`. A multi-line entry fails validation.
-- Ids are the register's prefix and a number (`T-001`, `R-001`, `I-001`, `A-001`, `D-001`, `DEC-001`, `ACT-001`, `CR-001`, `MTG-001`, `M-001`, `P-001`, `O-001`, `B-001`, `TM-001`, `REQ-001`, `TST-001`, `ENV-001`, `PERM-001`). The prefixes are in the config under `registers.<name>.prefix`. A new id is the highest existing number for the prefix plus one. The roster and capacity have no id.
+- A register file holds a single list named after it. Each entry is one line, a YAML flow mapping: `- { id: T-14, title: ..., owner: alice, status: in-progress, due: YYYY-MM-DD }`. A multi-line entry fails validation.
+- Ids are the register's prefix and a number (`T-1`, `R-1`, `I-1`, `A-1`, `D-1`, `DEC-1`, `ACT-1`, `CR-1`, `MTG-1`, `M-1`, `P-1`, `O-1`, `B-1`, `TM-1`, `REQ-1`, `TST-1`, `ENV-1`, `PERM-1`). The prefixes are in the config under `registers.<name>.prefix`. Ids are not zero-padded; a padded form counts as a different id. How a new id is chosen: `SKILL.md`, Working rules (Ids and bulk edits). The roster and capacity have no id.
 - Owners are roster slugs. The roster register has one entry per person: `slug`, `name`, `role`.
 - Statuses, severities, levels and similar values must come from the config's `vocab`. An empty vocab list accepts any value. `vocab.priority_order` lists the task priority levels, most urgent first.
 - Credential-like strings (a password, token, key or a link with a password) in any field are a validation error; the message names the entry and field, never the text.
 - Dates are `YYYY-MM-DD`. The fields that hold dates are listed per register in the config (`dates`); `months`: fields that hold a month `YYYY-MM`; `tasks` and `milestones` list `period`; the statuses that mean an entry is closed are `closed`; `pending` on `decisions` and `changes` lists the statuses that still need a decision (the Blockers table of the status report).
 - Every register has an optional `origin` field (`vocab.origin`): `stated` means the user or owner said it and `proposed` means the agent suggested it and it is not confirmed.
-- To edit an entry, find its line with `grep -nE 'id: T-014[,}]' <register file>` and change that line only.
+- To edit an entry: `SKILL.md`, Working rules (Edit one entry, not the file).
 - Leftover git conflict markers in a register are reported before YAML parsing (`pmo/registers/<file>:<line>: merge conflict markers; resolve them first (references/git.md, Several writers)`).
 - Duplicate ids are reported with each copy's file, line, label and a hint to run `renumber.py` (`duplicate id <ID>: <file>:<line> "<label>", ...; run renumber.py`).
-- After any edit run `render_views.py`. Views are deterministic (sorted, no timestamps), so after a merge conflict in a view the fix is to render again.
+- After any edit run `render_views.py` (`SKILL.md`, Working rules). Views are deterministic (sorted, no timestamps), so after a merge conflict in a view the fix is to render again.
 
 ## Config keys
 
@@ -81,7 +83,7 @@ A translation is a file next to its original, named `<name>.<lang>.md` (for exam
 - `registers.tasks.blocked`: status values that count as blocked (default `[blocked]`).
 - `registers.tasks.active`: status values marking tasks currently active (default `[in-progress]`).
 - `registers.changes.accepted`: status values marking change requests as accepted (default `[approved, implemented]`).
-- `languages`: `draft` (the language documents are written in, default `en`), `translations` (codes of the other languages, default none) and one block per code with `label`, `dir` (`ltr` or `rtl`) and optionally `glossary` (approved term list, a `.md` file inside the project; the proposed list is `<stem>.proposed.md` next to it), `digits` (ten characters for 0 to 9), `connectors` (words for `of`, `to`, `and` between two numbers) and `separators` (decimal or thousands marks); `en` has the comma by default, and a draft language other than English needs its own for parity to read its numbers. A missing block means English only. Quote a code YAML would read as something else (`no`, `on`).
+- `languages`: `draft` (the language documents are written in, default `en`), `translations` (codes of the other languages, default none) and one block per code with `label`, `dir` (`ltr` or `rtl`) and optionally `glossary` (approved term list, a `.md` file inside the project; the proposed list is `<stem>.proposed.md` next to it), `digits` (ten characters for 0 to 9), `connectors` (words for `of`, `to`, `and` between two numbers) and `separators` (decimal or thousands marks); `en` has the comma by default, and a draft language other than English needs its own for parity to read its numbers. Shapes: `digits: "<ten characters for 0 to 9>"`, `connectors: { of: <word>, to: <word>, and: <word> }`, `separators: "<the marks, as one string>"`. A missing block means English only. Quote a code YAML would read as something else (`no`, `on`).
 - `doc_types.<type>.translate`: `in-period` (default) or `after-close`, when translations are made. `doc_types.<type>.translations`: codes that replace `languages.translations` for the type; `[]` means none.
 - `registers.tasks` field `done_on` (a date, optional): when a task was finished or dropped.
 - `doc_types.<type>.generator`: `true` to use `generate.py` to pre-fill the document, `false` or `null` to draft via agent. Generators write English only: `generate.py` exits 2 when `languages.draft` is not `en`.

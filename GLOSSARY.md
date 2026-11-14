@@ -73,7 +73,7 @@ An optional entry of the `priorities` register: an output with acceptance criter
 _Avoid_: priority (for a goal)
 
 **Entry**:
-One item in a register, with its own id (for example T-014).
+One item in a register, with its own id (for example T-14).
 _Avoid_: row, record, item, line
 
 **Origin**:

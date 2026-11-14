@@ -17,7 +17,7 @@ checks:
 ---
 
 <!-- Reads: permissions -->
-<!-- {{entity}} is domain.lifecycle_entity; when null, ask which entity and offer to write it to config only after a yes. Roles are written as the code names them and compared with domain.roles; any role not in domain.roles goes to Open questions. -->
+<!-- {{entity}} is domain.lifecycle_entity; when null, ask which entity. Roles are written as the code names them and compared with domain.roles; any role not in domain.roles goes to Open questions. -->
 
 # Entity lifecycle - {{entity}}
 

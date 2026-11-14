@@ -18,11 +18,8 @@ Set up a project's `pmo/` folder and starter registers.
    - Newer: the skill is out of date; update the skill (`setup.py` exits 2).
    Stop after reporting the status.
 
-2. **Gather configuration**
-   Ask the user for initial project details (project name, project manager; priority order and week start use defaults unless mentioned), and display the file list to be created (step 3). Wait for a yes before running `setup.py` or writing any file (`SKILL.md`, Safety rule 3: ask before writing beyond the request). Unknown answers stay null and become open questions.
-
-3. **Confirm layout**
-   Display the tree of files to be created and wait for confirmation:
+2. **Gather configuration and confirm**
+   Ask the user for initial project details (project name, project manager; priority order and week start use defaults unless mentioned). Unknown answers stay null and become open questions. Display the tree of files to be created and wait for one yes before running `setup.py` or writing any file (`SKILL.md`, Safety rule 3: ask before writing beyond the request):
    ```
    pmo/
    ├── bin/
@@ -41,14 +38,14 @@ Set up a project's `pmo/` folder and starter registers.
        ├── risks.yaml         ├── roster.yaml        ├── tasks.yaml
        └── teams.yaml
    ```
-   Wait for the user to confirm with a yes before running `setup.py` or writing anything. Setup copies the project launcher `pmo/bin/pmo` (mode 755). On an existing project, `setup.py --launcher` writes only the launcher and replaces one that differs from the skill's: ask first when the project already has one (`SKILL.md`, Safety rule 3). Optional registers (`requirements`, `tests`, `environments`, `permissions`) are not created at setup; they are copied on their first entry (`references/track.md`).
+   Setup copies the project launcher `pmo/bin/pmo` (mode 755). On an existing project, `setup.py --launcher` writes only the launcher and replaces one that differs from the skill's: ask first when the project already has one (`SKILL.md`, Safety rule 3). Optional registers (`requirements`, `tests`, `environments`, `permissions`) are not created at setup; they are copied on their first entry (`references/track.md`).
 
-4. **Run setup script**
+3. **Run setup script**
    Execute `scripts/setup.py` with the chosen flags:
    `python3 ${CLAUDE_SKILL_DIR}/scripts/setup.py [--name TEXT] [--manager TEXT] [--priority-order LIST] [--week-start DAY] [--launcher]`
    Pass `--week-start` when it is not Monday. Pass `--launcher` on an existing project to write or replace only `pmo/bin/pmo`.
 
-5. **Verify and next steps**
+4. **Verify and next steps**
    Run `python3 ${CLAUDE_SKILL_DIR}/scripts/render_views.py --check` to confirm registers and views are valid.
    Advise next steps:
    - Add your first tasks in `pmo/registers/tasks.yaml`.
