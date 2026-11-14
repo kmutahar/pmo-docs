@@ -1,4 +1,5 @@
 """Tests for scripts/pmo_common.py. Run from the repo root: python3 -m unittest discover tests"""
+import argparse
 import contextlib
 import datetime
 import io
@@ -13,6 +14,7 @@ import unittest
 import unittest.mock
 from pathlib import Path
 
+sys.dont_write_bytecode = True  # importing the shipped scripts must leave no __pycache__
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "skills/pmo-docs/scripts"))
 import pmo_common as pc  # noqa: E402
 
@@ -20,6 +22,7 @@ import pmo_common as pc  # noqa: E402
 class Common(unittest.TestCase):
     def project(self, config=None, register=None):
         d = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, d)
         (d / "pmo/registers").mkdir(parents=True)
         if config is not None:
             (d / "pmo/config.yaml").write_text(config, encoding="utf-8")
@@ -49,9 +52,11 @@ class Common(unittest.TestCase):
         for cfg in ("registers: {tasks: {view: ../x.md}}\n", "registers: {tasks: {file: ../x.yaml}}\n",
                     "paths: {views: /abs}\n", "paths: {documents: ../../docs}\n"):
             d = self.project("schema_version: 1\n" + cfg, "tasks: []\n")
-            with self.assertRaises(SystemExit) as cm:
+            err = io.StringIO()
+            with contextlib.redirect_stderr(err), self.assertRaises(SystemExit) as cm:
                 pc.load_config(d)
             self.assertEqual(cm.exception.code, 2, cfg)
+            self.assertIn("must stay inside the project", err.getvalue(), cfg)
 
     def test_render_views_touches_nothing_outside_the_project(self):
         d = self.project("schema_version: 1\nregisters: {tasks: {view: ../victim.md}}\n", "tasks: []\n")
@@ -70,6 +75,7 @@ class Common(unittest.TestCase):
 
     def test_symlinks_out_of_the_project_exit_2(self):
         outside = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, outside)
         (outside / "tasks.md").write_text("keep", encoding="utf-8")
         d = self.project("schema_version: 1\n", "tasks: []\n")
         (d / "pmo/views").symlink_to(outside, target_is_directory=True)  # a whole folder
@@ -121,13 +127,18 @@ class Common(unittest.TestCase):
     def test_config_that_is_not_a_map_exits_2(self):
         for cfg in ("- a\n- b\n", "schema_version: 1\npaths: null\n", "schema_version: 1\nregisters: [x]\n",
                     "doc_types: null\n", "doc_types: [a]\n", "vocab: null\n", "vocab: text\n"):
-            with self.assertRaises(SystemExit) as cm:
+            err = io.StringIO()
+            with contextlib.redirect_stderr(err), self.assertRaises(SystemExit) as cm:
                 pc.load_config(self.project(cfg))
             self.assertEqual(cm.exception.code, 2, cfg)
+            self.assertIn("must be a", err.getvalue(), cfg)
 
     def test_newer_schema_refused(self):
-        with self.assertRaises(SystemExit):
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err), self.assertRaises(SystemExit) as cm:
             pc.load_config(self.project("schema_version: 99\n"))
+        self.assertEqual(cm.exception.code, 2)
+        self.assertIn("newer than this skill knows", err.getvalue())
 
     def test_load_config_repeated_key_and_bad_yaml_exit_2(self):
         for cfg in (
@@ -394,7 +405,7 @@ class Helpers(unittest.TestCase):
         # a closed milestone is not overdue
         closed = cfg["registers"]["milestones"]["closed"][0]
         self.assertEqual(pc.rag(cfg, d, [], [{"id": "M-1", "status": closed, "due": "2026-03-14"}])[0], "green")
-        # red: three late tasks, reason lists three ids at most
+        # red: three late tasks (and five capped at three ids)
         late = [t(f"T-{n}", due="2026-03-01") for n in range(1, 6)]
         self.assertEqual(pc.rag(cfg, d, late), ("red", "3 or more tasks are blocked or overdue (T-1, T-2, T-3)"))
         # amber: two late tasks, a task due today is not overdue
@@ -759,15 +770,19 @@ class ConfigGuards(unittest.TestCase):
         self.assertIn(str(self.cfg_file), stderr)
         self.assertIn("not valid YAML", stderr)
         self.assertNotIn("Traceback", stderr)
-        with self.assertRaises(SystemExit) as cm:
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err), self.assertRaises(SystemExit) as cm:
             pc.load_config(self.root)
         self.assertEqual(cm.exception.code, 2)
+        self.assertIn("not valid YAML", err.getvalue())
 
     def test_non_utf8_config_exits_2(self):
         self.cfg_file.write_bytes(b"project: caf\xe9\n")
-        with self.assertRaises(SystemExit) as cm:
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err), self.assertRaises(SystemExit) as cm:
             pc.load_config(self.root)
         self.assertEqual(cm.exception.code, 2)
+        self.assertIn("not valid UTF-8", err.getvalue())
         p = subprocess.run(
             [sys.executable, str(pc.SKILL / "scripts/render_views.py"), "--check", "--project", str(self.root)],
             capture_output=True, text=True, encoding="utf-8"
@@ -826,18 +841,22 @@ class ConfigGuards(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertIn("doc_types.decision-log.name", stderr)
         self.assertNotIn("Traceback", stderr)
-        with self.assertRaises(SystemExit) as cm:
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err), self.assertRaises(SystemExit) as cm:
             pc.load_config(self.root)
         self.assertEqual(cm.exception.code, 2)
+        self.assertIn("doc_types.decision-log.name", err.getvalue())
 
     def test_safe_write_refuses_a_symlink_out(self):
         outside_file = self.tmp / "outside.md"
         outside_file.write_text("keep", encoding="utf-8")
         link = self.root / "pmo/views/out.md"
         link.symlink_to(outside_file)
-        with self.assertRaises(SystemExit) as cm:
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err), self.assertRaises(SystemExit) as cm:
             pc.safe_write(self.root, "pmo/views/out.md", "x")
         self.assertEqual(cm.exception.code, 2)
+        self.assertIn("must stay inside the project", err.getvalue())
         self.assertEqual(outside_file.read_text(encoding="utf-8"), "keep")
         pc.safe_write(self.root, "pmo/views/new.md", "hello")
         self.assertEqual((self.root / "pmo/views/new.md").read_text(encoding="utf-8"), "hello")

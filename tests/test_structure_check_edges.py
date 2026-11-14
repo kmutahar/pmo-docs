@@ -11,6 +11,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import test_structure_check as base  # noqa: E402
+sys.dont_write_bytecode = True  # importing the shipped scripts must leave no __pycache__
 sys.path.insert(0, str(REPO / "skills/pmo-docs/scripts"))
 import pmo_common as pc  # noqa: E402
 import structure_check as sc  # noqa: E402

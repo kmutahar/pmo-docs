@@ -8,6 +8,7 @@ from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
+sys.dont_write_bytecode = True  # importing the shipped scripts must leave no __pycache__
 sys.path.insert(0, str(REPO / "skills/pmo-docs/scripts"))
 import pmo_common as pc  # noqa: E402
 import render_views as rv  # noqa: E402

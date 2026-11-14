@@ -13,6 +13,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import translation_fixture as tf  # noqa: E402
+sys.dont_write_bytecode = True  # importing the shipped scripts must leave no __pycache__
 sys.path.insert(0, str(ROOT / "skills/pmo-docs/scripts"))
 import docs_audit as da  # noqa: E402
 import pmo_common as pc  # noqa: E402

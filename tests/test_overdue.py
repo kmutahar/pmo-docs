@@ -1,6 +1,7 @@
 """Tests for scripts/overdue.py on the Acme fixture. Run from the repo root: python3 -m unittest discover tests"""
 import contextlib
 import io
+import re
 import shutil
 import sys
 import tempfile
@@ -8,8 +9,11 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.dont_write_bytecode = True  # importing the shipped scripts must leave no __pycache__
 sys.path.insert(0, str(ROOT / "skills/pmo-docs/scripts"))
 import overdue as od  # noqa: E402
+import pmo_common as pc  # noqa: E402
+import render_views as rv  # noqa: E402
 
 
 class Overdue(unittest.TestCase):
@@ -25,7 +29,51 @@ class Overdue(unittest.TestCase):
             code = od.main(["--project", str(self.p), *args])
         return code, out.getvalue()
 
+    def sync_views(self):
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            code = rv.main(["--project", str(self.p)])
+        self.assertEqual(code, 0, out.getvalue())
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            code = rv.main(["--project", str(self.p), "--check"])
+        self.assertEqual(code, 0, out.getvalue())
+
+    def merge_config(self, updates):
+        def deep_merge(dst, src):
+            for k, v in src.items():
+                if isinstance(v, dict) and isinstance(dst.get(k), dict):
+                    deep_merge(dst[k], v)
+                else:
+                    dst[k] = v
+
+        cfg_path = self.p / "pmo/config.yaml"
+        cfg = pc.yaml.safe_load(cfg_path.read_text(encoding="utf-8")) or {}
+        deep_merge(cfg, updates)
+        cfg_path.write_text(pc.yaml.safe_dump(cfg, sort_keys=False, allow_unicode=True), encoding="utf-8")
+
+    def replace_task(self, tid, entry):
+        path = self.p / "pmo/registers/tasks.yaml"
+        lines = path.read_text(encoding="utf-8").splitlines()
+        out = [f"  - {entry}" if (f"id: {tid}," in ln or f"id: {tid}}}" in ln) else ln for ln in lines]
+        path.write_text("\n".join(out) + "\n", encoding="utf-8")
+
+    def clear_task_refs(self):
+        """Blank every T-n reference in the other registers, editing the text so entries stay on one line."""
+        def drop_ids(m):
+            return "[" + ", ".join(x for x in m.group(1).split(", ") if not re.fullmatch(r"T-\d+", x)) + "]"
+
+        for p in sorted((self.p / "pmo/registers").glob("*.yaml")):
+            if p.name == "tasks.yaml":
+                continue
+            text = p.read_text(encoding="utf-8")
+            new = re.sub(r"(\w+): T-\d+\b", r"\1: null", text)
+            new = re.sub(r"\[([^\]]*)\]", drop_ids, new)
+            if new != text:
+                p.write_text(new, encoding="utf-8")
+
     def test_acme_as_of(self):
+        self.sync_views()
         code, out = self.run_tool("--as-of", "2026-03-15")
         self.assertEqual(code, 0)
         self.assertIn("| T-1 | Set up staging server | alice | 2026-03-10 | 5 | high |", out)
@@ -37,26 +85,27 @@ class Overdue(unittest.TestCase):
         self.assertNotIn("M-2", out)
 
     def test_null_cells_say_not_set(self):
-        (self.p / "pmo/registers/tasks.yaml").write_text(
-            "tasks:\n  - {id: T-1, title: a, priority: null, owner: null, status: blocked, due: 2026-03-10}\n", encoding="utf-8")
+        self.replace_task("T-1", "{id: T-1, title: a, priority: null, owner: null, status: blocked, due: 2026-03-10}")
+        self.sync_views()
         _, out = self.run_tool("--as-of", "2026-03-15")
         self.assertIn("| T-1 | a | not set | 2026-03-10 | 5 | not set |", out)
 
     def test_days_window(self):
+        self.sync_views()
         _, out = self.run_tool("--as-of", "2026-03-15", "--days", "60")
         self.assertIn("M-2", out)
 
     def test_closed_statuses_come_from_config(self):
-        (self.p / "pmo/config.yaml").write_text(
-            "schema_version: 1\nregisters: {tasks: {closed: [done, dropped, in-progress]}}\n", encoding="utf-8")
+        self.merge_config({"registers": {"tasks": {"closed": ["done", "dropped", "in-progress"]}}})
+        self.sync_views()
         _, out = self.run_tool("--as-of", "2026-03-15")
         self.assertNotIn("Set up staging", out)
 
     def test_priority_order_from_config(self):
-        (self.p / "pmo/registers/tasks.yaml").write_text(
-            "tasks:\n  - {id: T-1, title: a, priority: high, status: blocked, due: 2026-03-01}\n"
-            "  - {id: T-2, title: b, priority: low, status: blocked, due: 2026-03-01}\n", encoding="utf-8")
-        (self.p / "pmo/config.yaml").write_text("schema_version: 1\nvocab: {priority_order: [low, high]}\n", encoding="utf-8")
+        self.replace_task("T-1", "{id: T-1, title: a, priority: high, status: blocked, due: 2026-03-01}")
+        self.replace_task("T-2", "{id: T-2, title: b, priority: low, status: blocked, due: 2026-03-01}")
+        self.merge_config({"vocab": {"priority_order": ["low", "high", "medium"]}})
+        self.sync_views()
         _, out = self.run_tool("--as-of", "2026-03-15")
         self.assertLess(out.index("T-2"), out.index("T-1"))
 
@@ -79,7 +128,8 @@ class Overdue(unittest.TestCase):
         self.assertIn("| T-2 | b |", out)
 
     def test_register_removed_from_config(self):
-        (self.p / "pmo/config.yaml").write_text("schema_version: 1\nregisters: {actions: null}\n", encoding="utf-8")
+        self.merge_config({"registers": {"actions": None}})
+        self.sync_views()
         code, out = self.run_tool("--as-of", "2026-03-15")
         self.assertEqual(code, 0)
         self.assertNotIn("ACT-1", out)
@@ -93,6 +143,7 @@ class Overdue(unittest.TestCase):
         self.assertIn("not readable", err.getvalue())
 
     def test_open_issues_most_severe_first_and_open_risks(self):
+        self.sync_views()
         _, out = self.run_tool("--as-of", "2026-03-15")
         a, b = out.index("## Open issues by severity"), out.index("## Open risks")
         issues, risks = out[a:b], out[b:]
@@ -103,9 +154,14 @@ class Overdue(unittest.TestCase):
         self.assertNotIn("R-2", risks)  # closed
 
     def test_milestone_window_is_inclusive_and_sorted(self):
-        (self.p / "pmo/registers/milestones.yaml").write_text(
-            "milestones:\n  - {id: M-9, title: b, status: not-started, due: 2026-03-29}\n"
-            "  - {id: M-8, title: a, status: not-started, due: 2026-03-20}\n", encoding="utf-8")
+        ms = self.p / "pmo/registers/milestones.yaml"
+        ms.write_text(
+            ms.read_text(encoding="utf-8").rstrip("\n") + "\n"
+            "  - {id: M-9, title: b, status: not-started, due: 2026-03-29}\n"
+            "  - {id: M-8, title: a, status: not-started, due: 2026-03-20}\n",
+            encoding="utf-8",
+        )
+        self.sync_views()
         _, out = self.run_tool("--as-of", "2026-03-15")
         self.assertLess(out.index("M-8"), out.index("M-9"))  # 14 days after 03-15 is 03-29
 
@@ -123,19 +179,24 @@ class Overdue(unittest.TestCase):
         self.assertEqual(e.exception.code, 2)
 
     def test_due_on_the_as_of_date_is_not_overdue_and_the_day_before_is_one_day_late(self):
-        self.tasks("{id: T-1, title: a, status: blocked, due: 2026-03-15}", "{id: T-2, title: b, status: blocked, due: 2026-03-14}")
+        self.replace_task("T-1", "{id: T-1, title: a, status: blocked, due: 2026-03-15}")
+        self.replace_task("T-2", "{id: T-2, title: b, status: blocked, due: 2026-03-14}")
+        self.sync_views()
         _, out = self.run_tool("--as-of", "2026-03-15")
         self.assertNotIn("| T-1 |", out)
         self.assertIn("| T-2 | b | not set | 2026-03-14 | 1 | not set |", out)
 
     def test_as_of_before_every_due_date_lists_no_overdue_work(self):
+        self.sync_views()
         _, out = self.run_tool("--as-of", "2020-01-01")
         self.assertIn("Overdue tasks: 0, open actions past due: 0", out)
 
     def test_days_late_across_a_leap_day(self):
-        self.tasks("{id: T-1, title: a, status: blocked, due: 2024-02-28}")
+        self.replace_task("T-1", "{id: T-1, title: a, status: blocked, due: 2024-02-28}")
+        self.sync_views()
         self.assertIn("| 2 |", self.run_tool("--as-of", "2024-03-01")[1])  # 28th, 29th
-        self.tasks("{id: T-1, title: a, status: blocked, due: 2023-02-28}")
+        self.replace_task("T-1", "{id: T-1, title: a, status: blocked, due: 2023-02-28}")
+        self.sync_views()
         self.assertIn("| 1 |", self.run_tool("--as-of", "2023-03-01")[1])
         self.assertIn("as of 2024-02-29", self.run_tool("--as-of", "2024-02-29")[1])
 
@@ -144,6 +205,7 @@ class Overdue(unittest.TestCase):
             "milestones:\n  - {id: M-1, title: a, status: not-started, due: 2026-03-14}\n"
             "  - {id: M-2, title: b, status: not-started, due: 2026-03-15}\n"
             "  - {id: M-3, title: c, status: not-started, due: 2026-03-16}\n", encoding="utf-8")
+        self.sync_views()
         _, out = self.run_tool("--as-of", "2026-03-15", "--days", "0")
         self.assertIn("milestones due within 0 days or overdue: 2", out)
         self.assertNotIn("M-3", out)
@@ -162,7 +224,8 @@ class Overdue(unittest.TestCase):
         self.assertIn("--days cannot be negative", err.getvalue())
 
     def test_unicode_pipe_and_list_cells(self):
-        self.tasks("{id: T-1, title: \"عنوان | x\", status: blocked, due: 2026-03-01, owner: [alice, bob]}")
+        self.replace_task("T-1", "{id: T-1, title: \"عنوان | x\", status: blocked, due: 2026-03-01, owner: [alice, bob]}")
+        self.sync_views()
         _, out = self.run_tool("--as-of", "2026-03-15")
         self.assertIn("| T-1 | عنوان \\| x | alice, bob | 2026-03-01 | 14 | not set |", out)
 
@@ -191,6 +254,7 @@ class Overdue(unittest.TestCase):
         self.assertIn("Overdue tasks: 0", out)
 
     def test_no_bad_due_dates_section_when_all_dates_parse(self):
+        self.sync_views()
         self.assertNotIn("Bad due dates", self.run_tool("--as-of", "2026-03-15")[1])
 
     def test_entry_without_an_id_does_not_crash(self):
@@ -211,6 +275,8 @@ class Overdue(unittest.TestCase):
 
     def test_empty_register_file_counts_as_empty(self):
         (self.p / "pmo/registers/tasks.yaml").write_text("", encoding="utf-8")
+        self.clear_task_refs()
+        self.sync_views()
         code, out = self.run_tool("--as-of", "2026-03-15")
         self.assertEqual(code, 0)
         self.assertIn("Overdue tasks: 0", out)
@@ -248,6 +314,7 @@ class Overdue(unittest.TestCase):
             "  - {id: T-9, title: Task nine, priority: high, owner: alice, status: in-progress, due: 2026-03-01}\n",
             encoding="utf-8",
         )
+        self.sync_views()
         code, out = self.run_tool("--as-of", "2026-03-15")
         self.assertEqual(code, 0)
         self.assertLess(out.index("| R-9 |"), out.index("| R-10 |"))

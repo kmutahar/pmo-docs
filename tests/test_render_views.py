@@ -8,6 +8,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 TOOL = REPO / "skills/pmo-docs/scripts/render_views.py"
+sys.dont_write_bytecode = True  # importing the shipped scripts must leave no __pycache__
 sys.path.insert(0, str(REPO / "skills/pmo-docs/scripts"))
 import pmo_common as pc  # noqa: E402
 import render_views  # noqa: E402
@@ -219,9 +220,12 @@ class RenderViews(unittest.TestCase):
         self.assertEqual(run(self.root, "--check")[0], 1)
 
     def test_check_fails_on_validation_error(self):
-        run(self.root)
+        self.assertEqual(run(self.root)[0], 0)
         self.append("tasks", "  - {id: T-9, title: x, status: nope}")
-        self.assertEqual(run(self.root, "--check")[0], 1)
+        code, out = run(self.root, "--check")
+        self.assertEqual(code, 1)
+        self.assertIn("status 'nope' not in", out)
+        self.assertNotIn("stale view", out)
 
     def test_only_the_top_key_may_be_unindented_or_non_entry(self):
         self.append("tasks", "other: 1")

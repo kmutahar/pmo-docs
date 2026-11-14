@@ -2,6 +2,7 @@
 import re
 import shutil
 import subprocess
+import os
 import sys
 import tempfile
 import unittest
@@ -9,8 +10,10 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 SCRIPTS = REPO / "skills/pmo-docs/scripts"
+sys.dont_write_bytecode = True  # importing the shipped scripts must leave no __pycache__
 sys.path.insert(0, str(SCRIPTS))
 import pmo_common as pc  # noqa: E402
+os.environ["PYTHONDONTWRITEBYTECODE"] = "1"  # child scripts must leave no __pycache__ either
 
 
 def tool(name, project, *args):
@@ -68,11 +71,10 @@ class TestGenerate(unittest.TestCase):
         self.assertEqual(code, 0)
         import structure_check
         cfg = pc.load_config(self.root)
-        errs, warns = structure_check.check(self.root, cfg, doc.read_text(encoding="utf-8"))
-        # The only errors allowed are leftover-placeholder and HTML-comment errors
-        allowed_pats = [r"unreplaced \{\{placeholder\}\}"]
-        disallowed = [e for e in errs if not any(re.search(p, e) for p in allowed_pats)]
-        self.assertEqual(disallowed, [], f"Disallowed errors: {disallowed}")
+        text = doc.read_text(encoding="utf-8")
+        errs, warns = structure_check.check(self.root, cfg, text)
+        self.assertEqual(errs, ["unreplaced {{placeholder}} left in text"])
+        self.assertEqual(set(re.findall(r"\{\{(.*?)\}\}", structure_check.strip_fences(text))), {"question"})
 
     def test_refuses_existing_document_exits_3(self):
         doc = self.root / "pmo/documents/Decision log.md"
@@ -305,24 +307,34 @@ class TestGenerate(unittest.TestCase):
         self.assertEqual(code, 3)
         self.assertIn("already exists", err)
 
-    def test_both_pass_structure_check_except_placeholders(self):
+    def _assert_generated_draft_placeholders(self, args, expected_placeholders):
         import structure_check
         cfg = pc.load_config(self.root)
-        allowed_pats = [r"unreplaced \{\{placeholder\}\}"]
-
-        # 1. Project plan
-        code, out, err = tool("generate.py", self.root, "project-plan", "--as-of", "2026-03-15", "--stdout")
+        code, out, err = tool("generate.py", self.root, *args, "--as-of", "2026-03-15", "--stdout")
         self.assertEqual(code, 0, err)
         errs, warns = structure_check.check(self.root, cfg, out)
-        disallowed = [e for e in errs if not any(re.search(p, e) for p in allowed_pats)]
-        self.assertEqual(disallowed, [], f"Project plan disallowed errors: {disallowed}")
+        self.assertEqual(errs, ["unreplaced {{placeholder}} left in text"], f"{args[0]} unexpected errors: {errs}")
+        found = set(re.findall(r"\{\{(.*?)\}\}", structure_check.strip_fences(out)))
+        self.assertEqual(found, expected_placeholders, f"{args[0]} placeholders mismatch")
 
-        # 2. Status report
-        code, out, err = tool("generate.py", self.root, "status-report", "2026-03", "--as-of", "2026-03-15", "--stdout")
-        self.assertEqual(code, 0, err)
-        errs, warns = structure_check.check(self.root, cfg, out)
-        disallowed = [e for e in errs if not any(re.search(p, e) for p in allowed_pats)]
-        self.assertEqual(disallowed, [], f"Status report disallowed errors: {disallowed}")
+    def test_both_pass_structure_check_except_placeholders(self):
+        self._assert_generated_draft_placeholders(("project-plan",), {"item", "question", "target"})
+        self._assert_generated_draft_placeholders(
+            ("status-report", "2026-03"),
+            {
+                "3 sentences at most: what moved, what did not, what is next",
+                "changes",
+                "comment",
+                "delta",
+                "id",
+                "new, changed or closed risk or issue",
+                "question",
+                "task",
+            },
+        )
+
+    def test_team_checklist_passes_structure_check_except_placeholders(self):
+        self._assert_generated_draft_placeholders(("team-checklist", "2026-03"), {"question"})
 
     def test_non_english_draft_language_exits_2(self):
         cfg_path = self.root / "pmo/config.yaml"

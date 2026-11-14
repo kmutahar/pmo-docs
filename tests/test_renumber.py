@@ -10,6 +10,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 TOOL = REPO / "skills/pmo-docs/scripts/renumber.py"
 RV = REPO / "skills/pmo-docs/scripts/render_views.py"
+sys.dont_write_bytecode = True  # importing the shipped scripts must leave no __pycache__
 sys.path.insert(0, str(REPO / "skills/pmo-docs/scripts"))
 import pmo_common as pc  # noqa: E402
 

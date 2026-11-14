@@ -4,6 +4,7 @@ Run from repo root: python3 -m unittest tests.test_technical_docs
 import re
 import shutil
 import subprocess
+import os
 import sys
 import tempfile
 import unittest
@@ -12,9 +13,11 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 TEMPLATES = REPO / "skills/pmo-docs/assets/templates"
 SCRIPTS = REPO / "skills/pmo-docs/scripts"
+sys.dont_write_bytecode = True  # importing the shipped scripts must leave no __pycache__
 sys.path.insert(0, str(SCRIPTS))
 import pmo_common as pc  # noqa: E402
 import structure_check as sc  # noqa: E402
+os.environ["PYTHONDONTWRITEBYTECODE"] = "1"  # child scripts must leave no __pycache__ either
 
 CFG = pc.load_config(".", must_exist=False)
 

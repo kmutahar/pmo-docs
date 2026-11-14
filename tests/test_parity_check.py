@@ -12,6 +12,7 @@ import translation_fixture as tf  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[1]
 TOOL = REPO / "skills/pmo-docs/scripts/parity_check.py"
+sys.dont_write_bytecode = True  # importing the shipped scripts must leave no __pycache__
 sys.path.insert(0, str(REPO / "skills/pmo-docs/scripts"))
 import parity_check as pc_tool  # noqa: E402
 import pmo_common as pc  # noqa: E402

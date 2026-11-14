@@ -1,12 +1,16 @@
 """Tests for the vendored and pruned PyYAML. Run from the repo root: python3 -m unittest discover tests"""
 import datetime
+import os
+import re
 import subprocess
 import sys
 import unittest
 from pathlib import Path
 
+sys.dont_write_bytecode = True  # importing the shipped scripts must leave no __pycache__
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "skills/pmo-docs/scripts"))
 import pmo_common as pc  # noqa: E402
+os.environ["PYTHONDONTWRITEBYTECODE"] = "1"  # child scripts must leave no __pycache__ either
 
 
 class VendoredYaml(unittest.TestCase):

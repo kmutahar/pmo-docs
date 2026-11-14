@@ -4,6 +4,7 @@ import datetime
 import io
 import re
 import shutil
+import os
 import sys
 import tempfile
 import unittest
@@ -11,9 +12,11 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 SCRIPTS = REPO / "skills/pmo-docs/scripts"
+sys.dont_write_bytecode = True  # importing the shipped scripts must leave no __pycache__
 sys.path.insert(0, str(SCRIPTS))
 import generate as gen  # noqa: E402
 import pmo_common as pc  # noqa: E402
+os.environ["PYTHONDONTWRITEBYTECODE"] = "1"  # child scripts must leave no __pycache__ either
 
 
 def run(project, *args):
