@@ -26,7 +26,7 @@ Reports that use history say "local history as of <date>": the remote may be ahe
 
 ## What belongs in git
 
-Everything under `pmo/` is tracked and never ignored: the config, registers, views, documents, templates and house rules. Views are committed so that others can read them without running anything. Registers keep one entry per line, so a changed entry is a one-line diff. After a merge conflict in a view, render it again with `render_views.py`.
+Everything under `pmo/` is tracked, except `pmo/.me` (the writer's own slug, ignored by `pmo/.gitignore`): the config, registers, views, documents, templates and house rules. Views are committed so that others can read them without running anything. Registers keep one entry per line, so a changed entry is a one-line diff. After a merge conflict in a view, render it again with `render_views.py`.
 
 ## When the user asks to commit
 

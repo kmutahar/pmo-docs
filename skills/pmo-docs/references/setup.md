@@ -28,6 +28,7 @@ Set up a project's `pmo/` folder and starter registers.
    ├── bin/
    │   └── pmo
    ├── config.yaml
+   ├── .gitignore         ignores .me
    ├── house-rules.md
    ├── documents/
    │   └── .gitkeep
@@ -40,12 +41,12 @@ Set up a project's `pmo/` folder and starter registers.
        ├── risks.yaml         ├── roster.yaml        ├── tasks.yaml
        └── teams.yaml
    ```
-   Wait for the user to confirm with a yes before running `setup.py` or writing anything. Setup copies the project launcher `pmo/bin/pmo` (mode 755). On an existing project, `setup.py --launcher` writes only the launcher. Optional registers (`requirements`, `tests`, `environments`, `permissions`) are not created at setup; they are copied on their first entry (`references/track.md`).
+   Wait for the user to confirm with a yes before running `setup.py` or writing anything. Setup copies the project launcher `pmo/bin/pmo` (mode 755). On an existing project, `setup.py --launcher` writes only the launcher and replaces one that differs from the skill's: ask first when the project already has one (`SKILL.md`, Safety rule 3). Optional registers (`requirements`, `tests`, `environments`, `permissions`) are not created at setup; they are copied on their first entry (`references/track.md`).
 
 4. **Run setup script**
    Execute `scripts/setup.py` with the chosen flags:
    `python3 ${CLAUDE_SKILL_DIR}/scripts/setup.py [--name TEXT] [--manager TEXT] [--priority-order LIST] [--week-start DAY] [--launcher]`
-   Pass `--week-start` when it is not Monday. Pass `--launcher` on an existing project to write only `pmo/bin/pmo`.
+   Pass `--week-start` when it is not Monday. Pass `--launcher` on an existing project to write or replace only `pmo/bin/pmo`.
 
 5. **Verify and next steps**
    Run `python3 ${CLAUDE_SKILL_DIR}/scripts/render_views.py --check` to confirm registers and views are valid.

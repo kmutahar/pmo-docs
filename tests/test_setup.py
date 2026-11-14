@@ -137,13 +137,17 @@ class Setup(unittest.TestCase):
         self.assertEqual(code, 0, err)
         self.assertIn("kept: pmo/bin/pmo", out)
 
-    def test_launcher_flag_existing_differs_exits_1(self):
+    def test_launcher_flag_replaces_a_differing_launcher(self):
         tool("setup.py", self.root, "--name", "Demo")
-        (self.root / "pmo/bin/pmo").write_text("custom content\n", encoding="utf-8")
+        dest = self.root / "pmo/bin/pmo"
+        dest.write_text("custom content\n", encoding="utf-8")
+        dest.chmod(0o644)
         code, out, err = tool("setup.py", self.root, "--launcher")
-        self.assertEqual(code, 1)
-        self.assertIn("differs", out + err)
-        self.assertEqual((self.root / "pmo/bin/pmo").read_text(encoding="utf-8"), "custom content\n")
+        self.assertEqual(code, 0, out + err)
+        self.assertIn("updated: pmo/bin/pmo", out)
+        starter = REPO / "skills/pmo-docs/assets/starter/bin/pmo"
+        self.assertEqual(dest.read_bytes(), starter.read_bytes())
+        self.assertEqual(dest.stat().st_mode & 0o777, 0o755)
 
     def test_fresh_setup_existing_differs_exits_1_and_writes_nothing(self):
         (self.root / "pmo/bin").mkdir(parents=True)
@@ -294,6 +298,35 @@ class Setup(unittest.TestCase):
         code, out, err = tool("setup.py", self.root, "--name", "Demo")
         self.assertEqual(code, 0, err)
         self.assertEqual(gi.read_text(encoding="utf-8"), ".me\n")
+
+    def test_unicode_name_is_written_as_is(self):
+        name = "".join(chr(c) for c in (0x645, 0x634, 0x631, 0x648, 0x639))
+        code, out, err = tool("setup.py", self.root, "--name", name)
+        self.assertEqual(code, 0, out + err)
+        text = (self.root / "pmo/config.yaml").read_text(encoding="utf-8")
+        self.assertIn(name, text)
+        self.assertNotIn(chr(92) + "u0645", text)
+
+    def test_failed_render_still_lists_what_was_written(self):
+        (self.root / "pmo/registers").mkdir(parents=True)
+        (self.root / "pmo/registers/tasks.yaml").write_text(
+            "tasks:\n  - {id: Q-9, title: A, status: nonsense}\n", encoding="utf-8"
+        )
+        code, out, _ = tool("setup.py", self.root)
+        self.assertEqual(code, 1)
+        self.assertIn("created: pmo/config.yaml", out)
+        self.assertIn("views not written", out)
+        code2, out2, err2 = tool("setup.py", self.root)
+        self.assertEqual(code2, 0, out2 + err2)
+        self.assertIn("already set up", out2)
+
+    def test_house_rules_point_to_skill_md(self):
+        code, out, err = tool("setup.py", self.root, "--name", "Demo")
+        self.assertEqual(code, 0, err)
+        text = (self.root / "pmo/house-rules.md").read_text(encoding="utf-8")
+        self.assertNotIn("take precedence", text)
+        self.assertIn("definition of done", text)
+        self.assertIn("House rules and lookup", text)
 
     def test_help(self):
         self.assertEqual(tool("setup.py", self.root, "--help")[0], 0)

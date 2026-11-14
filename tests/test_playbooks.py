@@ -100,5 +100,14 @@ class PlaybookFrontMatter(unittest.TestCase):
                 self.assertIn(stack, text)
 
 
+class PlaybookWording(unittest.TestCase):
+    def test_gitignore_is_documented(self):
+        skill = (pc.SKILL / "SKILL.md").read_text(encoding="utf-8")
+        editor_line = next(line for line in skill.splitlines() if line.startswith("- **Editor.**"))
+        self.assertIn("pmo/.gitignore", editor_line)
+        self.assertIn("except `pmo/.me`", (pc.SKILL / "references/git.md").read_text(encoding="utf-8"))
+        self.assertIn(".gitignore", (pc.SKILL / "references/setup.md").read_text(encoding="utf-8"))
+
+
 if __name__ == "__main__":
     unittest.main()

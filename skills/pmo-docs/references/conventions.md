@@ -111,7 +111,7 @@ Run from the project root, or pass `--project DIR`. Every script answers `--help
 
 | Command | What it does | Exit codes |
 |---|---|---|
-| `python3 ${CLAUDE_SKILL_DIR}/scripts/setup.py [--name TEXT] [--manager TEXT] [--priority-order LIST] [--week-start DAY]` | creates the config, house rules, empty registers and documents folder; never overwrites | 0 ok, 1 the new registers failed validation, 2 usage, a `schema_version` newer than the skill, or config paths that leave the project |
+| `python3 ${CLAUDE_SKILL_DIR}/scripts/setup.py [--name TEXT] [--manager TEXT] [--priority-order LIST] [--week-start DAY]` | creates the config, house rules, empty registers and documents folder; never overwrites | 0 ok, 1 the new registers failed validation, or `pmo/bin/pmo` exists and differs from the skill's, 2 usage, a `schema_version` newer than the skill, or config paths that leave the project |
 | `python3 ${CLAUDE_SKILL_DIR}/scripts/where.py <type> [period] [--week] [--as-of DATE] [--hashes] [--title TEXT] [--lang CODE]` | paths and settings of one doc type; `--hashes` adds the `source_hashes` line Finish records; `--lang` gives a translation's paths and `source_hash` | 0 ok, 2 usage, or a config the skill refuses |
 | `python3 ${CLAUDE_SKILL_DIR}/scripts/generate.py <type> [period] [--week] [--as-of DATE] [--stdout]` | pre-fills a document from registers for generator doc types; never overwrites | 0 ok, 1 validation errors, 2 usage, invalid doc type or a non-English draft language, or a config the skill refuses, 3 the document already exists |
 | `python3 ${CLAUDE_SKILL_DIR}/scripts/render_views.py [--check]` | validates every register and writes the views; with `--check` it writes nothing and also fails when a view on disk is stale | 0 valid and current, 1 validation errors or stale views, 2 usage, a `schema_version` newer than the skill, config paths that leave the project, or a views folder that cannot be written |
@@ -125,7 +125,7 @@ Run from the project root, or pass `--project DIR`. Every script answers `--help
 
 ## Launcher
 
-The project launcher `pmo/bin/pmo` is a POSIX `sh` script (`#!/bin/sh`, `set -eu`) copied by `setup.py` (and updated with `setup.py --launcher`). It dispatches to any skill script: `pmo/bin/pmo <script> [args]`. It sets the project root from its own location and passes `--project <root>` to the script.
+The project launcher `pmo/bin/pmo` is a POSIX `sh` script (`#!/bin/sh`, `set -eu`) copied by `setup.py` (`setup.py --launcher` replaces a launcher that differs from the skill's). It dispatches to any skill script: `pmo/bin/pmo <script> [args]`. It sets the project root from its own location and passes `--project <root>` to the script.
 
 Lookup order:
 1. `$PMO_DOCS_SKILL` environment variable if set. Must contain `SKILL.md` and `scripts/`; exits 2 if set but invalid.

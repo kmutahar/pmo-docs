@@ -38,8 +38,10 @@ def main(argv=None):
         pc.check_inside(args.project, "pmo/bin/pmo")
         if launcher_dest.exists():
             if launcher_dest.read_bytes() != launcher_src.read_bytes():
-                print("pmo/bin/pmo already exists and differs: delete it to replace", file=sys.stderr)
-                return 1
+                shutil.copyfile(launcher_src, launcher_dest)
+                launcher_dest.chmod(0o755)
+                print("updated: pmo/bin/pmo")
+                return 0
             print("kept: pmo/bin/pmo")
             return 0
         launcher_dest.parent.mkdir(parents=True, exist_ok=True)
@@ -99,7 +101,7 @@ def main(argv=None):
         pc.check_inside(args.project, rel)
 
     if launcher_dest.exists() and launcher_dest.read_bytes() != launcher_src.read_bytes():
-        print("pmo/bin/pmo already exists and differs: delete it to replace", file=sys.stderr)
+        print("pmo/bin/pmo already exists and differs: delete it, or run setup.py --launcher after setup to replace it", file=sys.stderr)
         return 1
 
     actions = []
@@ -117,7 +119,7 @@ def main(argv=None):
     if priority_order is not None:
         mine["vocab"] = {"priority_order": priority_order}
 
-    pc.safe_write(args.project, pc.CONFIG.as_posix(), pc.yaml.safe_dump(mine, sort_keys=False))
+    pc.safe_write(args.project, pc.CONFIG.as_posix(), pc.yaml.safe_dump(mine, sort_keys=False, allow_unicode=True))
     actions.append(f"created: {pc.CONFIG.as_posix()}")
 
     reg_dir.mkdir(parents=True, exist_ok=True)
@@ -141,8 +143,7 @@ def main(argv=None):
         content = (
             "# House rules\n\n"
             "This project's own rules go here.\n\n"
-            "Rules defined here take precedence over the skill's rules,\n"
-            "except for the safety rules in the skill's SKILL.md.\n"
+            "How these rules rank against the skill's rules, including the safety rules and the definition of done, is set in the skill's SKILL.md (House rules and lookup).\n"
         )
         pc.safe_write(args.project, rel_hr, content)
         actions.append(f"created: {rel_hr}")
@@ -188,7 +189,10 @@ def main(argv=None):
             out.write(code + "\n")
             code = 1
     if code != 0:
+        for act in actions:
+            print(act)
         sys.stdout.write(out.getvalue())
+        print("views not written: fix the errors above, then run render_views.py")
         return 1
 
     for act in actions:
