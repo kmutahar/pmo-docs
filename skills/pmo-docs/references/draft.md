@@ -32,7 +32,10 @@ Write one draft of one document from its template and the registers. Rules for f
    - A fact in no source: ask, or write `not set`, `not provided` or `not recorded` as `SKILL.md` says, and list it as an open question. If a register lacks something the template needs, offer to add it (`references/track.md`); never fill it from an older document.
 
 6. **Fill the template**
-   If the doc type has `generator: true`, run `python3 ${CLAUDE_SKILL_DIR}/scripts/generate.py <type> [period] [--week] [--as-of DATE]` and fill only what it left (prose placeholders, `{{comment}}`-style cells, the agent sections). Put its `note:` lines in Open questions. If the document already exists, `generate.py` exits 3 and writes nothing: run it with `--stdout`, show the user the differences from the existing file, and replace only the generated sections after a yes. Never delete the file to regenerate it (`SKILL.md` Safety rule 3). Otherwise fill every section as the Documents rules in `SKILL.md` say. Keep the comments in place; Finish removes them.
+   - The doc type has `generator: true`: run `python3 ${CLAUDE_SKILL_DIR}/scripts/generate.py <type> [period] [--week] [--as-of DATE]` and fill only what it left (prose placeholders, `{{comment}}`-style cells, the agent sections). Put its `note:` lines in Open questions. `generate.py` does not write `editor`: add the key yourself (`SKILL.md`, Documents, Editor).
+   - The document already exists (`generate.py` exits 3 and writes nothing): run it with `--stdout`, show the user the differences from the existing file, and replace only the generated sections after a yes. Never delete the file to regenerate it (`SKILL.md` Safety rule 3).
+   - The doc type has no generator: fill every section as the Documents rules in `SKILL.md` say.
+   Keep the comments in place; Finish removes them.
 
 
 7. **Write the file**

@@ -65,6 +65,7 @@ class SkillRules(unittest.TestCase):
         _, text = self._skill()
         self.assertIn("ask for the test id to link", text)
         self.assertIn("only when the user says there is no evidence", text)
+        self.assertIn("the user agrees to record that it was not tested", text)
 
     def test_track_has_no_second_done_rule(self):
         text = self._playbook("track.md")

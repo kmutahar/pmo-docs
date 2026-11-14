@@ -109,6 +109,32 @@ class PlaybookWording(unittest.TestCase):
         self.assertIn("except `pmo/.me`", (pc.SKILL / "references/git.md").read_text(encoding="utf-8"))
         self.assertIn(".gitignore", (pc.SKILL / "references/setup.md").read_text(encoding="utf-8"))
 
+    def test_draft_step_6_says_generator_writes_no_editor(self):
+        text = (pc.SKILL / "references/draft.md").read_text(encoding="utf-8")
+        self.assertIn("does not write `editor`", text)
+
+    def test_track_step_5_asks_before_apply(self):
+        text = (pc.SKILL / "references/track.md").read_text(encoding="utf-8")
+        self.assertIn("ask the user once whether the right copy keeps the id", text)
+        self.assertNotIn("With no references, run `--apply`", text)
+
+    def test_missing_script_rule(self):
+        skill = (pc.SKILL / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("do not do their work by hand", skill)
+        audit = (pc.SKILL / "references/docs-audit.md").read_text(encoding="utf-8")
+        self.assertNotIn("draft file names", audit)
+
+    def test_safety_rule_3_names_the_fixed_files(self):
+        skill = (pc.SKILL / "SKILL.md").read_text(encoding="utf-8")
+        rule3 = next(line for line in skill.splitlines() if line.startswith("3. **Ask before writing beyond the request.**"))
+        self.assertIn("pmo/.gitignore", rule3)
+        self.assertIn("pmo/bin/pmo", rule3)
+
+    def test_packed_sentences_are_split(self):
+        self.assertNotIn("or when commits change documents", (pc.SKILL / "SKILL.md").read_text(encoding="utf-8"))
+        self.assertNotIn("More than about ten", (pc.SKILL / "references/intake.md").read_text(encoding="utf-8"))
+        self.assertNotIn("log a decision there", (pc.SKILL / "references/track.md").read_text(encoding="utf-8"))
+
     def test_no_padded_id_examples(self):
         pat = re.compile(r"\b(?:T|R|I|A|D|DEC|ACT|CR|MTG|M|P|O|B|TM|REQ|TST|ENV|PERM)-0[0-9]+\b")
         files = [pc.SKILL / "SKILL.md", *(pc.SKILL / "references").rglob("*.md")]

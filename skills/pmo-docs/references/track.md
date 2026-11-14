@@ -17,13 +17,13 @@ Add, change or close entries in the registers. Rules on status, consent and prop
    For an existing entry search the register file for `id: T-14[,}]` (the search tool, or `grep -nE 'id: T-14[,}]' <register file>`). A register without ids is found by its keys (`grep -n 'slug: alice' ...`, or `person` and `period` for capacity). Read that one line.
 
 3. **Check for a scope change**
-   Moving a date, owner or priority of committed work, or adding or dropping a goal, is a scope change: go to `references/govern.md` (change request) first, unless the user says it is the agreed new plan. Then apply it and log a decision there.
+   Moving a date, owner or priority of committed work, or adding or dropping a goal, is a scope change: go to `references/govern.md` (change request) first, unless the user says it is the agreed new plan. Then apply it and log a `DEC-` entry (`references/govern.md`).
 
 4. **Edit one line**
    Edit that line only (new entries go at the end of the list). Before the first entry of `requirements`, `tests`, `environments` or `permissions`, copy its starter file from `${CLAUDE_SKILL_DIR}/assets/starter/optional-registers/` to `paths.registers/`. A new id is the highest number for the prefix plus one. Check that an owner is in the roster and that every value is in the vocabulary. Ask for a missing owner, date or priority; leave it `null` until answered.
 
 5. **Validate**
-   Run `python3 ${CLAUDE_SKILL_DIR}/scripts/render_views.py` and fix what it reports before going on. When validation reports a duplicate id, run `renumber.py`. With no references, run `--apply`. With references, match each reference to a copy by its title, owner and context, ask the user once for the whole batch in plain English, then run `--apply` with the flags. A line that mentions two duplicated ids needs one flag per id; the dry run prints them.
+   Run `python3 ${CLAUDE_SKILL_DIR}/scripts/render_views.py` and fix what it reports before going on. When validation reports a duplicate id, run `renumber.py`. Show the dry run's keeps and gets lines and ask the user once whether the right copy keeps the id: the choice is by file order, and people may have used the id where the script cannot see. With references, match each reference to a copy by its title, owner and context and put that in the same question. After the yes, run `--apply` (with the flags, if there are references).
 
 6. **List stale documents**
    Run `python3 ${CLAUDE_SKILL_DIR}/scripts/docs_audit.py`. Name the finished documents the audit reports as stale and the drafts it reports as behind. Offer to redraft or refresh them (`references/draft.md`). Redraft nothing unasked.

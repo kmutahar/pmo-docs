@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: renumber-no-references
+description: Duplicate T-5 in tasks with no references; the agent must show which copy keeps T-5 and which gets T-6 and ask for confirmation before running renumber.py --apply without editing registers.
+context:
+  scaffold_script: scaffold.sh
