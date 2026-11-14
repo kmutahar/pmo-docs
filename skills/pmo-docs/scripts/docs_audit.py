@@ -314,7 +314,7 @@ def audit(root, cfg, today):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     pc.add_project_arg(ap)
-    ap.add_argument("--as-of", type=datetime.date.fromisoformat, default=datetime.date.today(),
+    ap.add_argument("--as-of", type=pc.as_of, default=datetime.date.today(),
                     metavar="YYYY-MM-DD", help="date used for age checks (default: today)")
     args = ap.parse_args(argv)
     if not Path(args.project).is_dir():

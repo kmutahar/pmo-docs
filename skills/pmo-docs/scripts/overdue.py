@@ -84,7 +84,7 @@ def report(root, cfg, as_of, days):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     pc.add_project_arg(ap)
-    ap.add_argument("--as-of", type=datetime.date.fromisoformat, default=datetime.date.today(),
+    ap.add_argument("--as-of", type=pc.as_of, default=datetime.date.today(),
                     metavar="YYYY-MM-DD", help="date to compare against (default: today)")
     ap.add_argument("--days", type=int, default=14, help="milestone window in days (default: 14)")
     args = ap.parse_args(argv)

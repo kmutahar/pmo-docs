@@ -6,6 +6,7 @@ if sys.version_info < (3, 10):
 
 sys.dont_write_bytecode = True
 
+import argparse
 import copy
 import datetime
 import hashlib
@@ -391,6 +392,16 @@ def to_date(v):
     if not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", s):
         raise ValueError(f"not a YYYY-MM-DD date: {v!r}")
     return datetime.date.fromisoformat(s)
+
+
+def as_of(s):
+    """Strict YYYY-MM-DD argparse type for --as-of."""
+    if not isinstance(s, str) or not s:
+        raise argparse.ArgumentTypeError(f"not a YYYY-MM-DD date: {s!r}")
+    try:
+        return to_date(s)
+    except ValueError as e:
+        raise argparse.ArgumentTypeError(str(e)) from e
 
 
 def cell(v):

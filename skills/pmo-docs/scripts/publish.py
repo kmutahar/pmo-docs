@@ -34,7 +34,7 @@ def main(argv=None) -> int:
     ap.add_argument("--apply", action="store_true", help="perform the copy; without this flag, print a dry-run listing")
     ap.add_argument("--overwrite", action="append", default=[], metavar="REL", help="overwrite a conflicting document")
     ap.add_argument("--include", action="append", default=[], metavar="REL", help="publish a stale document")
-    ap.add_argument("--as-of", type=datetime.date.fromisoformat, default=datetime.date.today(),
+    ap.add_argument("--as-of", type=pc.as_of, default=datetime.date.today(),
                     metavar="YYYY-MM-DD", help="date for staleness checks (default: today)")
     args = ap.parse_args(argv)
 

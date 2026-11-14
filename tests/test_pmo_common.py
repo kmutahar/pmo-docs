@@ -559,6 +559,12 @@ class Helpers(unittest.TestCase):
         self.assertIsNone(pc.to_date(None))
         self.assertIsNone(pc.to_date(""))
 
+    def test_as_of_strict(self):
+        self.assertEqual(pc.as_of("2026-03-01"), datetime.date(2026, 3, 1))
+        for bad in ("", "20260301", "2026-W10-1", "2026-02-30", "soon", " 2026-03-01", "2026-03-01\n", "٢٠٢٦-٠٣-٠١"):
+            with self.subTest(bad=bad), self.assertRaises(argparse.ArgumentTypeError):
+                pc.as_of(bad)
+
     def test_cell_backslashes_and_carriage_return(self):
         self.assertEqual(pc.cell("a\\|b"), r"a\\\|b")
         self.assertEqual(pc.cell("a|b"), r"a\|b")
@@ -742,6 +748,25 @@ class EveryTool(unittest.TestCase):
 
         for f in SCRIPTS.glob("*.py"):
             self.assertEqual(bad_lines(f.read_text(encoding="utf-8")), [], f.name)
+
+    def test_as_of_rejects_compact_and_week_dates(self):
+        d = Path(tempfile.mkdtemp()) / "acme"
+        self.addCleanup(shutil.rmtree, d.parent)
+        shutil.copytree(Path(__file__).resolve().parents[1] / "examples/acme", d)
+        cases = (
+            ("overdue.py", ()),
+            ("docs_audit.py", ()),
+            ("generate.py", ("status-report", "--stdout")),
+            ("publish.py", ()),
+            ("where.py", ("status-report",)),
+        )
+        for name, extra in cases:
+            for bad in ("20260301", "2026-W10-1"):
+                with self.subTest(script=name, as_of=bad):
+                    code, out = self.run_tool(name, "--project", str(d), *extra, "--as-of", bad)
+                    self.assertEqual(code, 2, out)
+                    self.assertIn("--as-of", out)
+                    self.assertIn(bad, out)
 
 
 class ConfigGuards(unittest.TestCase):

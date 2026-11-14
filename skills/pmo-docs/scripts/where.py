@@ -26,7 +26,7 @@ def main(argv=None):
     ap.add_argument("type", help="document type (e.g. status-report)")
     ap.add_argument("period", nargs="?", default=None, help="period string (e.g. 2026-03)")
     ap.add_argument("--week", action="store_true", help="use ISO week as period (YYYY-Www)")
-    ap.add_argument("--as-of", type=datetime.date.fromisoformat, default=datetime.date.today(),
+    ap.add_argument("--as-of", type=pc.as_of, default=datetime.date.today(),
                     metavar="YYYY-MM-DD", help="date to evaluate period against (default: today)")
     ap.add_argument("--hashes", action="store_true",
                     help="also print source_hashes: the Finish value for the type's generated_from registers")
