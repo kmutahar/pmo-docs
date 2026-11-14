@@ -29,7 +29,7 @@ def main(argv=None):
     ap.add_argument("--week-start", choices=pc.WEEKDAYS, default="monday",
                     help="first day of the week (default monday)")
     ap.add_argument("--launcher", action="store_true",
-                    help="write only pmo/bin/pmo")
+                    help="write or replace only pmo/bin/pmo")
     args = ap.parse_args(argv)
 
     if not Path(args.project).is_dir():
