@@ -298,6 +298,17 @@ def type_translations(cfg, doc_type) -> list[str]:
     return languages(cfg)["translations"]
 
 
+def register_prefixes(cfg) -> list[str]:
+    """Non-empty register prefixes from cfg (or defaults), longest first then alphabetical."""
+    regs = cfg.get("registers") if isinstance(cfg, dict) else None
+    if not isinstance(regs, dict):
+        regs = {}
+    prefixes = [r["prefix"] for r in regs.values() if isinstance(r, dict) and isinstance(r.get("prefix"), str) and r["prefix"]]
+    if not prefixes:
+        prefixes = ["T", "P", "M", "R", "I", "A", "D", "DEC", "CR", "ACT", "MTG", "TM"]
+    return sorted(set(prefixes), key=lambda x: (-len(x), x))
+
+
 def translate_flag(cfg, doc_type) -> str:
     """doc_types.<type>.translate, default 'in-period'."""
     dt_info = _doc_type(cfg, doc_type)

@@ -297,6 +297,15 @@ class Where(unittest.TestCase):
         self.assertEqual(code_bad, 2)
         self.assertIn("title", err)
 
+    def test_non_utf8_template_override_exits_2(self):
+        tpl = self.root / "pmo/templates/decision-log.md"
+        tpl.parent.mkdir(parents=True, exist_ok=True)
+        tpl.write_bytes(b"---\ntype: decision-log\n---\n\xe9\n")
+        code, _, err = run(self.root, "decision-log")
+        self.assertEqual(code, 2)
+        self.assertIn("decision-log.md: not UTF-8 text", err)
+        self.assertNotIn("Traceback", err)
+
 
 class WhereTranslations(unittest.TestCase):
     def setUp(self):

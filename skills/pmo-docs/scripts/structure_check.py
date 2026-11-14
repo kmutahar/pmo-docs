@@ -49,14 +49,22 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import pmo_common as pc  # noqa: E402
 
 
+FENCE = re.compile(r"^ {0,3}(```|~~~).*?^ {0,3}\1[^\n]*$", re.S | re.M)
+
+
+def strip_fences(text):
+    return FENCE.sub("", text)
+
+
 def sections(body):
     """[(level, title, text until the next heading)] in order; code fences and HTML comments ignored."""
-    body = re.sub(r"<!--.*?-->", "", re.sub(r"```.*?```", "", body, flags=re.S), flags=re.S)
+    body = re.sub(r"<!--.*?-->", "", strip_fences(body), flags=re.S)
     out = []
     for line in body.splitlines():
         m = re.match(r"^(#{1,6})\s+(.+?)\s*$", line)
         if m:
-            out.append([len(m.group(1)), m.group(2), []])
+            title = re.sub(r"\s+#+\s*$", "", m.group(2))
+            out.append([len(m.group(1)), title, []])
         elif out:
             out[-1][2].append(line)
     return [(lv, t, "\n".join(txt)) for lv, t, txt in out]
@@ -119,11 +127,39 @@ def data_rows(sp):
     return [r for s in sp for _, rows in tables(s[2]) for r in rows if not is_none_row(r)]
 
 
+def id_matches(x, y):
+    return bool(x and y and (re.match(re.escape(x) + r"(?!\w)", y) or re.match(re.escape(y) + r"(?!\w)", x)))
+
+
 def run_checks(checks, dsec):
     """Errors from the template's declared checks, run on the document's sections."""
     errors = []
     for n, c in enumerate(checks or [], 1):
-        kind, tag = c.get("kind") if isinstance(c, dict) else None, f"template check {n}"
+        tag = f"template check {n}"
+        if isinstance(c, dict):
+            if "kind" in c and not isinstance(c["kind"], str):
+                errors.append(f"{tag}: kind must be text")
+                continue
+            bad_key = next((k for k in ("section", "rows_in", "headings_in", "listed_in", "sections_in") if k in c and not isinstance(c[k], str)), None)
+            if bad_key:
+                errors.append(f"{tag}: {bad_key} must be text")
+                continue
+            if "columns" in c:
+                cols = c["columns"]
+                if not isinstance(cols, list) or not all(isinstance(x, str) for x in cols):
+                    errors.append(f"{tag}: columns must be a list of text")
+                    continue
+            if "level" in c:
+                lv = c["level"]
+                if isinstance(lv, str) and re.fullmatch(r"[0-9]+", lv):
+                    c = dict(c)
+                    c["level"] = int(lv)
+                elif isinstance(lv, bool) or not isinstance(lv, int):
+                    errors.append(f"{tag}: level must be a whole number")
+                    continue
+            kind = c.get("kind")
+        else:
+            kind = None
         need = {"required_cells": ("section", "columns"), "equal_count": ("rows_in", "headings_in", "level"),
                 "listed_have_sections": ("listed_in", "sections_in", "level")}.get(kind)
         if not need or any(k not in c for k in need):
@@ -158,18 +194,23 @@ def run_checks(checks, dsec):
             heads = [norm(t) for lv, t, _ in spans[c["sections_in"]] if lv == c["level"]]
             for r in data_rows(spans[c["listed_in"]]):
                 x = norm(r[0]) if r and r[0] else ""
-                if x and not any(x.startswith(y) or y.startswith(x) for y in heads):
+                if x and not any(id_matches(x, y) for y in heads):
                     errors.append(f"`{c['sections_in']}` has no level-{c['level']} heading for `{r[0]}` (listed in `{c['listed_in']}`)")
     return errors
 
 
-def duplicate_ids(text):
+def duplicate_ids(text, cfg=None):
+    id_rx = re.compile(r"[A-Z]{1,4}-\d+[A-Za-z]?")
+    cfg_rx = None
+    if cfg:
+        prefixes = pc.register_prefixes(cfg)
+        cfg_rx = re.compile(r"(?:" + "|".join(re.escape(p) for p in prefixes) + r")-\d+[A-Za-z]?")
     dups = set()
-    for _, rows in tables(re.sub(r"```.*?```", "", text, flags=re.S)):
+    for _, rows in tables(strip_fences(text)):
         seen = set()
         for r in rows:
             cell = r[0].strip("`") if r else ""  # ids may be written as `DEC-1`
-            if re.fullmatch(r"[A-Z]{1,4}-\d+[A-Za-z]?", cell):
+            if id_rx.fullmatch(cell) or (cfg_rx and cfg_rx.fullmatch(cell)):
                 (dups if cell in seen else seen).add(cell)
     return sorted(dups)
 
@@ -182,27 +223,27 @@ def check_head(tfm, fm, errors, warns):
         warns.append(f"template_version {dv} differs from template v{tv}" if dv is not None else f"no template_version (template is v{tv})")
 
 
-def check_tail(text, body, errors, warns, draft):
+def check_tail(text, body, errors, warns, draft, cfg=None):
     """Placeholders, HTML comments (a warning in a draft) and duplicate ids left in a document."""
-    if re.search(r"\{\{.*?\}\}", re.sub(r"```.*?```", "", text, flags=re.S)):
+    if re.search(r"\{\{.*?\}\}", strip_fences(text)):
         errors.append("unreplaced {{placeholder}} left in text")
-    if "<!--" in body:
+    if "<!--" in strip_fences(body):
         if draft:
             warns.append("template comments are kept in a draft; Finish removes them")
         else:
             errors.append("HTML comment `<!--` left in document (remove template/author notes)")
-    if dups := duplicate_ids(body):
+    if dups := duplicate_ids(body, cfg):
         errors.append("duplicate IDs in one table: " + ", ".join(dups[:8]))
 
 
-def check_translation_light(tfm, fm, text, body):
+def check_translation_light(tfm, fm, text, body, cfg=None):
     """(errors, warnings) for a translation document (light check)."""
     errors, warns = [], []
     check_head(tfm or {}, fm, errors, warns)
     dsec = sections(body)
     if sum(1 for lv, _, _ in dsec if lv == 1) != 1:
         errors.append("document must have exactly one `#` title")
-    check_tail(text, body, errors, warns, fm.get("status") == "draft")
+    check_tail(text, body, errors, warns, fm.get("status") == "draft", cfg)
     return errors, warns
 
 
@@ -223,15 +264,18 @@ def check(root, cfg, text):
         tpl, _ = pc.find_asset(root, cfg, "templates", dt.get("template", f"{tid}.md"))
     except ValueError as e:
         return [str(e)], warns
+    tpl_name = dt.get("template", f"{tid}.md")
     if not tpl.exists():
-        return [f"template {dt.get('template', f'{tid}.md')} not found"], warns
+        return [f"template {tpl_name} not found"], warns
     try:
         tfm, tbody = pc.split_front_matter(pc.read(tpl), strict=True)
+    except UnicodeDecodeError:
+        return [f"template {tpl_name}: not UTF-8 text"], warns
     except pc.yaml.YAMLError:
-        return [f"template {dt.get('template', f'{tid}.md')}: template front matter invalid"], warns
+        return [f"template {tpl_name}: template front matter invalid"], warns
     tfm = tfm or {}
     if fm.get("translation_of") is not None:
-        return check_translation_light(tfm, fm, text, body)
+        return check_translation_light(tfm, fm, text, body, cfg)
     check_head(tfm, fm, errors, warns)
 
     tsec, dsec = sections(tbody), sections(body)
@@ -260,7 +304,7 @@ def check(root, cfg, text):
         warns.append("extra sections: " + "; ".join(extra[:6]) + (" ..." if len(extra) > 6 else ""))
     warns += [f"`{t}`: empty table (keep the header and add one row: None)" for lv, t, txt in dsec if lv == 2 for _, rows in tables(txt) if not rows]
 
-    check_tail(text, body, errors, warns, fm.get("status") == "draft")
+    check_tail(text, body, errors, warns, fm.get("status") == "draft", cfg)
     return errors + run_checks(tfm.get("checks"), dsec), warns
 
 

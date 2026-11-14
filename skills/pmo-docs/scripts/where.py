@@ -108,7 +108,11 @@ def main(argv=None):
 
     tpl_version = str(fm.get("template_version")) if fm.get("template_version") is not None else "none"
     based_on = str(fm.get("based_on")) if fm.get("based_on") is not None else "none"
-    drift = drift_state(args.project, cfg, tpl_path, tpl_source)
+    try:
+        drift = drift_state(args.project, cfg, tpl_path, tpl_source)
+    except UnicodeDecodeError:
+        print(f"template {tpl_path.name}: not UTF-8 text", file=sys.stderr)
+        return 2
     generated_from = ", ".join(info.get("generated_from") or [])
     stale_days = str(info["stale_days"]) if info.get("stale_days") is not None else "none"
     if "{period}" in pattern:

@@ -48,11 +48,7 @@ def normalise(text: str, info: dict) -> str:
 
 def id_regex(cfg) -> re.Pattern:
     """Ids from the register prefixes in the config: (?<![A-Za-z0-9])(?:T|P|...)-\\d+ ; the lookbehind, not \\b, so an id glued to a letter of another script still matches."""
-    regs = cfg.get("registers", {}) if isinstance(cfg, dict) else {}
-    prefixes = [r["prefix"] for r in regs.values() if isinstance(r, dict) and r.get("prefix")]
-    if not prefixes:
-        prefixes = ["T", "P", "M", "R", "I", "A", "D", "DEC", "CR", "ACT", "MTG", "TM"]
-    prefixes = sorted(set(prefixes), key=lambda x: (-len(x), x))
+    prefixes = pc.register_prefixes(cfg)
     pat = r"(?<![A-Za-z0-9])(?:" + "|".join(re.escape(p) for p in prefixes) + r")-\d+"
     return re.compile(pat)
 

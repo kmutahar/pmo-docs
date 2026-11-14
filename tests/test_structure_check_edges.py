@@ -84,6 +84,20 @@ class Helpers(unittest.TestCase):
         self.assertEqual(sc.duplicate_ids("| ID |\n|---|\n| T-1 |\n\n| ID |\n|---|\n| T-1 |\n"), [])  # per table
         self.assertEqual(sc.duplicate_ids("```\n| ID |\n|---|\n| T-1 |\n| T-1 |\n```\n"), [])
 
+    def test_fences_of_both_kinds_are_ignored(self):
+        errs, warns = [], []
+        body = "# A\n```html\n<!-- example -->\n```\n"
+        sc.check_tail(body, body, errs, warns, False)
+        self.assertEqual(errs, [])
+        self.assertNotIn("not a heading", [t for _, t, _ in sc.sections("# A\n~~~\n# not a heading\n~~~\n## B\n")])
+        self.assertEqual([t for _, t, _ in sc.sections("# A\n## Risks ##\n")], ["A", "Risks"])
+        self.assertEqual([t for _, t, _ in sc.sections("# A\n## C#\n")], ["A", "C#"])
+
+    def test_duplicate_ids_with_a_project_prefix(self):
+        table = "| ID |\n|---|\n| STORY-1 |\n| STORY-1 |\n"
+        self.assertEqual(sc.duplicate_ids(table, {"registers": {"stories": {"prefix": "STORY"}}}), ["STORY-1"])
+        self.assertEqual(sc.duplicate_ids(table), [])
+
 
 class Checks(unittest.TestCase):
     def setUp(self):
@@ -185,6 +199,26 @@ class Checks(unittest.TestCase):
         self.assertEqual(self.check("---\ntype: roadmap\n---\n" + ok)[0], [])  # a heading may extend the listed name, and a blank cell is skipped
         self.assertIn("no level-3 heading for `Orders`", " ".join(self.check("---\ntype: roadmap\n---\n" + ok.replace("| |", "| Orders |"))[0]))
 
+    def test_listed_ids_match_at_a_word_edge(self):
+        checks = [{"kind": "listed_have_sections", "listed_in": "List", "sections_in": "Detail", "level": 3}]
+        body = "# T\n## List\n| ID |\n|---|\n| R-1 |\n## Detail\n### R-10 - other risk\n"
+        self.assertEqual(len(sc.run_checks(checks, sc.sections(body))), 1)
+        self.assertEqual(sc.run_checks(checks, sc.sections(body.replace("R-10 - other risk", "R-1 - title"))), [])
+
+    def test_wrongly_typed_checks_give_one_error_each(self):
+        dsec = sc.sections("# T\n## A\n| I |\n|---|\n| 1 |\n## B\n### one\n")
+        bad = (
+            {"kind": "required_cells", "section": 5, "columns": ["A"]},
+            {"kind": ["x"]},
+            {"kind": "required_cells", "section": "S", "columns": "Level"},
+            {"kind": "equal_count", "rows_in": "A", "headings_in": "B", "level": "x"},
+        )
+        for chk in bad:
+            errs = sc.run_checks([chk], dsec)
+            self.assertEqual(len(errs), 1, (chk, errs))
+            self.assertIn("template check", errs[0])
+        self.assertEqual(sc.run_checks([{"kind": "equal_count", "rows_in": "A", "headings_in": "B", "level": "3"}], dsec), [])
+
     def test_unreplaced_placeholders_comments_and_duplicate_ids(self):
         self.tpl("---\ntype: roadmap\n---\n# R\n")
         errs = self.check("---\ntype: roadmap\nperiod: x\n---\n# R\n{{a}}\n<!-- c -->\n| ID |\n|---|\n| T-1 |\n| T-1 |\n")[0]
@@ -222,6 +256,16 @@ class Cli(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("ERROR pmo/documents/Bin.md: not UTF-8 text", out)
         self.assertIn("1 file(s) with structure errors", out)
+
+    def test_non_utf8_template_names_the_template(self):
+        (self.root / "pmo/templates/decision-log.md").write_bytes(b"---\ntype: decision-log\n---\n\xe9\n")
+        text = (REPO / "examples/acme/pmo/documents/Decision log.md").read_text(encoding="utf-8")
+        doc = self.docs / "Decision log.md"
+        doc.write_text(text, encoding="utf-8")
+        code, out = main("--project", str(self.root), str(doc))
+        self.assertEqual(code, 1)
+        self.assertIn("template decision-log.md: not UTF-8 text", out)
+        self.assertNotIn("Traceback", out)
 
     def test_files_not_found_and_a_folder_are_errors(self):
         code, out = main("--project", str(self.root), str(self.docs / "no.md"), str(self.docs))
