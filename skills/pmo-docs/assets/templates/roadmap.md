@@ -35,10 +35,10 @@ checks:
 | {{item}} | {{notes}} | {{target_month}} |
 
 ## Milestones
-<!-- One row per milestone; write "not set" where the register has no value and add an open question. -->
+<!-- One row per milestone; write the empty-value word (`SKILL.md`, Empty values) where the register has no value and add an open question; write `none` in Depends on when the milestone depends on nothing. -->
 | ID | Milestone | Owner | Due | Exit criteria | Depends on | Status |
 |---|---|---|---|---|---|---|
 | {{id}} | {{title}} | {{lead}} | {{due}} | {{exit_criteria}} | {{depends_on}} | {{status}} |
 
 ## Open questions
-- 
+- {{question}}

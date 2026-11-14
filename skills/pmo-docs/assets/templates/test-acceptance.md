@@ -56,4 +56,4 @@ checks:
 
 ## Open questions
 <!-- Questions that block acceptance or need clarification; write "- None" when nothing is open. -->
-- 
+- {{question}}

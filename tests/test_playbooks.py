@@ -165,6 +165,11 @@ class PlaybookWording(unittest.TestCase):
         self.assertIn("Draft in another language", text)
         self.assertIn("generator: null", text)
 
+    def test_empty_value_table(self):
+        text = (pc.SKILL / "SKILL.md").read_text(encoding="utf-8")
+        for row in ("| `not set` |", "| `not recorded` |", "| `not provided` |"):
+            self.assertIn(row, text)
+
 
 if __name__ == "__main__":
     unittest.main()

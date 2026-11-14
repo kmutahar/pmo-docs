@@ -53,7 +53,7 @@ checks:
 - **Failure handling:** {{failure handling}}
 
 ## Environments
-<!-- Environments from the environments register; Base address from location without URLs; write "not recorded" for an empty field. -->
+<!-- Environments from the environments register; Base address is the environment's `location`, never a link that holds a password; write "not recorded" for an empty field. -->
 | Environment | Base address | Differences |
 |---|---|---|
 | {{environment}} | {{base_address}} | {{differences}} |
@@ -72,4 +72,4 @@ checks:
 
 ## Open questions
 <!-- Missing consumer requirements, unresolved environment differences, or unconfirmed access details; write "- None" when nothing is open. -->
-- 
+- {{question}}

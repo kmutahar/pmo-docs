@@ -63,4 +63,4 @@ last_updated: "{{date}}"
 <!-- the RAG rule used, anything inferred, unverified or missing -->
 
 ## Open questions
-- 
+- {{question}}

@@ -185,7 +185,7 @@ def run_checks(checks, dsec):
                     i = h.index(norm(col))
                     for r in rows:
                         if not is_none_row(r) and (i >= len(r) or not r[i]):
-                            errors.append(f"`{c['section']}` row `{r[0] or '?'}`: {col} empty (write \"not set\" + open question)")
+                            errors.append(f"`{c['section']}` row `{r[0] or '?'}`: {col} empty (write \"not set\" + open question, or \"none\" when there is nothing to list)")
         elif kind == "equal_count":
             rows = len(data_rows(spans[c["rows_in"]]))
             heads = sum(1 for lv, _, _ in spans[c["headings_in"]] if lv == c["level"])

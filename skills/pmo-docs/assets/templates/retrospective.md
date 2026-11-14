@@ -23,13 +23,13 @@ last_updated: "{{date}}"
 
 ## What went well
 <!-- Only what the team said; do not invent. -->
-- 
+- {{item}}
 
 ## What did not go well
-- 
+- {{item}}
 
 ## What we learned
-- 
+- {{item}}
 
 ## Improvements
 <!-- Each row is specific and becomes an action. -->
@@ -38,7 +38,7 @@ last_updated: "{{date}}"
 | {{improvement}} | {{lead}} | {{due}} | {{id}} |
 
 ## Carry forward to the next plan
-- 
+- {{item}}
 
 ## Open questions
-- 
+- {{question}}

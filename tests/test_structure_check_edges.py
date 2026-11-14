@@ -219,6 +219,15 @@ class Checks(unittest.TestCase):
             self.assertIn("template check", errs[0])
         self.assertEqual(sc.run_checks([{"kind": "equal_count", "rows_in": "A", "headings_in": "B", "level": "3"}], dsec), [])
 
+    def test_milestone_with_no_dependency_message(self):
+        checks = [{"kind": "required_cells", "section": "Milestones", "columns": ["Depends on"]}]
+        empty_doc = "# Roadmap\n\n## Milestones\n| ID | Depends on |\n|---|---|\n| M-1 |  |\n"
+        errs = sc.run_checks(checks, sc.sections(empty_doc))
+        self.assertEqual(len(errs), 1)
+        self.assertIn('or "none" when there is nothing to list', errs[0])
+        none_doc = empty_doc.replace("| M-1 |  |", "| M-1 | none |")
+        self.assertEqual(sc.run_checks(checks, sc.sections(none_doc)), [])
+
     def test_unreplaced_placeholders_comments_and_duplicate_ids(self):
         self.tpl("---\ntype: roadmap\n---\n# R\n")
         errs = self.check("---\ntype: roadmap\nperiod: x\n---\n# R\n{{a}}\n<!-- c -->\n| ID |\n|---|\n| T-1 |\n| T-1 |\n")[0]

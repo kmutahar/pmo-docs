@@ -90,6 +90,22 @@ class Templates(unittest.TestCase):
         finally:
             shutil.rmtree(root.parent)
 
+    def test_no_template_line_is_a_bare_bullet(self):
+        for f in sorted(TEMPLATES.glob("*.md")):
+            with self.subTest(f.name):
+                for lineno, line in enumerate(f.read_text(encoding="utf-8").splitlines(), 1):
+                    self.assertNotRegex(line, r"^-\s*$", f"{f.name}:{lineno}")
+
+    def test_open_questions_bullet_is_a_placeholder(self):
+        for f in sorted(TEMPLATES.glob("*.md")):
+            with self.subTest(f.name):
+                _, body = pc.split_front_matter(f.read_text(encoding="utf-8"), strict=True)
+                oq = [txt for _, title, txt in sc.sections(body) if title == "Open questions"]
+                if oq:
+                    bullets = [ln.strip() for ln in oq[0].splitlines() if ln.lstrip().startswith("- ")]
+                    self.assertTrue(bullets, f"{f.name}: no bullet under Open questions")
+                    self.assertEqual(bullets[0], "- {{question}}")
+
 
 if __name__ == "__main__":
     unittest.main()

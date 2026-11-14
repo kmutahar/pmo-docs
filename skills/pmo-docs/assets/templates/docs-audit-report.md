@@ -48,10 +48,10 @@ last_updated: "{{date}}"
 
 ## Fixes applied
 <!-- only when the run was allowed to fix; otherwise write "None (no fixes requested)" -->
-- 
+- {{item}}
 
 ## Not checked
-- 
+- {{item}}
 
 ## Open questions
-- 
+- {{question}}

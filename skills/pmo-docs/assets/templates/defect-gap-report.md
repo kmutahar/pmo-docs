@@ -52,4 +52,4 @@ checks:
 
 ## Open questions
 <!-- Gaps, unlinked failed tests, missing issue details, or unresolved defects needing decision; write "- None" when nothing is open. -->
-- 
+- {{question}}

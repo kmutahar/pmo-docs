@@ -49,11 +49,11 @@ checks:
 | {{status}} | {{meaning}} | {{when_it_happens}} |
 
 ## Environments
-<!-- Deployment environments from the environments register; Base address comes from the environment location without URLs; Base address is required; write "not recorded" for an empty field. -->
+<!-- Deployment environments from the environments register; Base address is the environment's `location`, never a link that holds a password, and is required; write "not recorded" for an empty field. -->
 | Environment | Base address | Notes |
 |---|---|---|
 | {{environment}} | {{base_address}} | {{notes}} |
 
 ## Open questions
 <!-- Undocumented endpoints, missing permission rules, or unconfirmed parameters; write "- None" when nothing is open. -->
-- 
+- {{question}}

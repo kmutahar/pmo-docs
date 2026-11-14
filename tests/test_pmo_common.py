@@ -110,10 +110,13 @@ class Common(unittest.TestCase):
                          "doc_types: {roadmap: null}\n")
         c = pc.load_config(d)
         self.assertEqual(c["project"]["name"], "Acme")
-        self.assertEqual(c["project"]["period_format"], "YYYY-MM")  # map merged
+        self.assertEqual(c["project"]["week_start"], "monday")  # map merged
         self.assertEqual(c["vocab"]["task_status"], ["a", "b"])  # list replaced
         self.assertNotIn("rag", c["vocab"])  # null removes
         self.assertNotIn("roadmap", c["doc_types"])
+
+    def test_period_format_is_not_a_default_key(self):
+        self.assertNotIn("period_format", pc.load_config(".", must_exist=False)["project"])
 
     def test_config_that_is_not_a_map_exits_2(self):
         for cfg in ("- a\n- b\n", "schema_version: 1\npaths: null\n", "schema_version: 1\nregisters: [x]\n",

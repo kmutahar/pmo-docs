@@ -55,4 +55,4 @@ checks:
 
 ## Open questions
 <!-- Disputed transitions, unlisted roles, or ambiguous lifecycle rules; write "- None" when nothing is open. -->
-- 
+- {{question}}

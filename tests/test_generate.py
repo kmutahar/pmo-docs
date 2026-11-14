@@ -115,7 +115,7 @@ class TestGenerate(unittest.TestCase):
         code, out, err = tool("generate.py", self.root, "decision-log", "--as-of", "2026-03-15")
         self.assertEqual(code, 0, err)
         self.assertTrue(doc.exists())
-        clean_text = re.sub(r"<!--.*?-->\n*", "", doc.read_text(encoding="utf-8"))
+        clean_text = re.sub(r"<!--.*?-->\n*", "", doc.read_text(encoding="utf-8")).replace("- {{question}}", "- None")
         doc.write_text(clean_text, encoding="utf-8")
         sc_code, sc_out, sc_err = tool("structure_check.py", self.root, str(doc))
         self.assertEqual(sc_code, 0, sc_out + sc_err)
@@ -218,7 +218,7 @@ class TestGenerate(unittest.TestCase):
     def test_untouched_blocks_keep_trailing_spaces(self):
         code, out, err = tool("generate.py", self.root, "status-report", "2026-03", "--as-of", "2026-03-15", "--stdout")
         self.assertEqual(code, 0, err)
-        self.assertTrue(out.endswith("## Open questions\n- \n"), repr(out[-40:]))
+        self.assertTrue(out.endswith("## Open questions\n- {{question}}\n"), repr(out[-40:]))
 
     def test_bad_register_config_exits_2(self):
         cfg_path = self.root / "pmo/config.yaml"

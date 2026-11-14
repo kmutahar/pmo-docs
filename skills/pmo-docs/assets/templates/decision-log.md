@@ -24,7 +24,7 @@ checks:
 | {{id}} | {{decision}} | {{status}} | {{date}} | {{decided_by}} |
 
 ## Decisions
-<!-- same order as the Summary; write "not recorded" for an empty field, never invent one -->
+<!-- same order as the Summary; write the empty-value word (`SKILL.md`, Empty values) for an empty field, never invent one -->
 ### {{id}} - {{title}}
 - **Status:** {{status}} - **Date:** {{date}} - **Decided by:** {{decided_by}}
 - **Context:** {{context}}
@@ -34,4 +34,4 @@ checks:
 - **Supersedes / related:** {{ids or "none"}}
 
 ## Open questions
-- 
+- {{question}}

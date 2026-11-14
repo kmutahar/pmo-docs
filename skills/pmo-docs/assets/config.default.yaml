@@ -5,7 +5,6 @@ schema_version: 1
 project:
   name: null          # asked by setup
   manager: null       # the project manager, asked by setup
-  period_format: YYYY-MM
   week_start: monday  # first day of a week: monday to sunday; a week is named by the ISO week of its fourth day
 
 # Folders, relative to the project root.

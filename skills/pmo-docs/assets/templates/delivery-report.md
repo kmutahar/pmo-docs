@@ -41,13 +41,13 @@ last_updated: "{{date}}"
 | {{item}} | {{reason}} | {{plan}} |
 
 ## Issues and risks that occurred
-- 
+- {{item}}
 
 ## Lessons learned
-- 
+- {{item}}
 
 ## Carried to next period
 - {{task}} `{{id}}`
 
 ## Open questions
-- 
+- {{question}}

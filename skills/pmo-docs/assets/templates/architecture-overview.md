@@ -61,4 +61,4 @@ checks:
 
 ## Open questions
 <!-- Architectural uncertainties, unconfirmed dependencies, or pending technical decisions; write "- None" when nothing is open. -->
-- 
+- {{question}}

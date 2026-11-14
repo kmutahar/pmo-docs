@@ -51,7 +51,7 @@ Overdue tasks: {{overdue_tasks}}, open actions past due: {{overdue_actions}}, mi
 
 ## Suggested next steps
 <!-- at most 5, each naming an id, a person and what to ask them; for a risk, the next step is its mitigation -->
-- 
+- {{item}}
 
 ## Open questions
-- 
+- {{question}}

@@ -42,9 +42,9 @@ checks:
 | {{id}} | {{requirement}} | {{kind}} | {{acceptance}} | {{status}} |
 
 ## Out of scope
-<!-- Features, qualities or constraints explicitly excluded from scope for this release or phase; write "none" if nothing is excluded. -->
+<!-- Features, qualities or constraints explicitly excluded from scope for this release or phase; write "None" if nothing is excluded. -->
 - {{item out of scope}}
 
 ## Open questions
 <!-- Questions that need decisions from stakeholders or the team; write "- None" when nothing is open. -->
-- 
+- {{question}}

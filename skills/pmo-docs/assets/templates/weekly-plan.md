@@ -35,7 +35,7 @@ last_updated: "{{date}}"
 
 ## Risks to the week
 <!-- for example a person with more tasks than days -->
-- 
+- {{item}}
 
 ## Open questions
-- 
+- {{question}}

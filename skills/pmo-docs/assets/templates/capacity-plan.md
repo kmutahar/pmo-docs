@@ -23,11 +23,11 @@ last_updated: "{{date}}"
 
 ## Overloaded or at risk
 <!-- First bullet states the rule used for the flag. -->
-- 
+- {{item}}
 
 ## Recommendations
 <!-- Name the task ids and people each move touches. -->
-- 
+- {{item}}
 
 ## Open questions
-- 
+- {{question}}
