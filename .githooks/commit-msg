@@ -1,11 +1,5 @@
 #!/usr/bin/env bash
-# Commit subjects become public changelog lines: block blocked names in the message.
-names="$(git rev-parse --show-toplevel)/.scrub-names"
-[ -s "$names" ] || exit 0
+# Commit subjects become public changelog lines: block private data and blocked names in the message.
+root="$(git rev-parse --show-toplevel)"
 # git's own "#" comment lines list file names; they never reach the commit, so skip them
-git stripspace --strip-comments < "$1" | grep -iEf "$names" >/dev/null
-case ${PIPESTATUS[1]} in
-  0) echo "commit-msg: the message contains a blocked name (see .scrub-names)" >&2; exit 1 ;;
-  1) ;;
-  *) echo "commit-msg: .scrub-names holds an invalid regex" >&2; exit 1 ;;
-esac
+git stripspace --strip-comments < "$1" | bash "$root/dev/scrub.sh" --message -
