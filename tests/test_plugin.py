@@ -88,9 +88,13 @@ class Plugin(unittest.TestCase):
 
 class Evals(unittest.TestCase):
     """The eval files are only run by hand (they cost tokens), so check their shape and fixture here."""
+
+    @staticmethod
+    def _grader_front_matter(path):
+        import yaml
+        return yaml.safe_load(path.read_text(encoding="utf-8").split("---", 2)[1])
+
     def test_every_case_has_a_prompt_and_unique_graders(self):
-        sys.path.insert(0, str(REPO / "skills/pmo-docs/scripts"))
-        import pmo_common  # noqa: F401  (puts the vendored PyYAML on the path)
         import yaml
         prompts = sorted((REPO / "evals").glob("*/prompt.md"))
         self.assertGreaterEqual(len(prompts), 2)
@@ -103,10 +107,44 @@ class Evals(unittest.TestCase):
             self.assertTrue((d / "prompt.md").read_text(encoding="utf-8").strip(), case)
             names = set()
             for g in sorted((d / "graders").glob("*.md")):
-                fm = yaml.safe_load(g.read_text(encoding="utf-8").split("---")[1])
+                fm = self._grader_front_matter(g)
                 self.assertIn(fm["type"], {"regex", "tool_order", "tool_used", "file_exists", "llm", "baseline"}, g.name)
                 names.add(g.stem)
             self.assertGreaterEqual(len(names), 3, case)
+
+    def test_no_grader_input_match_ends_with_dollar(self):
+        for g in sorted((REPO / "evals").glob("*/graders/*.md")):
+            fm = self._grader_front_matter(g)
+            pattern = fm.get("input_match")
+            if pattern is not None:
+                self.assertFalse(str(pattern).endswith("$"), f"{g.parent.parent.name}/{g.name}")
+
+    def test_every_case_has_skill_fired_grader(self):
+        for prompt in sorted((REPO / "evals").glob("*/prompt.md")):
+            d = prompt.parent
+            sf = d / "graders/skill-fired.md"
+            self.assertTrue(sf.is_file(), d.name)
+            fm = self._grader_front_matter(sf)
+            self.assertEqual(fm.get("type"), "tool_used", d.name)
+            self.assertEqual(fm.get("tool"), "Skill", d.name)
+
+    def test_edit_and_write_graders_have_twins(self):
+        for prompt in sorted((REPO / "evals").glob("*/prompt.md")):
+            d = prompt.parent
+            edits = set()
+            writes = set()
+            for g in sorted((d / "graders").glob("*.md")):
+                fm = self._grader_front_matter(g)
+                if fm.get("type") != "tool_used" or fm.get("max") != 0:
+                    continue  # only "must not write" checks need a twin; a required Edit has no Write twin
+                sig = (fm.get("input_match"), fm.get("min"), fm.get("max"))
+                if fm.get("tool") == "Edit":
+                    edits.add(sig)
+                elif fm.get("tool") == "Write":
+                    writes.add(sig)
+            if d.name == "ids-and-bulk-edits":
+                continue  # Write is banned on purpose; the new task must be added with Edit
+            self.assertEqual(edits, writes, d.name)
 
     def test_every_scaffold_builds_a_valid_acme(self):
         for scaffold in sorted((REPO / "evals").glob("*/scaffold.sh")):

@@ -1,6 +1,7 @@
 ---
 type: tool_used
-tool: Edit
+tool: Write
 input_match: 'tasks\.yaml'
-min: 1
+min: 0
+max: 0
 ---

@@ -1,7 +1,5 @@
 ---
-type: tool_used
-tool: Bash
-input_match: 'setup\.py'
-min: 0
-max: 0
+type: file_exists
+path: pmo/registers/tasks.yaml
+exists: false
 ---
