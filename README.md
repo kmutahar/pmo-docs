@@ -45,7 +45,7 @@ Needs Python 3.10 or newer on Linux or macOS (Windows: use WSL). Nothing to `pip
 /plugin install pmo-docs@pmo-docs
 ```
 
-The marketplace and the plugin are both named `pmo-docs` (see `.claude-plugin/` and `skills/pmo-docs/.claude-plugin/`). Installing copies only the skill folder. The short form `kmutahar/pmo-docs` clones over SSH. With no SSH key on GitHub, add the marketplace with the web address instead:
+Installing copies only the skill folder. The short form `kmutahar/pmo-docs` clones over SSH. With no SSH key on GitHub, add the marketplace with the web address instead:
 
 ```
 /plugin marketplace add https://github.com/kmutahar/pmo-docs.git
@@ -94,7 +94,7 @@ Other agents: run the commands above with the newer tag, or give the agent the p
 
 From nothing to a first rendered view. Run the agent in your project's root folder.
 
-1. Ask the agent: "set up a project office". It asks for the project name, project manager and priority order, shows the files it will create and waits for your yes. Then it runs the setup script.
+1. Ask the agent: "set up a project office". It asks its questions, shows the files it will create and waits for your yes.
 2. Add your people and first tasks. Ask the agent ("add a task: set up staging, high priority, due 2026-03-10"), or edit `pmo/registers/roster.yaml` and `pmo/registers/tasks.yaml` yourself, one entry per line:
    ```yaml
    tasks:
@@ -112,7 +112,7 @@ python3 "$SKILL/scripts/render_views.py"
 python3 "$SKILL/scripts/render_views.py" --check
 ```
 
-`setup.py` never overwrites a file. `render_views.py` prints `registers valid; wrote 21 views to pmo/views`, or the errors it found (and exits 1). `--check` writes nothing and exits 1 when the registers are invalid or a view is stale. Every script answers `--help`.
+`render_views.py` prints `registers valid; wrote 21 views to pmo/views`, or the errors it found (and exits 1). `--check` writes nothing and exits 1 when the registers are invalid or a view is stale. Every script answers `--help`.
 
 Next, ask for a document ("draft the project charter", "weekly-status"). A worked example with a small example project is in [`docs/walkthrough.md`](docs/walkthrough.md).
 
@@ -162,7 +162,7 @@ languages:
   xx: { label: XX, dir: rtl, glossary: pmo/data/glossary-xx.md }
 ```
 
-A translation is a file next to its original, `<name>.xx.md`, made with the `translate` playbook and never unasked. `doc_types.<type>.translate` (`in-period` or `after-close`) says when; `doc_types.<type>.translations` limits the languages for one type. `parity_check.py` compares a translation with its original (headings, tables, ids, numbers) and `docs_audit.py` reports a translation behind its original. The approved glossary is read only; new terms go to a proposed file next to it. Generators write English only.
+A translation is a file next to its original, `<name>.xx.md`, made with the `translate` playbook and never unasked. `doc_types.<type>.translate` (`in-period` or `after-close`) says when; `doc_types.<type>.translations` limits the languages for one type. `parity_check.py` compares a translation with its original (headings, tables, ids, numbers, list items, ticked boxes) and `docs_audit.py` reports a translation behind its original. The approved glossary is read only; new terms go to a proposed file next to it. Generators write English only.
 
 ## Intake from chat exports
 
@@ -193,27 +193,20 @@ Seven stacks ship with the skill: Next.js (`nextjs`), Express (`express`), ASP.N
 - **Add a stack**: To use a stack that is not shipped, write `pmo/playbooks/stacks/<stack>.md` with the standard six headings and `playbook_version: 1` (`skills/pmo-docs/references/extend.md`).
 - **Safety**: The agent reads your code and does not run it. Commands like listing the API live are run by you, or by the agent only after you say yes (`skills/pmo-docs/SKILL.md`, Documents).
 
-## What it reads and writes
+## Safety: what it reads and writes
 
 - It reads the project's `pmo/` folder (including `pmo/.me`, a local untracked file holding your roster slug), the skill's own files and, only as evidence, read-only git history. Drafting release notes with `--repo` also reads the git history of another local repository you name. Drafting a technical document reads your project's source code (routes, models, config and test files, names only) and runs read-only git on it.
-- It writes only inside the folders named in `pmo/config.yaml` (by default, under `pmo/`, including `pmo/.gitignore` and `pmo/.me`). Anything else is shown first and waits for your yes. The one exception you set up yourself: publishing (`/pmo-docs:publish`, or the dry run and your yes without the plugin) copies finished documents to `publish.path` and, in `repo` mode, commits there only after a second yes. It never pushes.
+- It writes only inside the folders named in `pmo/config.yaml` (by default, under `pmo/`, including `pmo/.gitignore` and `pmo/.me`). Anything else is shown first and waits for your yes. The one exception you set up yourself is publishing: nothing is posted or published unless you ask (you type `/pmo-docs:publish`, or without the plugin you say yes to the dry-run listing). It copies finished documents to `publish.path` and, in `repo` mode, commits there only after a second yes. It never pushes.
 - It never overwrites a file you edited by hand.
-- The rules are in [`skills/pmo-docs/SKILL.md`](skills/pmo-docs/SKILL.md) (Safety rules).
-
-## Safety
-
-- Its scripts send nothing over the network. Nothing is posted or published unless you ask: you type `/pmo-docs:publish`, or you say yes to the dry-run listing. Publishing never pushes.
+- Its scripts send nothing over the network.
 - It never runs `git add`, commit or push unless you ask. You commit when you choose; git is the backup. The commit model is in [`skills/pmo-docs/references/git.md`](skills/pmo-docs/references/git.md).
 - `pmo/` holds people's names (the roster and the owners of entries). If your project's repo is public, so are they.
 - In Claude Code, the scripts are allowed by the skill for the turn that loads it. Later turns may ask for your permission again; that is expected.
+- The rules are in [`skills/pmo-docs/SKILL.md`](skills/pmo-docs/SKILL.md) (Safety rules).
 
 ## Check the registers in your own git hook
 
 The skill installs no hook. If you want one, call `pmo/bin/pmo render_views --check` from your own pre-commit hook: it writes nothing, stages nothing, and exits 1 when the registers are invalid or a view is stale. The recipe and the reasons are in [`skills/pmo-docs/references/git.md`](skills/pmo-docs/references/git.md) (Checking registers in your own hook).
-
-## Two writers
-
-Two or more people can work on the same project without a server or locks. Registers keep one entry per line, so diffs stay small. After a merge conflict in a register, keep both sides' new entries and resolve duplicates with `renumber.py`; views are rendered again with `render_views.py`. Merge rules for registers, views, drafts and finished documents are in [`skills/pmo-docs/references/git.md`](skills/pmo-docs/references/git.md) (Several writers).
 
 A GitHub Actions workflow can run the same check on pushes and pull requests:
 
@@ -233,29 +226,27 @@ jobs:
         env: { PMO_DOCS_SKILL: pmo-docs-0.7.4/skills/pmo-docs }
 ```
 
+## Two writers
+
+Two or more people can work on the same project without a server or locks. Registers keep one entry per line, so diffs stay small. After a merge conflict in a register, keep both sides' new entries and resolve duplicates with `renumber.py`; views are rendered again with `render_views.py`. Merge rules for registers, views, drafts and finished documents are in [`skills/pmo-docs/references/git.md`](skills/pmo-docs/references/git.md) (Several writers). An editor on a draft is a warning, not a lock.
+
 ## Limits
 
-- No locks: an editor on a draft is a warning, not a lock. Two people or agent sessions can edit the same project; duplicate ids after a merge are resolved with `renumber.py`.
 - Generators write English only; other languages are drafted by the agent. Parity checks compare structure, ids and numbers, not wording.
 
 ## Roadmap
 
+Released: v0.1 to v0.7 (core skill, generators and publishing, languages and intake, stacks and technical documents, other agents and the launcher, hardening, teams). Details are in [`CHANGELOG.md`](CHANGELOG.md).
+
 | Version | Theme |
 |---|---|
-| v0.1 | Core skill: registers, views, templates and checks, setup, plugin manifest (released) |
-| v0.2 | Generators, calendar, publishing with `init` and `publish` commands, playbook overrides and drift warnings, a catalogue of doc types (released) |
-| v0.3 | Languages and translation, intake from chat exports (released) |
-| v0.4 | Stacks, technical and domain templates, and their registers (released) |
-| v0.5 | Other agents and unattended runs: a launcher, schedules, a shared hook (released) |
-| v0.6 | Hardening: more eval cases, a wider unit-test suite and the fixes it found (released) |
-| v0.7 | Teams: a command that fixes duplicate ids, an editor named on each draft, written merge rules (released) |
 | v0.8 | Format freeze: a test that a v0.1 project still works, a test that every config key is documented, the stability promise |
 | v0.9 | Verification: the evals, the security scan and the install check |
 | 1.0 | Final: a trial on a real project, then the release that declares the formats stable |
 
 ## Contributing
 
-Run the tests with `python3 -m unittest discover tests`. CI runs them and a privacy scrub on every push and pull request. The local commit gate (`.githooks/`) also needs a list of names that only the maintainer has, so contributors leave it off and rely on CI. The rules for working on this repo, and the maintainer's procedures (evals, security scan, releases), are in [`AGENTS.md`](AGENTS.md).
+Run the tests with `python3 -m unittest discover tests`. CI runs them and a privacy scrub on every push and pull request. The local commit gate (`.githooks/`) also needs a list of names that only the maintainer has, so contributors leave it off and rely on CI. The rules for working on this repo, and the maintainer's procedures (evals, security scan, releases), are in [`AGENTS.md`](AGENTS.md) and [`dev/maintaining.md`](dev/maintaining.md).
 
 ## Licence
 

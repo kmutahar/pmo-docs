@@ -172,7 +172,7 @@ claude -p "run weekly-status; draft only, do not finish, publish or commit" --al
 ```
 Delete the new draft between runs (`git -C "$TRY/project" clean -fd pmo/documents`). Write down the first `--allowedTools` string that works, exactly as typed, or `none` when neither works. Do not try a wider pattern such as `Bash(python3 *)`: it would let an unattended run start any Python command.
 
-3a.6. Record the result in `docs/plans/v0.7.3.md`, section 5, as one line: `W1 result (<UTC date>): A=<yes|no>, B=<intact|replaced>, C=<prompts|writes>, D=<works|denied; allowedTools string or none>.` Then read `$LOGA` once for private data before sharing, and keep the log. This plan file is deleted at the release, so also note the result line in your `memory.md`; the files W10 and W11 change keep the outcome after that.
+3a.6. Record the result in the current plan's Results section as one line: `W1 result (<UTC date>): A=<yes|no>, B=<intact|replaced>, C=<prompts|writes>, D=<works|denied; allowedTools string or none>.` Then read `$LOGA` once for private data before sharing, and keep the log. This plan file is deleted at the release, so also note the result line in your `memory.md`; the files W10 and W11 change keep the outcome after that.
 
 ## Part 4: the release zip (other agents)
 
