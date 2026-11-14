@@ -697,5 +697,14 @@ class Translations(unittest.TestCase):
         out = self.run_audit()[1]
         self.assertIn("is not a translation language in the config", out)
 
+    def test_type_differs_from_original(self):
+        tf.enable_languages(self.p, ("xx",))
+        _, orig_text = self.finish_decision_log()
+        trans = tf.make_translation(orig_text).replace("type: decision-log", "type: status-report", 1)
+        (self.docs / "Decision log.xx.md").write_text(trans, encoding="utf-8")
+        code, out = self.run_audit()
+        self.assertEqual(code, 1)
+        self.assertIn("`Decision log.xx.md` - type differs from the original", out)
+
 if __name__ == "__main__":
     unittest.main()

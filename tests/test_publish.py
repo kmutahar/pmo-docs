@@ -263,6 +263,21 @@ class Publish(unittest.TestCase):
         code, out, _ = run(self.root)
         self.assertEqual(code, 0)
 
+    def test_repo_mode_without_git_exits_2(self):
+        repo_dir = self.tmp / "ext_repo"
+        repo_dir.mkdir()
+        empty_bin = self.tmp / "empty_bin"
+        empty_bin.mkdir()
+        self.set_config(f"publish:\n  mode: repo\n  path: '{repo_dir}'\n")
+        p = subprocess.run(
+            [sys.executable, str(TOOL), "--project", str(self.root)],
+            capture_output=True, text=True, encoding="utf-8",
+            env={**os.environ, "PATH": str(empty_bin)},
+        )
+        self.assertEqual(p.returncode, 2)
+        self.assertIn("ERROR cannot run git:", p.stderr)
+        self.assertNotIn("Traceback", p.stderr)
+
     def test_repo_mode_never_commits(self):
         repo_dir = self.tmp / "target_repo"
         repo_dir.mkdir()
@@ -620,6 +635,25 @@ class Publish(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("uncopied: Decision log.md (invalid: fix the errors listed by structure_check.py)", out)
         self.assertFalse((self.root / "published/Decision log.md").exists())
+
+    def test_invalid_finished_document_with_more_than_three_errors_truncates_listing(self):
+        import re
+        self.set_config("publish:\n  mode: folder\n  path: published\n")
+        (self.docs / "Decision log.md").write_text(
+            "---\ntype: decision-log\nstatus: finished\n---\n\n# Decision log\n",
+            encoding="utf-8",
+        )
+        code, out, _ = run(self.root)
+        self.assertEqual(code, 1)
+        self.assertRegex(
+            out,
+            r"invalid: Decision log\.md\n"
+            r"  front matter key `title` missing\n"
+            r"  front matter key `project` missing\n"
+            r"  front matter key `manager` missing\n"
+            r"  \.\.\. and \d+ more\n",
+        )
+        self.assertNotIn("template_version", out)
 
     def test_valid_finished_document_still_publishes(self):
         self.set_config("publish:\n  mode: folder\n  path: published\n")

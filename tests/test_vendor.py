@@ -63,5 +63,12 @@ class VendoredYaml(unittest.TestCase):
         self.assertEqual(yaml.YAMLObject.yaml_loader, [])
         self.assertNotIn("!x", yaml.SafeLoader.yaml_constructors)
 
+    def test_version_file_matches_vendored_yaml(self):
+        version_file = Path(__file__).resolve().parents[1] / "skills/pmo-docs/scripts/_vendor/VERSION"
+        first_line = version_file.read_text(encoding="utf-8").splitlines()[0]
+        m = re.match(r"^PyYAML\s+(\S+)", first_line)
+        self.assertIsNotNone(m, first_line)
+        self.assertEqual(m.group(1), pc.yaml.__version__)
+
 if __name__ == "__main__":
     unittest.main()

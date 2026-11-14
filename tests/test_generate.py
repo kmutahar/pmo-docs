@@ -157,6 +157,17 @@ class TestGenerate(unittest.TestCase):
         self.assertIn("Summary", err)
         self.assertIn("generator: null", err)
 
+    def test_missing_slot_exits_2(self):
+        tpl_dir = self.root / "pmo/templates"
+        tpl_dir.mkdir(parents=True, exist_ok=True)
+        orig = (REPO / "skills/pmo-docs/assets/templates/team-checklist.md").read_text(encoding="utf-8")
+        modified = orig.replace("## {{team}} - {{lead}}", "## Teams")
+        (tpl_dir / "team-checklist.md").write_text(modified, encoding="utf-8")
+        code, _, err = tool("generate.py", self.root, "team-checklist", "2026-03", "--stdout")
+        self.assertEqual(code, 2)
+        self.assertIn("template missing section `{{team}} - {{lead}}`", err)
+        self.assertIn("generator: null", err)
+
     def test_generator_null_in_project_config_exits_2(self):
         cfg_file = self.root / "pmo/config.yaml"
         cfg_text = cfg_file.read_text(encoding="utf-8")

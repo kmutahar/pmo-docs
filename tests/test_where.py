@@ -358,7 +358,7 @@ class WhereTranslations(unittest.TestCase):
     def test_lang_not_configured_exits_2(self):
         code, _, err = run(self.root, "decision-log", "--lang", "xx")
         self.assertEqual(code, 2)
-        self.assertIn("translations", err)
+        self.assertIn("has no translations configured", err)
 
     def test_lang_not_allowed_for_type_exits_2(self):
         tf.enable_languages(self.root, ("xx",))
@@ -366,7 +366,13 @@ class WhereTranslations(unittest.TestCase):
         cfg_file.write_text(cfg_file.read_text(encoding="utf-8") + "\ndoc_types:\n  decision-log:\n    translations: []\n", encoding="utf-8")
         code, _, err = run(self.root, "decision-log", "--lang", "xx")
         self.assertEqual(code, 2)
-        self.assertIn("translations", err)
+        self.assertIn("has no translations configured", err)
+
+    def test_lang_not_in_allowed_type_translations_exits_2(self):
+        tf.enable_languages(self.root, ("xx",))
+        code, _, err = run(self.root, "decision-log", "--lang", "yy")
+        self.assertEqual(code, 2)
+        self.assertIn("does not translate into 'yy'; allowed codes: xx", err)
 
     def test_translate_flag_after_close(self):
         tf.enable_languages(self.root, ("xx",))

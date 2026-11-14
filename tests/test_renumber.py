@@ -459,6 +459,88 @@ class TestRenumber(unittest.TestCase):
         self.assertEqual(code_app, 0, out_app + err_app)
         self.assertEqual(outside_file.read_text(encoding="utf-8"), outside_content)
 
+    def test_23_apply_flag_errors(self):
+        self.append_entry("tasks", self.task("T-901", "Alpha one"))
+        self.append_entry("tasks", self.task("T-901", "Alpha two"))
+        self.append_entry("tasks", self.task("T-902", "Beta one"))
+        self.append_entry("tasks", self.task("T-902", "Beta two"))
+        self.append_entry(
+            "changes",
+            "{id: CR-3, title: One ref, requested_by: bob, date: 2026-03-08, description: d, impact: i, status: proposed, decided_by: null, decided_on: null, related_tasks: [T-901]}",
+        )
+        self.append_entry(
+            "changes",
+            "{id: CR-4, title: Multi ref, requested_by: bob, date: 2026-03-08, description: d, impact: i, status: proposed, decided_by: null, decided_on: null, related_tasks: [T-901, T-902]}",
+        )
+        ref1 = "pmo/registers/changes.yaml:4"
+        ref2 = "pmo/registers/changes.yaml:5"
+        bad_ref = "pmo/registers/changes.yaml:99"
+        snapshot = {p: p.read_bytes() for p in sorted(self.root.rglob("*")) if p.is_file()}
+        cases = [
+            (["--rewrite", ref1], f"ERROR invalid --rewrite format: {ref1}"),
+            (["--rewrite", "changes.yaml=T-903"], "ERROR invalid --rewrite format: changes.yaml=T-903"),
+            (["--rewrite", "pmo/registers/changes.yaml:abc=T-903"], "ERROR invalid --rewrite format: pmo/registers/changes.yaml:abc=T-903"),
+            (["--rewrite", f"{ref1}="], f"ERROR invalid --rewrite format: {ref1}="),
+            (["--rewrite", f"{bad_ref}=T-903"], f"ERROR unknown reference line: {bad_ref}"),
+            (["--rewrite", f"{ref1}=T-999"], f"ERROR T-999 is not a valid new id for {ref1}"),
+            (["--rewrite", f"{ref1}=T-903", "--rewrite", f"{ref1}=T-903"], f"ERROR multiple decisions for {ref1}"),
+            (["--keep", "changes.yaml=T-901"], "ERROR invalid --keep format: changes.yaml=T-901"),
+            (["--keep", "pmo/registers/changes.yaml:abc=T-901"], "ERROR invalid --keep format: pmo/registers/changes.yaml:abc=T-901"),
+            (["--keep", f"{ref1}="], f"ERROR invalid --keep format: {ref1}="),
+            (["--keep", f"{bad_ref}=T-901"], f"ERROR unknown reference line: {bad_ref}"),
+            (["--keep", f"{ref1}=T-999"], f"ERROR T-999 is not a valid id for {ref1}"),
+            (["--keep", "changes.yaml"], "ERROR invalid --keep format: changes.yaml"),
+            (["--keep", "pmo/registers/changes.yaml:abc"], "ERROR invalid --keep format: pmo/registers/changes.yaml:abc"),
+            (["--keep", bad_ref], f"ERROR unknown reference line: {bad_ref}"),
+            (["--keep", ref2], f"ERROR reference {ref2} mentions several duplicated ids; use --keep {ref2}=OLD-ID"),
+            (["--keep", ref1, "--keep", f"{ref1}=T-901"], f"ERROR multiple decisions for {ref1}"),
+            (["--rewrite", f"{ref1}=T-903", "--keep", ref1], f"ERROR multiple decisions for {ref1}"),
+        ]
+        for flags, expected in cases:
+            with self.subTest(flags=flags):
+                code, _, err = self.run_tool("--apply", *flags)
+                self.assertEqual(code, 2, err)
+                self.assertIn(expected, err)
+                after = {p: p.read_bytes() for p in sorted(self.root.rglob("*")) if p.is_file()}
+                self.assertEqual(after, snapshot)
+
+    def test_24_only_duplicates_in_the_file(self):
+        for name in ("changes", "issues", "requirements", "tests", "dependencies"):
+            (self.reg / f"{name}.yaml").write_text(f"{name}: []\n", encoding="utf-8")
+        (self.reg / "tasks.yaml").write_text(
+            "tasks:\n  - " + self.task("T-5", "First") + "\n  - " + self.task("T-5", "Second") + "\n",
+            encoding="utf-8",
+        )
+        code, out, err = self.run_tool("--line", "pmo/registers/tasks.yaml:3", "--apply")
+        self.assertEqual(code, 0, out + err)
+        loaded = pc.yaml.safe_load((self.reg / "tasks.yaml").read_text(encoding="utf-8"))["tasks"]
+        self.assertEqual([(e["id"], e["title"]) for e in loaded], [("T-5", "Second"), ("T-6", "First")])
+        rv_check = subprocess.run([sys.executable, str(RV), "--project", str(self.root), "--check"],
+                                  capture_output=True, text=True, encoding="utf-8")
+        self.assertEqual(rv_check.returncode, 0, rv_check.stdout + rv_check.stderr)
+
+    def test_25_id_inside_map_value(self):
+        self.append_entry(
+            "tasks",
+            "{id: T-900, title: Linked task, team: web, group: ui, priority: low, owner: alice, status: not-started, due: 2026-03-28, period: 2026-03, x_links: {blocks: T-901}, notes: ''}",
+        )
+        pos = f"pmo/registers/tasks.yaml:{len((self.reg / 'tasks.yaml').read_text(encoding='utf-8').splitlines())}"
+        self.append_entry("tasks", self.task("T-901", "First copy"))
+        self.append_entry("tasks", self.task("T-901", "Second copy"))
+        code, out, err = self.run_tool()
+        self.assertEqual(code, 1, out + err)
+        self.assertIn(pos, out)
+        self.assertIn("in x_links", out)
+        self.assertIn(f"--rewrite {pos}=T-902", out)
+        code_app, out_app, err_app = self.run_tool("--apply", "--rewrite", f"{pos}=T-902")
+        self.assertEqual(code_app, 0, out_app + err_app)
+        loaded = pc.yaml.safe_load((self.reg / "tasks.yaml").read_text(encoding="utf-8"))["tasks"]
+        linked = next(e for e in loaded if e["id"] == "T-900")
+        self.assertEqual(linked["x_links"], {"blocks": "T-902"})
+        rv_check = subprocess.run([sys.executable, str(RV), "--project", str(self.root), "--check"],
+                                  capture_output=True, text=True, encoding="utf-8")
+        self.assertEqual(rv_check.returncode, 0, rv_check.stdout + rv_check.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()

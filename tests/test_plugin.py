@@ -42,6 +42,28 @@ class Plugin(unittest.TestCase):
         fm = yaml.safe_load(re.match(r"---\n(.*?)\n---\n", text, re.S).group(1))
         self.assertEqual(str(fm["metadata"]["version"]), load("plugin.json")["version"])
 
+    def test_all_four_version_files_agree(self):
+        version = load("plugin.json")["version"]
+        sys.path.insert(0, str(REPO / "skills/pmo-docs/scripts/_vendor"))
+        import yaml
+        skill_text = (REPO / "skills/pmo-docs/SKILL.md").read_text(encoding="utf-8")
+        fm = yaml.safe_load(re.match(r"---\n(.*?)\n---\n", skill_text, re.S).group(1))
+        self.assertEqual(str(fm["metadata"]["version"]), version)
+
+        rx = re.compile(
+            r"(?:pmo-docs/|pmo-docs-|tags/v|tag `v|Status: v|e\.g\. `)(\d+\.\d+\.\d+)"
+        )
+        readme = (REPO / "README.md").read_text(encoding="utf-8")
+        readme_versions = rx.findall(readme)
+        self.assertGreaterEqual(len(readme_versions), 5)
+        self.assertEqual(set(readme_versions), {version}, readme_versions)
+        self.assertIn(f"**Status: v{version} released.**", readme)
+
+        guide = (REPO / "docs/INSTALL_FOR_AGENTS.md").read_text(encoding="utf-8")
+        guide_versions = rx.findall(guide)
+        self.assertGreaterEqual(len(guide_versions), 5)
+        self.assertEqual(set(guide_versions), {version}, guide_versions)
+
     def test_marketplace_json(self):
         m = load("marketplace.json")
         self.assertEqual(m["name"], "pmo-docs")

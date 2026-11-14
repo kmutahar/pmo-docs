@@ -407,9 +407,12 @@ class Helpers(unittest.TestCase):
         self.assertEqual(pc.rag(cfg, d, [], [{"id": "M-1", "status": closed, "due": "2026-03-14"}])[0], "green")
         # red: three late tasks (and five capped at three ids)
         late = [t(f"T-{n}", due="2026-03-01") for n in range(1, 6)]
+        self.assertEqual(pc.rag(cfg, d, late[:3]), ("red", "3 or more tasks are blocked or overdue (T-1, T-2, T-3)"))
         self.assertEqual(pc.rag(cfg, d, late), ("red", "3 or more tasks are blocked or overdue (T-1, T-2, T-3)"))
+        mix = [t("T-1", status="blocked"), t("T-2", status="blocked"), t("T-3", due="2026-03-01")]
+        self.assertEqual(pc.rag(cfg, d, mix), ("red", "3 or more tasks are blocked or overdue (T-1, T-2, T-3)"))
         # amber: two late tasks, a task due today is not overdue
-        self.assertEqual(pc.rag(cfg, d, late[:2])[1], "tasks T-1, T-2 are overdue")
+        self.assertEqual(pc.rag(cfg, d, late[:2]), ("amber", "tasks T-1, T-2 are overdue"))
         self.assertEqual(pc.rag(cfg, d, [t("T-1", due="2026-03-15")])[0], "green")
         self.assertEqual(pc.rag(cfg, d, [t("T-1", due="2026-03-14")])[0], "amber")
 
@@ -835,6 +838,23 @@ class ConfigGuards(unittest.TestCase):
             self.assertIn("no pmo/config.yaml here", mock_stderr.getvalue())
         defaults = pc.load_config(empty, must_exist=False)
         self.assertEqual(defaults["schema_version"], 1)
+
+    def test_unreadable_config_exits_2(self):
+        self.cfg_file.unlink()
+        self.cfg_file.mkdir()
+        p = subprocess.run(
+            [sys.executable, str(pc.SKILL / "scripts/render_views.py"), "--check", "--project", str(self.root)],
+            capture_output=True, text=True, encoding="utf-8"
+        )
+        self.assertEqual(p.returncode, 2)
+        self.assertIn(str(self.cfg_file), p.stderr)
+        self.assertIn("cannot be read", p.stderr)
+        self.assertNotIn("Traceback", p.stderr)
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err), self.assertRaises(SystemExit) as cm:
+            pc.load_config(self.root)
+        self.assertEqual(cm.exception.code, 2)
+        self.assertIn("cannot be read", err.getvalue())
 
     def test_bad_values_exit_2(self):
         cases = [
