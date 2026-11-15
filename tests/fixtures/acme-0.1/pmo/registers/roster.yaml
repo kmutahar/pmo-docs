@@ -1,0 +1,4 @@
+roster:
+  - {slug: sam, name: Sam Example, role: Project manager}
+  - {slug: alice, name: Alice Example, role: Platform lead}
+  - {slug: bob, name: Bob Example, role: Web lead}

@@ -1,0 +1,3 @@
+teams:
+  - {id: TM-1, order: 1, heading: Platform, owners: [alice], note: Servers and API, output: Staging and API}
+  - {id: TM-2, order: 2, heading: Web, owners: [bob], note: Pages and design, output: Login and home pages}

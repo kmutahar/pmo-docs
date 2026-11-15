@@ -1,0 +1,3 @@
+meetings:
+  - {id: MTG-1, title: Weekly sync, date: 2026-03-09, attendees: [sam, alice, bob], decisions: [DEC-2], actions: [ACT-1, ACT-2], minutes_doc: null}
+  - {id: MTG-2, title: Kickoff, date: 2026-02-10, attendees: [sam, alice, bob], decisions: [DEC-1], actions: [], minutes_doc: null}
