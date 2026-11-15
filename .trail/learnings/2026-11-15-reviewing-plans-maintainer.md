@@ -18,12 +18,11 @@ touches:
 - The README roadmap and the hub version table change together. Docs and plans give no counts that change (evals, tests); suppression counts are findings, recorded after a scan, never predicted.
 - Maintainer-gated work orders: a package that branches on a recorded result stops when the result line is missing; a value an agent cannot get without a command (UTC date) is written by the driver.
 - Before putting an old "proposed" item to the maintainer, check it against current code.
+- Sort leftover items three ways: already run by a later plan (remove), coverable by a planned version (move in as a full step), new feature (maintainer's keep/delete call). Items fixing what an id, date or front matter may hold go before the format freeze.
+- Renumbering a package changes the order diagram, the package table and the release package together.
 
 ## Tried and ruled out
 - `git rev-parse --show-toplevel` as the project root: scripts take the cwd or `--project` and never search upwards.
-- Pre-approving `Bash(python3 *)` for a scheduled run, and an eval grader that asks for script output.
-- Refusing YAML aliases by testing for an alias event: test the event's `anchor`; merge keys (`<<`) are refused by tag.
-- Doubling every backslash in a table cell: only backslashes right before a pipe need it.
 - Trusting "the existing tests already allow this", or answering "it matches" about a doc line from memory: read the code and run it.
 
 ## Watch out

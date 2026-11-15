@@ -9,7 +9,7 @@ touches:
 ---
 
 ## Decided
-- Commit chunks follow the plan's package order, one topic each; propose them first. A correction to something unreleased is a `refactor:` so it stays out of the changelog.
+- A correction to something unreleased is a `refactor:` so it stays out of the changelog.
 - The pre-commit hook is the real privacy gate. Under `git commit -- <paths>` git gives it a temporary index with the working-tree copies, and `scrub.sh` scans that.
 - Any pipe over `pmo/` in a script or checklist uses `find ... -print0 | sort -z | xargs -0`: Acme file names hold spaces.
 

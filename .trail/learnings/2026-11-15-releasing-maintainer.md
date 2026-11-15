@@ -16,10 +16,10 @@ touches:
 
 ## Tried and ruled out
 - `V=<old>` install check to test the new release: it tests the old tag.
+- Install check C needs manual permission mode (the doc says so); check D runs through `claude -p`, so the mode switch does not apply to it.
 - The `--unreleased` preview: with `render_always = true` it prints a version heading even when cliff.toml skips every commit, while `git-cliff -o CHANGELOG.md --tag vX` writes no section, and `release.yml` then fails after the tag is public.
 
 ## Watch out
 - A release whose only new commits are chore/ci/test/refactor or docs(plan|dev|memory) has no changelog section: add a user-facing commit first.
 - A local marketplace copies the working tree, so a `__pycache__` can appear in the installed scripts; the `git archive` zip has none. Scan SkillSpector on a `git archive` copy too.
-- Release prerequisites: `main` level with `origin/main`, nothing staged (`--allow-dirty` skips the staged check for a dry run).
 - A text replacement that does not match changes nothing and prints no error: print the changed line afterwards.
