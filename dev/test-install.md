@@ -172,7 +172,7 @@ claude -p "run weekly-status; draft only, do not finish, publish or commit" --al
 ```
 Delete the new draft between runs (`git -C "$TRY/project" clean -fd pmo/documents`). Write down the first `--allowedTools` string that works, exactly as typed, or `none` when neither works. Do not try a wider pattern such as `Bash(python3 *)`: it would let an unattended run start any Python command.
 
-3a.6. Record the result in the current plan's Results section ("Results and open questions") as one line: `Install check (<UTC date>): A=<yes|no>, B=<intact|replaced>, C=<prompts|writes>, D=<works|denied; allowedTools string or none>.` Then read `$LOGA` once for private data before sharing, and keep the log. Any fix goes into `skills/pmo-docs/SKILL.md` (`allowed-tools`), `skills/pmo-docs/references/schedule.md` or `PRIVACY.md`, which keep the outcome after the plan file is deleted at release.
+3a.6. Record the result in your notes (a file in `tmp/`) as one line: `Install check (<UTC date>): A=<yes|no>, B=<intact|replaced>, C=<prompts|writes>, D=<works|denied; allowedTools string or none>.` Then read `$LOGA` once for private data before sharing, and keep the log. Any fix goes into `skills/pmo-docs/SKILL.md` (`allowed-tools`), `skills/pmo-docs/references/schedule.md` or `PRIVACY.md`, which keep the outcome.
 
 ## Part 4: the release zip (other agents)
 

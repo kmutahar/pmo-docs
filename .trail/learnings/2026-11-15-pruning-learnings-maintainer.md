@@ -11,7 +11,7 @@ touches:
 - Front matter is `title`, `author`, `date`, `touches` only. When several learnings cover one topic, merge them into one and delete the rest. Delete with plain `rm`, never `git rm --cached`.
 
 ## Tried and ruled out
-- Keeping learnings that only restate `docs/PLAN.md`, `AGENTS.md` or `memory.md`: they go stale and can contradict them.
+- Keeping learnings that only restate `AGENTS.md` or `memory.md`: they go stale and can contradict them.
 
 ## Watch out
 - Check numbers and names against the repo before keeping a learning (for example, a claim about what `dev/scrub.sh` catches went stale). Prefer no number to a wrong one.

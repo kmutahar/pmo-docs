@@ -11,7 +11,7 @@ touches:
 
 ## Decided
 - Run the install check (`dev/test-install.md`) before the tag exists, against a local marketplace (project scope, throwaway `CLAUDE_CONFIG_DIR`) and a zip from `git archive --format=zip --prefix=pmo-docs/ -o <zip> HEAD:skills/pmo-docs`. It shows the old version, because `dev/release` writes the new one; a `V=<new>` run works only after the tag is pushed.
-- Cleanup goes in its own commit before the release commit: delete the version's plan file, point the hub row to the new tag, mark the README roadmap and hub index released. Move unfinished work to the next plan or the hub first. The hub's release date is UTC and must match the tag day.
+- Cleanup goes in its own commit before the release commit, never inside it. Release dates are UTC and must match the tag day.
 - Check that a release has a changelog section by reading the written `CHANGELOG.md` (`^## \[X.Y.Z\]`), not the `git-cliff --unreleased` preview.
 
 ## Tried and ruled out

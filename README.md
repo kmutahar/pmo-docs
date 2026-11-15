@@ -6,7 +6,7 @@ Keep your project's tasks, risks and decisions in plain files. Ask your AI codin
 - *"add a task: set up staging, high priority, due 2026-03-10"* — logs the task and updates your views.
 - *"draft release notes"* — turns recent tasks, changes and git history into a release-notes draft.
 
-> **Status: v0.7.6 released.** Registers, views, documents, checks, generators, recipes, languages and stacks work today. Release history is in [`CHANGELOG.md`](CHANGELOG.md); the plan, decisions and later versions are in [`docs/PLAN.md`](docs/PLAN.md).
+> **Status: v0.7.6 released.** Registers, views, documents, checks, generators, recipes, languages and stacks work today. Release history is in [`CHANGELOG.md`](CHANGELOG.md).
 
 ## How it works
 
@@ -262,16 +262,6 @@ Two or more people can work on the same project without a server or locks. Regis
 ## Stability
 
 From the first major release (`1.0`), the config format (`pmo/config.yaml`, `schema_version: 1`) and the register formats (`pmo/registers/*.yaml`) are stable. A project made with `1.x` keeps working with every later `1.x`: new keys and fields are optional, and a change that would make an existing project invalid waits for the next major version (a `feat!` commit). Until `1.0` the formats can still change. When a format does change, the release ships a migration script and an upgrade note in [`CHANGELOG.md`](CHANGELOG.md).
-
-## Roadmap
-
-Released: v0.1 to v0.7 (core skill, generators and publishing, languages and intake, stacks and technical documents, other agents and the launcher, hardening, teams). Details are in [`CHANGELOG.md`](CHANGELOG.md).
-
-| Version | Theme |
-|---|---|
-| v0.8 | Format freeze: a test that a v0.1 project still works, a test that every config key is documented, the stability promise |
-| v0.9 | Verification: the evals, the security scan, the walkthrough and the install check |
-| 1.0 | Final: a trial on a real project, then the release that declares the formats stable |
 
 ## Contributing
 

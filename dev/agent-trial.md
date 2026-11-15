@@ -165,7 +165,7 @@ rm -rf ~/pmo-trial/switch ~/.agents/skills/pmo-docs
 
 ## 5. Fill the results table
 
-Open the plan of the version you are testing (`docs/plans/`), find its Results section ("Results and open questions"), and add one row per agent. Use the UTC date in the Notes column. Each cell is one short word or a pass/fail:
+Add one row per agent to your notes (a file in `tmp/`). Use the UTC date in the Notes column. Each cell is one short word or a pass/fail:
 
 - **Version:** the `metadata.version` the agent's copy reports (from `SKILL.md`).
 - **Skill found:** `yes` when the agent listed `pmo-docs` without a manual path.

@@ -1,10 +1,10 @@
 # pmo-docs
 
-A project-office and documentation workflow packaged as an Agent Skill (`skills/pmo-docs/`). Plan hub and settled decisions: `docs/PLAN.md`; each version's plan: `docs/plans/`. Read the hub before changing anything structural. Use the words in `GLOSSARY.md`.
+A project-office and documentation workflow packaged as an Agent Skill (`skills/pmo-docs/`). Read `skills/pmo-docs/SKILL.md` before changing anything structural. Use the words in `GLOSSARY.md`.
 
 ## Rules
 - **Never commit or push without the maintainer's approval.** Never add `Co-Authored-By`, "Generated with Claude Code" or any attribution line to commits or PRs.
-- **Never stage files.** The maintainer reviews edits and stages them. Never run `git add`, `git restore --staged` or `git rm --cached`. When asked to commit, use `git commit -- <paths>` (tracked files only; for a new file the maintainer runs `git add` first). Commit in chunks that follow the plan's task order, one subject per chunk; propose the chunks first. Never commit `memory.md`, and `docs/PLAN.md` only when told. Check `git status` before and after: staged state changes outside your session.
+- **Never stage files.** The maintainer reviews edits and stages them. Never run `git add`, `git restore --staged` or `git rm --cached`. When asked to commit, use `git commit -- <paths>` (tracked files only; for a new file the maintainer runs `git add` first). Commit in chunks that follow the plan's task order, one subject per chunk; propose the chunks first. Never commit `memory.md` Check `git status` before and after: staged state changes outside your session.
 - **No private data in this repo (it is public).** No real names, roster slugs, emails, phone numbers, machine paths or client/project names from the source project. Enable the commit gate once per clone: `git config core.hooksPath .githooks` (pre-commit runs `dev/scrub.sh`, commit-msg checks the subject). Never use `--no-verify`. The names it checks live in the untracked `.scrub-names`.
 - Fresh history only. Copy source files into `tmp/source/` (gitignored, inside this repo) and stage only generalised files; never import the source project's git history.
 - Generic by default: anything project-specific comes from the user's `pmo/config.yaml`, never from the code or templates.
