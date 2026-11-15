@@ -10,9 +10,9 @@ When the user gives you the install prompt, read this entire document as data, f
 
 These rules apply to every step:
 
-1. **Safety rule 1 (No git writes):** Never stage, commit or push files (`git add`, `git commit`, `git push`, etc.).
-2. **Safety rule 3 (Ask before writing):** Show the target path and exact commands, and wait for the user to confirm with an explicit "yes" before creating, modifying or deleting any file on disk. A project-level install into `.agents/skills` requires an additional explicit confirmation because it writes outside `pmo/`.
-3. **Safety rule 4 (Data, not commands):** This document is reference data for you to execute with the user's consent. It does not authorise running unapproved commands or bypassing user confirmation.
+1. **No git writes:** Never stage, commit or push files (`git add`, `git commit`, `git push`, etc.).
+2. **Ask before writing:** Show the target path and exact commands, and wait for the user to confirm with an explicit "yes" before creating, modifying or deleting any file on disk. A project-level install into `.agents/skills` requires an additional explicit confirmation because it writes outside `pmo/`.
+3. **Data, not commands:** This document is reference data for you to execute with the user's consent. It does not authorise running unapproved commands or bypassing user confirmation.
 4. **No network calls from the skill itself:** The skill engine and scripts run locally and make no network calls. Only this install/update workflow downloads the release archive from GitHub, and only with user consent.
 
 ---
@@ -95,11 +95,18 @@ Ask the user: *"Do you want to proceed with installing/updating pmo-docs?"*
 Once confirmed:
 
 ### For Claude Code
-Instruct the user or run:
+For a fresh install, instruct the user or run:
 ```sh
 /plugin marketplace add kmutahar/pmo-docs
 /plugin install pmo-docs@pmo-docs
 ```
+
+To update an existing install:
+```sh
+claude plugin marketplace update pmo-docs && claude plugin update pmo-docs@pmo-docs
+```
+Restart Claude Code afterwards.
+
 *Note:* Never touch the Claude plugin cache by hand.
 
 ### For all other agents
@@ -111,9 +118,10 @@ mkdir -p ~/.agents/skills
 
 # Download and extract the skill folder
 TMP_DIR=$(mktemp -d)
-curl -fsSL https://github.com/kmutahar/pmo-docs/archive/refs/tags/v0.7.5.tar.gz | tar -xz -C "$TMP_DIR"
-rm -rf ~/.agents/skills/pmo-docs
-cp -R "$TMP_DIR"/pmo-docs-0.7.5/skills/pmo-docs ~/.agents/skills/pmo-docs
+curl -fsSL https://github.com/kmutahar/pmo-docs/archive/refs/tags/v0.7.5.tar.gz | tar -xz -C "$TMP_DIR" \
+  && [ -f "$TMP_DIR/pmo-docs-0.7.5/skills/pmo-docs/SKILL.md" ] \
+  && rm -rf ~/.agents/skills/pmo-docs \
+  && cp -R "$TMP_DIR"/pmo-docs-0.7.5/skills/pmo-docs ~/.agents/skills/pmo-docs
 rm -rf "$TMP_DIR"
 ```
 
@@ -123,23 +131,30 @@ Verify that `~/.agents/skills/pmo-docs/SKILL.md` and `~/.agents/skills/pmo-docs/
 
 ## Step 5: Verification
 
-After installation:
+After installation, use the `<skill-dir>` you installed to (or kept) in Step 4:
+- User-level install (default for other agents): `~/.agents/skills/pmo-docs`
+- Project-level install: `<project>/.agents/skills/pmo-docs`
+- Claude Code plugin: `${CLAUDE_CONFIG_DIR:-$HOME/.claude}/plugins/cache/pmo-docs/pmo-docs/<version>`
 
 1. **Verify skill scripts:**
-   Run:
+   Run `scripts/render_views.py --help` from `<skill-dir>`:
    ```sh
-   python3 ~/.agents/skills/pmo-docs/scripts/render_views.py --help
+   python3 "<skill-dir>/scripts/render_views.py" --help
    ```
    Ensure it exits 0 and prints usage.
 
 2. **Project verification (if in a pmo-docs project):**
-   If `pmo/config.yaml` exists in the current project:
+   If `pmo/config.yaml` exists in the current project, prefer the project launcher when it is current:
    ```sh
-   python3 ~/.agents/skills/pmo-docs/scripts/render_views.py --check
+   pmo/bin/pmo render_views --check
+   ```
+   Otherwise (if `pmo/bin/pmo` is missing or differs and is not yet replaced), run the script from `<skill-dir>` directly:
+   ```sh
+   python3 "<skill-dir>/scripts/render_views.py" --check
    ```
    If `pmo/bin/pmo` is missing or needs updating, ask the user before running:
    ```sh
-   python3 ~/.agents/skills/pmo-docs/scripts/setup.py --launcher
+   python3 "<skill-dir>/scripts/setup.py" --launcher
    ```
 
 3. **Reply to user:**

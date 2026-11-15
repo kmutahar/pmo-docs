@@ -20,7 +20,7 @@ The words used here are defined in [`GLOSSARY.md`](GLOSSARY.md).
 pmo/
   bin/             pmo project launcher (commit it)
   config.yaml      only your settings; defaults come from the skill
-  registers/       tasks, risks, issues, decisions, requirements, tests, environments, permissions, ...
+  registers/       tasks, risks, issues, decisions, requirements, tests, environments, permissions, ... (some created when first used)
   views/           generated summaries and catalogue (commit them)
   documents/       drafts and finished documents
   templates/       only the templates you changed or added
@@ -56,9 +56,10 @@ Installing copies only the skill folder. The short form `kmutahar/pmo-docs` clon
 ```sh
 mkdir -p ~/.agents/skills
 tmp=$(mktemp -d)
-curl -fsSL https://github.com/kmutahar/pmo-docs/archive/refs/tags/v0.7.5.tar.gz | tar -xz -C "$tmp"
-rm -rf ~/.agents/skills/pmo-docs
-cp -R "$tmp"/pmo-docs-0.7.5/skills/pmo-docs ~/.agents/skills/pmo-docs
+curl -fsSL https://github.com/kmutahar/pmo-docs/archive/refs/tags/v0.7.5.tar.gz | tar -xz -C "$tmp" \
+  && [ -f "$tmp/pmo-docs-0.7.5/skills/pmo-docs/SKILL.md" ] \
+  && rm -rf ~/.agents/skills/pmo-docs \
+  && cp -R "$tmp"/pmo-docs-0.7.5/skills/pmo-docs ~/.agents/skills/pmo-docs
 rm -rf "$tmp"
 ls ~/.agents/skills/pmo-docs/SKILL.md ~/.agents/skills/pmo-docs/scripts
 ```
@@ -95,8 +96,13 @@ Other agents: run the commands above with the newer tag, or give the agent the p
 From nothing to a first rendered view. Run the agent in your project's root folder.
 
 1. Ask the agent: "set up a project office". It asks its questions, shows the files it will create and waits for your yes.
-2. Add your people and first tasks. Ask the agent ("add a task: set up staging, high priority, due 2026-03-10"), or edit `pmo/registers/roster.yaml` and `pmo/registers/tasks.yaml` yourself, one entry per line:
+2. Add your people and first tasks (`owner` is a roster slug). Ask the agent ("add a task: set up staging, high priority, due 2026-03-10"), or edit `pmo/registers/roster.yaml` and `pmo/registers/tasks.yaml` yourself, one entry per line:
    ```yaml
+   # pmo/registers/roster.yaml
+   roster:
+     - {slug: sam, name: Sam Example, role: Project manager}
+
+   # pmo/registers/tasks.yaml
    tasks:
      - {id: T-1, title: Set up staging server, priority: high, owner: sam, status: in-progress, due: 2026-03-10}
    ```
@@ -112,7 +118,7 @@ python3 "$SKILL/scripts/render_views.py"
 python3 "$SKILL/scripts/render_views.py" --check
 ```
 
-`render_views.py` prints `registers valid; wrote 21 views to pmo/views`, or the errors it found (and exits 1). `--check` writes nothing and exits 1 when the registers are invalid or a view is stale. Every script answers `--help`.
+`render_views.py` prints `registers valid; wrote 17 views to pmo/views` (one per register plus the catalogue), or the errors it found (and exits 1). `--check` writes nothing and exits 1 when the registers are invalid or a view is stale. Every script answers `--help`.
 
 Next, ask for a document ("draft the project charter", "weekly-status"). A worked example with a small example project is in [`docs/walkthrough.md`](docs/walkthrough.md).
 
@@ -241,7 +247,7 @@ Released: v0.1 to v0.7 (core skill, generators and publishing, languages and int
 | Version | Theme |
 |---|---|
 | v0.8 | Format freeze: a test that a v0.1 project still works, a test that every config key is documented, the stability promise |
-| v0.9 | Verification: the evals, the security scan and the install check |
+| v0.9 | Verification: the evals, the security scan, the walkthrough and the install check |
 | 1.0 | Final: a trial on a real project, then the release that declares the formats stable |
 
 ## Contributing

@@ -15,13 +15,13 @@ The skill's behaviour rules are in [`SKILL.md`](../skills/pmo-docs/SKILL.md); th
 
 ```
 pmo/
-  config.yaml      project name and manager only
+  config.yaml      project name, manager, domain and stack
   registers/       20 registers, one entry per line
   views/           one view per register plus the catalogue, rendered from them
   documents/       a status report and a decision log, both drafts
 ```
 
-The config holds only the settings Acme changes (`schema_version`, the project name and the project manager). Everything else comes from the skill's defaults. The people are in the roster register:
+The config holds only the settings Acme changes (`schema_version`, the project name and manager, plus the `domain` and `technical` settings the technical documents read). Everything else comes from the skill's defaults. The people are in the roster register:
 
 ```yaml
 roster:
@@ -137,7 +137,7 @@ stale_days: 30
 window: 2026-03-01..2026-03-31
 translations: none
 translate: in-period
-source_hashes: {tasks: "86d95355", milestones: "0e9469b7", risks: "a9268ee2", issues: "fcc3f6b0", changes: "5351a37c", actions: "3c2a3948", decisions: "988ad57c", teams: "e2679193"}
+source_hashes: {tasks: "86d95355", milestones: "0e9469b7", risks: "c0043131", issues: "fbf13b7c", changes: "5351a37c", actions: "3c2a3948", decisions: "988ad57c", teams: "e2679193"}
 [exit 0]
 ```
 
