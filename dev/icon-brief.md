@@ -23,12 +23,12 @@ google-chrome --headless --screenshot=skills/pmo-docs/.claude-plugin/icon.png --
 | Format | PNG or JPEG. SVG and WebP are **not** accepted. PNG is preferred (sharp edges, transparency). |
 | Shape | Square, same width and height. |
 | Size | Between 512 and 2048 pixels on each side. Deliver 1024 x 1024 so it stays sharp when scaled down. |
-| File size | Under 2 MB. A flat-colour icon is usually under 100 KB. |
+| File size | Under 256 KiB (the plugin directory limit). A flat-colour icon is usually under 100 KB. |
 | Location | `skills/pmo-docs/.claude-plugin/icon.png` (the plugin's `.claude-plugin/` folder), or any path set as `icon` in `skills/pmo-docs/.claude-plugin/plugin.json`. |
 | Colour | sRGB. No embedded colour profile other than sRGB. |
 | Name | `icon.png`, lower case. |
 
-`tests/test_plugin.py` checks that the file is a PNG, square, 512 to 2048 pixels and under 2 MB.
+`tests/test_plugin.py` checks that the file is a PNG, square, 512 to 2048 pixels and under 256 KiB.
 
 A note from the validator: the file may become the listing icon only once, the first time the plugin is saved or submitted in the developer portal. Changing it afterwards does not change the listing icon. So get the design right before the first submission.
 
@@ -58,7 +58,7 @@ Keep contrast high: the main shape against the background at least 4.5 to 1, so 
 
 ## What to deliver
 
-1. `icon.png`, 1024 x 1024, PNG, sRGB, under 2 MB.
+1. `icon.png`, 1024 x 1024, PNG, sRGB, under 256 KiB.
 2. The editable source (SVG, Figma or similar), so the icon can be changed later.
 3. One line saying whether the corners are filled or rounded with transparency.
 4. A preview at 512, 128, 64 and 32 pixels on a white and on a dark background, to show it holds up when small.

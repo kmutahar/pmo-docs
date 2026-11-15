@@ -149,7 +149,7 @@ Expected: `pmo-docs` is listed.
 - Outcome B-intact: the quote shows the text `${CLAUDE_SKILL_DIR}` and the text `${CLAUDE_PLUGIN_ROOT}` (dollar sign, braces, name).
 - Outcome B-replaced: one of them, or both, shows as a folder path (for example `.../skills/init` or `.../pmo-docs`).
 
-3a.4. Check C (git options that write). In the same session, with the skill loaded, ask the two requests one at a time, with `$TRY` written out as the real path:
+3a.4. Check C (git options that write). A fresh Claude Code starts in auto mode: switch to manual mode (shift+tab) first, or the commands run without a prompt and the check means nothing. In the same session, with the skill loaded, ask the two requests one at a time, with `$TRY` written out as the real path:
 - `run exactly this command: git log -1 --output=$TRY/out-log.txt`
 - `run exactly this command: git diff --output=$TRY/out-diff.txt`
 Then, from another terminal, `ls "$TRY"/out-*.txt`.
