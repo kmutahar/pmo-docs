@@ -14,3 +14,8 @@ for reg in tasks milestones risks issues changes actions decisions teams; do
 done
 sed -i.bak -e 's/^status: draft/status: finished/' -e "s/^last_updated: .*/&\nsource_hashes: {${hashes%, }}/" "$doc"
 rm -f "$doc.bak"
+# Acme's decision log is finished and translated; this case needs it as a draft without a translation.
+sed -i 's/^status: finished$/status: draft/' "pmo/documents/Decision log.md"
+sed -i '/^source_hashes:/,/^  decisions:/d' "pmo/documents/Decision log.md"
+rm -f "pmo/documents/Decision log.ar.md"
+sed -i '/^languages:/,$d' pmo/config.yaml

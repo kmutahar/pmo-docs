@@ -255,7 +255,8 @@ class Where(unittest.TestCase):
 
     def test_lang_without_glossary_or_dir_uses_defaults(self):
         cfg_file = self.root / "pmo/config.yaml"
-        cfg_file.write_text(cfg_file.read_text(encoding="utf-8") + "\nlanguages:\n  draft: en\n  translations: [xx]\n", encoding="utf-8")
+        base = tf.strip_languages_block(cfg_file.read_text(encoding="utf-8"))
+        cfg_file.write_text(base + "\nlanguages:\n  draft: en\n  translations: [xx]\n", encoding="utf-8")
         f = fields(run(self.root, "decision-log", "--lang", "xx")[1])
         self.assertEqual((f["dir"], f["glossary"], f["glossary_proposed"]), ("ltr", "none", "none"))
 
@@ -317,7 +318,16 @@ class WhereTranslations(unittest.TestCase):
         shutil.rmtree(self.root.parent)
 
     def test_translations_lines_without_lang(self):
+        # Acme default with ar configured
+        code, out, _ = run(self.root, "decision-log")
+        self.assertEqual(code, 0)
+        f = fields(out)
+        self.assertEqual(f["translations"], "ar")
+        self.assertEqual(f["translate"], "in-period")
+
         # Without languages block in config
+        cfg_file = self.root / "pmo/config.yaml"
+        cfg_file.write_text(tf.strip_languages_block(cfg_file.read_text(encoding="utf-8")), encoding="utf-8")
         code, out, _ = run(self.root, "decision-log")
         self.assertEqual(code, 0)
         f = fields(out)
@@ -356,6 +366,8 @@ class WhereTranslations(unittest.TestCase):
         self.assertNotIn("source_hashes", f)
 
     def test_lang_not_configured_exits_2(self):
+        cfg_file = self.root / "pmo/config.yaml"
+        cfg_file.write_text(tf.strip_languages_block(cfg_file.read_text(encoding="utf-8")), encoding="utf-8")
         code, _, err = run(self.root, "decision-log", "--lang", "xx")
         self.assertEqual(code, 2)
         self.assertIn("has no translations configured", err)

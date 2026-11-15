@@ -215,8 +215,6 @@ class TestRenumber(unittest.TestCase):
             "--keep", "pmo/registers/meetings.yaml:2",
             "--keep", "pmo/documents/2026-03 - Status report.md:47",
             "--keep", "pmo/documents/2026-03 - Status report.md:54",
-            "--keep", "pmo/documents/Decision log.md:16",
-            "--keep", "pmo/documents/Decision log.md:20",
         )
         self.assertEqual(code_app, 0, out_app + err_app)
         self.assertEqual((self.reg / "dependencies.yaml").read_bytes(), deps_before)

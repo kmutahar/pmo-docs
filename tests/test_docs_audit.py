@@ -68,8 +68,21 @@ class Audit(unittest.TestCase):
         code, out = self.run_audit()  # the Acme status report is a draft
         self.assertEqual(code, 0, out)
 
+    def test_acme_finished_decision_log_is_not_stale_on_fresh_copy(self):
+        code, out = self.run_audit()
+        self.assertEqual(code, 0, out)
+        self.assertIn("## Stale (0)", out)
+
+    def test_editing_decisions_register_makes_acme_decision_log_stale(self):
+        reg = self.p / "pmo/registers/decisions.yaml"
+        reg.write_text(reg.read_text(encoding="utf-8") + "\n# change\n", encoding="utf-8")
+        code, out = self.run_audit()
+        self.assertEqual(code, 1, out)
+        self.assertIn("`Decision log.md` - register `decisions` changed", out)
+
     def test_draft_behind_its_registers_is_reported(self):
         self.finish()
+        (self.docs / "Decision log.ar.md").unlink()
         dec_log = self.docs / "Decision log.md"
         dec_log.write_text(
             '---\ntype: decision-log\nstatus: draft\nsource_hashes:\n  decisions: "00000000"\n---\n# Decision log\n',
@@ -367,7 +380,7 @@ class Audit(unittest.TestCase):
         (self.docs / "deep/er").mkdir(parents=True)
         (self.docs / "deep/er/X.md").write_text("---\ntype: decision-log\nstatus: draft\n---\n", encoding="utf-8")
         out = self.run_audit()[1]
-        self.assertIn("Scanned 3 Markdown files.", out)
+        self.assertIn("Scanned 4 Markdown files.", out)
         self.assertNotIn("notes.txt", out)
 
     def test_empty_documents_folder_scans_nothing_and_exits_0(self):
@@ -433,7 +446,7 @@ class Audit(unittest.TestCase):
         self.assertIn("`تقرير ✓.md` -> `مفقود.md`", out)
 
     def test_status_typo_is_a_finding(self):
-        f = self.docs / "Decision log.md"
+        f = self.docs / "2026-03 - Status report.md"
         f.write_text(f.read_text(encoding="utf-8").replace("status: draft", "status: Finished", 1), encoding="utf-8")
         code, out = self.run_audit()
         self.assertEqual(code, 1)
@@ -441,6 +454,7 @@ class Audit(unittest.TestCase):
         self.assertIn("status `Finished` is not draft or finished", out)
 
     def test_invalid_front_matter_yaml_is_a_finding(self):
+        (self.docs / "Decision log.ar.md").unlink()
         (self.docs / "Decision log.md").write_text("---\ntype: [\n---\n# x\n", encoding="utf-8")
         code, out = self.run_audit()
         self.assertEqual(code, 1)
@@ -643,7 +657,9 @@ class Translations(unittest.TestCase):
 
     def test_finished_translation_of_draft_original(self):
         tf.enable_languages(self.p, ("xx",))
-        orig_text = (self.docs / "Decision log.md").read_text(encoding="utf-8")
+        orig_file = self.docs / "Decision log.md"
+        orig_text = orig_file.read_text(encoding="utf-8").replace("status: finished", "status: draft", 1)
+        orig_file.write_text(orig_text, encoding="utf-8")
         self.finish_translation(orig_text)
         code, out = self.run_audit()
         self.assertEqual(code, 1)

@@ -50,9 +50,17 @@ class ParityCheck(unittest.TestCase):
         self.assertIn("ok    pmo/documents/Decision log.xx.md", out)
         self.assertIn("0 file(s) differ from their originals", out)
 
-    def test_no_translations_exits_0(self):
+    def test_acme_translation_passes_parity(self):
         code, out = run(self.proj)
         self.assertEqual(code, 0, out)
+        self.assertIn("ok    pmo/documents/Decision log.ar.md", out)
+        self.assertIn("0 file(s) differ from their originals", out)
+
+    def test_no_translations_exits_0(self):
+        (self.docs / "Decision log.ar.md").unlink()
+        code, out = run(self.proj)
+        self.assertEqual(code, 0, out)
+        self.assertNotIn("ok    ", out)
         self.assertIn("0 file(s) differ from their originals", out)
 
     def test_row_removed_is_reported(self):

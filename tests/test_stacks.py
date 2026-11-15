@@ -155,7 +155,7 @@ class Override(unittest.TestCase):
     def run_audit(self):
         out = io.StringIO()
         with contextlib.redirect_stdout(out):
-            code = da.main(["--project", str(self.p)])
+            code = da.main(["--project", str(self.p), "--as-of", "2026-03-15"])
         return code, out.getvalue()
 
     def test_override_without_based_on_is_drift(self):

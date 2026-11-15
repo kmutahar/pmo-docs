@@ -21,12 +21,9 @@ TOOL = SCRIPTS / "publish.py"
 
 
 def finished_text(h: str) -> str:
+    import re
     raw = (REPO / "examples/acme/pmo/documents/Decision log.md").read_text(encoding="utf-8")
-    return raw.replace(
-        "status: draft",
-        f"status: finished\nsource_hashes:\n  decisions: \"{h}\"",
-        1,
-    )
+    return re.sub(r'decisions:\s*\S+', f'decisions: "{h}"', raw, count=1)
 
 
 def run(project, *args):
@@ -347,6 +344,7 @@ class Publish(unittest.TestCase):
     @unittest.skipIf(hasattr(os, "geteuid") and os.geteuid() == 0, "root ignores file permissions")
     def test_copy_failure_exits_2_and_leaves_the_target_whole(self):
         self.set_config("publish:\n  mode: folder\n  path: published\n")
+        (self.docs / "Decision log.ar.md").unlink()
         self.finish_decision_log()
         pub = self.root / "published"
         pub.mkdir()
@@ -511,7 +509,7 @@ class Publish(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertNotIn("Unknown.md", out)
         self.assertNotIn("Untyped.md", out)
-        self.assertIn("drafts: 3", out)  # the plain file, the Acme status report and the Acme decision log
+        self.assertIn("drafts: 2", out)  # the plain file and the Acme status report
         self.assertIn("excluded: 0", out)
 
     def test_status_other_than_finished_is_a_draft(self):
@@ -519,8 +517,9 @@ class Publish(unittest.TestCase):
         for n, st in enumerate(("Finished", "done", "", "null", "[finished]")):
             self.write_finished(f"D{n}.md", f"---\ntype: decision-log\nstatus: {st or chr(39)*2}\n---\n# x\n")
         out = run(self.root)[1]
-        self.assertNotIn("new:", out)
-        self.assertIn("drafts: 7", out)  # five here plus the two Acme drafts
+        for n in range(5):
+            self.assertNotIn(f"D{n}.md", out)
+        self.assertIn("drafts: 6", out)  # five here plus the Acme status report
 
     def test_a_file_that_is_not_utf8_is_skipped_as_a_draft(self):
         self.set_config("publish:\n  mode: folder\n  path: published\n")
@@ -545,6 +544,9 @@ class Publish(unittest.TestCase):
 
     def test_apply_with_nothing_to_publish_exits_0(self):
         self.set_config("publish:\n  mode: folder\n  path: published\n")
+        (self.docs / "Decision log.ar.md").unlink()
+        dec = self.docs / "Decision log.md"
+        dec.write_text(dec.read_text(encoding="utf-8").replace("status: finished", "status: draft", 1), encoding="utf-8")
         code, out, _ = run(self.root, "--apply")
         self.assertEqual(code, 0)
         self.assertNotIn("copied", out)

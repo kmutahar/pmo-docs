@@ -16,7 +16,9 @@ from pathlib import Path
 
 sys.dont_write_bytecode = True  # importing the shipped scripts must leave no __pycache__
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "skills/pmo-docs/scripts"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 import pmo_common as pc  # noqa: E402
+import translation_fixture as tf  # noqa: E402
 
 
 class Common(unittest.TestCase):
@@ -582,11 +584,20 @@ class Helpers(unittest.TestCase):
 
 class Languages(unittest.TestCase):
     def test_missing_block_is_english_only(self):
-        c = pc.load_config(Path(__file__).resolve().parents[1] / "examples/acme")
-        info = pc.languages(c)
+        acme_dir = Path(__file__).resolve().parents[1] / "examples/acme"
+        acme = pc.load_config(acme_dir)
+        with tempfile.TemporaryDirectory() as td:
+            shutil.copytree(acme_dir, Path(td) / "p")
+            cfg_file = Path(td) / "p/pmo/config.yaml"
+            cfg_file.write_text(tf.strip_languages_block(cfg_file.read_text(encoding="utf-8")), encoding="utf-8")
+            info = pc.languages(pc.load_config(Path(td) / "p"))
         self.assertEqual(info["draft"], "en")
         self.assertEqual(info["translations"], [])
         self.assertEqual(info["info"]["en"]["dir"], "ltr")
+
+        acme_info = pc.languages(acme)
+        self.assertEqual(acme_info["translations"], ["ar"])
+        self.assertEqual(acme_info["info"]["ar"]["dir"], "rtl")
 
     def test_project_block_merges(self):
         base = pc.load_config(Path(__file__).resolve().parents[1] / "examples/acme")

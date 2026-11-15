@@ -458,7 +458,7 @@ class Odd(unittest.TestCase):
 
     def test_draft_language_region_code(self):
         cfg_file = self.root / "pmo/config.yaml"
-        orig_cfg = cfg_file.read_text(encoding="utf-8")
+        orig_cfg = re.sub(r"(?m)^languages:.*\n(?:[ \t#].*\n|\n)*", "", cfg_file.read_text(encoding="utf-8"))
         cfg_file.write_text(orig_cfg + "\nlanguages:\n  draft: en-GB\n  en-GB: {label: EN, dir: ltr}\n", encoding="utf-8")
         out, _ = self.gen("decision-log")
         self.assertIn("Decision log", out)

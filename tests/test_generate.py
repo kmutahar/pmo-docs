@@ -349,7 +349,8 @@ class TestGenerate(unittest.TestCase):
 
     def test_non_english_draft_language_exits_2(self):
         cfg_path = self.root / "pmo/config.yaml"
-        cfg_path.write_text(cfg_path.read_text(encoding="utf-8") + "\nlanguages:\n  draft: xx\n  xx: {label: XX, dir: rtl}\n", encoding="utf-8")
+        base = re.sub(r"(?m)^languages:.*\n(?:[ \t#].*\n|\n)*", "", cfg_path.read_text(encoding="utf-8"))
+        cfg_path.write_text(base + "\nlanguages:\n  draft: xx\n  xx: {label: XX, dir: rtl}\n", encoding="utf-8")
         doc = self.root / "pmo/documents/Decision log.md"
         if doc.exists():
             doc.unlink()
@@ -360,7 +361,8 @@ class TestGenerate(unittest.TestCase):
 
     def test_english_with_translations_still_generates(self):
         cfg_path = self.root / "pmo/config.yaml"
-        cfg_path.write_text(cfg_path.read_text(encoding="utf-8") + "\nlanguages:\n  draft: en\n  translations: [xx]\n  en: {label: EN, dir: ltr}\n  xx: {label: XX, dir: rtl}\n", encoding="utf-8")
+        base = re.sub(r"(?m)^languages:.*\n(?:[ \t#].*\n|\n)*", "", cfg_path.read_text(encoding="utf-8"))
+        cfg_path.write_text(base + "\nlanguages:\n  draft: en\n  translations: [xx]\n  en: {label: EN, dir: ltr}\n  xx: {label: XX, dir: rtl}\n", encoding="utf-8")
         code, out, err = tool("generate.py", self.root, "decision-log", "--stdout")
         self.assertEqual(code, 0, err)
         self.assertIn("Decision log", out)

@@ -208,7 +208,7 @@ class StructureCheck(unittest.TestCase):
 
     def test_translation_draft_keeps_its_comments(self):
         dec_log = (REPO / "examples/acme/pmo/documents/Decision log.md").read_text(encoding="utf-8")
-        trans_text = tf.make_translation(dec_log) + "\n<!-- author comment -->\n"
+        trans_text = tf.make_translation(dec_log).replace("status: finished", "status: draft") + "\n<!-- author comment -->\n"
         errors, warns = self.run_check(trans_text)
         self.assertEqual(errors, [])
         self.assertTrue(any("template comments are kept in a draft" in w for w in warns))

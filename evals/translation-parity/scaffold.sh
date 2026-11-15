@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copies the fake Acme project (examples/acme) into the working folder, finishes its decision log, enables
+# Copies the fake Acme project (examples/acme) into the working folder, keeps its finished decision log, drops its Arabic translation, enables
 # the invented language xx and adds an xx translation with two deliberate faults: the Summary table has one
 # row fewer and the date of DEC-1 differs by one digit. The source_hash is the body hash of the original
 # (tests/test_eval_translation_parity.py fails when an Acme change moves it). No Python, no network.
@@ -7,7 +7,8 @@
 set -euo pipefail
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cp -R "$here/../../examples/acme/." .
-sed -i 's/^status: draft$/status: finished/' "pmo/documents/Decision log.md"
+rm -f "pmo/documents/Decision log.ar.md"
+sed -i '/^languages:/,$d' pmo/config.yaml
 cat >> pmo/config.yaml <<'EOT'
 
 languages:

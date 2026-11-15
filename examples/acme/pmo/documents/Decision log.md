@@ -4,8 +4,10 @@ type: decision-log
 project: "Acme Portal"
 manager: "Sam Example"
 template_version: 1
-status: draft
+status: finished
 last_updated: "2026-03-15"
+source_hashes:
+  decisions: "988ad57c"
 ---
 
 # Decision log - Acme Portal

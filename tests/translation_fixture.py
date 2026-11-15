@@ -36,9 +36,29 @@ WORDS = {
 }
 
 
+def strip_languages_block(cfg_text: str) -> str:
+    """Remove any top-level languages block from config.yaml text without changing other sections."""
+    lines = cfg_text.splitlines(keepends=True)
+    out = []
+    skipping = False
+    for line in lines:
+        if skipping:
+            if line.strip() == "" or line.startswith((" ", "\t", "#")):
+                continue
+            skipping = False
+        if line.startswith("languages:"):
+            skipping = True
+            continue
+        out.append(line)
+    return "".join(out)
+
+
 def enable_languages(project: Path, translations=("xx",), block: str = "") -> None:
-    """Append a languages block to project/pmo/config.yaml: draft en, the given translations with label and dir rtl, plus the extra YAML in block (for example a digits line)."""
+    """Write a languages block to project/pmo/config.yaml (replacing any existing block): draft en, the given translations with label and dir rtl, plus the extra YAML in block (for example a digits line)."""
     cfg_file = Path(project) / "pmo/config.yaml"
+    base = strip_languages_block(cfg_file.read_text(encoding="utf-8"))
+    if base and not base.endswith("\n"):
+        base += "\n"
     text = (
         "\nlanguages:\n"
         "  draft: en\n"
@@ -53,8 +73,11 @@ def enable_languages(project: Path, translations=("xx",), block: str = "") -> No
         if not block.endswith("\n"):
             block += "\n"
         text += block
-    with open(cfg_file, "a", encoding="utf-8") as f:
-        f.write(text)
+    cfg_file.write_text(base + text, encoding="utf-8")
+    if "ar" not in translations:
+        ar_doc = Path(project) / "pmo/documents/Decision log.ar.md"
+        if ar_doc.exists():
+            ar_doc.unlink()
 
 
 def make_translation(original_text: str, lang: str = "xx", dir_: str = "rtl") -> str:

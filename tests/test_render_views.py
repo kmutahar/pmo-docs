@@ -415,8 +415,10 @@ class LanguageConfig(unittest.TestCase):
         self.assertTrue(any("doc_types.status-report.translations code `zz` not in languages.translations" in e for e in errs))
 
     def test_cli_exits_2_on_language_error(self):
-        with open(self.root / "pmo/config.yaml", "a", encoding="utf-8") as f:
-            f.write("languages:\n  draft: xx\n")
+        import re
+        cfg_file = self.root / "pmo/config.yaml"
+        base = re.sub(r"(?m)^languages:.*\n(?:[ \t#].*\n|\n)*", "", cfg_file.read_text(encoding="utf-8"))
+        cfg_file.write_text(base + "\nlanguages:\n  draft: xx\n", encoding="utf-8")
         code, out = run(self.root)
         self.assertEqual(code, 2)
         self.assertIn("languages.xx", out)

@@ -15,13 +15,14 @@ The skill's behaviour rules are in [`SKILL.md`](../skills/pmo-docs/SKILL.md); th
 
 ```
 pmo/
-  config.yaml      project name, manager, domain and stack
+  config.yaml      project name, manager, domain, stack and the Arabic translation setting
+  data/            the approved Arabic glossary
   registers/       20 registers, one entry per line
   views/           one view per register plus the catalogue, rendered from them
-  documents/       a status report and a decision log, both drafts
+  documents/       a draft status report, a finished decision log and its Arabic translation
 ```
 
-The config holds only the settings Acme changes (`schema_version`, the project name and manager, plus the `domain` and `technical` settings the technical documents read). Everything else comes from the skill's defaults. The people are in the roster register:
+The config holds only the settings Acme changes (`schema_version`, the project name and manager, plus the `domain` and `technical` settings the technical documents read and the `languages` block of section 6). Everything else comes from the skill's defaults. The people are in the roster register:
 
 ```yaml
 roster:
@@ -135,19 +136,20 @@ drift: n/a
 generated_from: tasks, milestones, risks, issues, changes, actions, decisions, teams
 stale_days: 30
 window: 2026-03-01..2026-03-31
-translations: none
+translations: ar
 translate: in-period
 source_hashes: {tasks: "86d95355", milestones: "0e9469b7", risks: "c0043131", issues: "fbf13b7c", changes: "5351a37c", actions: "3c2a3948", decisions: "988ad57c", teams: "e2679193"}
 [exit 0]
 ```
 
-The `template` line shows the full path on your machine; it is shortened here. `generated_from` lists the registers a status report is made from. `source_hashes` is what Finish records in a finished document, so that a later change to one of those registers can be noticed (the document is then stale). `translations` and `translate` say which languages the type is translated into and when; Acme writes English only (section 6).
+The `template` line shows the full path on your machine; it is shortened here. `generated_from` lists the registers a status report is made from. `source_hashes` is what Finish records in a finished document, so that a later change to one of those registers can be noticed (the document is then stale). `translations` and `translate` say which languages the type is translated into and when (Acme translates into Arabic `ar`; section 6).
 
 ## 5. Check the documents
 
 ```
 $ python3 "$SKILL/scripts/structure_check.py"
 ok    pmo/documents/2026-03 - Status report.md
+ok    pmo/documents/Decision log.ar.md
 ok    pmo/documents/Decision log.md
 
 0 file(s) with structure errors
@@ -165,13 +167,13 @@ warn  pmo/documents/2026-03 - Status report.md: extra sections: Overview
 [exit 1]
 ```
 
-Both Acme documents are drafts. `docs_audit.py` looks for stale, old and broken documents and exits 1 when it finds any:
+The status report is a draft; the decision log and its Arabic translation are finished. `docs_audit.py` looks for stale, old and broken documents and exits 1 when it finds any:
 
 ```
 $ python3 "$SKILL/scripts/docs_audit.py" --as-of 2026-03-15
 # Docs audit - 2026-03-15
 
-Scanned 2 Markdown files.
+Scanned 3 Markdown files.
 
 ## Front matter (0)
 
@@ -207,29 +209,29 @@ None
 
 ## 6. Languages and translations
 
-Acme has no `languages` block, so it writes English only. Add one to `pmo/config.yaml` to translate documents into a second language (`xx` is an invented code):
+Acme's `pmo/config.yaml` declares Arabic (`ar`) as a translation language with an approved glossary (`pmo/data/glossary-ar.md`):
 
 ```yaml
 languages:
-  translations: [xx]
-  xx: { label: XX, dir: rtl, glossary: pmo/data/glossary-xx.md }
+  translations: [ar]
+  ar: { label: AR, dir: rtl, glossary: pmo/data/glossary-ar.md }
 ```
 
-`render_views.py --check` validates the new keys (it still prints `registers valid, views current`). `where.py --lang` then gives the translation's path, the value for its `translation_of` and the `source_hash` of the original's body:
+`render_views.py --check` validates the language keys. `where.py --lang` then gives the translation's path, the value for its `translation_of` and the `source_hash` of the original's body:
 
 ```
-$ python3 "$SKILL/scripts/where.py" decision-log --lang xx --hashes
+$ python3 "$SKILL/scripts/where.py" decision-log --lang ar --hashes
 type: decision-log
 title: Decision log
-document: pmo/documents/Decision log.xx.md
-document_exists: no
+document: pmo/documents/Decision log.ar.md
+document_exists: yes
 original: pmo/documents/Decision log.md
 original_exists: yes
 translation_of: "Decision log.md"
-lang: xx
+lang: ar
 dir: rtl
-glossary: pmo/data/glossary-xx.md
-glossary_proposed: pmo/data/glossary-xx.proposed.md
+glossary: pmo/data/glossary-ar.md
+glossary_proposed: pmo/data/glossary-ar.proposed.md
 template: <skill folder>/assets/templates/decision-log.md
 template_source: skill
 template_exists: yes
@@ -239,7 +241,7 @@ drift: n/a
 generated_from: decisions
 stale_days: 30
 window: none
-translations: xx
+translations: ar
 translate: in-period
 source_hash: "f1bea050"
 [exit 0]
@@ -248,7 +250,7 @@ source_hash: "f1bea050"
 A type that is not translated refuses the flag. The shipped defaults translate neither the audit report nor the overdue report:
 
 ```
-$ python3 "$SKILL/scripts/where.py" docs-audit-report --lang xx
+$ python3 "$SKILL/scripts/where.py" docs-audit-report --lang ar
 usage: where.py [-h] [--project PROJECT] [--week] [--as-of YYYY-MM-DD]
                 [--hashes] [--title TITLE] [--lang CODE]
                 type [period]
@@ -256,10 +258,11 @@ where.py: error: doc type 'docs-audit-report' has no translations configured
 [exit 2]
 ```
 
-`parity_check.py` compares each translation with its original: the same headings, tables, ids, numbers, list items and ticked boxes. Acme has no translation yet:
+`parity_check.py` compares each translation with its original: the same headings, tables, ids, numbers, list items and ticked boxes:
 
 ```
 $ python3 "$SKILL/scripts/parity_check.py"
+ok    pmo/documents/Decision log.ar.md
 
 0 file(s) differ from their originals
 [exit 0]
