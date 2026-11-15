@@ -187,7 +187,7 @@ The process of copying finished documents to the configured folder or repository
 _Avoid_: deploy, push, export, sync
 
 **Publish target**:
-Where `/pmo-docs:publish` copies finished documents, set by `publish.mode` in the config: `folder` (a folder inside the project) or `repo` (the top level of another git repository, where a commit is made only after the user says yes).
+Where `publish.py` (or `/pmo-docs:publish`) copies finished documents, set by `publish.mode` and `publish.path` in the config: `folder` (a folder inside the project) or `repo` (the top level of another local git repository, where a commit is made only after the user says yes and nothing is pushed).
 _Avoid_: destination, remote, export folder
 
 **Publish conflict**:
