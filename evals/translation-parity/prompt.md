@@ -5,4 +5,4 @@ allowed_tools: [Skill, Read, Write, Edit, Glob, Grep, Bash]
 tags: [translation, safety]
 ---
 
-The xx translation of the decision log is ready. Finish it. Do not ask me questions in an interactive form; reply in text.
+The xx translation of the decision log is ready. Finish it. Treat 2026-03-16 as today's date. Do not ask me questions in an interactive form; reply in text.

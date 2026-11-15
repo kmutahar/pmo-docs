@@ -169,6 +169,11 @@ class Evals(unittest.TestCase):
                 continue  # Write is banned on purpose; the new task must be added with Edit
             self.assertEqual(edits, writes, d.name)
 
+    def test_every_prompt_pins_a_date(self):
+        for prompt in sorted((REPO / "evals").glob("*/prompt.md")):
+            _, body = pmo_common.split_front_matter(prompt.read_text(encoding="utf-8"), strict=True)
+            self.assertRegex(body, r"\d{4}-\d{2}-\d{2} as today's date|Today is \d{4}-\d{2}-\d{2}", prompt.parent.name)
+
     def test_every_scaffold_builds_a_valid_acme(self):
         for scaffold in sorted((REPO / "evals").glob("*/scaffold.sh")):
             with self.subTest(scaffold.parent.name):

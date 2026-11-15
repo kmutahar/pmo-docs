@@ -15,4 +15,4 @@ Run release-notes for the period 2026-03. Treat 2026-03-31 as today's date. Do n
 5a7c9e1b3d2f4a6c8e0b1d3f5a7c9e2b4d6f8a1d	Tidy the footer links
 ```
 
-Save the draft where the project's naming puts it. In your final answer, quote the draft's front matter lines `covers_from` and `covers_to` and every bullet under "New", "Improved", "Fixed", "Breaking changes" and "Internal", and every bullet under "Open questions".
+Save the draft as `pmo/documents/2026-03 - Release notes.md`. In your final answer, quote the draft's front matter lines `covers_from` and `covers_to` and every bullet under "New", "Improved", "Fixed", "Breaking changes" and "Internal", and every bullet under "Open questions".
