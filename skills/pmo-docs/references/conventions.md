@@ -73,6 +73,15 @@ A translation is a file next to its original, named `<name>.<lang>.md` (for exam
 
 ## Config keys
 
+- `project.name`, `project.manager`: the project's name and its project manager (default `null`; asked at setup).
+- `paths.registers`, `paths.views`, `paths.house_rules`: folders and file as in the Folders table (defaults `pmo/registers`, `pmo/views`, `pmo/house-rules.md`).
+- `registers.<name>.file`, `registers.<name>.view`: the register's YAML file and its view file in the views folder (for example `tasks.yaml`, `tasks.md`).
+- `registers.<name>.fields`: the list of fields an entry may hold; any other field is a validation error. `registers.<name>.enums`: field name to the `vocab` list that field's values come from.
+- `registers.<name>.dates`: fields that hold a date (`YYYY-MM-DD`). `registers.<name>.months`: fields that hold a month (`YYYY-MM`).
+- `registers.<name>.closed`: statuses that mean the entry is closed. `registers.<name>.pending`: statuses that still need a decision.
+- `vocab.<name>`: the values a field may take; an empty list accepts any value. The lists are `task_status`, `risk_status`, `issue_status`, `change_status`, `decision_status`, `action_status`, `risk_level`, `issue_severity`, `rag`, `origin`, `priority_order`, `requirement_status`, `requirement_kind`, `test_status`, `test_kind`, `environment_kind` and `environment_status`.
+- `doc_types.<type>.title`, `doc_types.<type>.template`: the document's title and its template file name in the templates folder.
+- `doc_types.<type>.generated_from`: the registers the document is made from; a change in one makes it stale. `doc_types.<type>.stale_days`: days after which an unchanged document counts as stale (omit for never).
 - `project.week_start`: day of the week a working week starts (`monday`, `tuesday`, ..., `sunday`; default `monday`).
 - `domain.lifecycle_entity`: entity name whose life cycle is described by `entity-lifecycle` (default `null`).
 - `domain.roles`: list of permission roles as named in code (for example `[admin, editor, viewer]`).
