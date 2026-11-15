@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: plan-one-owner-majority
+description: Project plan from an Acme copy where bob owns all open tasks; the reply must note that bob carries most of the open work and offer a proposed risk without writing to risks.yaml.
+context:
+  scaffold_script: scaffold.sh

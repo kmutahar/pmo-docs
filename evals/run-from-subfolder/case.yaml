@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: run-from-subfolder
+description: User is in docs/notes inside the Acme project and asks to add a task; the agent must edit pmo/registers/tasks.yaml at the project root as T-5 rather than creating a pmo/ folder under docs/notes.
+context:
+  scaffold_script: scaffold.sh

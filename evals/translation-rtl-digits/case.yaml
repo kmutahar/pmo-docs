@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: translation-rtl-digits
+description: Translate the Acme decision log into Arabic (ar) with config digits set to Arabic-Indic; numbers in prose must use ٢٠ while ids (DEC-2) and dates (2026-03-09) stay in ASCII digits.
+context:
+  scaffold_script: scaffold.sh

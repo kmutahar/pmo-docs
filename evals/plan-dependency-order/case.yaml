@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: plan-dependency-order
+description: Project plan from an Acme copy where T-2 (due 2026-03-25) depends on T-1 (due 2026-03-30) via D-1; the plan and reply must flag the dependency order conflict without changing any date.
+context:
+  scaffold_script: scaffold.sh
