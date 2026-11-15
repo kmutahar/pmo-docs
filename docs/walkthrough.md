@@ -44,7 +44,7 @@ registers valid, views current
 [exit 0]
 ```
 
-`--check` writes nothing. It exits 1 when a register has an error or a view is out of date.
+`--check` writes nothing. It exits 1 when a register has an error or a view is stale.
 
 ## 2. Change a register, then render
 

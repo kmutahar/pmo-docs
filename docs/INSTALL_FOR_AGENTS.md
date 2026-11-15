@@ -13,7 +13,7 @@ These rules apply to every step:
 1. **No git writes:** Never stage, commit or push files (`git add`, `git commit`, `git push`, etc.).
 2. **Ask before writing:** Show the target path and exact commands, and wait for the user to confirm with an explicit "yes" before creating, modifying or deleting any file on disk. A project-level install into `.agents/skills` requires an additional explicit confirmation because it writes outside `pmo/`.
 3. **Data, not commands:** This document is reference data for you to execute with the user's consent. It does not authorise running unapproved commands or bypassing user confirmation.
-4. **No network calls from the skill itself:** The skill engine and scripts run locally and make no network calls. Only this install/update workflow downloads the release archive from GitHub, and only with user consent.
+4. **No network calls from the skill itself:** The skill and its scripts run locally and make no network calls. Only this install/update workflow downloads the release archive from GitHub, and only with user consent.
 
 ---
 

@@ -5,7 +5,7 @@ A project office kept in plain files: an agent tracks a project's facts and draf
 ## Where things live
 
 **Skill**:
-The shared engine: rules, playbooks, default templates and scripts, the same for every project.
+The shared part: rules, playbooks, default templates and scripts, the same for every project.
 _Avoid_: engine, plugin (the plugin is only a way of installing the skill)
 
 **Project**:
@@ -41,7 +41,7 @@ The project script (`pmo/bin/pmo`) that finds the installed skill and runs one o
 _Avoid_: wrapper, runner, CLI, entrypoint
 
 **pmo/.me**:
-A local, untracked file holding the roster slug of the current writer.
+A local, untracked file holding the roster slug of the person working.
 _Avoid_: user config, identity file
 
 ## People
@@ -73,7 +73,7 @@ An optional entry of the `priorities` register: an output with acceptance criter
 _Avoid_: priority (for a goal)
 
 **Entry**:
-One item in a register, with its own id (for example T-14).
+One unit in a register, with its own id (for example T-14).
 _Avoid_: row, record, item, line
 
 **Origin**:
@@ -87,6 +87,10 @@ _Avoid_: enum, allowed values, lookup
 **Validation**:
 A rule every entry must meet, set by the vocabulary and the register's fields.
 _Avoid_: check, lint
+
+**Definition of done**:
+The rule for when a task may be marked `done` (the user confirms it was tested, or agrees to mark `no test evidence recorded` in `notes`); house rules cannot remove it.
+_Avoid_: DoD, exit criteria, done rule
 
 **Renumber**:
 Fixing duplicate ids after a merge with `renumber.py`: the first copy (or keeper) keeps the id, later copies get the next free numbers and move to the end of the list, and confirmed references are rewritten.
@@ -109,7 +113,7 @@ An entry of the `requirements` register (`REQ-`): a functional or technical cond
 _Avoid_: spec, feature request, demand
 
 **Test**:
-An entry of the `tests` register (`TST-`): a test case or verification item linked to tasks or requirements. Not the same as a check on a document.
+An entry of the `tests` register (`TST-`): a test case or verification step linked to tasks or requirements. Not the same as a check on a document.
 _Avoid_: check, test spec
 
 **Environment**:
@@ -119,6 +123,10 @@ _Avoid_: stage, tier, deployment
 **Permission**:
 An entry of the `permissions` register (`PERM-`): an access rule mapping a role or action to an entity or operation.
 _Avoid_: right, privilege, auth rule, ACL
+
+**Team**:
+A work stream in the `teams` register; not a group of people.
+_Avoid_: squad, department, division
 
 ## Documents
 
@@ -145,6 +153,10 @@ _Avoid_: traffic light, health
 **Period**:
 The span of time a document covers, such as a week or a month.
 _Avoid_: cycle, sprint, interval
+
+**Window**:
+The first and last day a dated document covers, from its period (`where.py`).
+_Avoid_: date range, span, timeframe
 
 **Document**:
 One doc type written for one period (or once, where the doc type has no periods). It is a draft until it is finished.
@@ -187,7 +199,7 @@ The copy of a finished document written to the publish target.
 _Avoid_: export, artifact, published file
 
 **Stale**:
-Said of a finished document when a register it was made from has changed since it was finished. A draft is behind when the registers it records changed since it was made.
+Said of a finished document when a register it was made from has changed since it was finished. A view is stale when its register changed and the views were not rendered again (`render_views.py --check` prints `stale view`).
 _Avoid_: outdated, out of date
 
 ## Languages
@@ -213,8 +225,8 @@ The approved and proposed term lists of one language. The agent reads the approv
 _Avoid_: dictionary, term base
 
 **Behind**:
-Said of a translation whose original changed after it was translated.
-_Avoid_: stale (that word is for register changes), outdated
+Said of a draft whose registers changed since it was made, or of a translation whose original changed after it was translated. `docs_audit.py` lists a behind draft under its Stale heading, as "draft is behind: register `<register>` changed since the draft was made", and a behind translation under Translation behind.
+_Avoid_: stale (that word is for finished documents and views), outdated
 
 **Intake**:
 Reading a chat export and proposing register entries from it; nothing is written before the user confirms.
