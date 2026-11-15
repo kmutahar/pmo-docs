@@ -201,11 +201,11 @@ def run_checks(checks, dsec):
 
 
 def duplicate_ids(text, cfg=None):
-    id_rx = re.compile(r"[A-Z]{1,4}-\d+[A-Za-z]?")
+    id_rx = re.compile(r"[A-Z]{1,4}-[0-9]+[A-Za-z]?")
     cfg_rx = None
     if cfg:
         prefixes = pc.register_prefixes(cfg)
-        cfg_rx = re.compile(r"(?:" + "|".join(re.escape(p) for p in prefixes) + r")-\d+[A-Za-z]?")
+        cfg_rx = re.compile(r"(?:" + "|".join(re.escape(p) for p in prefixes) + r")-[0-9]+[A-Za-z]?")
     dups = set()
     for _, rows in tables(strip_fences(text)):
         seen = set()

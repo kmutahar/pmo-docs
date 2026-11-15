@@ -26,9 +26,9 @@ KNOWN_RECIPES = ("weekly-status", "monthly-status", "month-start", "overdue-repo
 
 def real_date(v):
     if isinstance(v, datetime.date):
-        return True
+        return not isinstance(v, datetime.datetime)  # a date with a time of day is not a date here
     try:
-        return bool(re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(v))) and bool(datetime.date.fromisoformat(str(v)))
+        return bool(re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", str(v))) and bool(datetime.date.fromisoformat(str(v)))
     except ValueError:
         return False
 
@@ -460,7 +460,7 @@ def validate(data, cfg, root=None):
                             break
                     desc = f'{pos} "{label_val}"' if label_val is not None else pos
                     id_occurrences[key].append(desc)
-                if rid and isinstance(rid, str) and prefix and not re.fullmatch(re.escape(prefix) + r"-\d+", str(rid)):
+                if rid and isinstance(rid, str) and prefix and not re.fullmatch(re.escape(prefix) + r"-[0-9]+", str(rid)):
                     errors.append(f"{who}: id must look like {prefix}-1")
             if name == "roster":
                 slug_val = r.get("slug")

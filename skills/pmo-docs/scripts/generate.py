@@ -80,7 +80,7 @@ def id_number(v):
     s = str(v or "")
     if "-" in s:
         part = s.rsplit("-", 1)[-1]
-        m = re.match(r"^\d+", part)
+        m = re.match(r"^[0-9]+", part)
         if m:
             return int(m.group(0))
     return 0

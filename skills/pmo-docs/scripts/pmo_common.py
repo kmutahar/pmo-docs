@@ -623,7 +623,7 @@ def rag(cfg, as_of: datetime.date, tasks, milestones=(), issues=(), risks=()) ->
 
 def id_num(tid):
     """First number inside an id string, or 0 when there is none."""
-    m = re.search(r"\d+", str(tid))
+    m = re.search(r"[0-9]+", str(tid))
     return int(m.group()) if m else 0
 
 
