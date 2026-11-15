@@ -105,6 +105,17 @@ A translation is a file next to its original, named `<name>.<lang>.md` (for exam
 - `publish.url`: optional web URL prefix used when printing published links.
 - `schedule`: optional list of entries recording scheduled recipes and times (e.g. `[{ recipe: weekly-status, when: "Mon 08:00" }]`) to record what runs unattended; see `references/schedule.md`.
 
+## Schema version and migrations
+
+`schema_version` in `pmo/config.yaml` is `1`. No release has changed a format yet, so there is no migration script. A script or tool that finds a newer `schema_version` than it knows exits 2.
+
+When a format first has to change (a breaking change, which waits for a major version), the release adds `scripts/migrate/NNNN_<what>.py`:
+
+- One script per version step, numbered in order (`0001_...` moves a project from version 1 to 2); a project at version N runs every script after N, in number order.
+- A script works on the project folder it is given, changes only files inside it, and sets `schema_version` last, so a failed run can be repeated.
+- The release has an upgrade note in `CHANGELOG.md` that names the script.
+- Optional new keys and fields do not need a script and do not change `schema_version`.
+
 ## Views and catalogue
 
 - Register views (`pmo/views/<name>.md`) summarize each register, listing entries by id number (registers without ids keep file order; the tasks view sorts by priority, then id number).
