@@ -771,6 +771,32 @@ class EveryTool(unittest.TestCase):
                     self.assertIn("--as-of", out)
                     self.assertIn(bad, out)
 
+    def test_null_register_file_exits_2_in_every_script_that_loads_config(self):
+        d = Path(tempfile.mkdtemp()) / "acme"
+        self.addCleanup(shutil.rmtree, d.parent)
+        shutil.copytree(Path(__file__).resolve().parents[1] / "examples/acme", d)
+        cfg_file = d / "pmo/config.yaml"
+        cfg_file.write_text(cfg_file.read_text(encoding="utf-8") + "\nregisters: {tasks: {file: null}}\n", encoding="utf-8")
+        cases = (
+            ("docs_audit.py", ()),
+            ("generate.py", ("status-report", "--stdout")),
+            ("overdue.py", ()),
+            ("parity_check.py", ()),
+            ("publish.py", ()),
+            ("render_views.py", ("--check",)),
+            ("renumber.py", ()),
+            ("structure_check.py", ()),
+            ("where.py", ("status-report",)),
+        )
+        for name, extra in cases:
+            with self.subTest(script=name):
+                p = subprocess.run([sys.executable, str(SCRIPTS / name), "--project", str(d), *extra],
+                                   capture_output=True, text=True, encoding="utf-8")
+                self.assertEqual(p.returncode, 2, p.stdout + p.stderr)
+                self.assertIn("ERROR config:", p.stderr)
+                self.assertIn("registers.tasks.file", p.stderr)
+                self.assertNotIn("Traceback", p.stderr)
+
 
 class ConfigGuards(unittest.TestCase):
     def setUp(self):
@@ -867,6 +893,7 @@ class ConfigGuards(unittest.TestCase):
             ("project: just text\n", "project", True),
             ("doc_types: {decision-log: {name: 5}}\n", "doc_types.decision-log.name", True),
             ("doc_types: {decision-log: {stale_days: '30'}}\n", "doc_types.decision-log.stale_days", True),
+            ("registers: {tasks: {file: null}}\n", "registers.tasks.file", True),
             ("paths: {templates: null}\n", "paths.templates is missing", False),
         ]
         acme_text = (Path(__file__).resolve().parents[1] / "examples/acme/pmo/config.yaml").read_text(encoding="utf-8")

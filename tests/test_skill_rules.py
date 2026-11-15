@@ -124,7 +124,8 @@ class SkillRules(unittest.TestCase):
         text = self._playbook("schedule.md")
         self.assertIn("Without --allowedTools", text)
         self.assertIn("claude -p", text)
-        self.assertNotIn("dangerously", text)
+        self.assertIn("Never print permission-skipping flags (`--dangerously-skip-permissions`)", text)
+        self.assertEqual(text.count("--dangerously-skip-permissions"), 1)  # only in the "Never print" line, not in the cron line
 
     def test_privacy_covers_chats_docs_and_patterns(self):
         text = (REPO / "PRIVACY.md").read_text(encoding="utf-8")

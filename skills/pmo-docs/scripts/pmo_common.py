@@ -84,6 +84,9 @@ def config_type_errors(cfg) -> list[str]:
     for name, r in cfg.get("registers", {}).items():
         if not isinstance(r, dict):
             continue
+        fval = r.get("file")
+        if not isinstance(fval, str) or not fval.strip():
+            errors.append(f"registers.{name}.file must be non-empty text")
         if "prefix" in r and not isinstance(r["prefix"], str):
             errors.append(f"registers.{name}.prefix must be text")
         for k in ("fields", "dates", "months", "closed", "done", "blocked", "active", "accepted"):
