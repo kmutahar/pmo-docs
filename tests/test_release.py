@@ -1,7 +1,8 @@
-# Tests dev/release (--help, version and tag checks, dirty tree, dry run, the non-dry path up to the first prompt, with stub git-cliff/claude) in a throwaway git repo.
+# Tests dev/release (--help, version and tag checks, dirty tree, dry run, the non-dry path up to the first prompt and, through a pseudo-terminal, the commit, tag and push steps and their failures, with stub git-cliff/claude) in a throwaway git repo.
 # Run from the repo root: python3 -m unittest tests.test_release
 import json
 import os
+import pty
 import shutil
 import subprocess
 import tempfile
@@ -228,6 +229,111 @@ class ReleaseTest(unittest.TestCase):
         r = self.release("--dry-run", "9.9.9")
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertIn("warning:", r.stderr.lower())
+
+
+    def release_tty(self, version, answers, **env):
+        """Run dev/release on a pseudo-terminal (its prompts read /dev/tty) and answer each [y/N] prompt in order. Returns (exit code, output)."""
+        env = {**{k: v for k, v in os.environ.items() if k not in ("DRY_RUN", "RELEASE_SKIP_CHECKS")},
+               "GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1",
+               "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t.t", "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@t.t",
+               "RELEASE_SKIP_CHECKS": "1", "PYTHONDONTWRITEBYTECODE": "1", **env}
+        pid, fd = pty.fork()
+        if pid == 0:
+            os.chdir(self.tmp)
+            os.execvpe("bash", ["bash", "dev/release", version], env)
+        out, seen, answers = b"", 0, list(answers)
+        while True:
+            try:
+                data = os.read(fd, 4096)
+            except OSError:  # the child closed the terminal
+                break
+            if not data:
+                break
+            out += data
+            while out.count(b"[y/N]") > seen and answers:
+                os.write(fd, answers.pop(0).encode() + b"\n")
+                seen += 1
+        os.close(fd)
+        _, status = os.waitpid(pid, 0)
+        return os.waitstatus_to_exitcode(status), out.decode("utf-8", "replace")
+
+    def bare_origin(self):
+        remote = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, remote)
+        self.git("init", "--bare", "-q", str(remote), cwd=remote)
+        self.git("remote", "add", "origin", str(remote))
+        self.git("push", "-q", "-u", "origin", "main")
+        return remote
+
+    def hook(self, repo_git_dir, name, body):
+        path = Path(repo_git_dir) / "hooks" / name
+        path.parent.mkdir(exist_ok=True)
+        path.write_text("#!/bin/sh\n" + body, encoding="utf-8")
+        path.chmod(0o755)
+
+    def test_yes_to_both_prompts_commits_tags_and_pushes(self):
+        env = self.stub_non_dry()
+        remote = self.bare_origin()
+        code, out = self.release_tty("9.9.9", ["y", "y"], **env)
+        self.assertEqual(code, 0, out)
+        self.assertIn("Committed and tagged v9.9.9.", out)
+        self.assertEqual(self.git("log", "-1", "--format=%s").stdout.strip(), "chore(release): v9.9.9")
+        self.assertEqual(self.git("rev-parse", "v9.9.9^{commit}").stdout, self.git("rev-parse", "HEAD").stdout)
+        self.assertEqual(self.git("rev-parse", "main", cwd=remote).stdout, self.git("rev-parse", "HEAD").stdout)
+        self.assertIn("v9.9.9", self.git("tag", cwd=remote).stdout)
+
+    def test_no_to_push_leaves_commit_and_tag_local(self):
+        env = self.stub_non_dry()
+        remote = self.bare_origin()
+        code, out = self.release_tty("9.9.9", ["y", "n"], **env)
+        self.assertEqual(code, 0, out)
+        self.assertIn("Not pushed.", out)
+        self.assertIn("v9.9.9", self.git("tag").stdout)
+        self.assertEqual(self.git("tag", cwd=remote).stdout, "")
+
+    def test_commit_failure_leaves_head_and_prints_the_undo(self):
+        env = self.stub_non_dry()
+        self.hook(self.tmp / ".git", "pre-commit", "echo rejected >&2\nexit 1\n")
+        before = self.git("rev-parse", "HEAD").stdout
+        code, out = self.release_tty("9.9.9", ["y"], **env)
+        self.assertNotEqual(code, 0, out)
+        self.assertEqual(self.git("rev-parse", "HEAD").stdout, before)
+        self.assertEqual(self.git("tag").stdout, "")
+        self.assertIn("To undo:", out)
+
+    def test_tag_failure_keeps_the_commit_and_says_how_to_tag(self):
+        env = self.stub_non_dry()
+        # a post-commit hook that takes the tag name makes `git tag -a` fail after the commit exists
+        self.hook(self.tmp / ".git", "post-commit", "git tag v9.9.9 HEAD\n")
+        code, out = self.release_tty("9.9.9", ["y"], **env)
+        self.assertNotEqual(code, 0, out)
+        self.assertIn("the release commit exists but tagging failed", out)
+        self.assertEqual(self.git("log", "-1", "--format=%s").stdout.strip(), "chore(release): v9.9.9")
+
+    def test_push_failure_keeps_commit_and_tag_local_and_says_how_to_retry(self):
+        env = self.stub_non_dry()
+        remote = self.bare_origin()
+        self.hook(remote, "pre-receive", "echo refused >&2\nexit 1\n")
+        code, out = self.release_tty("9.9.9", ["y", "y"], **env)
+        self.assertNotEqual(code, 0, out)
+        self.assertIn("push failed; commit and tag are local only", out)
+        self.assertIn("git push --atomic origin HEAD v9.9.9", out)
+        self.assertIn("v9.9.9", self.git("tag").stdout)
+        self.assertEqual(self.git("tag", cwd=remote).stdout, "")
+
+    def test_behind_upstream_warns_and_continues(self):
+        remote = self.bare_origin()
+        other = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, other)
+        self.git("clone", "-q", "-b", "main", str(remote), str(other / "c"), cwd=other)
+        (other / "c" / "new.txt").write_text("x", encoding="utf-8")
+        self.git("add", ".", cwd=other / "c")
+        self.git("commit", "-qm", "ahead", cwd=other / "c")
+        self.git("push", "-q", "origin", "main", cwd=other / "c")
+        self.git("fetch", "-q", "origin")
+        r = self.release("--dry-run", "9.9.9")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("behind its upstream", r.stderr)
 
 
 if __name__ == "__main__":

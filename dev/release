@@ -91,6 +91,10 @@ if remote_tags=$(GIT_TERMINAL_PROMPT=0 git ls-remote --tags origin "refs/tags/$t
 else
   echo "warning: could not check origin for tag $tag ($remote_tags); continuing" >&2
 fi
+# shortcut: compares with the last fetched origin state, no fetch here; upgrade to 'git fetch' if a stale clone ever slips through
+if git rev-parse -q --verify '@{u}' >/dev/null 2>&1 && [ "$(git rev-list --count 'HEAD..@{u}')" != 0 ]; then
+  echo "warning: HEAD is behind its upstream ($(git rev-parse --abbrev-ref '@{u}')); pull before releasing" >&2
+fi
 
 # 3. checks (RELEASE_SKIP_CHECKS only counts in a dry run; the tests use it)
 if [ "$dry" = 1 ] && [ "${RELEASE_SKIP_CHECKS:-0}" = 1 ]; then
