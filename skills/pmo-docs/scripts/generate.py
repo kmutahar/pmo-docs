@@ -126,12 +126,9 @@ def period_tasks(ctx: Ctx) -> tuple[list[dict], list[str]]:
             if p == window_month:
                 matching.append(t)
         elif due:
-            try:
-                d = pc.to_date(due)
-                if ctx.window and d and ctx.window[0] <= d <= ctx.window[1]:
-                    matching.append(t)
-            except (ValueError, TypeError):
-                unassigned.append(t)
+            d = pc.to_date(due)
+            if ctx.window and d and ctx.window[0] <= d <= ctx.window[1]:
+                matching.append(t)
         else:
             unassigned.append(t)
 
@@ -393,12 +390,9 @@ def generate_team_checklist(ctx: Ctx) -> Filled:
             if mp == window_month:
                 matching_ms.append(m)
         elif due:
-            try:
-                d = pc.to_date(due)
-                if ctx.window and d and ctx.window[0] <= d <= ctx.window[1]:
-                    matching_ms.append(m)
-            except (ValueError, TypeError):
-                pass
+            d = pc.to_date(due)
+            if ctx.window and d and ctx.window[0] <= d <= ctx.window[1]:
+                matching_ms.append(m)
     matching_ms.sort(key=lambda m: id_number(m.get("id")))
 
     if matching_ms:
@@ -638,12 +632,9 @@ def generate_status_report(ctx: Ctx) -> Filled:
             if p and p < window_month:
                 completed_before_count += 1
             elif not p and due:
-                try:
-                    d = pc.to_date(due)
-                    if d and d.strftime("%Y-%m") < window_month:
-                        completed_before_count += 1
-                except (ValueError, TypeError):
-                    pass
+                d = pc.to_date(due)
+                if d and d.strftime("%Y-%m") < window_month:
+                    completed_before_count += 1
 
     all_milestones = ctx.data.get("milestones", [])
     all_issues = ctx.data.get("issues", [])
@@ -651,11 +642,8 @@ def generate_status_report(ctx: Ctx) -> Filled:
 
     if ctx.as_of > window[1]:
         def keep_raised(entry):
-            try:
-                d = pc.to_date(entry.get("raised"))
-                return d is None or d <= window[1]
-            except (ValueError, TypeError):
-                return True
+            d = pc.to_date(entry.get("raised"))
+            return d is None or d <= window[1]
 
         all_issues = [i for i in all_issues if keep_raised(i)]
         all_risks = [r for r in all_risks if keep_raised(r)]
