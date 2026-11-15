@@ -6,7 +6,7 @@ Keep your project's tasks, risks and decisions in plain files. Ask your AI codin
 - *"add a task: set up staging, high priority, due 2026-03-10"* — logs the task and updates your views.
 - *"draft release notes"* — turns recent tasks, changes and git history into a release-notes draft.
 
-> **Status: v0.7.5 released.** Registers, views, documents, checks, generators, recipes, languages and stacks work today. Release history is in [`CHANGELOG.md`](CHANGELOG.md); the plan, decisions and later versions are in [`docs/PLAN.md`](docs/PLAN.md).
+> **Status: v0.7.6 released.** Registers, views, documents, checks, generators, recipes, languages and stacks work today. Release history is in [`CHANGELOG.md`](CHANGELOG.md); the plan, decisions and later versions are in [`docs/PLAN.md`](docs/PLAN.md).
 
 ## How it works
 
@@ -60,10 +60,10 @@ Installing copies only the skill folder. The short form `kmutahar/pmo-docs` clon
 ```sh
 mkdir -p ~/.agents/skills
 tmp=$(mktemp -d)
-curl -fsSL https://github.com/kmutahar/pmo-docs/archive/refs/tags/v0.7.5.tar.gz | tar -xz -C "$tmp" \
-  && [ -f "$tmp/pmo-docs-0.7.5/skills/pmo-docs/SKILL.md" ] \
+curl -fsSL https://github.com/kmutahar/pmo-docs/archive/refs/tags/v0.7.6.tar.gz | tar -xz -C "$tmp" \
+  && [ -f "$tmp/pmo-docs-0.7.6/skills/pmo-docs/SKILL.md" ] \
   && rm -rf ~/.agents/skills/pmo-docs \
-  && cp -R "$tmp"/pmo-docs-0.7.5/skills/pmo-docs ~/.agents/skills/pmo-docs
+  && cp -R "$tmp"/pmo-docs-0.7.6/skills/pmo-docs ~/.agents/skills/pmo-docs
 rm -rf "$tmp"
 ls ~/.agents/skills/pmo-docs/SKILL.md ~/.agents/skills/pmo-docs/scripts
 ```
@@ -82,7 +82,7 @@ Then restart the agent or open a new session and ask it to list its skills: `pmo
 Paste this into any coding agent. It reads [`docs/INSTALL_FOR_AGENTS.md`](docs/INSTALL_FOR_AGENTS.md), looks for existing copies, shows its plan, asks before every write, installs and verifies:
 
 ```
-Read the raw text of https://raw.githubusercontent.com/kmutahar/pmo-docs/v0.7.5/docs/INSTALL_FOR_AGENTS.md (curl it, do not work from a summary), then follow it exactly to install and verify the pmo-docs skill for the agent you are running in. Respond in the user's language.
+Read the raw text of https://raw.githubusercontent.com/kmutahar/pmo-docs/v0.7.6/docs/INSTALL_FOR_AGENTS.md (curl it, do not work from a summary), then follow it exactly to install and verify the pmo-docs skill for the agent you are running in. Respond in the user's language.
 ```
 
 ### Update
@@ -246,9 +246,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: curl -fsSL https://github.com/kmutahar/pmo-docs/archive/refs/tags/v0.7.5.tar.gz | tar -xz
+      - run: curl -fsSL https://github.com/kmutahar/pmo-docs/archive/refs/tags/v0.7.6.tar.gz | tar -xz
       - run: pmo/bin/pmo render_views --check
-        env: { PMO_DOCS_SKILL: pmo-docs-0.7.5/skills/pmo-docs }
+        env: { PMO_DOCS_SKILL: pmo-docs-0.7.6/skills/pmo-docs }
 ```
 
 ## Two writers
