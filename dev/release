@@ -144,15 +144,14 @@ def plugin(text):
     return new
 
 def install_doc(text):
-    # release tag in links ("pmo-docs/v1.2.3/", "refs/tags/v1.2.3.tar.gz"), archive folder, "tag `v1.2.3`", "e.g. `1.2.3`", the README "**Status: v1.2.3 released"
+    # release tag in links ("pmo-docs/v1.2.3/", "refs/tags/v1.2.3.tar.gz"), archive folder, "tag `v1.2.3`", "e.g. `1.2.3`"
     v = r"\d+\.\d+\.\d+"
     new, n = re.subn(rf"((?:pmo-docs|refs/tags)/)v{v}", rf"\1v{version}", text)
     if n == 0:
         fail("no release tag link found to update")
     new = re.sub(rf"(pmo-docs-){v}(?=/skills)", rf"\g<1>{version}", new)
     new = re.sub(rf"(tag `?)v{v}", rf"\1v{version}", new)
-    new = re.sub(rf"(e\.g\. `){v}", rf"\g<1>{version}", new)
-    return re.sub(rf"(\*\*Status: )v{v}( released)", rf"\1v{version}\2", new)
+    return re.sub(rf"(e\.g\. `){v}", rf"\g<1>{version}", new)
 
 for path, fn in (("skills/pmo-docs/SKILL.md", skill), ("skills/pmo-docs/.claude-plugin/plugin.json", plugin),
                  ("README.md", install_doc), ("docs/INSTALL_FOR_AGENTS.md", install_doc)):

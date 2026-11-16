@@ -51,13 +51,12 @@ class Plugin(unittest.TestCase):
         self.assertEqual(str(fm["metadata"]["version"]), version)
 
         rx = re.compile(
-            r"(?:pmo-docs/|pmo-docs-|tags/v|tag `v|Status: v|e\.g\. `)(\d+\.\d+\.\d+)"
+            r"(?:pmo-docs/|pmo-docs-|tags/v|tag `v|e\.g\. `)(\d+\.\d+\.\d+)"
         )
         readme = (REPO / "README.md").read_text(encoding="utf-8")
         readme_versions = rx.findall(readme)
         self.assertGreaterEqual(len(readme_versions), 5)
         self.assertEqual(set(readme_versions), {version}, readme_versions)
-        self.assertIn(f"**Status: v{version} released.**", readme)
 
         guide = (REPO / "docs/INSTALL_FOR_AGENTS.md").read_text(encoding="utf-8")
         guide_versions = rx.findall(guide)

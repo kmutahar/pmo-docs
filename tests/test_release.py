@@ -148,7 +148,6 @@ class ReleaseTest(unittest.TestCase):
             text = (self.tmp / rel).read_text(encoding="utf-8")
             self.assertIn("v9.9.9", text, rel)
             self.assertNotIn("v0.5.0", text, rel)
-        self.assertIn("**Status: v9.9.9 released.**", (self.tmp / "README.md").read_text(encoding="utf-8"))
 
     def test_changelog_links_without_owner_repo_stop_the_release(self):
         env = self.stub_non_dry()
