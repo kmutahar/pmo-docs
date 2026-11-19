@@ -462,6 +462,16 @@ class Files(Base):
         self.assertEqual(cli("--project", str(self.root))[0], 0)
         self.assertFalse((self.views / view).exists())
 
+    def test_hand_written_file_with_an_orphan_view_name_is_left_alone(self):
+        cli("--project", str(self.root))
+        view = self.cfg["registers"]["risks"]["view"]
+        (self.reg / "risks.yaml").unlink()
+        (self.views / view).write_text("My own notes.\n", encoding="utf-8")
+        code, out, _ = cli("--project", str(self.root), "--check")
+        self.assertEqual((code, view in out), (0, False))
+        self.assertEqual(cli("--project", str(self.root))[0], 0)
+        self.assertEqual((self.views / view).read_text(encoding="utf-8"), "My own notes.\n")
+
     def test_check_with_missing_views_reports_each_as_stale(self):
         shutil.rmtree(self.views)
         code, out, _ = cli("--project", str(self.root), "--check")
