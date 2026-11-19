@@ -1,4 +1,4 @@
-# SkillSpector baseline: findings reviewed and accepted on 2026-11-05.
+# SkillSpector baseline: findings reviewed and accepted on 2026-11-05, extended 2026-11-16.
 # Run: see dev/maintaining.md (SkillSpector).
 # Scan a clean copy (git archive HEAD skills/pmo-docs), not a working tree with __pycache__.
 version: 2
@@ -12,9 +12,30 @@ rules:
   - id: "AST7"
     path: "*scripts/_vendor/yaml/*"
     reason: "Vendored PyYAML. getattr only in token/event repr and the reader stream name; not user-controlled"
+  - id: "TP4"
+    path: "*scripts/_vendor/yaml/*"
+    reason: "Vendored PyYAML library code; it has no skill description to mismatch"
   - id: "EA3"
     path: "*scripts/_vendor/PyYAML-LICENSE"
     reason: "False positive: the phrase 'NOT LIMITED TO' is licence text"
   - id: "AST4"
     path: "*scripts/publish.py"
     reason: "Runs git rev-parse with an explicit argument list and no shell to verify publish targets"
+  - id: "LP1"
+    path: "*scripts/publish.py"
+    reason: "Uses urllib.parse.quote only to format printed URLs; makes no network requests"
+  - id: "LP1"
+    path: "*assets/starter/bin/pmo"
+    reason: "Launcher checks for SKILL.md and reads plugin.json in the plugin cache to find the installed skill; it only locates the skill and runs its scripts"
+  - id: "P2"
+    path: "*assets/templates/architecture-overview.md"
+    reason: "Template section-guidance HTML comments shown in drafts and stripped on Finish; not hidden instructions"
+  - id: "P2"
+    path: "*assets/templates/user-guide.md"
+    reason: "Template section-guidance HTML comments shown in drafts and stripped on Finish; not hidden instructions"
+  - id: "RA2"
+    path: "*references/schedule.md"
+    reason: "Documents a crontab -e line for the user to add manually; the skill does not install cron jobs"
+  - id: "RA2"
+    path: "*references/stacks/flutter.md"
+    reason: "Points the reader to iOS Info.plist for permission descriptions; does not create LaunchAgent plists"
