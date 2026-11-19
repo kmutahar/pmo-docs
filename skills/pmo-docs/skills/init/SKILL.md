@@ -2,6 +2,7 @@
 name: init
 description: Set up a pmo-docs project office in the current folder. Runs only when the user types /pmo-docs:init.
 disable-model-invocation: true
+argument-hint: "[project-name]"
 allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/setup.py *) Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/render_views.py *)
 ---
 
