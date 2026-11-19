@@ -96,7 +96,7 @@ history_text() {
 
 hits=$(scan -E -e "$generic")
 [ -n "$hits" ] && { echo "== machine paths / emails / phones =="; echo "$hits"; fail=1; }
-hits=$(history_text | grep -E -e "$generic")
+hits=$(history_text | grep -vxF 'Signed-off-by: dependabot[bot] <support@github.com>' | grep -E -e "$generic")
 [ -n "$hits" ] && { echo "== machine paths / emails / phones in history or tags =="; echo "$hits"; fail=1; }
 
 if [ -s .scrub-names ]; then
