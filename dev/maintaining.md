@@ -27,7 +27,7 @@ Not shipped. Linked from `AGENTS.md`. Script usage is in each script's `--help`.
 - The dry run's changelog section reads well and holds no private names or machine paths.
 - The README roadmap, if it lists the version, is updated.
 - Cleanup goes in its own commit before `dev/release`; the release commit then holds only `CHANGELOG.md` and the version files.
-- The maintainer approves, commits, tags and pushes (`dev/release` asks twice).
+- The maintainer approves, commits, tags and pushes (`dev/release` asks twice). It pushes `dev` and the tag; after the release job passes, the `fast-forward-main` job in `release.yml` moves `main` to the tagged commit. Never commit to `main` directly: that job then fails.
 
 ## Never in a tracked file or a commit message
 

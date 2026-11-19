@@ -278,7 +278,9 @@ class ReleaseTest(unittest.TestCase):
         self.assertIn("Committed and tagged v9.9.9.", out)
         self.assertEqual(self.git("log", "-1", "--format=%s").stdout.strip(), "chore(release): v9.9.9")
         self.assertEqual(self.git("rev-parse", "v9.9.9^{commit}").stdout, self.git("rev-parse", "HEAD").stdout)
-        self.assertEqual(self.git("rev-parse", "main", cwd=remote).stdout, self.git("rev-parse", "HEAD").stdout)
+        self.assertEqual(self.git("rev-parse", "dev", cwd=remote).stdout, self.git("rev-parse", "HEAD").stdout)
+        # the release workflow moves main after the checks pass; the script never does
+        self.assertNotEqual(self.git("rev-parse", "--verify", "-q", "main", cwd=remote, check=False).returncode, 0)
         self.assertIn("v9.9.9", self.git("tag", cwd=remote).stdout)
 
     def test_no_to_push_leaves_commit_and_tag_local(self):
