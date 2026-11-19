@@ -88,6 +88,26 @@ class Publish(unittest.TestCase):
         self.assertIn("new: Decision log.md", out)
         self.assertFalse((self.root / "published").exists())
 
+    def test_listing_names_the_target(self):
+        self.set_config("publish:\n  mode: folder\n  path: published\n")
+        self.finish_decision_log()
+        code, out, _ = run(self.root)
+        self.assertEqual(code, 0)
+        self.assertIn(f"target: {(self.root / 'published').resolve()} (folder)", out)
+
+    def test_apply_refuses_an_existing_tmp_file_and_leaves_it(self):
+        self.set_config("publish:\n  mode: folder\n  path: published\n")
+        self.finish_decision_log()
+        pub = self.root / "published"
+        pub.mkdir()
+        tmp_f = pub / "Decision log.md.tmp"
+        tmp_f.write_text("Not ours.\n", encoding="utf-8")
+        code, _, err = run(self.root, "--apply")
+        self.assertEqual(code, 2)
+        self.assertIn("is in the way", err)
+        self.assertEqual(tmp_f.read_text(encoding="utf-8"), "Not ours.\n")
+        self.assertFalse((pub / "Decision log.md").exists())
+
     def test_apply_copies_new_files_byte_identical(self):
         self.set_config("publish:\n  mode: folder\n  path: published\n")
         src = self.finish_decision_log()

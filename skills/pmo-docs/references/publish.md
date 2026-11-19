@@ -10,7 +10,7 @@ Copies finished documents to the configured folder or git repository. With the p
 
 ## Without the plugin
 
-Use the launcher: `pmo/bin/pmo publish [--as-of YYYY-MM-DD]` is the dry run. Show its listing and explain each line in plain words (copied, skipped, stale, conflict, invalid). Ask one question: "Copy these now?". Only on a yes, run the same command with `--apply` (and `--overwrite REL` or `--include REL` for the paths the user named). Never run `--apply` without a yes to that listing in this conversation.
+Use the launcher: `pmo/bin/pmo publish [--as-of YYYY-MM-DD]` is the dry run. Show its listing with the `target:` folder and explain each line in plain words (copied, skipped, stale, conflict, invalid). Ask one question: "Copy these now?". Only on a yes, run the same command with `--apply` (and `--overwrite REL` or `--include REL` for the paths the user named). Never run `--apply` without a yes to that listing in this conversation.
 
 ## Steps
 
@@ -26,7 +26,7 @@ Use the launcher: `pmo/bin/pmo publish [--as-of YYYY-MM-DD]` is the dry run. Sho
    - A `stale, conflict` document needs both: show the diff, then `--include` and `--overwrite` if the user agrees.
 
 3. **Confirm the copy**
-   Show the final list of files to copy and wait for the user's explicit yes.
+   Show the final list of files to copy with the `target:` folder and wait for the user's explicit yes.
 
 4. **Apply changes**
    Run `python3 ${CLAUDE_SKILL_DIR}/scripts/publish.py --apply` with the agreed `--overwrite <REL>` and `--include <REL>` flags. Report what was copied and report the `uncopied:` lines as the left-over list.

@@ -177,6 +177,7 @@ def main(argv=None) -> int:
 
     # Dry-run listing
     if not args.apply:
+        print(f"target: {target_dir} ({mode})")
         url_base = pub.get("url")
         for rel, _, state, errors in classified:
             print(f"{state}: {rel}")
@@ -217,6 +218,9 @@ def main(argv=None) -> int:
 
         if to_copy:
             tmp_f = target_f.with_name(target_f.name + ".tmp")
+            if tmp_f.exists() or tmp_f.is_symlink():  # copyfile would follow it and overwrite a file we did not create
+                print(f"ERROR cannot copy {rel!r}: {tmp_f} is in the way; remove it", file=sys.stderr)
+                return 2
             try:
                 target_f.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(src_f, tmp_f)
