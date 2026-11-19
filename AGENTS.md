@@ -29,8 +29,7 @@ A project-office and documentation workflow packaged as an Agent Skill (`skills/
 - `skills/pmo-docs/` is all that ships: the marketplace manifest (`.claude-plugin/`) installs only that folder, so `dev/`, `tests/`, `docs/`, `evals/` and `examples/` do not ship. Its plugin manifest is `skills/pmo-docs/.claude-plugin/`.
 - `examples/acme/` is the one fake project, used by tests, evals and `docs/walkthrough.md`.
 - `PRIVACY.md` and `TERMS.md` are linked from `plugin.json`: update them when the skill starts reading or writing something new.
-- `.trail/learnings/` is committed (rules only); `.trail/cache/` is the generated repo graph.
-- `.trail/hook.cjs` and `.trail/README.md` are the trail tool's files, committed so a clone has them.
+- `.trail/` (learnings, the generated repo graph, the tool's hook) is local and untracked; `.gitignore` lists it.
 - `CLAUDE.md` only imports `AGENTS.md` and `memory.md`.
 
 ## Memory (`memory.md`)

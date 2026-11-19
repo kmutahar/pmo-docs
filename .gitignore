@@ -13,10 +13,12 @@ venv/
 .idea/
 .vscode/
 
-# agent session state
+# agent session state and local tool caches
 .claude/settings.local.json
 graphify-out/
 tmp/
+.trail/
+/graft/
 
 # secrets
 .env
@@ -27,6 +29,5 @@ tmp/
 # a project's private working data must never live in this repo
 pmo/inbox/
 
-# graft's local graph cache — regenerable, not committed (run `graft build`).
-/graft/
+# eval run output
 evals/results/
