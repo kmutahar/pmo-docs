@@ -11,11 +11,11 @@ Run as `release-notes [--repo PATH] [--since REF] [--until REF] [--period YYYY-M
 ## Steps
 
 1. **Find the repository and paths**
-   `--repo` defaults to the project folder; with `--repo`, every git command below runs as `git -C <repo> ...` (read-only). The document is written into this project's `paths.documents`. With `--repo`, the document title is `Release notes - <repo folder name>`, passed as `python3 ${CLAUDE_SKILL_DIR}/scripts/where.py release-notes <period> --title "Release notes - <folder>"`, so multiple repos in one month do not collide.
+   `--repo` defaults to the project folder; with `--repo`, every git command below runs as `git -C <repo> ...` (read-only; not in `allowed-tools`, so the user is asked for each one). The document is written into this project's `paths.documents`. With `--repo`, the document title is `Release notes - <repo folder name>`, passed as `python3 ${CLAUDE_SKILL_DIR}/scripts/where.py release-notes <period> --title "Release notes - <folder>"`, so multiple repos in one month do not collide.
    Period defaults to the month of `--until`'s commit date (or the current month).
 
 2. **Find the range**
-   Start with `--since` if given. Otherwise, look for `covers_to` in the newest finished or draft `release-notes` document in `paths.documents` with the same title (the same repo). If none exists, find the first commit of the period's month: run `git log --reverse --since=<YYYY-MM-01> --format=%H` (in `allowed-tools`; no pipes) and take the first line. The range begins at that commit's parent; with no parent (the repo's first commit), use that commit itself and say so.
+   Start with `--since` if given. Otherwise, look for `covers_to` in the newest finished or draft `release-notes` document in `paths.documents` with the same title (the same repo). If none exists, find the first commit of the period's month: run `git log --reverse --since=<YYYY-MM-01> --format=%H` (in `allowed-tools` without `--repo`; no pipes) and take the first line. The range begins at that commit's parent; with no parent (the repo's first commit), use that commit itself and say so.
    `--until` defaults to `HEAD`.
    Resolve both boundaries with `git rev-parse` to full SHAs for front matter (`covers_from` and `covers_to`).
 

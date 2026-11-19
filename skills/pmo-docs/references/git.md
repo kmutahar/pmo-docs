@@ -10,7 +10,7 @@ One model for every playbook. The rule itself is in `SKILL.md` (Safety rules, 1)
 
 ## What the agent never does
 
-The list of commands the agent never runs unasked is in `SKILL.md` (Safety rules, 1). No script in this skill runs git or installs a hook. Git is the backup.
+The list of commands the agent never runs unasked is in `SKILL.md` (Safety rules, 1). No script in this skill changes a repository or installs a hook; `publish.py` in `repo` mode only runs read-only `git rev-parse` to check the target. Git is the backup.
 
 ## What the agent may read
 

@@ -21,7 +21,7 @@ Use the launcher: `pmo/bin/pmo publish [--as-of YYYY-MM-DD]` is the dry run. Sho
 2. **Review candidates**
    Show the listing grouped by state:
    - For each `invalid`, run `python3 ${CLAUDE_SKILL_DIR}/scripts/structure_check.py <path>` and show the errors; it is not published until it passes.
-   - For each `conflict`, show the diff of target vs source (`git diff` or compare both files) and ask, per file, whether to overwrite.
+   - For each `conflict`, show the diff of target vs source (read both files) and ask, per file, whether to overwrite.
    - For each `stale`, explain which registers changed since the document was finished (run `python3 ${CLAUDE_SKILL_DIR}/scripts/docs_audit.py`) and ask whether to publish anyway (`--include`) or redraft first.
    - A `stale, conflict` document needs both: show the diff, then `--include` and `--overwrite` if the user agrees.
 

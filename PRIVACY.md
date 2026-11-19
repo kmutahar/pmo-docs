@@ -1,6 +1,6 @@
 # Privacy Policy
 
-Last updated: 2026-11-15 (UTC)
+Last updated: 2026-11-19 (UTC)
 
 pmo-docs is a project-office and documentation workflow packaged as an Agent Skill. It is a folder of instructions, templates and Python scripts. An AI agent that you run (for example Claude Code) reads the instructions and runs the scripts on your own machine. This page explains what that means for your data.
 
@@ -14,7 +14,7 @@ pmo-docs is an open-source project maintained by kmutahar. The maintainer does n
 
 pmo-docs reads and writes only files on your machine:
 
-- **Your `pmo/` folder:** the registers (tasks, risks, decisions, changes and similar), the generated views, `config.yaml`, `pmo/.gitignore`, `pmo/.me` (a local, untracked file holding one roster slug) and the documents you create from the templates.
+- **Your `pmo/` folder:** the registers (tasks, risks, decisions, changes and similar), the generated views, `config.yaml`, `pmo/.gitignore`, `pmo/.me` (a local, untracked file holding one roster slug), the house rules file (`pmo/house-rules.md`), the launcher (`pmo/bin/pmo`) and the documents you create from the templates.
 - **Project documents you point it at:** for example when you ask the agent to audit or draft a document.
 - **Chat exports and pasted messages:** when you ask the agent to take tasks or decisions from a chat export or a pasted message, it reads it once. It does not copy the export or the message into the project. It writes only the facts you confirm, never message text, phone numbers or email addresses.
 - **Your project's source code:** when you ask the agent to draft a technical document (API reference, integration guide, architecture overview, user guide, entity lifecycle), it reads routes, data models, permission rules, configuration and test files to cite what they say. It records names (for example variable and setting names), never secret values. It runs read-only git on the project repository (`git rev-parse`, `git log`) to note which commit the code was read at and whether it has moved since. It runs a project command (for example listing the routes of a framework, or starting the app) only after you say yes, and never edits the code.
@@ -22,7 +22,7 @@ pmo-docs reads and writes only files on your machine:
 
 These files can contain personal data that you or your team wrote, such as names, email addresses, roles, task owners or meeting notes. pmo-docs does not look for this data, copy it elsewhere (except when you publish, see section 7) or build profiles from it. It only processes it locally so the agent can fill in, check and render your documents.
 
-pmo-docs does not read your browser data, contacts, calendar, mailbox or keychains. Its Python scripts read no environment variables except `PMO_DEBUG`, which only shows a full error trace, and refuse paths that leave the project folder (absolute paths, `..`, symlinks out of the project and `.git`), with one documented exception: publishing in `repo` mode (writes finished documents into another local repository after confirmation; section 7). Drafting release notes with `--repo` has the agent read the git history of another local repository you name, with read-only `git -C` (allowed in `allowed-tools`). To locate the installed skill without hardcoded paths, the project launcher script (`pmo/bin/pmo`) reads `PMO_DOCS_SKILL`, `HOME` and `CLAUDE_CONFIG_DIR`, searching standard skill folders (`.claude/skills`, `.agents/skills`, `.github/skills`, `.cursor/skills`, `.gemini/skills`, and user-level `~/.claude/skills`, `~/.agents/skills`, `~/.copilot/skills`, `~/.cursor/skills`, `~/.gemini/skills`) and the Claude plugin cache, and reads nothing else.
+pmo-docs does not read your browser data, contacts, calendar, mailbox or keychains. Its Python scripts read no environment variables except `PMO_DEBUG`, which only shows a full error trace, and refuse paths that leave the project folder (absolute paths, `..`, symlinks out of the project and `.git`), with one documented exception: publishing in `repo` mode (writes finished documents into another local repository after confirmation; section 7). Drafting release notes with `--repo` has the agent read the git history of another local repository you name, with read-only `git -C` (the agent asks before each such command). To locate the installed skill without hardcoded paths, the project launcher script (`pmo/bin/pmo`) reads `PMO_DOCS_SKILL`, `HOME` and `CLAUDE_CONFIG_DIR`, searching standard skill folders (`.claude/skills`, `.agents/skills`, `.github/skills`, `.cursor/skills`, `.gemini/skills`, and user-level `~/.claude/skills`, `~/.agents/skills`, `~/.copilot/skills`, `~/.cursor/skills`, `~/.gemini/skills`) and the Claude plugin cache, and reads nothing else.
 
 ## 3. What pmo-docs does not do
 
