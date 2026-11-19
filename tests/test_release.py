@@ -19,7 +19,7 @@ class ReleaseTest(unittest.TestCase):
         for rel in ("dev/release", "skills/pmo-docs/SKILL.md", "skills/pmo-docs/.claude-plugin/plugin.json", "README.md", "docs/INSTALL_FOR_AGENTS.md"):
             (self.tmp / rel).parent.mkdir(parents=True, exist_ok=True)
             shutil.copy(ROOT / rel, self.tmp / rel)
-        self.git("init", "-q", "-b", "main")
+        self.git("init", "-q", "-b", "dev")
         self.git("add", ".")
         self.git("commit", "-qm", "init")
 
@@ -204,7 +204,7 @@ class ReleaseTest(unittest.TestCase):
         self.addCleanup(shutil.rmtree, remote)
         self.git("init", "--bare", "-q", str(remote), cwd=remote)
         self.git("remote", "add", "origin", str(remote))
-        self.git("push", "-q", "origin", "main")
+        self.git("push", "-q", "origin", "dev")
         self.git("tag", "v9.9.9")
         self.git("push", "-q", "origin", "v9.9.9")
         self.git("tag", "-d", "v9.9.9")
@@ -217,11 +217,11 @@ class ReleaseTest(unittest.TestCase):
         self.assertEqual(ok.returncode, 0, ok.stderr)
         self.assertNotIn("warning:", ok.stderr.lower())
 
-    def test_non_main_branch_rejected(self):
+    def test_non_dev_branch_rejected(self):
         self.git("checkout", "-qb", "feature")
         r = self.release("--dry-run", "9.9.9")
         self.assertEqual(r.returncode, 1)
-        self.assertIn("main", r.stderr)
+        self.assertIn("from dev", r.stderr)
 
     def test_unreachable_origin_warns_and_continues(self):
         self.git("remote", "add", "origin", str(self.tmp / "missing-remote.git"))
@@ -261,7 +261,7 @@ class ReleaseTest(unittest.TestCase):
         self.addCleanup(shutil.rmtree, remote)
         self.git("init", "--bare", "-q", str(remote), cwd=remote)
         self.git("remote", "add", "origin", str(remote))
-        self.git("push", "-q", "-u", "origin", "main")
+        self.git("push", "-q", "-u", "origin", "dev")
         return remote
 
     def hook(self, repo_git_dir, name, body):
@@ -324,11 +324,11 @@ class ReleaseTest(unittest.TestCase):
         remote = self.bare_origin()
         other = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, other)
-        self.git("clone", "-q", "-b", "main", str(remote), str(other / "c"), cwd=other)
+        self.git("clone", "-q", "-b", "dev", str(remote), str(other / "c"), cwd=other)
         (other / "c" / "new.txt").write_text("x", encoding="utf-8")
         self.git("add", ".", cwd=other / "c")
         self.git("commit", "-qm", "ahead", cwd=other / "c")
-        self.git("push", "-q", "origin", "main", cwd=other / "c")
+        self.git("push", "-q", "origin", "dev", cwd=other / "c")
         self.git("fetch", "-q", "origin")
         r = self.release("--dry-run", "9.9.9")
         self.assertEqual(r.returncode, 0, r.stderr)

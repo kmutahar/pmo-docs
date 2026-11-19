@@ -19,7 +19,7 @@ Steps: dirty check, version and tag check, dev/scrub.sh + tests +
 (metadata.version), skills/pmo-docs/.claude-plugin/plugin.json and the release tag in README.md and
 docs/INSTALL_FOR_AGENTS.md (install links and the agent prompt), `git-cliff -o CHANGELOG.md`,
 then confirmation 1 (default No) to commit + tag, confirmation 2 (default No)
-to push. There is no -y flag: commits and pushes need the maintainer's approval.
+to push (HEAD, the tag, and a fast-forward of `main`, which installs follow; cut releases from `dev`). There is no -y flag: commits and pushes need the maintainer's approval.
 EOF
 }
 
@@ -57,7 +57,7 @@ if [ "$dry" = 0 ]; then
 fi
 
 branch=$(git symbolic-ref --short -q HEAD) || die "detached HEAD, check out a branch first"
-[ "$branch" = "main" ] || die "releases must be cut from main, not $branch"
+[ "$branch" = "dev" ] || die "releases must be cut from dev (main is fast-forwarded to the release), not $branch"
 files=(skills/pmo-docs/SKILL.md skills/pmo-docs/.claude-plugin/plugin.json README.md docs/INSTALL_FOR_AGENTS.md)
 commit_paths=(CHANGELOG.md "${files[@]}")
 memory_staged=0
@@ -175,7 +175,7 @@ if [ "$dry" = 1 ]; then
 Would: set version in ${files[*]}
        git-cliff -o CHANGELOG.md --tag $tag, and print the release notes
        ask to commit "chore(release): $tag" of ${commit_paths[*]} and tag it (default No)
-       ask to run: git push --atomic origin HEAD $tag (default No)
+       ask to run: git push --atomic origin HEAD $tag HEAD:refs/heads/main (default No)
 EOF
   exit 0
 fi
@@ -220,9 +220,9 @@ git tag -a "$tag" -m "$tag" || die "the release commit exists but tagging failed
 echo "Committed and tagged $tag."
 { [ "$memory_staged" = 0 ] || git ls-files --error-unmatch memory.md >/dev/null 2>&1; } || echo "Note: the path-limited commit unstaged memory.md; run 'git add memory.md' to see it again."
 
-if confirm "Push HEAD and $tag to origin?"; then
-  git push --atomic origin HEAD "$tag" || die "push failed; commit and tag are local only. Retry: git push --atomic origin HEAD $tag"
+if confirm "Push HEAD, $tag and fast-forward main on origin?"; then
+  git push --atomic origin HEAD "$tag" HEAD:refs/heads/main || die "push failed; commit and tag are local only. Retry: git push --atomic origin HEAD $tag HEAD:refs/heads/main"
 else
-  echo "Not pushed. Later: git push --atomic origin HEAD $tag" >&2
+  echo "Not pushed. Later: git push --atomic origin HEAD $tag HEAD:refs/heads/main" >&2
   echo "To undo the release: git tag -d $tag && git reset --soft HEAD~1" >&2
 fi
