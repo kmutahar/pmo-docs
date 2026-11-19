@@ -1,4 +1,6 @@
 """Tests for scripts/renumber.py on a temp copy of examples/acme. Run from the repo root: python3 -m unittest tests.test_renumber"""
+import contextlib
+import io
 import re
 import shutil
 import subprocess
@@ -60,7 +62,7 @@ class TestRenumber(unittest.TestCase):
         self.assertIn("gets  T-6", out)
         self.assertIn("Fix login timeout", out)
         self.assertIn("owner bob", out)
-        self.assertIn("next: renumber.py --apply", out)
+        self.assertIn("next, after the user agrees: renumber.py --apply", out)
 
     def test_03_apply_with_no_references(self):
         self.append_entry("tasks", "{id: T-5, title: Write release notes, team: platform, group: docs, priority: low, owner: alice, status: not-started, due: 2026-03-28, period: 2026-03, notes: ''}")
@@ -121,7 +123,7 @@ class TestRenumber(unittest.TestCase):
         self.assertIn("pmo/documents/draft.md:11", out)
         self.assertIn("draft", out)
         self.assertIn("T-5 is blocked by vendor", out)
-        self.assertIn("next: choose --rewrite or --keep for each reference, then renumber.py --apply <flags>", out)
+        self.assertIn("next, after the user agrees: choose --rewrite or --keep for each reference, then renumber.py --apply <flags>", out)
 
         code_no_dec, out_no_dec, err_no_dec = self.run_tool("--apply")
         self.assertEqual(code_no_dec, 2)
@@ -538,6 +540,34 @@ class TestRenumber(unittest.TestCase):
         rv_check = subprocess.run([sys.executable, str(RV), "--project", str(self.root), "--check"],
                                   capture_output=True, text=True, encoding="utf-8")
         self.assertEqual(rv_check.returncode, 0, rv_check.stdout + rv_check.stderr)
+
+    def test_26_write_failure_names_files_already_changed(self):
+        from unittest import mock
+        import renumber
+        self.append_entry("tasks", self.task("T-901", "Task 1"))
+        self.append_entry("tasks", self.task("T-901", "Task 2"))
+        (self.docs / "notes.md").write_text(
+            "---\ntitle: Notes\ntype: status-report\nproject: acme\nmanager: alice\n"
+            "period: 2026-03\nstatus: draft\nlast_updated: 2026-03-15\n---\nSee T-901.\n", encoding="utf-8")
+        code, out, err = self.run_tool()
+        ref = re.search(r"--rewrite (pmo/documents/notes\.md:\d+)=T-902", out).group(1)
+        real = pc.safe_write
+        calls = []
+
+        def flaky(project, rel, text):
+            calls.append(rel)
+            if len(calls) == 2:
+                raise OSError("disk full")
+            return real(project, rel, text)
+
+        stderr = io.StringIO()
+        with mock.patch.object(pc, "safe_write", flaky), contextlib.redirect_stdout(io.StringIO()), \
+                contextlib.redirect_stderr(stderr):
+            rc = renumber.main(["--project", str(self.root), "--apply", "--rewrite", f"{ref}=T-902"])
+        self.assertEqual(rc, 2)
+        self.assertEqual(len(calls), 2)
+        self.assertIn(f"ERROR cannot write {calls[1]}: disk full", stderr.getvalue())
+        self.assertIn(f"already changed: {calls[0]}", stderr.getvalue())
 
 
 if __name__ == "__main__":

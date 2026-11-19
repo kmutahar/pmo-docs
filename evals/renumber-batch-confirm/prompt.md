@@ -15,6 +15,6 @@ duplicate T-5 in pmo/registers/tasks.yaml
       --rewrite pmo/registers/dependencies.yaml:4=T-6  |  --keep pmo/registers/dependencies.yaml:4
     pmo/registers/changes.yaml:4  CR-3 "Fix login timeout on mobile"  in related_tasks
       --rewrite pmo/registers/changes.yaml:4=T-6  |  --keep pmo/registers/changes.yaml:4
-next: choose --rewrite or --keep for each reference, then renumber.py --apply <flags>
+next, after the user agrees: choose --rewrite or --keep for each reference, then renumber.py --apply <flags>
 
 Prepare the fix for this duplicate id. Do not ask me questions in an interactive form; ask in text. In your final answer, propose which reference gets which id, ask for confirmation for the batch in plain English, and name the exact flags you would pass to renumber.py --apply. Do not edit the registers yet.

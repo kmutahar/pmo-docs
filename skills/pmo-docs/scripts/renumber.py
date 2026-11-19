@@ -378,9 +378,9 @@ def main(argv=None):
                 print(f"  left alone (finished): {', '.join(fin_refs)}")
 
         if has_any_ref_needing_decision:
-            print("next: choose --rewrite or --keep for each reference, then renumber.py --apply <flags>")
+            print("next, after the user agrees: choose --rewrite or --keep for each reference, then renumber.py --apply <flags>")
         else:
-            print("next: renumber.py --apply")
+            print("next, after the user agrees: renumber.py --apply")
 
         return 1
 
@@ -557,8 +557,16 @@ def main(argv=None):
         pending[rel_file] = new_content
         all_changed_lines.extend(changed_in_this_file)
 
+    written = []
     for rel_file in sorted(pending):
-        pc.safe_write(args.project, rel_file, pending[rel_file])
+        try:
+            pc.safe_write(args.project, rel_file, pending[rel_file])
+        except OSError as e:
+            print(f"ERROR cannot write {rel_file}: {e}", file=sys.stderr)
+            if written:
+                print(f"already changed: {', '.join(written)}", file=sys.stderr)
+            return 2
+        written.append(rel_file)
 
     for rel_file, lineno, line in all_changed_lines:
         print(f"changed: {rel_file}:{lineno}  {line.strip()}")
