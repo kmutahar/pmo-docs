@@ -42,7 +42,7 @@ fi
 if [ -z "$SKILL_DIR" ]; then
     CACHE_DIR="${CLAUDE_CONFIG_DIR:-${HOME:-}/.claude}/plugins/cache"
     if [ -d "$CACHE_DIR" ]; then
-        CACHED=$(python3 -c '
+        CACHED=$(python3 -I -c '
 import sys, re, json
 from pathlib import Path
 

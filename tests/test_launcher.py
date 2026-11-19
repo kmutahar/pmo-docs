@@ -101,6 +101,17 @@ class Launcher(unittest.TestCase):
         self.assertEqual(code, 0, err)
         self.assertIn("version=0.10.0", out)
 
+    def test_cache_lookup_ignores_json_py_in_cwd(self):
+        make_fake_skill(self.claude / "plugins/cache/pmo-docs/0.2.0", "0.2.0")
+        work = self.tmp / "work"
+        work.mkdir()
+        marker = self.tmp / "marker"
+        (work / "json.py").write_text(f'open({str(marker)!r}, "w").close()\n', encoding="utf-8")
+        code, out, err = self.run_launcher("where", cwd=work)
+        self.assertEqual(code, 0, err)
+        self.assertIn("version=0.2.0", out)
+        self.assertFalse(marker.exists())
+
     def test_nothing_installed_exits_2(self):
         code, out, err = self.run_launcher("where")
         self.assertEqual(code, 2)
