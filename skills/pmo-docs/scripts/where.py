@@ -2,7 +2,9 @@
 """Print where a document, its template and its inputs live.
 
 Usage:
-    python3 where.py <type> [period] [--week] [--as-of YYYY-MM-DD] [--hashes] [--title TEXT] [--lang CODE] [--project ROOT]
+    python3 where.py <type> [period] [--week] [--as-of YYYY-MM-DD] [--hashes] [--title TEXT] [--lang CODE] [--subproject ID] [--project ROOT]
+
+--subproject is for a doc type with per_subproject: true (required for it): it fills {subproject} in the name and adds an `entries_<register>` line (ids) per generated_from register whose `subproject` field matches.
 
 Prints key: value lines, then one `subproject: <id> kind=.. stack=.. docs_dir=..` line per sub-project in the config (unset parts are left out).
 
@@ -34,6 +36,7 @@ def main(argv=None):
                     help="also print source_hashes: the Finish value for the type's generated_from registers")
     ap.add_argument("--title", help="override the doc type's title in the file name")
     ap.add_argument("--lang", metavar="CODE", help="language code for a translation")
+    ap.add_argument("--subproject", metavar="ID", help="for a per_subproject doc type: the sub-project the document is about")
     args = ap.parse_args(argv)
 
     if args.title is not None and not args.title.strip():
@@ -48,6 +51,9 @@ def main(argv=None):
     doc_types = cfg.get("doc_types", {})
     if args.type not in doc_types:
         ap.error(f"unknown doc type {args.type!r}; known types: {', '.join(sorted(doc_types))}")
+
+    if err := pc.subproject_error(cfg, args.type, args.subproject):
+        ap.error(err)
 
     type_trans = pc.type_translations(cfg, args.type)
     tr_flag = pc.translate_flag(cfg, args.type)
@@ -75,7 +81,7 @@ def main(argv=None):
     except ValueError as e:
         ap.error(str(e))
 
-    doc_rel = pc.doc_rel_path(cfg, args.type, period, args.as_of, title=args.title)
+    doc_rel = pc.doc_rel_path(cfg, args.type, period, args.as_of, title=args.title, subproject=args.subproject)
     if args.lang:
         try:
             trans_doc_rel = pc.translation_rel(doc_rel, args.lang)
@@ -171,6 +177,10 @@ def main(argv=None):
         elif info.get("generated_from"):
             pairs = ", ".join(f'{r}: "{register_hash(args.project, cfg, r)}"' for r in info["generated_from"] if r in cfg["registers"])
             fields.append(("source_hashes", "{" + pairs + "}"))
+    for r in (info.get("generated_from") or []) if args.subproject else ():
+        if "subproject" in (cfg["registers"].get(r, {}).get("fields") or []):
+            ids = [str(e.get("id", "?")) for e in pc.load_register(args.project, cfg, r) if e.get("subproject") == args.subproject]
+            fields.append((f"entries_{r}", ", ".join(ids) or "none"))
     subs = cfg.get("subprojects")
     for sid, sp in (subs.items() if isinstance(subs, dict) else ()):  # render_views.py reports a malformed map
         parts = [f"{k}={sp[k]}" for k in ("kind", "stack", "docs_dir") if isinstance(sp, dict) and sp.get(k)]

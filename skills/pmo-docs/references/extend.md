@@ -46,6 +46,8 @@ To add a field to an existing register, set `registers.<name>.fields` in the con
 
 **Sub-projects.** For a project with parts that have their own stack or docs folder, list them under `subprojects` in the config (`api: {kind: backend, stack: laravel, docs_dir: docs/api}`; all three keys optional, `docs_dir` inside the project). To tag entries, add a `subproject` field to a register (tasks, issues, requirements) and `enums: {subproject: subprojects}`; validation then rejects a value that is not a listed id.
 
+**Per-sub-project documents.** For a document that is one per sub-project (a user guide per app), set `doc_types.<type>.per_subproject: true` and a `name` with the token, for example `"{subproject} - {title}.md"`. `where.py <type> --subproject <id>` prints that document's path and an `entries_<register>` line per register that has a `subproject` field; `generate.py` takes the same flag for a generator type. No default generator type is per sub-project; for a type the agent drafts, filter the register entries by their `subproject` field yourself.
+
 
 
 ## Change settings

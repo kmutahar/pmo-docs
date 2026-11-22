@@ -229,7 +229,7 @@ The optional YAML file of one language with the wording of register text (roster
 _Avoid_: name map, side map
 
 **Sub-project**:
-A part of a project with its own stack or docs folder (api, web, mobile), listed under `subprojects` in the config. A register tags its entries with an optional `subproject` field whose values must be listed ids.
+A part of a project with its own stack or docs folder (api, web, mobile), listed under `subprojects` in the config. A register tags its entries with an optional `subproject` field whose values must be listed ids. A doc type with `per_subproject: true` has one document per sub-project.
 _Avoid_: module, component
 
 **Behind**:

@@ -432,6 +432,16 @@ class LanguageConfig(unittest.TestCase):
         self.assertIn("subproject 'ios' not in ['api', 'web']", v)
         self.assertNotIn("T-1", v.replace("T-1: status", ""))
 
+    def test_per_subproject_checked(self):
+        def errs(subs, **dt):
+            cfg = pc.merge(self.defaults, {"subprojects": subs, "doc_types": {"user-guide": dt}})
+            return " | ".join(render_views.config_errors(cfg, root=self.root))
+        self.assertEqual(errs({"web": {}}, per_subproject=True, name="{subproject} - {title}.md"), "")
+        self.assertIn("must be true or false", errs({"web": {}}, per_subproject="yes"))
+        self.assertIn("needs `subprojects`", errs({}, per_subproject=True))
+        self.assertIn("`name` must contain {subproject}", errs({"web": {}}, per_subproject=True))
+        self.assertIn("per_subproject is not true", errs({"web": {}}, name="{subproject}.md"))
+
     def test_translate_sometimes(self):
         cfg = pc.merge(self.defaults, {"doc_types": {"status-report": {"translate": "sometimes"}}})
         errs = render_views.config_errors(cfg, root=self.root)

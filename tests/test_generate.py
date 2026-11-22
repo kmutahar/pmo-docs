@@ -44,6 +44,19 @@ class TestGenerate(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertIn("no generator configured", err)
 
+    def test_subproject_names_the_file_and_filters_entries(self):
+        sys.path.insert(0, str(REPO / "tests"))
+        from test_where import make_per_subproject
+        make_per_subproject(self.root)
+        self.assertEqual(tool("generate.py", self.root, "decision-log")[0], 2)  # per_subproject needs the flag
+        self.assertEqual(tool("generate.py", self.root, "decision-log", "--subproject", "ios")[0], 2)
+        code, out, _ = tool("generate.py", self.root, "decision-log", "--subproject", "api", "--stdout")
+        self.assertEqual(code, 0)
+        self.assertIn("DEC-1", out)
+        self.assertNotIn("DEC-2", out)
+        code, out, _ = tool("generate.py", self.root, "decision-log", "--subproject", "web")
+        self.assertEqual((code, out.strip()), (0, "wrote pmo/documents/web - Decision log.md"))
+
     def test_decision_log_on_acme(self):
         doc = self.root / "pmo/documents/Decision log.md"
         if doc.exists():

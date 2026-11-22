@@ -226,6 +226,7 @@ It looks for the skill in `$PMO_DOCS_SKILL`, project skill folders, the Claude p
 | `publish` | Where finished documents go (`mode: none`, `folder` or `repo`). |
 | `schedule` | Recipes to run on a schedule. |
 | `doc_types.<type>.generator` | Set to `null` to turn off the generator for that type. |
+| `doc_types.<type>.per_subproject` | `true` makes a type one document per sub-project: `{subproject}` in its `name`, `--subproject ID` on `where.py` and `generate.py`. |
 
 `pmo/views/catalogue.md` is rendered by `render_views.py`. It lists every document type with its title, who makes it (`generator` or `agent`), when to produce it and its publish settings.
 

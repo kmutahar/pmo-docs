@@ -24,6 +24,19 @@ def fields(out):
     return dict(line.split(": ", 1) for line in out.splitlines() if ": " in line)
 
 
+PER_SUB_CFG = '\nsubprojects:\n  api: {}\n  web: {}\nregisters:\n  decisions:\n    fields: [id, title, context, decision, options, consequences, decided_by, date, status, supersedes, related, origin, subproject]\ndoc_types:\n  decision-log:\n    per_subproject: true\n    name: "{subproject} - {title}.md"\n'
+
+
+def make_per_subproject(root):
+    """Make decision-log one document per sub-project; DEC-1 is tagged api, DEC-2 web."""
+    cfg_file = root / "pmo/config.yaml"
+    cfg_file.write_text(cfg_file.read_text(encoding="utf-8") + PER_SUB_CFG, encoding="utf-8")
+    reg = root / "pmo/registers/decisions.yaml"
+    lines = reg.read_text(encoding="utf-8").splitlines()
+    lines = [l[:-1] + ", subproject: " + ("api" if "DEC-1," in l else "web") + "}" if l.lstrip().startswith("- {id:") else l for l in lines]
+    reg.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
 class Where(unittest.TestCase):
     def setUp(self):
         self.root = Path(tempfile.mkdtemp()) / "acme"
@@ -301,6 +314,24 @@ class Where(unittest.TestCase):
         self.assertEqual(code, 0)
         lines = [l for l in out.splitlines() if l.startswith("subproject")]
         self.assertEqual(lines, ["subproject: api kind=backend stack=pmo/stacks/api.md docs_dir=docs/api", "subproject: web"])
+
+    def test_per_subproject_document_and_entries(self):
+        make_per_subproject(self.root)
+        code, out, _ = run(self.root, "decision-log", "--subproject", "api")
+        f = fields(out)
+        self.assertEqual(code, 0)
+        self.assertEqual(f["document"], "pmo/documents/api - Decision log.md")
+        self.assertEqual(f["entries_decisions"], "DEC-1")
+        self.assertEqual(fields(run(self.root, "decision-log", "--subproject", "web")[1])["entries_decisions"], "DEC-2")
+
+    def test_per_subproject_flag_is_checked(self):
+        self.assertEqual(run(self.root, "decision-log")[0], 0)  # not per_subproject: no flag needed
+        self.assertEqual(run(self.root, "decision-log", "--subproject", "api")[0], 2)  # the type is not per_subproject
+        make_per_subproject(self.root)
+        code, _, err = run(self.root, "decision-log")
+        self.assertEqual((code, "--subproject" in err), (2, True))
+        code, _, err = run(self.root, "decision-log", "--subproject", "ios")
+        self.assertEqual((code, "unknown sub-project" in err), (2, True))
 
     def test_help(self):
         self.assertEqual(run(self.root, "--help")[0], 0)

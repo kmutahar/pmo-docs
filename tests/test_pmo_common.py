@@ -214,6 +214,19 @@ class Common(unittest.TestCase):
 
 
 class Helpers(unittest.TestCase):
+    def test_subproject_token_filter_and_check(self):
+        cfg = {"subprojects": {"api": {}, "web": {}}, "registers": {"tasks": {"fields": ["id", "subproject"]}, "teams": {"fields": ["id"]}},
+               "paths": {"documents": "docs"},
+               "doc_types": {"guide": {"title": "Guide", "name": "{subproject} - {title}.md", "per_subproject": True}, "plain": {}}}
+        day = datetime.date(2026, 1, 2)
+        self.assertEqual(pc.doc_rel_path(cfg, "guide", "2026-01", day, subproject="web"), "docs/web - Guide.md")
+        self.assertIsNone(pc.subproject_error(cfg, "guide", "api"))
+        self.assertIsNone(pc.subproject_error(cfg, "plain", None))
+        for args in (("guide", None), ("guide", "ios"), ("plain", "api")):
+            self.assertIsNotNone(pc.subproject_error(cfg, *args), args)
+        data = {"tasks": [{"id": "T-1", "subproject": "api"}, {"id": "T-2", "subproject": "web"}, {"id": "T-3"}], "teams": [{"id": "A"}]}
+        self.assertEqual(pc.for_subproject(cfg, data, "api"), {"tasks": [{"id": "T-1", "subproject": "api"}], "teams": [{"id": "A"}]})
+
     def test_week_of(self):
         # Monday start (0)
         self.assertEqual(pc.week_of(datetime.date(2026, 11, 6), 0), "2026-W45")

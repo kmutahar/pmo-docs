@@ -475,12 +475,29 @@ def resolve_period(period: str | None, week: bool, as_of: datetime.date, start: 
     return as_of.strftime("%Y-%m")
 
 
-def doc_rel_path(cfg, doc_type: str, period: str, as_of: datetime.date, title: str | None = None) -> str:
-    """'<paths.documents>/<name>' with {title}, {period} and {date} filled, as where.py does today."""
+def subproject_error(cfg, doc_type: str, subproject: str | None) -> str | None:
+    """Why `subproject` cannot be used with this doc type, or None. A per_subproject type needs one of the configured ids; any other type takes none."""
+    info = cfg.get("doc_types", {}).get(doc_type, {})
+    ids = sorted(cfg.get("subprojects") or {})
+    if not info.get("per_subproject"):
+        return f"doc type `{doc_type}` is not per sub-project (set doc_types.{doc_type}.per_subproject: true)" if subproject else None
+    if subproject is None:
+        return f"doc type `{doc_type}` is per sub-project; pass --subproject ID ({', '.join(ids)})"
+    return None if subproject in ids else f"unknown sub-project {subproject!r}; known: {', '.join(ids)}"
+
+
+def for_subproject(cfg, data: dict[str, list[dict]], subproject: str) -> dict[str, list[dict]]:
+    """data with each register that has a `subproject` field cut to the entries tagged with that id; other registers stay whole."""
+    return {r: [e for e in es if e.get("subproject") == subproject] if "subproject" in (cfg["registers"].get(r, {}).get("fields") or []) else es
+            for r, es in data.items()}
+
+
+def doc_rel_path(cfg, doc_type: str, period: str, as_of: datetime.date, title: str | None = None, subproject: str | None = None) -> str:
+    """'<paths.documents>/<name>' with {title}, {period}, {date} and {subproject} filled, as where.py does today."""
     info = cfg.get("doc_types", {}).get(doc_type, {})
     doc_title = title if title is not None else info.get("title", "")
     pattern = info.get("name", "{title}.md")
-    doc_file = pattern.replace("{title}", doc_title).replace("{period}", period).replace("{date}", str(as_of))
+    doc_file = pattern.replace("{title}", doc_title).replace("{period}", period).replace("{date}", str(as_of)).replace("{subproject}", subproject or "")
     return f"{cfg['paths']['documents']}/{doc_file}"
 
 

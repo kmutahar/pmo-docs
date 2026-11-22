@@ -371,6 +371,7 @@ doc_types:
     title: Release notes
     template: release-notes.md
     name: "{period} - {title}.md"
+    per_subproject: false
     generated_from: [tasks, changes]
     when: for each release or month end
     regenerate: when commits or changes are tagged
@@ -378,6 +379,7 @@ doc_types:
     title: Functional requirements
     template: functional-requirements.md
     name: "{title}.md"
+    per_subproject: false
     generated_from: [requirements]
     stale_days: 30
     when: Once the requirements are agreed, and before design or test planning starts.
@@ -434,6 +436,7 @@ doc_types:
     title: API reference
     template: api-reference.md
     name: "{title}.md"
+    per_subproject: false
     generated_from: [environments, permissions]
     stale_days: 30
     when: When the API has a first consumer, and before each release that changes an endpoint.
@@ -442,6 +445,7 @@ doc_types:
     title: Integration guide
     template: integration-guide.md
     name: "{title}.md"
+    per_subproject: false
     generated_from: [environments, permissions]
     stale_days: 30
     when: Before a new consumer connects.
@@ -458,6 +462,7 @@ doc_types:
     title: User guide
     template: user-guide.md
     name: "{title}.md"
+    per_subproject: false
     generated_from: [requirements, permissions]
     stale_days: 60
     when: Before the product reaches its first users, and when a screen or a role changes.

@@ -234,6 +234,16 @@ def config_errors(cfg, root=None):
                 v = info.get(k)
                 if v is not None and not isinstance(v, str):
                     errors.append(f"config: doc_types.{dt}.{k} must be text")
+            ps = info.get("per_subproject")
+            name = info.get("name")
+            if ps is not None and not isinstance(ps, bool):
+                errors.append(f"config: doc_types.{dt}.per_subproject must be true or false")
+            elif ps and not cfg.get("subprojects"):
+                errors.append(f"config: doc_types.{dt}.per_subproject needs `subprojects` in the config")
+            elif ps and isinstance(name, str) and "{subproject}" not in name:
+                errors.append(f"config: doc_types.{dt}.per_subproject is true, so `name` must contain {{subproject}}")
+            if not ps and isinstance(name, str) and "{subproject}" in name:
+                errors.append(f"config: doc_types.{dt}.name uses {{subproject}} but per_subproject is not true")
 
     langs = cfg.get("languages")
     if langs is not None:

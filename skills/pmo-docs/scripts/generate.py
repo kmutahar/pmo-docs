@@ -2,7 +2,9 @@
 """Generate a document from templates and registers.
 
 Usage:
-    python3 generate.py <type> [period] [--week] [--as-of YYYY-MM-DD] [--stdout] [--project ROOT]
+    python3 generate.py <type> [period] [--week] [--as-of YYYY-MM-DD] [--subproject ID] [--stdout] [--project ROOT]
+
+--subproject is for a doc type with per_subproject: true: it fills {subproject} in the name and keeps only the register entries whose `subproject` field matches.
 
 Exit codes:
     0 written (or printed with --stdout)
@@ -839,6 +841,7 @@ def main(argv=None) -> int:
     ap.add_argument("--week", action="store_true", help="use ISO week as period (YYYY-Www)")
     ap.add_argument("--as-of", type=pc.as_of, default=datetime.date.today(),
                     metavar="YYYY-MM-DD", help="date to evaluate period against (default: today)")
+    ap.add_argument("--subproject", metavar="ID", help="for a per_subproject doc type: the sub-project the document is about")
     ap.add_argument("--stdout", action="store_true", help="print document to stdout instead of writing to disk")
     args = ap.parse_args(argv)
 
@@ -886,6 +889,9 @@ def main(argv=None) -> int:
         print("\n".join("ERROR " + e for e in bad), file=sys.stderr)
         return 2
 
+    if err := pc.subproject_error(cfg, args.type, args.subproject):
+        ap.error(err)
+
     data, read_errors = render_views.read_registers(root, cfg)
     val_errors = render_views.validate(data, cfg, root=root)
     all_errors = read_errors + val_errors
@@ -893,6 +899,9 @@ def main(argv=None) -> int:
         for err in all_errors:
             print("ERROR", err, file=sys.stderr)
         return 1
+
+    if args.subproject:
+        data = pc.for_subproject(cfg, data, args.subproject)
 
     tpl_name = info.get("template", f"{args.type}.md")
     try:
@@ -952,7 +961,7 @@ def main(argv=None) -> int:
                 new_fm = re.sub(r"^status:.*$", _add_hashes, fm_text, count=1, flags=re.M)
                 doc_text = "---\n" + new_fm + "\n---\n" + doc_text[m.end():]
 
-    rel_path = pc.doc_rel_path(cfg, args.type, period, args.as_of)
+    rel_path = pc.doc_rel_path(cfg, args.type, period, args.as_of, subproject=args.subproject)
     pc.check_inside(root, rel_path)
     target_path = root / rel_path
 
