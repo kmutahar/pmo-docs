@@ -1,6 +1,6 @@
 # Privacy Policy
 
-Last updated: 2026-11-19 (UTC)
+Last updated: 2026-11-22 (UTC)
 
 pmo-docs is a project-office and documentation workflow packaged as an Agent Skill. It is a folder of instructions, templates and Python scripts. An AI agent that you run (for example Claude Code) reads the instructions and runs the scripts on your own machine. This page explains what that means for your data.
 
@@ -26,7 +26,7 @@ pmo-docs does not read your browser data, contacts, calendar, mailbox or keychai
 
 ## 3. What pmo-docs does not do
 
-- **No network calls.** The scripts use only the Python standard library and a vendored copy of PyYAML. They do not open connections, download files, call APIs or send email. The only web addresses in the code are inside comments and documentation text. (When you ask an agent to install or update the skill via `docs/INSTALL_FOR_AGENTS.md`, the agent downloads the release archive from GitHub only after you say yes.) The agent may read public framework documentation on the web when you ask it to write a stack file for a framework the skill does not ship; it reads only the pages it needs, names them in the stack file (`Checked against:`) and sends nothing from your project.
+- **No network calls.** The scripts use only the Python standard library and a vendored copy of PyYAML. They do not open connections, download files, call APIs or send email. The only web addresses in the code are inside comments and documentation text. (When you ask an agent to install or update the skill via `docs/INSTALL_FOR_AGENTS.md`, the agent downloads the release archive from GitHub only after you say yes. If you choose to install using the third-party `npx skills` CLI, that CLI downloads from GitHub and has its own optional anonymous telemetry that you can disable with `DISABLE_TELEMETRY=1`.) The agent may read public framework documentation on the web when you ask it to write a stack file for a framework the skill does not ship; it reads only the pages it needs, names them in the stack file (`Checked against:`) and sends nothing from your project.
 - **No telemetry or analytics.** Nothing is counted, logged remotely or reported back.
 - **No credentials.** It does not read, ask for, store or forward passwords, tokens, API keys or SSH keys.
 - **No cookies or tracking.** There is no website or app, so there is nothing to track.
@@ -35,7 +35,7 @@ pmo-docs does not read your browser data, contacts, calendar, mailbox or keychai
 
 ## 4. Retention and deletion
 
-pmo-docs keeps nothing of its own. It has no database, cache service or log that leaves your machine. The files it writes live in your project, and you keep, move, version or delete them as you choose. To remove everything pmo-docs created, delete the `pmo/` folder (and any generated documents) and uninstall the plugin. There is no remote copy to ask us to erase.
+pmo-docs keeps nothing of its own. It has no database, cache service or log that leaves your machine. The files it writes live in your project, and you keep, move, version or delete them as you choose. To remove everything pmo-docs created, delete the `pmo/` folder (and any generated documents) and uninstall the plugin (or remove the installed skill folder). There is no remote copy to ask us to erase.
 
 If your project is in a Git repository, your Git history keeps earlier versions of these files according to your own Git settings. That is under your control, not the plugin's.
 
@@ -51,7 +51,7 @@ pmo-docs is a project-office tool for working professionals. It is not directed 
 
 ## 7. Security
 
-All processing happens on your machine under your user account, with the permissions your agent has. The scripts only write inside the project folder (with one exception: publish `repo` mode copies finished documents into another local repository after your explicit confirmation and, after a second yes, commits them there; it never pushes). Publishing copies finished documents only after you type `/pmo-docs:publish`, or, without the plugin, after you say yes to the dry-run listing the agent shows you. Automated agent installation guided by `docs/INSTALL_FOR_AGENTS.md` writes the skill folder to `~/.agents/skills` or a project skill folder only after your explicit confirmation. The skill lists the command patterns the agent may run without asking (`allowed-tools` in `skills/pmo-docs/SKILL.md`). The read-only git patterns there do not cover options that write a file: Claude Code still asks before `git log --output=<file>` or `git diff --output=<file>` (checked 2026-11-15). You keep control through your agent's own permission prompts. To report a security problem, see "Contact" below.
+All processing happens on your machine under your user account, with the permissions your agent has. The scripts only write inside the project folder (with one exception: publish `repo` mode copies finished documents into another local repository after your explicit confirmation and, after a second yes, commits them there; it never pushes). Publishing copies finished documents only after you type `/pmo-docs:publish`, or, without the plugin, after you say yes to the dry-run listing the agent shows you. Automated agent installation guided by `docs/INSTALL_FOR_AGENTS.md` writes the skill folder to `~/.agents/skills` or a project skill folder only after your explicit confirmation. The skill lists the command patterns the agent may run without asking (`allowed-tools` in `skills/pmo-docs/SKILL.md`). The read-only git patterns there do not cover options that write a file: Claude Code still asks before `git log --output=<file>` or `git diff --output=<file>`. The scripts take `--project DIR`, which the agent passes only for the project folder or a folder you named. A scheduled unattended run (`references/schedule.md`) may write any file in the project, not only `pmo/`, so schedule it only in a project you trust. You keep control through your agent's own permission prompts. To report a security problem, see "Contact" below.
 
 ## 8. Your rights
 
@@ -63,4 +63,4 @@ If pmo-docs ever adds a feature that sends data off your machine, this policy wi
 
 ## 10. Contact
 
-For privacy questions or to report a security concern, open an issue at <https://github.com/kmutahar/pmo-docs/issues>. Do not post private data in a public issue; ask for a private way to share details if you need one.
+For privacy questions, open an issue at <https://github.com/kmutahar/pmo-docs/issues> (never post private data in a public issue). To report a security vulnerability privately, follow [`SECURITY.md`](SECURITY.md) (open the **Security** tab on the repository page and choose **Report a vulnerability**).

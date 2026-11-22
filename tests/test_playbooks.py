@@ -147,7 +147,7 @@ class PlaybookWording(unittest.TestCase):
     def test_git_md_holds_the_workflow(self):
         text = (pc.SKILL / "references/git.md").read_text(encoding="utf-8")
         self.assertIn("name: pmo check", text)
-        self.assertIn("<version>", text)
+        self.assertIn("<full commit sha of the release tag>", text)
         self.assertNotIn("The README has the full file", text)
 
     def test_finish_steps_and_publish_title(self):

@@ -38,7 +38,7 @@ A scheduled run drafts only: it must never Finish, publish, or commit. The skill
    ```
    The prompt explicitly states the draft-only limit because an unattended cron run does not read this playbook.
    Replace /path/to/project with the absolute path of the project, and use the full path of `claude` if cron does not find it.
-   Without --allowedTools the headless run is denied the tools it needs and writes nothing. Do not widen this list.
+   Without --allowedTools the headless run is denied the tools it needs and writes nothing. Do not widen this list. `Write` and `Edit` here are not limited to `pmo/`: the unattended run can change any file in the project, and `paths.*` may point outside `pmo/`. Schedule it only in a project you trust.
    Never print permission-skipping flags (`--dangerously-skip-permissions`).
 
    If the agent harness provides its own session-scheduling tool, show the equivalent call with the same prompt and timing.

@@ -62,7 +62,7 @@ Make it executable. A hook in `.git/hooks` is not shared with teammates; to shar
 - **Drafts:** resolve by hand, then `structure_check.py`.
 - **Finished documents:** never merged; a second finished version is a new draft.
 
-A GitHub Actions workflow can run the same check as the hook. It downloads the skill at the installed version (`metadata.version` in `SKILL.md`) from the release archive and sets `PMO_DOCS_SKILL` to its `skills/pmo-docs` folder. It runs `pmo/bin/pmo render_views --check` on pushes and pull requests that touch `pmo/**`, with `permissions: contents: read`. It never commits. The workflow (replace `<version>` with `metadata.version` from `SKILL.md`):
+A GitHub Actions workflow can run the same check as the hook. It checks out the skill from this repository at the commit of the installed version's release tag (`metadata.version` in `SKILL.md`), pinned by full commit SHA, and sets `PMO_DOCS_SKILL` to its `skills/pmo-docs` folder. It runs `pmo/bin/pmo render_views --check` on pushes and pull requests that touch `pmo/**`, with `permissions: contents: read`. It never commits. The workflow (replace the placeholder with the full commit SHA that tag `v<metadata.version>` points to):
 
 ```yaml
 name: pmo check
@@ -74,8 +74,9 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - run: curl -fsSL https://github.com/kmutahar/pmo-docs/archive/refs/tags/v<version>.tar.gz | tar -xz
+      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
+        with: { repository: kmutahar/pmo-docs, ref: <full commit sha of the release tag>, path: .pmo-docs }
       - run: pmo/bin/pmo render_views --check
-        env: { PMO_DOCS_SKILL: pmo-docs-<version>/skills/pmo-docs }
+        env: { PMO_DOCS_SKILL: .pmo-docs/skills/pmo-docs }
 ```
