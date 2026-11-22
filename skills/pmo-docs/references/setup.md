@@ -19,7 +19,7 @@ Set up a project's `pmo/` folder and starter registers.
    Stop after reporting the status.
 
 2. **Gather configuration and confirm**
-   Ask the user for initial project details (project name, project manager; priority order and week start use defaults unless mentioned). Unknown answers stay null and become open questions. Display the tree of files to be created and wait for one yes before running `setup.py` or writing any file (`SKILL.md`, Safety rule 3: ask before writing beyond the request):
+   Ask the user for initial project details (project name, project manager; priority order and week start use defaults unless mentioned). Ask for any missing name in its own question that takes free text, before the consent question, so the consent question is a plain yes or no. Unknown answers stay null and become open questions. Display the tree of files to be created and wait for one yes before running `setup.py` or writing any file (`SKILL.md`, Safety rule 3: ask before writing beyond the request):
    ```
    pmo/
    ├── bin/
