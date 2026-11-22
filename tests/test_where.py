@@ -258,7 +258,7 @@ class Where(unittest.TestCase):
         base = tf.strip_languages_block(cfg_file.read_text(encoding="utf-8"))
         cfg_file.write_text(base + "\nlanguages:\n  draft: en\n  translations: [xx]\n", encoding="utf-8")
         f = fields(run(self.root, "decision-log", "--lang", "xx")[1])
-        self.assertEqual((f["dir"], f["glossary"], f["glossary_proposed"]), ("ltr", "none", "none"))
+        self.assertEqual((f["dir"], f["glossary"]), ("ltr", "none"))
 
     def test_hashes_for_a_type_without_generated_from_prints_no_hash_line(self):
         cfg_file = self.root / "pmo/config.yaml"
@@ -353,7 +353,7 @@ class WhereTranslations(unittest.TestCase):
         self.assertEqual(f["translation_of"], '"Decision log.md"')
         self.assertEqual(f["dir"], "rtl")
         self.assertEqual(f["glossary"], "pmo/data/glossary-xx.md")
-        self.assertEqual(f["glossary_proposed"], "pmo/data/glossary-xx.proposed.md")
+        self.assertNotIn("glossary_proposed", f)
 
     def test_lang_hashes_prints_source_hash(self):
         tf.enable_languages(self.root, ("xx",))

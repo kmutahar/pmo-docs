@@ -456,17 +456,15 @@ class Helpers(unittest.TestCase):
         self.assertEqual(pc.rag({**base, "vocab": {**base["vocab"], "rag": ["G", "A", "R"]}}, d, amber)[0], "A")
         self.assertEqual(pc.rag({**base, "vocab": {**base["vocab"], "rag": ["G", "A", "R"]}}, d, [])[0], "G")
 
-    def test_glossary_paths_shapes(self):
-        gp = lambda g, lang="xx": pc.glossary_paths({"languages": {"xx": {"glossary": g}}}, lang)  # noqa: E731
-        self.assertEqual(gp("a/b/g.txt"), ("a/b/g.txt", "a/b/g.proposed.txt"))
-        self.assertEqual(gp("g.txt"), ("g.txt", "g.proposed.txt"))
-        self.assertEqual(gp("g"), ("g", "g.proposed"))
+    def test_glossary_path_shapes(self):
+        gp = lambda g, lang="xx": pc.glossary_path({"languages": {"xx": {"glossary": g}}}, lang)  # noqa: E731
+        self.assertEqual(gp("a/b/g.md"), "a/b/g.md")
         for bad in (None, 5, "  ", ["a"]):
-            self.assertEqual(gp(bad), (None, None))
-        self.assertEqual(gp("g.md", "yy"), (None, None))
-        self.assertEqual(pc.glossary_paths({"languages": {"xx": "s"}}, "xx"), (None, None))
-        self.assertEqual(pc.glossary_paths({"languages": [1]}, "xx"), (None, None))
-        self.assertEqual(pc.glossary_paths([], "xx"), (None, None))
+            self.assertIsNone(gp(bad))
+        self.assertIsNone(gp("g.md", "yy"))
+        self.assertIsNone(pc.glossary_path({"languages": {"xx": "s"}}, "xx"))
+        self.assertIsNone(pc.glossary_path({"languages": [1]}, "xx"))
+        self.assertIsNone(pc.glossary_path([], "xx"))
 
     def test_languages_shapes(self):
         self.assertEqual(pc.languages({"languages": "x"}), {"draft": "en", "translations": [], "info": {"en": {}}})
@@ -671,17 +669,15 @@ class Languages(unittest.TestCase):
         different = finished + "\nExtra word.\n"
         self.assertNotEqual(h1, pc.body_hash(different))
 
-    def test_glossary_paths(self):
+    def test_glossary_path(self):
         base = pc.load_config(Path(__file__).resolve().parents[1] / "examples/acme")
         cfg = pc.merge(base, {
             "languages": {
                 "xx": {"glossary": "pmo/data/glossary-xx.md"}
             }
         })
-        approved, proposed = pc.glossary_paths(cfg, "xx")
-        self.assertEqual(approved, "pmo/data/glossary-xx.md")
-        self.assertEqual(proposed, "pmo/data/glossary-xx.proposed.md")
-        self.assertEqual(pc.glossary_paths(base, "en"), (None, None))
+        self.assertEqual(pc.glossary_path(cfg, "xx"), "pmo/data/glossary-xx.md")
+        self.assertIsNone(pc.glossary_path(base, "en"))
 
     def test_languages_drops_repeats_and_bad_codes(self):
         got1 = pc.languages({"languages": {"draft": "en", "translations": ["ar", "ar", "en"]}})

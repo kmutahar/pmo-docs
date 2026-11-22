@@ -1,6 +1,6 @@
 ---
 type: tool_used
-tool: Write
-input_match: 'glossary-fr\.proposed\.md'
+tool: Edit
+input_match: 'glossary-fr\.md'
 min: 1
 ---

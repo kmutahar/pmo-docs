@@ -21,8 +21,15 @@ languages:
 EOT
 mkdir -p pmo/data
 cat > pmo/data/glossary-fr.md <<'EOT'
-| Term | Translation | Note |
-|---|---|---|
-| Decision log | Registre des décisions | document title |
-| Open questions | Points en suspens | section heading |
+## Approved
+
+| ID | Term | Translation | Note |
+|---|---|---|---|
+| G-001 | Decision log | Registre des décisions | document title |
+| G-002 | Open questions | Points en suspens | section heading |
+
+## Proposed
+
+| ID | Term | Translation | Seen in | Date |
+|---|---|---|---|---|
 EOT

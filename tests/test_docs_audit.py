@@ -539,6 +539,25 @@ class Translations(unittest.TestCase):
         self.assertEqual(code, 0, out)
         self.assertIn("Total findings: 0", out)
 
+    def test_glossary_ids_checked(self):
+        tf.enable_languages(self.p, ("xx",))
+        cfg = self.p / "pmo/config.yaml"
+        cfg.write_text(cfg.read_text(encoding="utf-8").replace("  xx:\n    label: XX\n", "  xx:\n    glossary: pmo/data/glossary-xx.md\n    label: XX\n"), encoding="utf-8")
+        g = self.p / "pmo" / "data" / "glossary-xx.md"
+        g.parent.mkdir(parents=True, exist_ok=True)
+        hdr = "| ID | Term | Translation | Note |\n|---|---|---|---|\n"
+        g.write_text("## Approved\n\n" + hdr + "| G-001 | A | a | |\n\n## Proposed\n\n" + hdr + "| G-001 | B | b | |\n| Term | C | c | |\n", encoding="utf-8")
+        code, out = self.run_audit()
+        self.assertEqual(code, 1)
+        self.assertIn("## Glossary (2)", out)
+        self.assertIn("ID G-001 is also used", out)
+        g.write_text("## Approved\n\n" + hdr + "| G-001 | A | a | |\n", encoding="utf-8")
+        out = self.run_audit()[1]
+        self.assertIn("## Glossary (1)", out)
+        self.assertIn("missing the `## Proposed` section", out)
+        g.write_text("## Approved\n\n" + hdr + "| G-001 | A | a | |\n\n## Proposed\n\n" + hdr, encoding="utf-8")
+        self.assertIn("## Glossary (0)", self.run_audit()[1])
+
     def test_translation_behind(self):
         tf.enable_languages(self.p, ("xx",))
         _, orig_text = self.finish_decision_log()

@@ -45,7 +45,7 @@ def _unquote(s):
     return re.sub(r"(?:%[0-9A-Fa-f]{2})+", lambda m: bytes.fromhex(m[0].replace("%", "")).decode("utf-8", "replace"), s)
 
 
-CHECKS = ("front matter", "stale", "old", "broken links", "override drift", "translation behind", "parity")
+CHECKS = ("front matter", "stale", "old", "broken links", "override drift", "translation behind", "parity", "glossary")
 STALE_CHECKS = ("stale", "translation behind")
 
 
@@ -297,6 +297,34 @@ def drift_state(root, cfg, tpl_path: Path, tpl_source: str) -> str:
     return "yes" if _template_msg(tpl_path.name, tpl_path, default_file) else "no"
 
 
+def glossary_problems(root, cfg) -> list[str]:
+    """Each language's glossary file: the `## Approved` and `## Proposed` sections exist, and every row has a `G-nnn` ID that no other row uses."""
+    out = []
+    for lang in (cfg.get("languages") or {}):
+        g = pc.glossary_path(cfg, lang)
+        f = Path(root) / g if g else None
+        if not f or not f.is_file():
+            continue
+        lines = f.read_text(encoding="utf-8").splitlines()
+        for sec in ("Approved", "Proposed"):
+            if f"## {sec}" not in (ln.strip() for ln in lines):
+                out.append(f"{g}: missing the `## {sec}` section")
+        seen = {}
+        for n, line in enumerate(lines, 1):
+            if not line.startswith("|"):
+                continue
+            cell = line.strip("| ").split("|")[0].strip()
+            if cell == "ID" or set(cell) <= set("-: "):
+                continue
+            if not re.fullmatch(r"G-\d{3,}", cell):
+                out.append(f"{g}:{n}: first column `{cell}` is not an ID like G-001")
+            elif cell in seen:
+                out.append(f"{g}:{n}: ID {cell} is also used on line {seen[cell]}")
+            else:
+                seen[cell] = n
+    return out
+
+
 def audit(root, cfg, today):
     """(files scanned, {check: [message]})."""
     base = Path(root) / cfg["paths"]["documents"]
@@ -308,6 +336,7 @@ def audit(root, cfg, today):
     t_drift = template_drift(root, cfg)
     p_drift = playbook_drift(root, cfg)
     found["override drift"].extend(t_drift + p_drift)
+    found["glossary"].extend(glossary_problems(root, cfg))
     return len(files), found
 
 

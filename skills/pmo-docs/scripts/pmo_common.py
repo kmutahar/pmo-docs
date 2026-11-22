@@ -343,23 +343,12 @@ def body_hash(text: str) -> str:
     return hashlib.sha256(joined.encode("utf-8")).hexdigest()[:8]
 
 
-def glossary_paths(cfg, lang: str) -> tuple[str | None, str | None]:
-    """(approved, proposed) paths as written in the config, or (None, None) without a glossary. proposed = same folder, '<stem>.proposed.md'."""
+def glossary_path(cfg, lang: str) -> str | None:
+    """The language's glossary path as written in the config, or None without one."""
     langs = cfg.get("languages") if isinstance(cfg, dict) else None
-    if not isinstance(langs, dict):
-        return None, None
-    block = langs.get(lang)
-    if not isinstance(block, dict):
-        return None, None
-    g = block.get("glossary")
-    if not isinstance(g, str) or not g.strip():
-        return None, None
-    if g.endswith(".md"):
-        proposed = g[:-3] + ".proposed.md"
-    else:
-        p = Path(g)
-        proposed = f"{p.parent.as_posix()}/{p.stem}.proposed{p.suffix}" if str(p.parent) != "." else f"{p.stem}.proposed{p.suffix}"
-    return g, proposed
+    block = langs.get(lang) if isinstance(langs, dict) else None
+    g = block.get("glossary") if isinstance(block, dict) else None
+    return g if isinstance(g, str) and g.strip() else None
 
 
 def doc_type(text):

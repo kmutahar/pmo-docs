@@ -1,5 +1,5 @@
 schema_version: "1.0"
 name: translate-with-glossary
-description: "A new French translation of the Acme decision log: the approved glossary terms are used exactly, ids and dates stay as in the original, the approved glossary is never written and new terms go to the proposed file."
+description: "A new French translation of the Acme decision log: the approved glossary terms are used exactly, ids and dates stay as in the original, the Approved glossary rows are untouched and new terms go to the Proposed section with new IDs."
 context:
   scaffold_script: scaffold.sh

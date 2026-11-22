@@ -242,7 +242,7 @@ languages:
   ar: { label: AR, dir: rtl, glossary: pmo/data/glossary-ar.md }
 ```
 
-The agent writes a translation only when you ask, and checks that headings, tables, ids, numbers, list items and ticked boxes match. The approved glossary is read-only: new terms go to a proposed file next to it. Generators write English only. Per-type settings and check scripts are in [`skills/pmo-docs/references/translate.md`](skills/pmo-docs/references/translate.md).
+The agent writes a translation only when you ask, and checks that headings, tables, ids, numbers, list items and ticked boxes match. The glossary is one file with an Approved and a Proposed section: the agent only adds new terms under Proposed, and you move rows up. Generators write English only. Per-type settings and check scripts are in [`skills/pmo-docs/references/translate.md`](skills/pmo-docs/references/translate.md).
 
 ### Publishing
 

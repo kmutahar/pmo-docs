@@ -85,7 +85,7 @@ def main(argv=None):
         orig_exists = "yes" if (Path(args.project) / doc_rel).exists() else "no"
         lang_info = pc.languages(cfg)["info"].get(args.lang, {})
         lang_dir = lang_info.get("dir", "ltr")
-        g_app, g_prop = pc.glossary_paths(cfg, args.lang)
+        g_app = pc.glossary_path(cfg, args.lang)
     else:
         doc_rel_print = doc_rel
         doc_exists = "yes" if (Path(args.project) / doc_rel).exists() else "no"
@@ -142,7 +142,6 @@ def main(argv=None):
             ("lang", args.lang),
             ("dir", lang_dir),
             ("glossary", g_app if g_app else "none"),
-            ("glossary_proposed", g_prop if g_prop else "none"),
         ])
     fields.extend([
         ("template", template_str),

@@ -221,7 +221,7 @@ The state of a translation that has the same headings, tables, ids, numbers, lis
 _Avoid_: match, sync
 
 **Translation glossary**:
-The approved and proposed term lists of one language. The agent reads the approved list and only appends to the proposed one.
+The term list of one language: one file with an Approved and a Proposed section. The agent uses the Approved rows and only appends to Proposed.
 _Avoid_: dictionary, term base
 
 **Behind**:

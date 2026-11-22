@@ -120,9 +120,9 @@ A template is the contract: its front matter declares the checks, `structure_che
 
 A translation is a document in another language, next to its original as `<name>.<lang>.md` (`references/conventions.md`). It is made with `references/translate.md`, never unasked.
 
-- It keeps the original's headings, tables, ids, numbers, list items and ticked boxes. `parity_check.py` reports no difference before Finish.
+- It keeps the original's heading levels and order, table columns and rows, ids, numbers, list items and ticked boxes; heading text, column names and field labels are translated with the glossary. `parity_check.py` reports no difference before Finish.
 - Ids, paths, dates and code stay as they are. Add nothing to the original's facts and drop nothing.
-- The approved glossary of a language is read only. New terms go to the proposed file next to it; moving a row to the approved file is the user's step.
+- A language's glossary is one file with an Approved and a Proposed section. Every row has an ID (`G-001`, never reused). The agent only appends new terms under Proposed with the next free ID and never changes an Approved row; moving a row up to Approved is the user's step and keeps its ID.
 - A translation records `source_hash`, not `source_hashes`. It is behind its original when the original's text changed afterwards (`docs_audit.py` compares the hash).
 - A translation is finished only after its original. The original is never edited from a translation.
 

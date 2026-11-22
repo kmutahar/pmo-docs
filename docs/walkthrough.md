@@ -28,7 +28,7 @@ The skill's behaviour rules are in [`SKILL.md`](../skills/pmo-docs/SKILL.md); th
 ```
 pmo/
   config.yaml      project name, manager, domain, stack and the Arabic translation setting
-  data/            the approved Arabic glossary
+  data/            the Arabic glossary
   registers/       20 registers, one entry per line
   views/           one view per register plus the catalogue, rendered from them
   documents/       a draft status report, a finished decision log and its Arabic translation
@@ -235,7 +235,7 @@ None
 
 **Run:** `where.py decision-log --lang ar --hashes`, then `parity_check.py`. **You should see:** the path `Decision log.ar.md` and `0 file(s) differ from their originals`.
 
-Acme's `pmo/config.yaml` declares Arabic (`ar`) as a translation language with an approved glossary (`pmo/data/glossary-ar.md`):
+Acme's `pmo/config.yaml` declares Arabic (`ar`) as a translation language with a glossary (`pmo/data/glossary-ar.md`):
 
 ```yaml
 languages:
@@ -257,7 +257,6 @@ translation_of: "Decision log.md"
 lang: ar
 dir: rtl
 glossary: pmo/data/glossary-ar.md
-glossary_proposed: pmo/data/glossary-ar.proposed.md
 template: <skill folder>/assets/templates/decision-log.md
 template_source: skill
 template_exists: yes

@@ -2,7 +2,7 @@
 playbook_version: 1
 ---
 
-Reads: pmo/config.yaml (`languages`, `doc_types`), `where.py --lang` output, the original, the existing translation, the approved and proposed glossaries.
+Reads: pmo/config.yaml (`languages`, `doc_types`), `where.py --lang` output, the original, the existing translation, the glossary.
 
 # Translate
 
@@ -14,7 +14,7 @@ The rules for translations live in `SKILL.md` (Translations) and `references/con
    Ask when any is unclear. A language not in the type's `translations` goes to `references/extend.md` first.
 
 2. **Find the paths**
-   Run `python3 ${CLAUDE_SKILL_DIR}/scripts/where.py <type> [period] --lang <code> --hashes`. Note `document`, `original`, `translation_of`, `dir`, `glossary`, `glossary_proposed` and `source_hash`. The original must exist. If it is a draft, the translation can be drafted but not finished.
+   Run `python3 ${CLAUDE_SKILL_DIR}/scripts/where.py <type> [period] --lang <code> --hashes`. Note `document`, `original`, `translation_of`, `dir`, `glossary` and `source_hash`. The original must exist. If it is a draft, the translation can be drafted but not finished.
 
 3. **Decide the case**
    - No translation file: translate (step 5).
@@ -25,11 +25,11 @@ The rules for translations live in `SKILL.md` (Translations) and `references/con
    Run `python3 ${CLAUDE_SKILL_DIR}/scripts/parity_check.py "<translation>"`; its messages name the sections that differ in structure, ids or numbers. Read the original and the translation side by side for sections whose wording changed with no id or number change. List the sections you will update and wait for a yes. Update those sections only. Leave the user's own wording in the others.
 
 5. **Read the glossaries**
-   Read the approved glossary if it exists (a Markdown table `| Term | Translation | Note |`, first column in the draft language). Use its translation for every listed term, exactly. A domain term that is not listed: translate it consistently inside this document and append one row to the proposed file `| Term | Proposed translation | Seen in | Date |` unless the term is already there. Create the proposed file with its header and the folder if missing. Never write to the approved file.
+   Read the glossary if it exists: one Markdown file with an `## Approved` and a `## Proposed` section. Approved rows are a table `| ID | Term | Translation | Note |`; the ID is `G-001`, `G-002` and so on, the term is in the draft language. Use the Approved translation for every listed term, exactly, for headings, column names and labels too. A domain term that is not listed in either section: translate it consistently inside this document and append one row to the Proposed table `| ID | Term | Translation | Seen in | Date |`. A term already under Proposed is used as proposed and not added again. The new ID is the next number after the highest ID in the file; an ID is never reused, and a row the user moves up to Approved keeps its ID, so teams can review by ID. If the file is missing, create it (and the folder) with both sections and their table headers. Only append rows under Proposed with a targeted edit: never change, move or delete another line, and never add under Approved.
 
 6. **Write the translation**
    Front matter is the original's, minus `checks` and `source_hashes`, with `title` translated and `lang`, `dir`, `translation_of`, `source_hash` added (the values `where.py` printed; if it cannot run, leave `source_hash` out and say so); `status: draft`; `last_updated` today.
-   Body: the same headings in the same order and levels, the same tables (same columns and rows, in the same order), the same ids (in backticks where the original has them), the same numbers (written with the language's digits when the config has `digits`), the same dates (`YYYY-MM-DD`), links, paths and code. Translate the words `not set`, `not provided`, `not recorded`, `None` and the `Open questions` section consistently with the glossary. Names from the roster stay as the roster has them. Add nothing the original does not say; leave nothing out. Keep the original's comments out of the translation.
+   Body: the same headings in the same order and levels, the same tables (same columns and rows, in the same order), the same fields and checkboxes. Translate the heading text, the column names and the field labels (`Status`, `Date`) with the glossary; only the structure is compared, not the words. Keep the same ids (in backticks where the original has them), the same numbers (written with the language's digits when the config has `digits`), the same dates (`YYYY-MM-DD`), links, paths and code. Translate the words `not set`, `not provided`, `not recorded`, `None` and the `Open questions` section consistently with the glossary. Names from the roster stay as the roster has them. Add nothing the original does not say; leave nothing out. Keep the original's comments out of the translation.
 
 7. **Check**
    Run `python3 ${CLAUDE_SKILL_DIR}/scripts/parity_check.py "<file>"` and `python3 ${CLAUDE_SKILL_DIR}/scripts/structure_check.py "<file>"`. Fix every difference by changing the translation, never the original. Do not finish while parity reports anything.
@@ -38,7 +38,7 @@ The rules for translations live in `SKILL.md` (Translations) and `references/con
    Finish only when the user says so, or says yes when you ask. Do it as `SKILL.md` defines it for a translation (Finish, step 8). The original must be finished first.
 
 9. **Reply**
-   Path, parity and structure results, the terms added to the proposed glossary (count and file), what is left for the user (move terms to the approved glossary, review the translation), and that the user commits it.
+   Path, parity and structure results, the terms added under Proposed (count and file), what is left for the user (move rows up to Approved, review the translation), and that the user commits it.
 
 ## Do not
 
@@ -56,4 +56,4 @@ The rules for translations live in `SKILL.md` (Translations) and `references/con
 - `doc_types.<type>.translate`: `in-period` (default) or `after-close`, controlling when Finish offers translation (`SKILL.md`, Finish step 8).
 - `doc_types.<type>.translations`: language codes that replace `languages.translations` for one doc type (`[]` disables translation for that type).
 - `parity_check.py`: compares a translation with its original (headings, tables, ids, numbers, list items, ticked boxes).
-- `docs_audit.py`: reports a translation that is behind its original and checks parity.
+- `docs_audit.py`: reports a translation that is behind its original checks parity and checks glossary IDs.

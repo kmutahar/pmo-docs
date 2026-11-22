@@ -58,7 +58,7 @@ Put only what differs in `pmo/config.yaml`: maps merge, lists replace, `null` re
      translations: [xx]
      xx: { label: XX, dir: rtl, glossary: pmo/data/glossary-xx.md }
    ```
-2. `glossary` is a Markdown file inside the project; the proposed list sits next to it as `<name>.proposed.md`. `digits`, `connectors` and `separators` are optional (`references/conventions.md`).
+2. `glossary` is a Markdown file inside the project; it holds an `## Approved` and a `## Proposed` section (`references/translate.md`). `digits`, `connectors` and `separators` are optional (`references/conventions.md`).
 3. To change when or where a type is translated, set `doc_types.<type>.translate` (`in-period` or `after-close`) and `doc_types.<type>.translations` (a list that replaces `languages.translations`; `[]` means none).
 4. Run `render_views.py`; it checks the new keys. Then translate with `references/translate.md`.
 
