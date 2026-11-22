@@ -332,6 +332,7 @@ doc_types:
     name: "{period} - {title}.md"
     generated_from: [tasks, milestones, priorities, issues, risks, changes]
     stale_days: 30
+    generator: true
     when: at milestone completion or release cutoff
     regenerate: when release tasks or issues close
   capacity-plan:
@@ -398,6 +399,7 @@ doc_types:
     name: "{period} - {title}.md"
     generated_from: [tests, issues, requirements]
     stale_days: 30
+    generator: true
     when: At the end of a test round, and before a release decision.
     regenerate: A test result, an issue or a requirement changes.
   entity-lifecycle:
@@ -422,6 +424,7 @@ doc_types:
     name: "{title}.md"
     generated_from: [requirements, tasks, milestones, objectives, roster]
     stale_days: 90
+    generator: true
     when: at kickoff, and when the scope changes
     regenerate: when requirements or milestones change
   work-order:
@@ -430,6 +433,7 @@ doc_types:
     name: "{title}.md"
     generated_from: [tasks, milestones, requirements, roster, budget]
     stale_days: 30
+    generator: true
     when: when a defined piece of work is handed to a team or person
     regenerate: when its tasks change before it is accepted
   api-reference:

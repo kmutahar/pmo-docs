@@ -226,7 +226,7 @@ class Cli(unittest.TestCase):
     def test_every_generator_runs_with_no_entries_in_any_register(self):
         for f in (self.root / "pmo/registers").glob("*.yaml"):
             f.write_text("", encoding="utf-8")
-        for t in ("status-report", "project-plan", "team-checklist", "decision-log"):
+        for t in ("status-report", "project-plan", "team-checklist", "decision-log", "scope-wbs", "work-order", "delivery-report", "defect-gap-report"):
             code, out, err = run(self.root, t, "--stdout")
             self.assertEqual(code, 0, (t, err))
             self.assertTrue(out.startswith("---\n"), t)

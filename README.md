@@ -232,7 +232,7 @@ It looks for the skill in `$PMO_DOCS_SKILL`, project skill folders, the Claude p
 
 ### Generators
 
-Four document types are pre-filled mechanically from registers by `scripts/generate.py`: `decision-log`, `team-checklist`, `project-plan` and `status-report`. The agent fills only what is left: prose placeholders, comments and open questions. Weekly reports count the month that holds at least four of the week's seven days.
+Eight document types are pre-filled mechanically from registers by `scripts/generate.py`: `decision-log`, `team-checklist`, `project-plan`, `status-report`, `scope-wbs`, `work-order`, `delivery-report` and `defect-gap-report`. The agent fills only what is left: prose placeholders, comments and open questions. Weekly reports count the month that holds at least four of the week's seven days.
 
 ### Languages and translation
 

@@ -361,6 +361,43 @@ class TestGenerate(unittest.TestCase):
     def test_team_checklist_passes_structure_check_except_placeholders(self):
         self._assert_generated_draft_placeholders(("team-checklist", "2026-03"), set())
 
+    def test_scope_wbs_groups_tasks_by_area(self):
+        self._assert_generated_draft_placeholders(("scope-wbs",), {"deliverable", "exclusion", "assumption"})
+        code, out, _ = tool("generate.py", self.root, "scope-wbs", "--stdout")
+        self.assertIn("| ui | Design login page; Pick a payment vendor | Bob Example | not set | `T-2`, `T-4`, `REQ-1` |", out)
+        self.assertIn("| docs | Write API outline | Alice Example | not set | `T-3` |", out)
+
+    def test_work_order_lists_open_tasks_by_person_then_due_date(self):
+        self._assert_generated_draft_placeholders(("work-order",), {"title", "purpose", "scope item", "criterion", "budget and constraints"})
+        code, out, _ = tool("generate.py", self.root, "work-order", "--as-of", "2026-03-15", "--stdout")
+        self.assertIn("**Assigned to:** Alice Example, Bob Example", out)
+        self.assertIn("**Due:** 2026-04-01", out)
+        self.assertLess(out.index("`T-1`"), out.index("`T-2`"))  # grouped by person in roster order
+        self.assertLess(out.index("`T-2`"), out.index("`T-4`"))  # then by due date
+        self.assertNotIn("`T-3`", out)  # done, so not open
+
+    def test_delivery_report_counts_and_carries_over(self):
+        self._assert_generated_draft_placeholders(
+            ("delivery-report", "2026-03"),
+            {"id", "output", "lead", "delivered", "acceptance_met", "evidence", "title", "status", "item", "reason", "plan"})
+        code, out, _ = tool("generate.py", self.root, "delivery-report", "2026-03", "--as-of", "2026-03-15", "--stdout")
+        self.assertIn("**Planned:** 4 tasks - **Delivered:** 1 (25%) - **Dropped:** 0 - **Carried over:** 3", out)
+        self.assertIn("- Write API outline `T-3` - Alice Example - 2026-03-05", out)
+        self.assertIn("| M-1 | Staging ready | 2026-03-20 | in-progress |", out)
+        self.assertIn("- Pick a payment vendor `T-4`", out.split("## Carried to next period")[1])
+
+    def test_defect_gap_report_lists_failed_tests_issues_and_gaps(self):
+        self._assert_generated_draft_placeholders(
+            ("defect-gap-report", "2026-03"),
+            {"At most three sentences summarizing quality state, critical defects, and release readiness.", "recommendation naming an ID"})
+        code, out, _ = tool("generate.py", self.root, "defect-gap-report", "2026-03", "--as-of", "2026-03-15", "--stdout")
+        self.assertIn("**Failed tests:** 1 - **Open issues:** 3 - **Requirements without a passing test:** 2", out)
+        self.assertIn("| TST-2 | Login with valid credentials | REQ-1 | I-3 | high | Bob Example |", out)
+        self.assertLess(out.index("| I-3 |"), out.index("| I-1 |"))  # most severe first
+        self.assertNotIn("| I-4 |", out)  # resolved
+        self.assertIn("| REQ-1 | Users can log in | high | test failed |", out)
+        self.assertIn("| REQ-2 | Pages load fast | medium | no test |", out)
+
     def test_non_english_draft_language_exits_2(self):
         cfg_path = self.root / "pmo/config.yaml"
         base = re.sub(r"(?m)^languages:.*\n(?:[ \t#].*\n|\n)*", "", cfg_path.read_text(encoding="utf-8"))

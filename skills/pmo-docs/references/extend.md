@@ -69,7 +69,7 @@ Put only what differs in `pmo/config.yaml`: maps merge, lists replace, `null` re
 ## Draft in another language
 
 1. Set `languages.draft` to its code and give the code a block in `languages` (as above).
-2. Set `generator: null` on the generator doc types (`status-report`, `project-plan`, `team-checklist`, `decision-log`): `generate.py` writes English only and stops otherwise.
+2. Set `generator: null` on the generator doc types (`status-report`, `project-plan`, `team-checklist`, `decision-log`, `scope-wbs`, `work-order`, `delivery-report`, `defect-gap-report`): `generate.py` writes English only and stops otherwise.
 3. Copy each template you use from `${CLAUDE_SKILL_DIR}/assets/templates/` to `pmo/templates/` and translate its headings and table columns: `structure_check.py` matches them exactly.
 
 ## Do not

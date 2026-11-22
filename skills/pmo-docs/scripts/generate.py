@@ -833,6 +833,168 @@ def generate_status_report(ctx: Ctx) -> Filled:
     )
 
 
+def code_list(ids):
+    return ", ".join(f"`{x}`" for x in ids) or "none"
+
+
+@generator("scope-wbs")
+def generate_scope_wbs(ctx: Ctx) -> Filled:
+    task_dropped = set(pc.statuses(ctx.cfg, "tasks", "closed")) - set(pc.statuses(ctx.cfg, "tasks", "done"))
+    tasks = sorted((t for t in ctx.data.get("tasks", []) if t.get("status") not in task_dropped), key=lambda t: id_number(t.get("id")))
+    reqs_of_task = {}
+    for r in ctx.data.get("requirements", []):
+        for tid in r.get("related_tasks") or []:
+            reqs_of_task.setdefault(tid, []).append(r.get("id"))
+
+    groups = {}
+    for t in tasks:
+        groups.setdefault(str(t.get("group") or "no group"), []).append(t)
+
+    rows = []
+    for g in sorted(groups, key=lambda g: (g == "no group", g)):
+        owners = list(dict.fromkeys(pc.person(t.get("owner"), ctx.names) for t in groups[g] if t.get("owner")))
+        ids = list(dict.fromkeys([t.get("id") for t in groups[g]] + [r for t in groups[g] for r in reqs_of_task.get(t.get("id"), [])]))
+        rows.append([g, "; ".join(pc.inline(t.get("title") or "not recorded") for t in groups[g]),
+                     ", ".join(owners) or "not set", "not set", code_list(ids)])
+
+    notes = ["Work breakdown: the Milestone column is not set because tasks carry no milestone link"] if rows else []
+    if no_owner := sum(1 for t in tasks if not t.get("owner")):
+        notes.append(f"{no_owner} tasks have no owner")
+
+    return Filled(
+        values={},
+        sections={"Work breakdown": pc.md_table(["Deliverable", "Parts", "Owner", "Milestone", "Tasks and requirements"], rows).strip()},
+        slots={},
+        notes=notes,
+    )
+
+
+@generator("work-order")
+def generate_work_order(ctx: Ctx) -> Filled:
+    task_closed = pc.statuses(ctx.cfg, "tasks", "closed")
+    open_tasks = [t for t in ctx.data.get("tasks", []) if t.get("status") not in task_closed]
+    by_person = {}
+    for t in open_tasks:
+        by_person.setdefault(pc.person(t.get("owner"), ctx.names), []).append(t)
+
+    roster_order = [pc.person(r.get("slug"), ctx.names) for r in ctx.data.get("roster", [])]
+    order = [p for p in roster_order if p in by_person]
+    order += sorted(p for p in by_person if p not in order and p != "not set") + (["not set"] if "not set" in by_person else [])
+
+    def due_key(t):
+        d = str(t.get("due") or "")
+        return (not d, d, id_number(t.get("id")))
+
+    # one table (structure_check wants a table directly under `## Tasks`), grouped by person
+    rows = [[f"{t.get('title') or 'not recorded'} `{t.get('id', '')}`", p, str(t.get("due") or "not set")]
+            for p in order for t in sorted(by_person[p], key=due_key)]
+
+    dues = [str(t["due"]) for t in open_tasks if t.get("due")]
+    notes = []
+    if missing_due := sum(1 for t in open_tasks if not t.get("due")):
+        notes.append(f"{missing_due} open tasks have no due date")
+
+    return Filled(
+        values={"lead": ", ".join(order) or "not set", "due date": max(dues) if dues else "not set"},
+        sections={"Tasks": pc.md_table(["Task", "Owner", "Due"], rows).strip()},
+        slots={},
+        notes=notes,
+    )
+
+
+def period_milestones(ctx: Ctx) -> list[dict]:
+    """Milestones belonging to the period: its month, or a due date inside the window."""
+    window_month = majority_month(ctx.window)
+    out = []
+    for m in ctx.data.get("milestones", []):
+        d = pc.to_date(m.get("due"))
+        if (m.get("period") == window_month) if m.get("period") else (d and ctx.window[0] <= d <= ctx.window[1]):
+            out.append(m)
+    return sorted(out, key=lambda m: (not m.get("due"), str(m.get("due") or ""), id_number(m.get("id"))))
+
+
+@generator("delivery-report")
+def generate_delivery_report(ctx: Ctx) -> Filled:
+    counted, notes = period_tasks(ctx)
+    task_done = pc.statuses(ctx.cfg, "tasks", "done")
+    task_closed = pc.statuses(ctx.cfg, "tasks", "closed")
+    delivered = sorted((t for t in counted if t.get("status") in task_done), key=lambda t: id_number(t.get("id")))
+    dropped = sum(1 for t in counted if t.get("status") in task_closed and t.get("status") not in task_done)
+    carried = sorted((t for t in counted if t.get("status") not in task_closed), key=lambda t: id_number(t.get("id")))
+    total = len(counted)
+    pct = round(100 * len(delivered) / total) if total else 0
+
+    summary = f"**Planned:** {total} tasks - **Delivered:** {len(delivered)} ({pct}%) - **Dropped:** {dropped} - **Carried over:** {len(carried)}"
+    if delivered:
+        summary += "\n\n" + "\n".join(
+            f"- {pc.inline(t.get('title') or 'not recorded')} `{t.get('id', '')}` - {pc.inline(pc.person(t.get('owner'), ctx.names))} - {t.get('due') or 'not set'}"
+            for t in delivered)
+
+    ms_rows = [[m.get("id") or "not set", m.get("title") or "not recorded", str(m.get("due") or "not set"), m.get("status") or "not recorded"]
+               for m in period_milestones(ctx)]
+    carry_body = "\n".join(f"- {pc.inline(t.get('title') or 'not recorded')} `{t.get('id', '')}`" for t in carried) or "- None"
+
+    return Filled(
+        values={},
+        sections={
+            "Summary": summary,
+            "Milestones": pc.md_table(["ID", "Milestone", "Due", "Result"], ms_rows).strip(),
+            "Carried to next period": carry_body,
+        },
+        slots={},
+        notes=notes,
+    )
+
+
+@generator("defect-gap-report")
+def generate_defect_gap_report(ctx: Ctx) -> Filled:
+    issues = {i.get("id"): i for i in ctx.data.get("issues", [])}
+    tests = ctx.data.get("tests", [])
+    failed = sorted((t for t in tests if t.get("status") == "failed"), key=lambda t: id_number(t.get("id")))
+    notes = []
+
+    defect_rows = []
+    for t in failed:
+        iss = issues.get(t.get("issue"))
+        if not iss:
+            notes.append(f"failed test {t.get('id')} has no linked issue")
+        defect_rows.append([t.get("id") or "not set", t.get("title") or "not recorded", t.get("requirement") or "not recorded",
+                            t.get("issue") or "not set", (iss.get("severity") or "not recorded") if iss else "not set",
+                            pc.person(t.get("owner"), ctx.names)])
+
+    issue_closed = pc.statuses(ctx.cfg, "issues", "closed")
+    sev = ctx.cfg.get("vocab", {}).get("issue_severity") or []  # least severe first
+    open_issues = sorted((i for i in issues.values() if i.get("status") not in issue_closed),
+                         key=lambda i: (-(sev.index(i["severity"]) if i.get("severity") in sev else -1), id_number(i.get("id"))))
+    issue_rows = [[i.get("id") or "not set", i.get("title") or "not recorded", i.get("severity") or "not recorded",
+                   pc.person(i.get("owner"), ctx.names), i.get("status") or "not recorded", str(i.get("raised") or "not recorded")]
+                  for i in open_issues]
+
+    req_closed = pc.statuses(ctx.cfg, "requirements", "closed")
+    gap_rows = []
+    for r in sorted(ctx.data.get("requirements", []), key=lambda r: id_number(r.get("id"))):
+        if r.get("status") in req_closed:
+            continue
+        states = {t.get("status") for t in tests if t.get("requirement") == r.get("id")}
+        if "passed" in states:
+            continue
+        gap = "no test" if not states else "test failed" if "failed" in states else "test not run"
+        gap_rows.append([r.get("id") or "not set", r.get("title") or "not recorded", r.get("priority") or "not recorded", gap])
+
+    counts = f"**Failed tests:** {len(failed)} - **Open issues:** {len(issue_rows)} - **Requirements without a passing test:** {len(gap_rows)}"
+    return Filled(
+        values={},
+        sections={
+            "Summary": counts + "\n\n{{At most three sentences summarizing quality state, critical defects, and release readiness.}}",
+            "Defects": pc.md_table(["ID", "Failed test", "Requirement", "Issue", "Severity", "Lead"], defect_rows).strip(),
+            "Open issues": pc.md_table(["ID", "Issue", "Severity", "Lead", "Status", "Raised"], issue_rows).strip(),
+            "Gaps": pc.md_table(["Requirement", "Title", "Priority", "Gap"], gap_rows).strip(),
+        },
+        slots={},
+        notes=notes,
+    )
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     pc.add_project_arg(ap)
