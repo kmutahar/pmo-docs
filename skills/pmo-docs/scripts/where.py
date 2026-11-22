@@ -4,6 +4,8 @@
 Usage:
     python3 where.py <type> [period] [--week] [--as-of YYYY-MM-DD] [--hashes] [--title TEXT] [--lang CODE] [--project ROOT]
 
+Prints key: value lines, then one `subproject: <id> kind=.. stack=.. docs_dir=..` line per sub-project in the config (unset parts are left out).
+
 Exit codes: 0 ok, 2 usage, a config the skill refuses, or a template that is not UTF-8 text.
 """
 import argparse
@@ -169,6 +171,10 @@ def main(argv=None):
         elif info.get("generated_from"):
             pairs = ", ".join(f'{r}: "{register_hash(args.project, cfg, r)}"' for r in info["generated_from"] if r in cfg["registers"])
             fields.append(("source_hashes", "{" + pairs + "}"))
+    subs = cfg.get("subprojects")
+    for sid, sp in (subs.items() if isinstance(subs, dict) else ()):  # render_views.py reports a malformed map
+        parts = [f"{k}={sp[k]}" for k in ("kind", "stack", "docs_dir") if isinstance(sp, dict) and sp.get(k)]
+        fields.append(("subproject", " ".join([str(sid), *parts])))
     for k, v in fields:
         print(f"{k}: {v}")
     return 0

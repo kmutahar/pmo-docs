@@ -278,6 +278,15 @@ class Where(unittest.TestCase):
         self.assertEqual(run(self.root, "status-report", "--bogus")[0], 2)
         self.assertEqual(run(self.root)[0], 2)  # the type is required
 
+    def test_subproject_lines_only_when_configured(self):
+        self.assertNotIn("subproject", run(self.root, "decision-log")[1])
+        cfg_file = self.root / "pmo/config.yaml"
+        cfg_file.write_text(cfg_file.read_text(encoding="utf-8") + "\nsubprojects:\n  api:\n    kind: backend\n    stack: pmo/stacks/api.md\n    docs_dir: docs/api\n  web: {}\n", encoding="utf-8")
+        code, out, _ = run(self.root, "decision-log")
+        self.assertEqual(code, 0)
+        lines = [l for l in out.splitlines() if l.startswith("subproject")]
+        self.assertEqual(lines, ["subproject: api kind=backend stack=pmo/stacks/api.md docs_dir=docs/api", "subproject: web"])
+
     def test_help(self):
         self.assertEqual(run(self.root, "--help")[0], 0)
 
