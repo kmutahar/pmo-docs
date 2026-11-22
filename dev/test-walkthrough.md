@@ -53,10 +53,10 @@ echo "## 4"; run python3 "$SKILL/scripts/where.py" status-report 2026-03 --hashe
 echo "## 5"; run python3 "$SKILL/scripts/structure_check.py"
 sed -i 's/^## Summary$/## Overview/' "$R"; run python3 "$SKILL/scripts/structure_check.py" "$R"; sed -i 's/^## Overview$/## Summary/' "$R"
 run python3 "$SKILL/scripts/docs_audit.py" --as-of 2026-03-15
-echo "## 6"; printf '\nlanguages:\n  translations: [xx]\n  xx: { label: XX, dir: rtl, glossary: pmo/data/glossary-xx.md }\n' >> pmo/config.yaml
+echo "## 6"
 run python3 "$SKILL/scripts/render_views.py" --check
-run python3 "$SKILL/scripts/where.py" decision-log --lang xx --hashes
-run python3 "$SKILL/scripts/where.py" docs-audit-report --lang xx
+run python3 "$SKILL/scripts/where.py" decision-log --lang ar --hashes
+run python3 "$SKILL/scripts/where.py" docs-audit-report --lang ar
 run python3 "$SKILL/scripts/parity_check.py"
 run python3 "$SKILL/scripts/docs_audit.py" --as-of 2026-03-15
 } 2>&1 | tee "$LOG/scripts.txt"
@@ -76,11 +76,11 @@ Sign in with `/login` if asked. Type these one at a time and read each answer be
    Expect: only the T-1 line changes, to `status: done` and `done_on: 2026-03-15`. The views are rendered with `render_views.py`, never edited by hand.
 3. `weekly-status for the week of 2026-03-09`
    Expect: a new draft weekly status, with numbers from the registers.
-4. `! printf '\nlanguages:\n  translations: [xx]\n  xx: { label: XX, dir: rtl }\n' >> pmo/config.yaml`
-   (The `!` runs it as a shell command.) Then: `finish the 2026-03 status report`
+   It may first ask which roster person you are: answer `sam` (it writes `pmo/.me`, which `pmo/.gitignore` hides from git).
+4. `finish the 2026-03 status report`
    Expect:
    - the Finish steps run, ending with `status: finished` and `source_hashes`;
-   - it asks once whether to translate into XX. Answer `no`.
+   - it asks once whether to translate into `ar` (Acme's `pmo/config.yaml` already configures `ar`). Answer `no`.
 5. `! mkdir -p inbox && printf '[2026-03-14 09:10] Sam Example: Bob, please add the footer links, due 2026-03-27\n[2026-03-14 11:30] Bob Example: the staging backup job is finished\n[2026-03-14 11:41] Alice Example: staging box password=Example-Pa55-zz\n' > inbox/chat.txt`
    Then: `take the new work and the finished work from inbox/chat.txt into the registers`
    Expect:

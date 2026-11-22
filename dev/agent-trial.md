@@ -1,6 +1,6 @@
 # Trial the skill in other agents
 
-A maintainer checklist, not shipped. Its results go into the current plan's Results section, and into the README's agent table at release. You run each agent yourself, in its own terminal session, and save what it did. The commands below are for zsh and write to `~/pmo-trial-logs/`.
+A maintainer checklist, not shipped. Record results in your `tmp/` notes (section 5) and update the README's agent table at release. You run each agent yourself, in its own terminal session, and save what it did. The commands below are for zsh and write to `~/pmo-trial-logs/`.
 
 Each trial works on a copy of the example project, `examples/acme`, in `~/pmo-trial/`, and installs the skill temporarily in `~/.agents/skills/pmo-docs` until cleanup. Nothing here touches your real projects' files, though your agents will see the trial skill until you remove it in cleanup.
 
@@ -27,7 +27,7 @@ rm -rf ~/pmo-trial/skill-tmp
 ls "$SKILL/SKILL.md" "$SKILL/scripts" 2>&1 | tee -a "$LOG/install.txt"
 ```
 
-The folders each agent searches, checked against its official docs on 2026-11-11 UTC:
+The folders each agent searches:
 
 | Agent | User folders | Project folders | Source |
 |---|---|---|---|
@@ -49,11 +49,7 @@ Record the result of this section in `$LOG/install.txt`: the list the agent prin
 
 ## 2. The install prompt
 
-Give each agent this prompt, unchanged, in a fresh session. It is the same prompt the README shows. Use the latest release tag in place of `<tag>` (the README shows it), or the commit you are testing:
-
-```
-Read the raw text of https://raw.githubusercontent.com/<owner>/pmo-docs/<tag>/docs/INSTALL_FOR_AGENTS.md (curl it, do not work from a summary), then follow it exactly to install and verify the pmo-docs skill for the agent you are running in. Respond in the user's language.
-```
+In a fresh session, give each agent the exact prompt from [`README.md`](../README.md#let-an-agent-install-it) (replacing the tag only if testing an unreleased commit).
 
 The prompt must end with the agent asking before any write. Answer yes only to the install step, and record each question the agent asked in `$LOG/install.txt`.
 
@@ -93,7 +89,7 @@ The expected files come from `docs/walkthrough.md` and the scripts. To build the
 | 2 | track | `acme` | Two turns. Turn 1 ("mark T-1 done"): asks for QA evidence and changes nothing. Turn 2 (give the evidence): only the `T-1` line in `pmo/registers/tasks.yaml` changes (`status: done`, `done_on` set); `pmo/views/tasks.md` is re-rendered. | No change before the evidence. Then only that line and that view change. |
 | 3 | render | `acme` | Hand-edit one status in `tasks.yaml`, then ask for a re-render. Only `pmo/views/tasks.md` changes. | `render_views.py --check` exits 0 after the prompt. No view was edited by hand. |
 | 4 | draft | `acme` | One new draft under `pmo/documents/`, at the path `where.py status-report --week` gives. The 2026-03 report is untouched. No register changes. | `structure_check.py` passes on the new file. Its status is `draft`. |
-| 5 | finish | `acme` | Only `pmo/documents/2026-03 - Status report.md`: `status` becomes `finished`, the template version and hashes are recorded, template comments are removed. Acme has no `languages` block, so no translation question. | `structure_check.py` passes. The new draft from prompt 4 is still a draft. |
+| 5 | finish | `acme` | Only `pmo/documents/2026-03 - Status report.md`: `status` becomes `finished`, the template version and hashes are recorded, template comments are removed. Acme configures `ar` under `languages`, so Finish asks once whether to translate into `ar` (answer `no`). | `structure_check.py` passes. The new draft from prompt 4 is still a draft. |
 
 The prompt texts for the agent:
 

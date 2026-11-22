@@ -1,19 +1,17 @@
 # Test the README install commands in a throwaway session
 
-A maintainer checklist, not shipped to users. It checks that a stranger can follow the README's **Install** section: add the marketplace, install the plugin (latest and pinned to a tag), get a working skill, and install from the release zip. Nothing here touches your real Claude Code setup if you follow Part 1. Run Parts 1 to 3 before the tag against a local marketplace (and after any change to the manifests or the layout); run Part 4 against the published zip after the tag.
-
-Order and history: run this check before the tag against a local marketplace (first run 2026-11-05 on a local marketplace, Claude Code 2.1.318, Linux; live GitHub run not yet run). Record results in the current plan's Results section.
+A maintainer checklist, not shipped to users. It checks that a stranger can follow the README's **Installation** section: add the marketplace, install the plugin (latest and pinned to a tag), get a working skill, and install from the release zip. Nothing here touches your real Claude Code setup if you follow Part 1. Run Parts 1 to 3 before the tag against a local marketplace (and after any change to the manifests or layout); run Part 4 against the published zip after the tag. Record results in your `tmp/` notes or the current plan.
 
 You need: Claude Code (`claude --version` prints a version), `git`, `python3` 3.10 or newer, `gh` (for the zip, Part 4) and an internet connection (for the live GitHub check and zip). Time: about 20 minutes.
 
-Set `V` to the version under test (without the `v`) and use it in the steps below, for example `export V=0.7.5`. It must equal `version` in `skills/pmo-docs/.claude-plugin/plugin.json` (in the local clone before the tag, or at the tag for the live check).
+Set `V` to the version under test (without the `v`) and use it in the steps below, for example `export V=0.9.0`. It must equal `version` in `skills/pmo-docs/.claude-plugin/plugin.json` (in the local clone before the tag, or at the tag for the live check).
 
 Before the tag exists, pass `"$REPO"` (your clone) to `marketplace add` in Part 2. For the live GitHub check and Part 4, run against the **pushed** repo on GitHub, because that is what a user installs:
 
 ```
 cd <your clone of pmo-docs>    # or: cd "$(git rev-parse --show-toplevel)" from inside the clone
-git fetch origin
-git status -sb          # the first line must read "## main...origin/main" with no "ahead"
+git fetch origin --tags
+git rev-parse "v$V^{commit}" origin/main   # for a live GitHub check after release, both must match
 ```
 
 ## How the output is captured (so you can share it)
@@ -94,7 +92,7 @@ The README gives two slash commands for inside a Claude Code session. The comman
    SKILLDIR="$CLAUDE_CONFIG_DIR/plugins/cache/pmo-docs/pmo-docs/$V/"
    test -d "$SKILLDIR" && echo "$SKILLDIR" && ls "$SKILLDIR" "$SKILLDIR/scripts" 2>&1 | tee -a "$LOG/transcript.txt"
    ```
-   Expected: the folder name is the version `$V`, and it holds only what is in `skills/pmo-docs/` in the clone (compare with `ls -A skills/pmo-docs`). **No** `dev/`, `tests/`, `docs/`, `evals/` or `examples/` (the layout fix of 2026-11-05; their presence means `source` in the marketplace entry is wrong). The scripts match `ls skills/pmo-docs/scripts`; a `__pycache__` appears only when the marketplace is a local folder, never from GitHub or the zip.
+   Expected: the folder name is the version `$V`, and it holds only what is in `skills/pmo-docs/` in the clone (compare with `ls -A skills/pmo-docs`). **No** `dev/`, `tests/`, `docs/`, `evals/` or `examples/` (their presence means `source` in the marketplace entry is wrong). The scripts match `ls skills/pmo-docs/scripts`; a `__pycache__` appears only when the marketplace is a local folder, never from GitHub or the zip.
 
 9. Run the scripts from the install, with the system Python and nothing installed with pip. This is the check that the vendored PyYAML works:
    ```
@@ -118,7 +116,7 @@ The README gives two slash commands for inside a Claude Code session. The comman
     ```
     Ask: `set up a project office`. Expected:
     - The `pmo-docs` skill fires.
-    - It asks for the project name, manager and priority order, shows the files it will create, and **waits for your yes**.
+    - It asks for the project name and manager (priority order and week start use defaults unless mentioned), shows the files it will create, and **waits for your yes**.
     - Before you say yes, check from another terminal that nothing was written: `ls "$TRY/project"` shows no `pmo/` folder.
 
 12. Answer with a fake name (project `Demo`, manager `Pat Example`) and say yes. Expected: a `pmo/` folder appears with `config.yaml`, `registers/`, `documents/`, `views/`.
@@ -141,13 +139,13 @@ claude plugin list 2>&1 | tee -a "$LOGA/transcript.txt"
 ```
 Expected: `pmo-docs` is listed.
 
-3a.2. Check A (variable in `allowed-tools`). Start `claude --debug-file "$LOGA/a-session.log"` and ask: `run where.py for the March 2026 status report and show me its output`. Watch the Bash call that runs `where.py`.
+3a.2. Check A (variable in `allowed-tools`). Start `claude --debug-file "$LOGA/a-session.log"` and ask: `draft the March 2026 status report`, and answer yes to the skill prompt (the skill must be loaded; asking for `where.py` by name makes the agent search the disk instead). Watch the first Bash call that runs `where.py`, then press Esc.
 - Outcome A-yes: it runs with no permission prompt.
 - Outcome A-no: Claude Code asks "Allow Bash(python3 .../where.py ...)?". Answer no and note it.
 
 3a.3. Check B (the mapping sentence). In the same session type `/pmo-docs:init`, then answer `no` to the first question. Then ask: `quote word for word the sentence of the init command that begins "In that playbook and in"`.
-- Outcome B-intact: the quote shows the text `${CLAUDE_SKILL_DIR}` and the text `${CLAUDE_PLUGIN_ROOT}` (dollar sign, braces, name).
-- Outcome B-replaced: one of them, or both, shows as a folder path (for example `.../skills/init` or `.../pmo-docs`).
+- Outcome B-intact: the quote says "the variable named CLAUDE_SKILL_DIR (dollar sign and braces)": the name is in words, as written in the file.
+- Outcome B-replaced: a folder path (for example `.../skills/init` or `.../pmo-docs`) appears where the name should be.
 
 3a.4. Check C (git options that write). A fresh Claude Code starts in auto mode: switch to manual mode (shift+tab) first, or the commands run without a prompt and the check means nothing. In the same session, with the skill loaded, ask the two requests one at a time, with `$TRY` written out as the real path:
 - `run exactly this command: git log -1 --output=$TRY/out-log.txt`
@@ -183,7 +181,7 @@ The README says other agents can take the zip from the GitHub release. This need
     gh release download "v$V" --repo kmutahar/pmo-docs --pattern "pmo-docs-$V.zip" --dir "$TRY/zip" 2>&1 | tee -a "$LOG/transcript.txt"
     unzip -q "$TRY/zip/pmo-docs-$V.zip" -d "$TRY/zip/unpacked" && ls "$TRY/zip/unpacked/pmo-docs" 2>&1 | tee -a "$LOG/transcript.txt"
     ```
-    Expected: one top folder `pmo-docs/` holding the same files as step 8. The file count (`unzip -Z1 "$TRY/zip/pmo-docs-$V.zip" | grep -vc '/$'`) equals `git archive --prefix=pmo-docs/ "v$V:skills/pmo-docs" | tar -t | grep -vc '/$'` run in the clone. The release notes on the release page must match the `CHANGELOG.md` section for `v$V`.
+    Expected: one top folder `pmo-docs/` holding the same files as step 8. The file count (`unzip -Z1 "$TRY/zip/pmo-docs-$V.zip" | grep -vc '/$'`) equals `git archive --prefix=pmo-docs/ "v${V}:skills/pmo-docs" | tar -t | grep -vc '/$'` run in the clone. The release notes on the release page must match the `CHANGELOG.md` section for `v$V`.
 
 15. Run the scripts from the unzipped copy with the system Python:
     ```
@@ -219,13 +217,6 @@ The README says other agents can take the zip from the GitHub release. This need
     ```
     Check that your real setup is untouched: in a normal terminal `claude plugin list` shows your usual plugins.
 
-## What earlier runs found (all fixed)
-
-- 2026-11-05, local marketplace: add, install, details, scripts from the install, update, uninstall and the live session all passed (the skill loaded, asked its questions, wrote nothing before the yes, left unknown values as `null`).
-- The short form `kmutahar/pmo-docs` clones over SSH: the README now also gives the HTTPS address (`a7de053`).
-- The installed plugin held the whole repo because the marketplace entry had `"source": "./"`: fixed by rooting the plugin at `skills/pmo-docs/` (`4aa04eb`). Step 8 now checks that only the skill is installed.
-- The README gives no `--scope`; the default is user scope.
-
 ## If a step fails
 
 | Symptom | Likely cause | Fix in the repo |
@@ -240,6 +231,6 @@ The README says other agents can take the zip from the GitHub release. This need
 | Step 11: the skill does not fire | `description` does not match the request, or a restart is missing | `SKILL.md` description |
 | Step 11: files written before your yes | a real behaviour bug | `SKILL.md` rule 3, then re-run the `setup-needs-consent` eval |
 
-Then share `$LOG` (or paste the failing step's output) with the agent, which fixes the README, the manifests or the skill and records the result in the current plan's Results section.
+Then share `$LOG` (or paste the failing step's output) with the agent, which fixes the README, the manifests or the skill and records the result in your `tmp/` notes.
 
-Not covered here: running the skill inside other agents (Part 4 only checks that the zip works), Windows, and macOS. Those stay "untested" in the README.
+Not covered here: running the skill inside other agents (Part 4 only checks that the zip works; see `dev/agent-trial.md` for agent trials), Windows, and macOS. Agents not trialled there (Gemini CLI, Cursor, Copilot) stay "untested" in the README.

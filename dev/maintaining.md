@@ -1,48 +1,69 @@
 # Maintainer tasks
 
-Not shipped. Linked from `AGENTS.md`. Script usage is in each script's `--help`.
+Not shipped. Linked from [`AGENTS.md`](../AGENTS.md) (which holds the standing repo rules). Script usage is in each script's `--help`.
 
-- **Evals** (heavy check: runs in the verification release; the cases in `evals/`, real agent runs, an estimated $5 for all on Sonnet with a Sonnet judge): `dev/run-evals [--case <name>]... [--runs N] [--jobs N] [--out DIR]` (all cases, 4 at once, Sonnet as agent and judge; the Haiku default judge splits its votes). Everything stays in one folder, `~/pmo-eval-runs/<UTC time>/`: `summary.log`, the plugin copy, and per case `eval.log`, `report.html` (the judges' reasons), `aggregate-result.json` and `sandbox-<n>/` (trace, session transcript, the project as the agent left it; never run git inside it). It builds a throwaway plugin copy because the plugin root is `skills/pmo-docs` and `claude plugin eval` needs `evals/` inside the plugin; plain `claude plugin eval` from the repo root never fires the skill. Use Sonnet (Haiku fails 5 of 9). Results are single samples and can flip, so re-run a failing case before changing `SKILL.md`. Prompts pin today's date. Grader lessons: an `llm` grader sees a file's path, not its text; `max: 0` needs `min: 0`; keep grader text short and positive; name output files in the prompt. Bash fails in the eval sandbox (`apply-seccomp ... setgroups`), so the agent cannot run the scripts and graders must not depend on Bash; the agent also runs in `dontAsk` mode, which denies Glob and Grep in the skill folder, so a playbook must name skill files by their exact `${CLAUDE_SKILL_DIR}/...` path.
-- **SkillSpector** (heavy check: runs in the verification release): scan a clean copy of the tracked files (a tree with `__pycache__` gives false findings) with `SKILLSPECTOR_PROVIDER=claude_cli SKILLSPECTOR_MODEL=sonnet skillspector scan skills/pmo-docs --baseline dev/skillspector-baseline.yaml`. A real result is SAFE with full coverage and every LLM call succeeded (`llm_calls_succeeded`); a cut-off run is not a result. Haiku reports false positives on the vendored PyYAML. Each LLM call is a `claude` session on the maintainer's plan. Avoid apostrophes in `config.default.yaml` comments (they break the static parser). Every baseline entry needs a reason.
-- **Updating vendored PyYAML:** `dev/update-pyyaml <unpacked sdist>` (header has steps; `dev/pyyaml-prune.patch` is the cut; `_vendor/VERSION` is edited by hand).
-- **Install check** (runs before the tag against a local marketplace, and Part 4 on the release zip; heavy checks run in the verification release — see `dev/test-install.md`): `dev/test-install.md`, in a throwaway `CLAUDE_CONFIG_DIR`.
-- **Walkthrough check** (heavy check: runs in the verification release): `dev/test-walkthrough.md`, in a throwaway `CLAUDE_CONFIG_DIR`. It runs the walkthrough's commands and the agent prompts; keep it in step with `docs/walkthrough.md`.
+## Checks
+
+### Evals (heavy check)
+- Command: `dev/run-evals [--case <name>]... [--runs N] [--jobs N] [--out DIR]` (all cases, 4 at once, Sonnet as agent and judge; estimated ~$5 for a full run; Haiku fails 5 of 9 and splits judge votes).
+- Output folder: `~/pmo-eval-runs/<UTC time>/` holding `summary.log`, a throwaway plugin copy, and per case: `eval.log`, `report.html`, `aggregate-result.json`, and `sandbox-<n>/` (never run git inside a sandbox).
+- Why a throwaway copy: the plugin root is `skills/pmo-docs` and `claude plugin eval` needs `evals/` inside the plugin; running `claude plugin eval` from the repo root never fires the skill.
+- Single samples can flip: re-run a failing case before changing `SKILL.md`.
+- Authoring rules: pin today's date in prompts; name output files in prompts; `llm` graders see paths, not file text (unless `focus: {source: file}` is used); `max: 0` needs `min: 0`; keep grader text short and positive. Bash fails in the eval sandbox (`apply-seccomp ... setgroups`), so graders must not rely on Bash; `dontAsk` mode denies Glob/Grep in the skill folder, so playbooks name skill files by exact `${CLAUDE_SKILL_DIR}/...` path.
+
+### SkillSpector (heavy check)
+- Scan a clean copy of tracked files (a tree with `__pycache__` gives false findings):
+  ```sh
+  SKILLSPECTOR_PROVIDER=claude_cli SKILLSPECTOR_MODEL=sonnet skillspector scan skills/pmo-docs --baseline dev/skillspector-baseline.yaml
+  ```
+- A valid result is `SAFE` with full coverage and all LLM calls succeeded (`llm_calls_succeeded`); a cut-off run is not a result.
+- Haiku produces false positives on vendored PyYAML. Avoid apostrophes in `config.default.yaml` comments (they break the static parser). Every baseline entry needs a reason.
+
+### Install, walkthrough and agent checklists
+- **Install check:** [`dev/test-install.md`](test-install.md) — Parts 1–3 before a tag (local marketplace), Part 4 on the published release zip; uses a throwaway `CLAUDE_CONFIG_DIR`.
+- **Walkthrough check:** [`dev/test-walkthrough.md`](test-walkthrough.md) — runs [`docs/walkthrough.md`](../docs/walkthrough.md) commands and prompts in a throwaway `CLAUDE_CONFIG_DIR`; keep both files in step.
+- **Other-agent trials:** [`dev/agent-trial.md`](agent-trial.md) — trials Codex, Gemini CLI, Cursor and Copilot.
+
+### Updating vendored PyYAML
+- Run `dev/update-pyyaml <unpacked sdist>` (script header has the steps; `dev/pyyaml-prune.patch` is the cut; edit `skills/pmo-docs/scripts/_vendor/VERSION` by hand).
 
 ## Working on a version
 
-- Rules from `AGENTS.md` apply in full. Check the plan against the working tree before any package starts.
-- Packages go one after another; parallel only when the plan says so and their "Touches" lists share no file. The drafting agent may be another tool; it leaves the changes in the working tree.
-- A package is done when its "Done when" list passes, including `python3 -m unittest discover tests` and `bash dev/scrub.sh`. Per-package reviews are not run: one Opus-high review over the whole tree runs once, in the verification release, before 1.0.
-- A package carries its own docs with its code and tests, including shared docs (`SKILL.md`, `references/conventions.md`, `GLOSSARY.md`). Rewording of `README.md` waits for a docs pass.
-- Tests: `unittest`, a temp copy of `examples/acme`, the script run with `subprocess` and `sys.executable`, nothing written outside the temp folder. The file's first line is a docstring that says what it tests and how to run it.
-- Each package names its commit subject. The maintainer commits in package order with `git commit -- <paths>`.
-- Unfinished work goes to the next plan or to a `<version>-skipped.md` file the maintainer decides on.
+Rules in [`AGENTS.md`](../AGENTS.md) apply in full.
+- Check the plan against the working tree before any package starts.
+- Packages run sequentially; parallel only when the plan says so and their "Touches" lists do not overlap.
+- A package is done when its "Done when" list, unit tests and `bash dev/scrub.sh` pass. Per-package reviews are skipped in favour of one whole-tree review before release.
+- Each package carries its own docs (`SKILL.md`, `references/conventions.md`, `GLOSSARY.md`). `README.md` rewording waits for a docs pass.
+- Test files follow `tests/test_render_views.py` (`unittest`, `subprocess` + `sys.executable` on a temp copy of `examples/acme`, first-line docstring stating what it tests and how to run it).
+- Unfinished work moves to the next plan or a `<version>-skipped.md` note.
 
 ## Release checklist
 
-- Every package is committed in order, with approval.
-- `python3 -m unittest discover tests` and `bash dev/scrub.sh` pass; CI is green on `main`.
-- `claude plugin validate .` and `claude plugin validate skills/pmo-docs` exit 0 (`dev/release` prints warnings and stops only on a failure; read them); the plugin listing shows each skill once.
-- `dev/release --bump --dry-run`, then `dev/release --dry-run X.Y.Z`, then `dev/release X.Y.Z` (in 0.x `--bump` proposes a minor for `feat` and breaking commits, a patch otherwise).
-- The dry run's changelog section reads well and holds no private names or machine paths.
-- The README roadmap, if it lists the version, is updated.
-- Cleanup goes in its own commit before `dev/release`; the release commit then holds only `CHANGELOG.md` and the version files.
-- The maintainer approves, commits, tags and pushes (`dev/release` asks twice). It pushes `dev` and the tag; after the release job passes, the `fast-forward-main` job in `release.yml` moves `main` to the tagged commit. Never commit to `main` directly: that job then fails.
+1. All packages committed on `dev` in order, with approval; cleanup in its own commit before `dev/release`.
+2. `python3 -m unittest discover tests` and `bash dev/scrub.sh` pass; CI is green on `dev`.
+3. `claude plugin validate .` and `claude plugin validate skills/pmo-docs` exit 0 (`dev/release` prints warnings and stops only on failure; read warnings); plugin listing shows each skill once.
+4. Dry runs: `dev/release --bump --dry-run`, then `dev/release --dry-run X.Y.Z` (in 0.x `--bump` proposes minor for `feat`/breaking, patch otherwise). Verify the changelog reads well and has no private names or machine paths.
+5. Release (maintainer only): `dev/release X.Y.Z` (asks twice at the terminal; steps in `dev/release --help`).
+   - The release commit holds only `CHANGELOG.md` and the four version files (`skills/pmo-docs/SKILL.md`, `skills/pmo-docs/.claude-plugin/plugin.json`, `README.md`, `docs/INSTALL_FOR_AGENTS.md`).
+   - It pushes `dev` and the `v*` tag. `.github/workflows/release.yml` builds the release (fails if the changelog section is missing), then its `fast-forward-main` job moves `main` to the tag. Never commit to `main` directly or that job fails.
 
 ## Never in a tracked file or a commit message
 
-Real names and roster slugs (including `owner:` values in templates and fixtures); private repo URLs and machine paths; the source project's name and ids; emails, phone numbers and contact details; security issues, permission matrices and auth requirements from the source; snapshot SHAs and branch names from the source; contents of the maintainer's memory files, scratch folders or private notes. Learnings (`.trail/learnings/`) are committed, so they hold rules only. `dev/scrub.sh` catches patterns only: security details and project-specific logic are removed by reading each file while generalising it, and anything taken from `tmp/source/` is rewritten from scratch.
+Real names and roster slugs (including `owner:` values in templates and fixtures); private repo URLs and machine paths; the source project's name and ids; emails, phone numbers and contact details; security issues, permission matrices and auth requirements from the source; snapshot SHAs and branch names from the source; contents of memory files, scratch folders or private notes. Learnings (`.trail/learnings/`) are local and untracked, and hold rules only. `dev/scrub.sh` catches patterns only: read each file when generalising, and rewrite anything taken from `tmp/source/` from scratch.
 
-## Limits (docs read 2026-10-20, 2026-11-04 and 2026-11-06)
+## Platform limits
 
-- Verified: `${CLAUDE_SKILL_DIR}` is substituted in `SKILL.md` text and in `allowed-tools`; an `allowed-tools` grant lasts for the turn that loads the skill; a plugin's install path changes on every update; a plugin's `bin/` is on the Bash tool's PATH only; `${CLAUDE_PLUGIN_DATA}` survives updates; a plugin can be just a manifest plus `skills/`.
-- Verified in v0.2: plugin `skills` paths must start with `./` and stay inside the plugin root; `disable-model-invocation: true` keeps a skill's description out of context and blocks the model from invoking it; `${CLAUDE_PLUGIN_ROOT}` is substituted in skill text.
-- Verified in the v0.5 trials (2026-11-11): Codex and Antigravity read skills from `~/.agents/skills`.
-- Not verified: whether the default `skills/` folder is scanned in addition to the listed paths, and whether `"./"` loads nested skill folders by itself (the command skills work as installed); `npx skills`-style registry tools; where Gemini CLI, Cursor and Copilot look for skills; whether claude.ai and Cowork load this plugin; marketplace naming rules and collisions; how Claude chooses between installed skills with overlapping descriptions; Bash permission rules with `~` or wildcards in a path; PEP 668 refusals on specific Debian, Ubuntu and Homebrew releases, and stock macOS `python3` being 3.9.6 (secondary sources only).
-- Anthropic directory (optional, 1.0): needs a paid plan, a README and a LICENSE, files under 256 KiB, at most 512 files, no symlinks or binaries, pinned launchers and a passing security scan. A generic name may be held for review. The listing icon can only be set at the first developer-portal submission.
+- **Verified:**
+  - `${CLAUDE_SKILL_DIR}` is substituted in `SKILL.md` text and `allowed-tools`; `${CLAUDE_PLUGIN_ROOT}` is substituted in skill text.
+  - An `allowed-tools` grant lasts for the turn that loads the skill; `disable-model-invocation: true` keeps a skill's description out of context and blocks model invocation.
+  - Plugin `skills` paths must start with `./` and stay inside the plugin root; a plugin can be just a manifest plus `skills/`; its install path changes on every update; its `bin/` is on the Bash tool's `PATH` only; `${CLAUDE_PLUGIN_DATA}` survives updates.
+  - Codex and Antigravity read skills from `~/.agents/skills`.
+  - `npx skills add . --list` discovers only `pmo-docs` (`metadata.internal: true` hides `skills/init` and `skills/publish`).
+- **Not verified:** whether default `skills/` is scanned in addition to listed paths, and whether `"./"` loads nested skill folders by itself; end-to-end `npx skills add`/`update` across agents; where Gemini CLI, Cursor and Copilot look for skills; claude.ai and Cowork loading; marketplace naming collisions; Claude's choice between overlapping skill descriptions; Bash permission rules with `~` or wildcards; PEP 668 refusals on specific distros and stock macOS `python3` 3.9.6.
+- **Anthropic directory (optional):** requires a paid plan, `README.md`, `LICENSE`, files under 256 KiB, at most 512 files, no symlinks or binaries, pinned launchers and a passing security scan. A generic name may be held for review. The listing icon (`dev/icon-brief.md`) is locked on the first developer-portal submission.
 
-## Naming rules (checked 2026-11-04)
+## Naming rules
 
-- **Skill `name`:** 1-64 characters; lowercase letters, digits and hyphens; no leading or trailing hyphen; no `--`; equals the parent folder name. `description` is 1-1024 characters, says what it does and when to use it, leads with the use case, and has trigger words. Keep `SKILL.md` under 500 lines.
-- **Plugin `name`:** kebab-case; no spaces, `@`, `:`, path separators or control characters; must not start with `claude-`, `anthropic-`, `anthropics-` or `cc-plugin-`; must not be exactly `claude`, `anthropic`, `anthropics`, `claude-code` or `claude-mods`. `claude plugin validate` checks these.
-- Sources: agentskills.io/specification and the Claude Code docs pages for skills, plugin manifest, components and publishing.
+- **Skill `name`:** 1–64 chars; lowercase letters, digits, hyphens; no leading/trailing hyphen or `--`; equals parent folder name. `description` is 1–1024 chars, leads with use case and trigger words. Keep `SKILL.md` under 500 lines.
+- **Plugin `name`:** kebab-case; no spaces, `@`, `:`, path separators or control chars; must not start with `claude-`, `anthropic-`, `anthropics-` or `cc-plugin-`; must not equal `claude`, `anthropic`, `anthropics`, `claude-code` or `claude-mods`. Checked by `claude plugin validate`.
+- Sources: agentskills.io/specification and Claude Code docs (skills, plugin manifest, components, publishing).
