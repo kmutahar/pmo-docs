@@ -1,6 +1,6 @@
 # Terms of Service
 
-Last updated: 2026-11-19 (UTC)
+Last updated: 2026-11-22 (UTC)
 
 These terms cover your use of pmo-docs, a project-office and documentation workflow packaged as an Agent Skill (the "Software"). By installing or using it, you agree to them. If you do not agree, do not use it.
 
@@ -30,7 +30,7 @@ AI agents can make mistakes, and so can scripts and templates. The Software draf
 
 ## 5. Acceptable use
 
-You agree not to use the Software to break the law, to infringe the rights of others, or to process data you have no right to process. You also agree not to present a modified version as the original project or to use the maintainer's name to suggest an endorsement you do not have. The MIT licence otherwise puts no limit on what you can do with the code.
+You agree not to use the Software to break the law, to infringe the rights of others, or to process data you have no right to process. As a request, not a licence condition: please do not present a modified version as the original project or use the maintainer's name to suggest an endorsement you do not have. The MIT licence puts no other limit on what you can do with the code.
 
 ## 6. No warranty
 
@@ -58,7 +58,7 @@ New versions of the Software are published on GitHub, and changes are listed in 
 
 ## 12. Ending use
 
-You can stop at any time by uninstalling the plugin or deleting the installed skill folder. Your files stay with you. The maintainer may stop maintaining the Software or archive the repository at any time; copies you already have remain yours to use under the MIT License.
+You can stop at any time by uninstalling pmo-docs or deleting the installed skill folder. Your files stay with you. The maintainer may stop maintaining the Software or archive the repository at any time; copies you already have remain yours to use under the MIT License.
 
 ## 13. General
 
