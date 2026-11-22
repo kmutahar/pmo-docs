@@ -84,6 +84,21 @@ class Where(unittest.TestCase):
         self.assertEqual(f["document"], "pmo/documents/2026-W46 - Status report.md")
         self.assertEqual(f["window"], "2026-11-07..2026-11-13")
 
+    def test_week_start_saturday_year_boundary(self):
+        # every day of two Saturday weeks across the year end: one label and one window per week
+        cfg_path = self.root / "pmo/config.yaml"
+        cfg_text = cfg_path.read_text(encoding="utf-8")
+        cfg_path.write_text(cfg_text.replace("project:\n", "project:\n  week_start: saturday\n", 1), encoding="utf-8")
+        for day in range(26, 32):  # 2026-12-26 (Sat) .. 2027-01-01 (Fri)
+            f = fields(run(self.root, "status-report", "--week", "--as-of", f"2026-12-{day}")[1])
+            self.assertEqual(f["document"], "pmo/documents/2026-W53 - Status report.md")
+            self.assertEqual(f["window"], "2026-12-26..2027-01-01")
+        for as_of in ("2027-01-01", "2027-01-02", "2027-01-03", "2027-01-08"):
+            f = fields(run(self.root, "status-report", "--week", "--as-of", as_of)[1])
+            first_week = as_of == "2027-01-01"
+            self.assertEqual(f["document"], f"pmo/documents/{'2026-W53' if first_week else '2027-W01'} - Status report.md")
+            self.assertEqual(f["window"], "2026-12-26..2027-01-01" if first_week else "2027-01-02..2027-01-08")
+
     def test_month_period_window(self):
         f = fields(run(self.root, "status-report", "2026-03")[1])
         self.assertEqual(f["window"], "2026-03-01..2026-03-31")
