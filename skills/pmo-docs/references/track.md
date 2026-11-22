@@ -17,7 +17,7 @@ Add, change or close entries in the registers. Rules on status, consent and prop
    For an existing entry search the register file for `id: T-14[,}]` (the search tool, or `grep -nE 'id: T-14[,}]' <register file>`). A register without ids is found by its keys (`grep -n 'slug: alice' ...`, or `person` and `period` for capacity). Read that one line.
 
 3. **Check for a scope change**
-   Moving a date, owner or priority of committed work, or adding or dropping a goal, is a scope change: go to `references/govern.md` (change request) first, unless the user says it is the agreed new plan. Then apply it and log a `DEC-` entry (`references/govern.md`).
+   Moving a date, owner or priority of committed work, or adding or dropping a goal, is a scope change: go to `references/govern.md` (change request) first. Then apply it and log a `DEC-` entry (`references/govern.md`).
 
 4. **Edit one line**
    Edit that line only (new entries go at the end of the list). Before the first entry of `requirements`, `tests`, `environments` or `permissions`, copy its starter file from `${CLAUDE_SKILL_DIR}/assets/starter/optional-registers/` to `paths.registers/`. New ids follow `SKILL.md`, Working rules "Ids and bulk edits". Check that an owner is in the roster and that every value is in the vocabulary. Ask for a missing owner, date or priority; leave it `null` until answered.

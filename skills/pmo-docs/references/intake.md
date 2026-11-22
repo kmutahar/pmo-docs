@@ -17,7 +17,7 @@ The rules on consent, credentials, origin and definition of done live in `SKILL.
    Do not copy, quote or use anything that looks like a password, token, key or a link with a password. Count such lines and say so in the reply, without quoting; tell the user to remove them from the chat and change them if they were shared. The registers reject them anyway (`render_views.py`).
 
 3. **Extract candidates**
-   New tasks, finished work, decisions, risks, issues and actions. For each: the register, a title in the user's words, the owner (map the sender to a roster slug; an unknown sender leaves `owner` empty and goes to the open questions; never add a person to the roster from a chat), a date (the message date for finished work; a due date only when a message states one), the evidence as message date and sender (not the message text).
+   New tasks, finished work, decisions, risks, issues and actions. For each: the register, a short title you write from the fact, the owner (map the sender to a roster slug; an unknown sender leaves `owner` empty and goes to the open questions; never add a person to the roster from a chat), a date (the message date for finished work; a due date only when a message states one), the evidence as message date and sender (not the message text).
 
 4. **Compare with the registers**
    `grep` titles. A match is shown as "already tracked as T-n", never added twice. A chat message never changes the status of an existing entry (`SKILL.md`, Status from evidence): show it as a proposal.

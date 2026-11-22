@@ -31,8 +31,8 @@ Everything under `pmo/` is tracked, except `pmo/.me` (the writer's own slug, ign
 ## When the user asks to commit
 
 1. Run `git status -sb` and propose the commit groups: for example registers with the views rendered from them, then each document on its own. Wait for the user's answer.
-2. Stage the named paths one by one (`git add <path> ...`) as `SKILL.md` says. If a path is already staged by the user, say so before adding more.
-3. Commit with a one-line subject. If a hook rejects the commit, report why.
+2. Stage the named paths one `git add -- <path>` at a time, as `SKILL.md` says. If a path is already staged by the user, say so before adding more.
+3. Commit only those paths with a one-line subject: `git commit -m "<subject>" -- <paths>`, so work the user staged earlier stays out. If a hook rejects the commit, report why.
 4. Do not push. Push only when the user asks for exactly that.
 
 The publish command's `repo`-mode commit follows `SKILL.md` Safety rule 1 (`references/publish.md`).

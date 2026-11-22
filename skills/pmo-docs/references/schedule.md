@@ -34,9 +34,9 @@ A scheduled run drafts only: it must never Finish, publish, or commit. The skill
 
    Print the cron command line for the user to add to their crontab (`crontab -e`):
    ```sh
-   0 8 * * 1 cd /path/to/project && claude -p "run <recipe>; draft only, do not finish, publish or commit" --allowedTools "Skill" "Read" "Write" "Edit" "Glob" "Grep"
+   0 8 * * 1 cd /path/to/project && claude -p "run <recipe>; draft only, do not finish, publish or commit; for month-start stop after listing the carry-over" --allowedTools "Skill" "Read" "Write" "Edit" "Glob" "Grep"
    ```
-   The prompt explicitly states the draft-only limit because an unattended cron run does not read this playbook.
+   The prompt explicitly states the draft-only limit because an unattended cron run does not read this playbook (the `month-start` stop is in the prompt for the same reason).
    Replace /path/to/project with the absolute path of the project, and use the full path of `claude` if cron does not find it.
    Without --allowedTools the headless run is denied the tools it needs and writes nothing. Do not widen this list. `Write` and `Edit` here are not limited to `pmo/`: the unattended run can change any file in the project, and `paths.*` may point outside `pmo/`. Schedule it only in a project you trust.
    Never print permission-skipping flags (`--dangerously-skip-permissions`).

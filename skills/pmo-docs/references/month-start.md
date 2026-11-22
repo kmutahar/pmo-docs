@@ -21,10 +21,10 @@ Run as `month-start [--period YYYY-MM]`. Sets up the registers and draft documen
    - Tasks not `done` or `dropped`, counted by priority level. Carrying them over keeps the id, sets `period` to the new month and adds `carried from <old>` to `notes`. Done and dropped tasks stay as history.
    - Milestones of the closing or an earlier month that are not done. Ask about each; moving a due date is a change request (`references/govern.md`). Never move or close one silently.
    - Open risks, assumptions, dependencies and actions: they stay as they are.
-   Wait for the user's yes.
+   Wait for the user's yes. An unattended run (no user to answer) stops here and changes no register.
 
 4. **Ask for the new month's inputs**
-   One short set of questions, defaults shown (at most four per call): the objective; which goals to keep, drop or change; new tasks; leave and capacity; milestone dates; task due dates. A change to carried work's scope, priority level, owner or date is a change request unless the user says it is the new plan.
+   One short set of questions, defaults shown (at most four per call): the objective; which goals to keep, drop or change; new tasks; leave and capacity; milestone dates; task due dates. A change to carried work's scope, priority level, owner or date is a change request (`references/govern.md`).
 
 5. **Update the registers**
    Apply the carry-over and the answers one line at a time (`references/track.md`): the tasks, new milestones with the new `period`, goals kept, dropped or changed (a dropped goal is a scope change, `references/govern.md`), new tasks, and capacity entries for the month (`null` where unknown). Run `python3 ${CLAUDE_SKILL_DIR}/scripts/render_views.py`.

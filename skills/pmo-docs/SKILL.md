@@ -25,7 +25,7 @@ Work from the project root (the folder that holds `pmo/`). From a subfolder, go 
 | to draft, write, create or regenerate a document | `references/draft.md` |
 | to draft an API reference, integration guide, architecture overview, user guide or entity lifecycle (written from the code) | `references/draft-technical.md` |
 | a stakeholder update | `references/draft.md` |
-| to draft release notes, or to list the documents a set of commits makes out of date | `references/release-notes.md` |
+| to draft release notes, or to list the documents a set of commits makes stale | `references/release-notes.md` |
 | to finish a draft ("ready", "finish it") | `references/finish.md` |
 | to publish documents | `references/publish.md` (with the plugin, the user types `/pmo-docs:publish`) |
 | to add, change or close tasks, risks, issues, assumptions, dependencies, actions, meetings, objectives, budget, milestones, capacity, people, goals, teams, requirements, tests, environments or permissions; "mark X done"; a pasted message with tasks | `references/track.md` |
@@ -137,7 +137,7 @@ Finish turns a draft into a finished document. It is defined here once; recipes 
 5. Remove every HTML comment and the `checks:` block from the document.
 6. Run `structure_check.py <file>`. Fix errors until it reports none; report warnings. The document is still a draft here, so a template-comment warning means step 5 missed a comment: remove it and run the check again.
 7. Set `status: finished` and `last_updated` to today.
-8. Translations. `where.py` prints `translations` and `translate` for the type. `after-close`: skip, and say translation waits until the period closes (a type with no period counts as `in-period`). `in-period`: ask once, "Translate into <codes> now?"; on yes, for each language follow `references/translate.md` and Finish the translation: the steps above, with `where.py --lang <code> --hashes`, `source_hash` in place of `source_hashes`, and `parity_check.py` before `structure_check.py`.
+8. Translations. `where.py` prints `translations` and `translate` for the type. `after-close`: skip, and say translation waits until the period closes (a type with no period counts as `in-period`). `in-period`: ask once, "Translate into <codes> now and finish them?"; on yes, for each language follow `references/translate.md` and Finish the translation: the steps above, with `where.py --lang <code> --hashes`, `source_hash` in place of `source_hashes`, and `parity_check.py` before `structure_check.py`.
 
 A finished document is stale when a register in its `generated_from` changed afterwards (`docs_audit.py` compares the hashes). A draft carries `source_hashes` from the moment it is made and is behind when one differs. A finished document that is edited goes back to `status: draft` and keeps its `source_hashes`.
 
