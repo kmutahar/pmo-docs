@@ -44,6 +44,8 @@ When the default template advances its version, `docs_audit.py` reports drift. C
 
 To add a field to an existing register, set `registers.<name>.fields` in the config. It is a list, so it replaces the default: repeat every field of the default list from `${CLAUDE_SKILL_DIR}/assets/config.default.yaml` and add the new one. The register's `enums` and `dates` are maps, so give only the new entries. Run `render_views.py`.
 
+**Sub-projects.** For a project with parts that have their own stack or docs folder, list them under `subprojects` in the config (`api: {kind: backend, stack: laravel, docs_dir: docs/api}`; all three keys optional, `docs_dir` inside the project). To tag entries, add a `subproject` field to a register (tasks, issues, requirements) and `enums: {subproject: subprojects}`; validation then rejects a value that is not a listed id.
+
 
 
 ## Change settings

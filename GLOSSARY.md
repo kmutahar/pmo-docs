@@ -228,6 +228,10 @@ _Avoid_: dictionary, term base
 The optional YAML file of one language with the wording of register text (roster names, task titles): `approved:` and `proposed:`, each register to id to field to text. Same rules as the translation glossary.
 _Avoid_: name map, side map
 
+**Sub-project**:
+A part of a project with its own stack or docs folder (api, web, mobile), listed under `subprojects` in the config. A register tags its entries with an optional `subproject` field whose values must be listed ids.
+_Avoid_: module, component
+
 **Behind**:
 Said of a draft whose registers changed since it was made, or of a translation whose original changed after it was translated. `docs_audit.py` lists a behind draft under its Stale heading, as "draft is behind: register `<register>` changed since the draft was made", and a behind translation under Translation behind.
 _Avoid_: stale (that word is for finished documents and views), outdated

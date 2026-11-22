@@ -143,6 +143,24 @@ def config_errors(cfg, root=None):
         if change_statuses and s not in change_statuses:
             errors.append(f"config: registers.changes.pending status `{s}` not in vocab.change_status")
 
+    subs = cfg.get("subprojects")
+    if subs is not None and not isinstance(subs, dict):
+        errors.append("config: subprojects must be a map of id to {kind, stack, docs_dir}")
+    for sid, sp in (subs.items() if isinstance(subs, dict) else ()):
+        if not isinstance(sid, str) or not re.fullmatch(r"[a-z0-9][a-z0-9-]*", sid):
+            errors.append(f"config: subprojects id `{sid}` must match [a-z0-9][a-z0-9-]*")
+        if not isinstance(sp, dict):
+            errors.append(f"config: subprojects.{sid} must be a map")
+            continue
+        for k in sp:
+            if k not in ("kind", "stack", "docs_dir"):
+                errors.append(f"config: subprojects.{sid} has unknown key `{k}` (kind, stack, docs_dir)")
+            elif not isinstance(sp[k], str) or not sp[k].strip():
+                errors.append(f"config: subprojects.{sid}.{k} must be non-empty text")
+        d = sp.get("docs_dir")
+        if isinstance(d, str) and d.strip() and (Path(d).is_absolute() or ".." in Path(d).parts):
+            errors.append(f"config: subprojects.{sid}.docs_dir `{d}` must be a folder inside the project")
+
     dom = cfg.get("domain")
     if dom is not None:
         if not isinstance(dom, dict):
@@ -410,12 +428,14 @@ def credential_labels(value) -> list[str]:
 
 
 def allowed(cfg, name):
-    """Allowed values for an `enums` entry: a vocab name, or a dotted config path such as domain.roles. [] means any value."""
-    if "." not in name:
+    """Allowed values for an `enums` entry: a vocab name, or a config path such as domain.roles or subprojects (a map gives its keys). [] means any value."""
+    if "." not in name and name not in cfg:  # a top-level config key such as subprojects is a path too
         return cfg["vocab"].get(name) or []
     node = cfg
     for part in name.split("."):
         node = node.get(part) if isinstance(node, dict) else None
+    if isinstance(node, dict):
+        return [k for k in node if isinstance(k, str)]   # a map such as subprojects allows its keys
     return node if isinstance(node, list) else []
 
 

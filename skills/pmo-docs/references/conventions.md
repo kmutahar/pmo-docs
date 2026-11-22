@@ -88,6 +88,7 @@ A translation is a file next to its original, named `<name>.<lang>.md` (for exam
 - `domain.roles`: list of permission roles as named in code (for example `[admin, editor, viewer]`).
 - `technical.stacks`: list of stack names the project code is built on (such as `[nextjs]`).
 - `technical.consumers`: list of systems or teams that call the API, one section each in `integration-guide`.
+- `subprojects`: map of sub-project id to `{kind, stack, docs_dir}`, all optional text, `docs_dir` inside the project (default `{}`). Tag entries with a `subproject` field and `enums: {subproject: subprojects}` (`references/extend.md`).
 - `registers.<name>.refs`: mapping of register field names to target register names (e.g. `tests: tests`). Validation checks that referenced IDs exist in the target register when that register exists.
 - `registers.tasks.done`: status values marking tasks as done (default `[done]`).
 - `registers.tasks.blocked`: status values that count as blocked (default `[blocked]`).

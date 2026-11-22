@@ -366,10 +366,10 @@ class LanguageConfig(unittest.TestCase):
         self.assertEqual(render_views.config_errors(valid_custom, root=self.root), [])
 
     def test_unknown_top_level_keys_are_all_reported(self):
-        cfg = pc.merge(self.defaults, {"subprojects": [], "tiers": {}})
+        cfg = pc.merge(self.defaults, {"wbs": [], "tiers": {}})
         errs = render_views.config_errors(cfg, root=self.root)
         self.assertEqual([e for e in errs if "unknown key" in e].__len__(), 2)
-        self.assertTrue(any("`subprojects`" in e for e in errs) and any("`tiers`" in e for e in errs))
+        self.assertTrue(any("`wbs`" in e for e in errs) and any("`tiers`" in e for e in errs))
 
     def test_bad_dir(self):
         cfg = pc.merge(self.defaults, {"languages": {"en": {"dir": "up"}}})
@@ -415,6 +415,22 @@ class LanguageConfig(unittest.TestCase):
         self.assertTrue(any("names `../n.yaml` must stay inside the project" in e for e in e1))
         e2 = render_views.config_errors(pc.merge(self.defaults, {"languages": {"en": {"names": "n.txt"}}}), root=self.root)
         self.assertTrue(any("must be a string ending in .yaml" in e for e in e2))
+
+    def test_subprojects_checked_and_used_as_enum(self):
+        ok = {"subprojects": {"api": {"kind": "backend", "stack": "laravel", "docs_dir": "docs/api"}, "web": {}}}
+        self.assertEqual(render_views.config_errors(pc.merge(self.defaults, ok), root=self.root), [])
+        bad = {"subprojects": {"API": {}, "web": {"size": "x"}, "app": {"docs_dir": "../x"}, "cli": "go"}}
+        errs = " | ".join(render_views.config_errors(pc.merge(self.defaults, bad), root=self.root))
+        for part in ("id `API`", "unknown key `size`", "must be a folder inside the project", "subprojects.cli must be a map"):
+            self.assertIn(part, errs)
+        cfg = pc.merge(self.defaults, ok)
+        cfg["registers"]["tasks"]["fields"] = cfg["registers"]["tasks"]["fields"] + ["subproject"]
+        cfg["registers"]["tasks"]["enums"]["subproject"] = "subprojects"
+        data = {"tasks": [{"id": "T-1", "title": "a", "status": "done", "subproject": "web"},
+                          {"id": "T-2", "title": "b", "status": "done", "subproject": "ios"}]}
+        v = " | ".join(render_views.validate(data, cfg))
+        self.assertIn("subproject 'ios' not in ['api', 'web']", v)
+        self.assertNotIn("T-1", v.replace("T-1: status", ""))
 
     def test_translate_sometimes(self):
         cfg = pc.merge(self.defaults, {"doc_types": {"status-report": {"translate": "sometimes"}}})
