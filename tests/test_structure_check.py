@@ -101,6 +101,28 @@ class StructureCheck(unittest.TestCase):
     def errs(self, text):
         return " | ".join(self.run_check(text)[0])
 
+    def test_suggest_lists_missing_headings_and_renames(self):
+        bad = GOOD.replace("## Index", "## Contents").replace("## Walkthrough\n### Login\n### Orders (list)\n", "")
+        hints = []
+        errors, _ = sc.check(self.root, self.cfg, bad, hints)
+        self.assertTrue(errors)
+        self.assertEqual(hints, ["add `## Index` (or rename `## Contents`)", "add `## Walkthrough`", "add `### Login`"])
+        for hints in ([], None):  # no hints for a clean document, and the errors do not depend on asking for them
+            self.assertEqual(sc.check(self.root, self.cfg, GOOD, hints), ([], []))
+            self.assertEqual(hints or [], [])
+        self.assertEqual(sc.check(self.root, self.cfg, bad, [])[0], sc.check(self.root, self.cfg, bad)[0])
+
+    def test_suggest_flag_prints_hints_and_keeps_exit_code(self):
+        doc = self.root / "bad.md"
+        doc.write_text(GOOD.replace("## Index", "## Contents"), encoding="utf-8")
+        for flag in ([], ["--suggest"]):
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                code = sc.main(["--project", str(self.root), *flag, str(doc)])
+            self.assertEqual(code, 1)
+            self.assertEqual("hint " in out.getvalue(), bool(flag))
+        self.assertIn("(or rename `## Contents`)", out.getvalue())
+
     def test_good_document_is_clean(self):
         self.assertEqual(self.run_check(GOOD), ([], []))
 

@@ -167,7 +167,7 @@ The scripts are in this skill's own folder, `scripts/` next to this file. Playbo
 | `scripts/generate.py <type> [period]` | pre-fill a document from registers (`generator: true` doc types) |
 | `scripts/render_views.py [--check]` | validate registers, write or compare views |
 | `scripts/renumber.py [<ID>] [--apply]` | fix duplicate ids after a merge |
-| `scripts/structure_check.py [files]` | check documents against their template |
+| `scripts/structure_check.py [--suggest] [files]` | check documents against their template; `--suggest` hints at missing headings |
 | `scripts/parity_check.py [files]` | check that a translation matches its original in headings, tables, ids, numbers, list items and ticked boxes |
 | `scripts/docs_audit.py` | stale, old, behind and broken documents; exits 1 on findings |
 | `scripts/overdue.py` | open tasks and actions past due, milestones overdue or due soon, open issues and risks |

@@ -2,7 +2,10 @@
 """Check that documents keep the structure of their template (the template is the contract).
 
 Usage:
-    python3 structure_check.py [--project ROOT] [FILE ...]   # default: every .md under paths.documents
+    python3 structure_check.py [--project ROOT] [--suggest] [FILE ...]   # default: every .md under paths.documents
+
+--suggest also prints, per file, a `hint` line for each missing template heading (in template order), naming an unexpected
+heading of the same level at the same position as a likely rename. It writes nothing and does not change the exit code.
 
 Translations (front matter `translation_of`) are checked lightly: keys, title, placeholders, comments, duplicate IDs; parity_check compares their structure.
 
@@ -248,8 +251,8 @@ def check_translation_light(tfm, fm, text, body, cfg=None):
     return errors, warns
 
 
-def check(root, cfg, text):
-    """(errors, warnings) for one document's text."""
+def check(root, cfg, text, hints=None):
+    """(errors, warnings) for one document's text. A list passed as hints gets one line per missing template heading."""
     errors, warns = [], []
     try:
         fm, body = pc.split_front_matter(text, strict=True)
@@ -283,16 +286,20 @@ def check(root, cfg, text):
     if sum(1 for lv, _, _ in dsec if lv == 1) != 1:
         errors.append("document must have exactly one `#` title")
     pos = -1
-    for lv, title, ttext in tsec:
+    matched, missing = {}, []  # template section index -> document section index; template indexes found nowhere
+    for k, (lv, title, ttext) in enumerate(tsec):
         if lv == 1 or is_slot(title):
             continue
         rx = heading_rx(title)
         hit = lambda i, d: d[0] == lv and rx.match(norm(d[1]))
         idx = next((i for i, d in enumerate(dsec) if i > pos and hit(i, d)), None)
         if idx is None:
-            errors.append(f"heading `{'#' * lv} {title}` " + ("is out of order" if any(hit(i, d) for i, d in enumerate(dsec)) else "is missing"))
+            moved = any(hit(i, d) for i, d in enumerate(dsec))
+            errors.append(f"heading `{'#' * lv} {title}` " + ("is out of order" if moved else "is missing"))
+            if not moved:
+                missing.append(k)
             continue
-        pos = idx
+        pos = matched[k] = idx
         tt, dt_ = tables(ttext), tables(dsec[idx][2])
         if tt:
             if not dt_:
@@ -300,7 +307,16 @@ def check(root, cfg, text):
             elif [norm(c) for c in dt_[0][0]] != [norm(c) for c in tt[0][0]]:
                 errors.append(f"`{title}`: table columns {dt_[0][0]} should be {tt[0][0]}")
     rxs = [(lv, heading_rx(t)) for lv, t, _ in tsec]
-    extra = [t for lv, t, _ in dsec if lv == 2 and not any(l == lv and r.match(norm(t)) for l, r in rxs)]
+    unexpected = [i for i, (lv, t, _) in enumerate(dsec) if not any(l == lv and r.match(norm(t)) for l, r in rxs)]
+    extra = [dsec[i][1] for i in unexpected if dsec[i][0] == 2]
+    for k in (missing if hints is not None else ()):
+        lv, title = tsec[k][0], tsec[k][1]
+        lo = max((d for j, d in matched.items() if j < k), default=-1)
+        hi = min((d for j, d in matched.items() if j > k), default=len(dsec))
+        same = next((i for i in unexpected if lo < i < hi and dsec[i][0] == lv), None)
+        hints.append(f"add `{'#' * lv} {title}`" + (f" (or rename `{'#' * lv} {dsec[same][1]}`)" if same is not None else ""))
+        if same is not None:
+            unexpected.remove(same)
     if extra:
         warns.append("extra sections: " + "; ".join(extra[:6]) + (" ..." if len(extra) > 6 else ""))
     warns += [f"`{t}`: empty table (keep the header and add one row: None)" for lv, t, txt in dsec if lv == 2 for _, rows in tables(txt) if not rows]
@@ -312,6 +328,7 @@ def check(root, cfg, text):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     pc.add_project_arg(ap)
+    ap.add_argument("--suggest", action="store_true", help="also print a hint per missing template heading (writes nothing)")
     ap.add_argument("files", nargs="*", help="documents to check (default: every .md under paths.documents)")
     a = ap.parse_args(argv)
     root = Path(a.project).resolve()
@@ -325,12 +342,13 @@ def main(argv=None):
             print(f"ERROR {f}: not a file")
             bad += 1
             continue
+        hints = [] if a.suggest else None
         try:
-            errors, warns = check(root, cfg, pc.read(f))
+            errors, warns = check(root, cfg, pc.read(f), hints)
         except UnicodeDecodeError:
             errors, warns = ["not UTF-8 text"], []
         rel = f.resolve().relative_to(root) if root in f.resolve().parents else f
-        print("\n".join([f"ERROR {rel}: {e}" for e in errors] + [f"warn  {rel}: {w}" for w in warns]) or f"ok    {rel}")
+        print("\n".join([f"ERROR {rel}: {e}" for e in errors] + [f"warn  {rel}: {w}" for w in warns] + [f"hint  {rel}: {h}" for h in hints or ()]) or f"ok    {rel}")
         bad += bool(errors)
     print(f"\n{bad} file(s) with structure errors")
     return 1 if bad else 0
