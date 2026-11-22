@@ -454,7 +454,7 @@ class Odd(unittest.TestCase):
             out, _ = self.gen(doc, "2026-03")
             for line in out.splitlines():
                 self.assertFalse(line.startswith("## Injected"), f"{doc} has line starting with '## Injected': {line}")
-            self.assertIn("Design login ## Injected heading {{x}} <!-- c -->", out)
+            self.assertIn("Design login ## Injected heading {{x}} &lt;!-- c -->", out)
 
     def test_draft_language_region_code(self):
         cfg_file = self.root / "pmo/config.yaml"

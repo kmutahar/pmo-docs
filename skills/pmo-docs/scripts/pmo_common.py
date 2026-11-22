@@ -408,20 +408,20 @@ def as_of(s):
 
 
 def cell(v):
-    """A value as one Markdown table cell: lists joined, pipes escaped (and the backslashes right before one), carriage returns and newlines flattened."""
+    """A value as one Markdown table cell: lists joined, `<` written as `&lt;` (so raw HTML and comments stay text), pipes escaped (and the backslashes right before one), carriage returns and newlines flattened."""
     if v is None or v == "":
         return ""
     if isinstance(v, (list, tuple)):
         return ", ".join(cell(x) for x in v)
     if isinstance(v, dict):
         return "; ".join(f"{k}: {cell(x)}" for k, x in v.items())
-    s = str(v).replace("\r\n", " ").replace("\r", " ").replace("\n", " ")
+    s = str(v).replace("\r\n", " ").replace("\r", " ").replace("\n", " ").replace("<", "&lt;")
     return re.sub(r"(\\*)\|", lambda m: m.group(1) * 2 + "\\|", s)
 
 
 def inline(v):
-    """A value as one line of text: any run of white space becomes one space."""
-    return " ".join(str(v).split())
+    """A value as one line of text: any run of white space becomes one space, `<` becomes `&lt;`."""
+    return " ".join(str(v).split()).replace("<", "&lt;")
 
 
 def week_start(cfg) -> int:
