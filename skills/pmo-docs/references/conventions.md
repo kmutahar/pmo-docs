@@ -67,6 +67,7 @@ A translation is a file next to its original, named `<name>.<lang>.md` (for exam
 - Ids and dates use the ASCII digits 0 to 9 only; a register date with a time of day (a YAML timestamp) is a validation error. Dates are `YYYY-MM-DD`. The fields that hold dates are listed per register in the config (`dates`); `months`: fields that hold a month `YYYY-MM`; `tasks` and `milestones` list `period`; the statuses that mean an entry is closed are `closed`; `pending` on `decisions` and `changes` lists the statuses that still need a decision (the Blockers table of the status report).
 - Scripts read files with `pc.read()`, which strips a BOM and turns CRLF into LF; `split_front_matter` expects text read that way and does not strip them from a raw string.
 - Every register has an optional `origin` field (`vocab.origin`): `stated` means the user or owner said it and `proposed` means the agent suggested it and it is not confirmed.
+- Optional review text: `description` (default field of risks, issues, changes and requirements) and `question` (a plain-language question for the reviewer; no register has it by default). `team-review` shows both; to use them in a register that lacks them, add the field to its `fields` (`references/extend.md`). Quote a question in a one-line entry, because an unquoted value ending in `?` is a YAML error: `question: "Which vendors?"`.
 - To edit an entry: `SKILL.md`, Working rules (Edit one entry, not the file).
 - Leftover git conflict markers in a register are reported before YAML parsing (`pmo/registers/<file>:<line>: merge conflict markers; resolve them first (references/git.md, Several writers)`).
 - Duplicate ids are reported with each copy's file, line, label and a hint to run `renumber.py` (`duplicate id <ID>: <file>:<line> "<label>", ...; run renumber.py`).
@@ -146,7 +147,7 @@ Run from the project root, or pass `--project DIR`. Every script answers `--help
 | `python3 ${CLAUDE_SKILL_DIR}/scripts/parity_check.py [files]` | checks that a translation has the same headings, tables, ids, numbers, list items and ticked boxes as its original (default: every translation) | 0 all match or none found, 1 a difference or a pair that cannot be compared, 2 usage or a config the skill refuses |
 | `python3 ${CLAUDE_SKILL_DIR}/scripts/docs_audit.py [--as-of DATE]` | front matter, stale, old, broken-link, template/playbook drift, translation-behind, parity, glossary-ID and names-file checks | 0 clean, 1 findings, 2 usage or a config the skill refuses |
 | `python3 ${CLAUDE_SKILL_DIR}/scripts/overdue.py [--as-of DATE] [--days N]` | overdue tasks, actions and milestones, open risks and issues | 0 ok, 2 usage, or a config the skill refuses |
-| `python3 ${CLAUDE_SKILL_DIR}/scripts/team_review.py [--csv]` | per-person review checklist of open entries (Markdown, or CSV with `--csv`) | 0 ok, 2 usage, or a config the skill refuses |
+| `python3 ${CLAUDE_SKILL_DIR}/scripts/team_review.py [--csv] [--lang CODE] [--import FILE.csv]` | per-person review checklist of open entries with description and question (Markdown, or CSV with `--csv`; `--lang` takes them from the language's names file); `--import` prints the status changes a reviewer's CSV proposes and writes nothing | 0 ok, 2 usage, an unreadable import file, or a config the skill refuses |
 
 
 ## Launcher

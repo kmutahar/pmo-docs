@@ -171,7 +171,7 @@ The scripts are in this skill's own folder, `scripts/` next to this file. Playbo
 | `scripts/parity_check.py [files]` | check that a translation matches its original in headings, tables, ids, numbers, list items and ticked boxes |
 | `scripts/docs_audit.py` | stale, old, behind and broken documents; exits 1 on findings |
 | `scripts/overdue.py` | open tasks and actions past due, milestones overdue or due soon, open issues and risks |
-| `scripts/team_review.py [--csv]` | open entries per roster person, and Proposed glossary rows, as a Markdown checklist or CSV |
+| `scripts/team_review.py [--csv] [--lang CODE] [--import FILE.csv]` | open entries per roster person, and Proposed glossary rows, as a Markdown checklist or CSV; `--import` shows proposed changes from a reviewer's CSV |
 
 ## How to reply
 

@@ -23,7 +23,7 @@ Example requests:
 | --- | --- |
 | `weekly-status` | Drafts a status report from current tasks, risks and milestones. |
 | `add a task: set up staging, high priority, due 2026-03-10` | Logs the task and updates the views. |
-| `team-review` | Prints a review checklist per person of the open entries they own; add `--csv` for one row per entry. |
+| `team-review` | Prints a review checklist per person of the open entries they own; add `--csv` for one row per entry, `--import FILE.csv` to preview the changes from a filled-in CSV. |
 | `draft release notes` | Turns recent tasks, changes and git history into a release-notes draft. |
 | `translate the status report into Arabic` | Writes `<name>.ar.md` next to the original and checks that structure, ids and numbers match. |
 
@@ -187,7 +187,7 @@ python3 "$SKILL/scripts/render_views.py" --check
 | `generate.py` | Pre-fill generated document types from registers. |
 | `where.py` | Print where a document, its template and its inputs live. |
 | `overdue.py` | Print overdue tasks, actions, milestones, open issues and open risks. |
-| `team_review.py` | Print a review checklist per person (Markdown, or CSV with `--csv`). |
+| `team_review.py` | Print a review checklist per person (Markdown, or CSV with `--csv`; `--lang` for translated text); `--import FILE.csv` prints the changes a reviewer's CSV proposes. |
 | `renumber.py` | Fix duplicate ids after a merge. |
 | `publish.py` | Copy finished documents to the publish target. |
 | `parity_check.py` | Check that a translation matches its original. |
