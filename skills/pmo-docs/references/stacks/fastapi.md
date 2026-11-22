@@ -29,7 +29,7 @@ A modern Python web framework for building APIs with type hints. Covers FastAPI 
 
 ## Config and environments
 - **Look in:** core/config.py, config.py, .env.example, .env.sample, .env.template
-- **Read:** pydantic-settings BaseSettings classes, os.getenv calls; defined environments; read names from the example file only
+- **Read:** pydantic-settings BaseSettings classes, os.getenv calls; defined environments; read names from the example file only; key names only; stop reading a file if a value looks like a credential, and note it by file and line
 - **Record as:** environments entries as proposals, variables as names
 - **Flask:** config.py, app.config.from_object/from_envvar, instance/config.py, from_prefixed_env, FLASK_DEBUG (FLASK_ENV was removed in Flask 2.3)
 

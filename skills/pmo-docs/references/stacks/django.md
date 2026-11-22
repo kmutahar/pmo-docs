@@ -26,7 +26,7 @@ A high-level Python web framework with ORM, authentication and admin.
 
 ## Config and environments
 - **Look in:** settings.py, settings/*.py, .env.example, .env.sample, .env.template, DJANGO_SETTINGS_MODULE references
-- **Read:** setting names (ALLOWED_HOSTS, DATABASES keys); defined environments; read names from the example file only
+- **Read:** setting names (ALLOWED_HOSTS, DATABASES keys); defined environments; read names from the example file only; key names only; stop reading a file if a value looks like a credential, and note it by file and line
 - **Record as:** environments entries as proposals, variables as names
 
 ## Tests

@@ -26,7 +26,7 @@ A cross-platform framework for building client applications across mobile, web a
 
 ## Config and environments
 - **Look in:** pubspec.yaml, lib/config/, lib/firebase_options.dart, --dart-define keys, .env.example, .env.sample, .env.template
-- **Read:** configuration keys, flavor names, environment variable names, never secret values; defined environments; read names from the example file only
+- **Read:** configuration keys, flavor names, environment variable names, never secret values; defined environments; read names from the example file only; key names only; stop reading a file if a value looks like a credential, and note it by file and line
 - **Record as:** environments entries as proposals, variables as names
 
 ## Tests

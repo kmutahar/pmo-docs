@@ -26,7 +26,7 @@ A minimalist web framework for Node.js routing and middleware.
 
 ## Config and environments
 - **Look in:** config/, .env.example, .env.sample, .env.template, process.env references, dotenv loading
-- **Read:** environment variable names and config keys; defined environments (NODE_ENV); read names from the example file only
+- **Read:** environment variable names and config keys; defined environments (NODE_ENV); read names from the example file only; key names only; stop reading a file if a value looks like a credential, and note it by file and line
 - **Record as:** environments entries as proposals, variables as names
 
 ## Tests
