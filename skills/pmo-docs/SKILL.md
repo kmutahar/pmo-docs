@@ -1,11 +1,11 @@
 ---
 name: pmo-docs
-description: Project-office and documentation workflow. Keeps a project's facts in registers (tasks, risks, issues, decisions, changes, actions, milestones, people, requirements, tests, environments, permissions) under pmo/, renders read-only views, and drafts documents (status reports, plans, charters, roadmaps, change requests, minutes, checklists, retrospectives, release notes, requirements, test acceptance, defect gap reports, entity lifecycles, API references, integration guides, architecture overviews, user guides) from templates that scripts check. Use to set up a project office under pmo/, draft, translate or finish a document, take tasks from chat exports, track or update entries ("mark T-14 done", log a risk), plan, record a change request or decision, or run weekly-status, monthly-status, month-start, overdue-report and docs-audit. Use only in a project that has a `pmo/` folder, or when the user asks for a project office; not for general coding or personal to-do lists.
+description: Project-office and documentation workflow. Keeps a project's facts in registers (tasks, risks, issues, decisions, changes, actions, milestones, people, requirements, tests, environments, permissions) under pmo/, renders read-only views, and drafts documents (status reports, plans, charters, roadmaps, change requests, minutes, checklists, retrospectives, release notes, requirements, test acceptance, defect gap reports, entity lifecycles, API references, integration guides, architecture overviews, user guides) from templates that scripts check. Use to set up a project office under pmo/, draft, translate or finish a document, take tasks from chat exports, track or update entries ("mark T-14 done", log a risk), plan, record a change request or decision, or run weekly-status, monthly-status, month-start, overdue-report, docs-audit and team-review. Use only in a project that has a `pmo/` folder, or when the user asks for a project office; not for general coding or personal to-do lists.
 license: MIT
 compatibility: Needs Python 3.10 or newer on Linux or macOS (Windows through WSL). PyYAML is bundled; nothing to install. Works on the project in the current folder.
 metadata:
   version: "0.9.0"
-allowed-tools: Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/setup.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/where.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/render_views.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/renumber.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/generate.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/structure_check.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/parity_check.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/docs_audit.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/overdue.py *) Bash(git status *) Bash(git log *) Bash(git diff *) Bash(git show *) Bash(git rev-parse *) Bash(git tag --list *)
+allowed-tools: Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/setup.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/where.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/render_views.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/renumber.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/generate.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/structure_check.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/parity_check.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/docs_audit.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/overdue.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/team_review.py *) Bash(git status *) Bash(git log *) Bash(git diff *) Bash(git show *) Bash(git rev-parse *) Bash(git tag --list *)
 
 ---
 
@@ -40,6 +40,7 @@ Work from the project root (the folder that holds `pmo/`). From a subfolder, go 
 | `month-start` | `references/month-start.md` |
 | `overdue-report` | `references/overdue-report.md` |
 | `docs-audit` | `references/docs-audit.md` |
+| `team-review` (a review checklist per person, as Markdown or CSV) | `references/team-review.md` |
 | to run a recipe on a schedule | `references/schedule.md` |
 | to commit, stage or push | `references/git.md` |
 
@@ -170,6 +171,7 @@ The scripts are in this skill's own folder, `scripts/` next to this file. Playbo
 | `scripts/parity_check.py [files]` | check that a translation matches its original in headings, tables, ids, numbers, list items and ticked boxes |
 | `scripts/docs_audit.py` | stale, old, behind and broken documents; exits 1 on findings |
 | `scripts/overdue.py` | open tasks and actions past due, milestones overdue or due soon, open issues and risks |
+| `scripts/team_review.py [--csv]` | open entries per roster person, and Proposed glossary rows, as a Markdown checklist or CSV |
 
 ## How to reply
 
