@@ -55,7 +55,7 @@ class Plugin(unittest.TestCase):
         )
         readme = (REPO / "README.md").read_text(encoding="utf-8")
         readme_versions = rx.findall(readme)
-        self.assertGreaterEqual(len(readme_versions), 5)
+        self.assertGreaterEqual(len(readme_versions), 3)
         self.assertEqual(set(readme_versions), {version}, readme_versions)
 
         guide = (REPO / "docs/INSTALL_FOR_AGENTS.md").read_text(encoding="utf-8")

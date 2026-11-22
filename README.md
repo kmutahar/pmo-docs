@@ -53,6 +53,7 @@ pmo/
 |-- bin/pmo            # project launcher (commit it)
 |-- config.yaml        # only your settings; defaults come from the skill
 |-- .gitignore         # ignores local pmo/.me
+|-- data/              # translation glossaries (created when needed)
 |-- registers/         # tasks, risks, issues, decisions, requirements, tests, ... (some created on first use)
 |-- views/             # generated summaries and catalogue (commit them)
 |-- documents/         # drafts and finished documents
@@ -61,7 +62,7 @@ pmo/
 `-- house-rules.md     # your own rules
 ```
 
-Setup asks for your project name and project manager (priority order and week start use defaults unless you mention them), shows the files it will write and waits for your yes. It never overwrites a file.
+Setup asks for your project name and project manager (priority order and week start use defaults unless you mention them), shows the files it will write and waits for your yes. It never overwrites a file you edited; it only appends `.me` to an existing `pmo/.gitignore`.
 
 ## Prerequisites
 
@@ -218,7 +219,7 @@ It looks for the skill in `$PMO_DOCS_SKILL`, project skill folders, the Claude p
 
 | Setting | What it controls |
 | --- | --- |
-| `project.week_start` | The day working weeks begin (`monday`, `sunday`, `saturday`). Weekly windows and file names follow it. |
+| `project.week_start` | The day working weeks begin (`monday` to `sunday`). Weekly windows and file names follow it. |
 | `languages` | Draft and translation languages. |
 | `publish` | Where finished documents go (`mode: none`, `folder` or `repo`). |
 | `schedule` | Recipes to run on a schedule. |
@@ -260,7 +261,7 @@ schedule:
   - { recipe: weekly-status, when: "Mon 08:00" }
 ```
 
-A scheduled run only drafts. It never finishes, publishes or commits. To refresh views without drafting, schedule `pmo/bin/pmo render_views`. The recipe is in [`skills/pmo-docs/references/schedule.md`](skills/pmo-docs/references/schedule.md).
+A scheduled run only drafts. It never finishes, publishes or commits, but it runs unattended and can write any file in the project, so schedule it only in a project you trust. To refresh views without drafting, schedule `pmo/bin/pmo render_views`. The recipe is in [`skills/pmo-docs/references/schedule.md`](skills/pmo-docs/references/schedule.md).
 
 ### Overrides and drift
 
@@ -292,29 +293,13 @@ The agent reads your code and does not run it. Commands such as listing the API 
 
 **Hooks.** The skill installs none. To check registers on commit, call `pmo/bin/pmo render_views --check` from your own pre-commit hook. It writes nothing, stages nothing and exits 1 when the registers are invalid or a view is stale. Details are in [`skills/pmo-docs/references/git.md`](skills/pmo-docs/references/git.md).
 
-**CI.** A GitHub Actions workflow can run the same check:
-
-```yaml
-name: pmo check
-on:
-  push: { paths: ["pmo/**"] }
-  pull_request: { paths: ["pmo/**"] }
-permissions: { contents: read }
-jobs:
-  check:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - run: curl -fsSL https://github.com/kmutahar/pmo-docs/archive/refs/tags/v0.9.0.tar.gz | tar -xz
-      - run: pmo/bin/pmo render_views --check
-        env: { PMO_DOCS_SKILL: pmo-docs-0.9.0/skills/pmo-docs }
-```
+**CI.** A GitHub Actions workflow can run the same check, with the skill checked out at the commit of its release tag, pinned by full commit SHA. The workflow is in [`git.md`](skills/pmo-docs/references/git.md).
 
 **Two writers.** Two or more people can work on one project without a server or locks. One entry per line keeps diffs small. After a merge conflict in a register, keep both sides' new entries, resolve duplicates with `renumber.py` and render the views again. Merge rules for registers, views, drafts and finished documents are in [`git.md`](skills/pmo-docs/references/git.md) (Several writers). An editor on a draft is a warning, not a lock.
 
 ## Safety
 
-**In short:** it reads your `pmo/` folder and files you point it at, writes only under `pmo/` (anything else waits for your yes), makes no network calls from its scripts, and never commits, pushes or stores credentials.
+**In short:** it reads your `pmo/` folder and files you point it at, writes under `pmo/` (anything else waits for your yes; an unattended scheduled run can write any project file), makes no network calls from its scripts, never pushes or stores credentials, and commits only in `repo` publish mode after a second yes.
 
 - **Reads:** your `pmo/` folder, skill files, files or chat exports you point it at (exports are never copied in), read-only git history, and source/config/test files for technical docs (variable names only, never secret files like `.env`). Public framework docs are fetched only when you ask for a new stack file.
 - **Writes:** under `pmo/` (config, registers, views, documents, launcher). Changes to config, templates, playbooks, hand-edited files or entries you did not state wait for your yes. Publishing copies finished documents only after you confirm (in `repo` mode, committing there waits for a second yes and never pushes).
@@ -323,25 +308,11 @@ jobs:
 
 ## Repository structure
 
-```text
-pmo-docs/
-|-- skills/pmo-docs/   # the only part that ships: SKILL.md, scripts/, references/, assets/, skills/
-|-- examples/acme/     # the one fake project used by tests, evals and the walkthrough
-|-- docs/              # walkthrough and agent install guide
-|-- tests/             # unit tests
-|-- evals/             # eval cases
-|-- dev/               # maintainer tools (scrub, release, icon)
-|-- GLOSSARY.md
-|-- AGENTS.md          # rules for working on this repo
-|-- PRIVACY.md
-|-- SECURITY.md
-`-- TERMS.md
-```
+See the Layout section of [`AGENTS.md`](AGENTS.md).
 
 ## Limits and stability
 
-- **One writer per project** is the design (a project manager and their agent). Teams are safe: duplicate ids fail validation (fix them with `renumber.py`) and views are deterministic.
-- Several people can edit documents (an `editor` field per draft and a warning), but there are no locks.
+- Several people can work on one project (see Working with git): duplicate ids fail validation (fix them with `renumber.py`) and views are deterministic. An `editor` field per draft gives a warning, not a lock.
 - Generators write English only. The agent drafts other languages, and parity checks compare structure, ids and numbers, not wording.
 - From `1.0`, the config format (`pmo/config.yaml`, `schema_version: 1`) and the register formats (`pmo/registers/*.yaml`) are stable. A project made with `1.x` keeps working with every later `1.x`: new keys and fields are optional, and a change that would invalidate an existing project waits for the next major version and ships with a migration script and an upgrade note in [`CHANGELOG.md`](CHANGELOG.md).
 - Until `1.0` the formats can change without a migration script.
