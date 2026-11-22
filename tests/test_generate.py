@@ -73,8 +73,8 @@ class TestGenerate(unittest.TestCase):
         cfg = pc.load_config(self.root)
         text = doc.read_text(encoding="utf-8")
         errs, warns = structure_check.check(self.root, cfg, text)
-        self.assertEqual(errs, ["unreplaced {{placeholder}} left in text"])
-        self.assertEqual(set(re.findall(r"\{\{(.*?)\}\}", structure_check.strip_fences(text))), {"question"})
+        self.assertEqual(errs, [])
+        self.assertNotIn("{{", text)
 
     def test_refuses_existing_document_exits_3(self):
         doc = self.root / "pmo/documents/Decision log.md"
@@ -228,10 +228,11 @@ class TestGenerate(unittest.TestCase):
         fm, _ = pc.split_front_matter(out, strict=True)
         self.assertEqual(fm["project"], 'Acme "Portal" \\ Co')
 
-    def test_untouched_blocks_keep_trailing_spaces(self):
+    def test_empty_open_questions_written_as_none(self):
         code, out, err = tool("generate.py", self.root, "status-report", "2026-03", "--as-of", "2026-03-15", "--stdout")
         self.assertEqual(code, 0, err)
-        self.assertTrue(out.endswith("## Open questions\n- {{question}}\n"), repr(out[-40:]))
+        self.assertTrue(out.endswith("## Open questions\n- None\n"), repr(out[-40:]))
+        self.assertNotIn("- {{question}}", out)
 
     def test_bad_register_config_exits_2(self):
         cfg_path = self.root / "pmo/config.yaml"
@@ -324,12 +325,13 @@ class TestGenerate(unittest.TestCase):
         code, out, err = tool("generate.py", self.root, *args, "--as-of", "2026-03-15", "--stdout")
         self.assertEqual(code, 0, err)
         errs, warns = structure_check.check(self.root, cfg, out)
-        self.assertEqual(errs, ["unreplaced {{placeholder}} left in text"], f"{args[0]} unexpected errors: {errs}")
+        want = ["unreplaced {{placeholder}} left in text"] if expected_placeholders else []
+        self.assertEqual(errs, want, f"{args[0]} unexpected errors: {errs}")
         found = set(re.findall(r"\{\{(.*?)\}\}", structure_check.strip_fences(out)))
         self.assertEqual(found, expected_placeholders, f"{args[0]} placeholders mismatch")
 
     def test_both_pass_structure_check_except_placeholders(self):
-        self._assert_generated_draft_placeholders(("project-plan",), {"item", "question", "target"})
+        self._assert_generated_draft_placeholders(("project-plan",), {"item", "target"})
         self._assert_generated_draft_placeholders(
             ("status-report", "2026-03"),
             {
@@ -339,13 +341,12 @@ class TestGenerate(unittest.TestCase):
                 "delta",
                 "id",
                 "new, changed or closed risk or issue",
-                "question",
                 "task",
             },
         )
 
     def test_team_checklist_passes_structure_check_except_placeholders(self):
-        self._assert_generated_draft_placeholders(("team-checklist", "2026-03"), {"question"})
+        self._assert_generated_draft_placeholders(("team-checklist", "2026-03"), set())
 
     def test_non_english_draft_language_exits_2(self):
         cfg_path = self.root / "pmo/config.yaml"

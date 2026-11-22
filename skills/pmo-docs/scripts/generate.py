@@ -229,7 +229,9 @@ def fill(template_text: str, filled: Filled) -> str:
             out_blocks.append("\n\n".join(parts))
             continue
 
-        # Untouched section: copy byte for byte
+        # Untouched section: copy byte for byte, except an empty Open questions list (SKILL.md: write `- None`)
+        if heading_title == "Open questions":
+            block_text = block_text.replace("- {{question}}", "- None")
         out_blocks.append(block_text.rstrip("\n"))
 
     for k in filled.sections:
