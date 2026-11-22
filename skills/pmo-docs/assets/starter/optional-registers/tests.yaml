@@ -1,4 +1,4 @@
 # tests: one entry per line, e.g.
-#   - {id: ..., title: ..., kind: ..., requirement: ..., task: ..., issue: ..., expected: ..., status: ..., run_on: ..., owner: ..., evidence: ..., notes: ..., origin: ...}
+#   - {id: ..., title: ..., kind: ..., requirement: ..., task: ..., issue: ..., steps: ..., expected: ..., area: ..., status: ..., run_on: ..., owner: ..., evidence: ..., notes: ..., origin: ...}
 # ids look like TST-1
 tests: []
