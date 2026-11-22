@@ -70,6 +70,9 @@ def config_errors(cfg, root=None):
     """Registers in the config that lack `file`, `view` or `fields`, bad week_start, or invalid blocked/active statuses."""
     errors = [f"config: register `{n}` needs `{k}`" for n, r in cfg["registers"].items() for k in ("file", "view", "fields")
               if not isinstance(r, dict) or not r.get(k)]
+    known = pc.load_yaml(pc.read(pc.SKILL / "assets" / "config.default.yaml"))
+    errors += [f"config: unknown key `{k}` (not a config key of the skill; a typo or a setting from an older format)"
+               for k in cfg if k not in known]
     prefixes = {}
     for n, r in cfg.get("registers", {}).items():
         if isinstance(r, dict):

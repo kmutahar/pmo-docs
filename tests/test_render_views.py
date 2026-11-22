@@ -365,6 +365,12 @@ class LanguageConfig(unittest.TestCase):
         })
         self.assertEqual(render_views.config_errors(valid_custom, root=self.root), [])
 
+    def test_unknown_top_level_keys_are_all_reported(self):
+        cfg = pc.merge(self.defaults, {"subprojects": [], "tiers": {}})
+        errs = render_views.config_errors(cfg, root=self.root)
+        self.assertEqual([e for e in errs if "unknown key" in e].__len__(), 2)
+        self.assertTrue(any("`subprojects`" in e for e in errs) and any("`tiers`" in e for e in errs))
+
     def test_bad_dir(self):
         cfg = pc.merge(self.defaults, {"languages": {"en": {"dir": "up"}}})
         errs = render_views.config_errors(cfg, root=self.root)
