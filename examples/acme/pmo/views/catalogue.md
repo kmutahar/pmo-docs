@@ -24,6 +24,9 @@
 | test-acceptance | Test acceptance | agent | Before each acceptance round, and again after it with the results. | A test is added or run, a requirement changes, or an environment changes. | 14 days | yes |
 | defect-gap-report | Defect and gap report | agent | At the end of a test round, and before a release decision. | A test result, an issue or a requirement changes. | 30 days | yes |
 | entity-lifecycle | Entity lifecycle | agent | After the first release that changes the entity, and when its rules are disputed. | A state, transition or permission changes in the code or the permissions register. | 60 days | yes |
+| client-summary | Client summary | agent | each period, for a client who does not read the status report | when milestones, decisions or changes move | 30 days | yes |
+| scope-wbs | Scope and work breakdown | agent | at kickoff, and when the scope changes | when requirements or milestones change | 90 days | yes |
+| work-order | Work order | agent | when a defined piece of work is handed to a team or person | when its tasks change before it is accepted | 30 days | yes |
 | api-reference | API reference | agent | When the API has a first consumer, and before each release that changes an endpoint. | An endpoint, a permission or an environment changes. | 30 days | yes |
 | integration-guide | Integration guide | agent | Before a new consumer connects. | A consumer is added, an endpoint or an environment changes. | 30 days | yes |
 | architecture-overview | Architecture overview | agent | When a new person or team needs the big picture, and after any change of components. | A component, an environment or a decision changes. | 90 days | yes |

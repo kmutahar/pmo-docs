@@ -41,8 +41,8 @@ Terms such as register, view, draft and Finish are defined in [`GLOSSARY.md`](GL
 
 ### Document types
 
-- **Planning:** project charter, project plan, roadmap, weekly plan, capacity plan, team checklist.
-- **Status & delivery:** weekly and monthly status report, stakeholder update, delivery report, release notes, overdue report, retrospective.
+- **Planning:** project charter, scope and work breakdown, work order, project plan, roadmap, weekly plan, capacity plan, team checklist.
+- **Status & delivery:** weekly and monthly status report, stakeholder update, client summary, delivery report, release notes, overdue report, retrospective.
 - **Governance:** change request, meeting minutes, decision log, docs audit report.
 - **Technical:** functional requirements, test acceptance, defect-gap report, entity lifecycle, API reference, integration guide, architecture overview, user guide.
 
