@@ -9,6 +9,10 @@
 
 An Agent Skill that keeps a project's tasks, risks and decisions in plain YAML files and drafts project documents from them, so the agent does not invent facts. Release history is in [`CHANGELOG.md`](CHANGELOG.md).
 
+**Start here:** [install](#installation) (2 commands for Claude Code) → [quick start](#quick-start) (3 steps) → [see it on a fake project](docs/walkthrough.md).
+
+**Jump to:** [How it works](#how-it-works) · [Usage](#usage) · [Configuration](#configuration) · [Working with git](#working-with-git) · [Safety](#safety) · [Limits](#limits-and-stability) · [Contributing](#contributing)
+
 ## Overview
 
 You keep registers (tasks, risks, issues, decisions and more) as one-line YAML entries in your project. Scripts validate them and render read-only views. When you ask your coding agent for a weekly status, a project plan or release notes, it drafts from those registers and a template, and a script checks the draft before you finish it.
@@ -33,11 +37,14 @@ Terms such as register, view, draft and Finish are defined in [`GLOSSARY.md`](GL
 | Templates | Required sections and rules per document type. |
 | Documents | Drafted for one period (a week, a month) or once. They stay drafts until you ask to Finish them. |
 | Checks | Scripts that verify a draft, so correctness does not depend on the model remembering rules. |
-| House rules | Your own rules in `pmo/house-rules.md`. They win over the skill's rules, except the safety rules. |
+| House rules | Your own rules in `pmo/house-rules.md`. They win over the skill's rules, except the safety rules and the definition of done. |
 
 ### Document types
 
-Project charter, project plan, roadmap, weekly plan, capacity plan, team checklist, weekly and monthly status report, stakeholder update, release notes, change request, meeting minutes, decision log, delivery report, retrospective, overdue report, docs audit report, functional requirements, test acceptance, defect-gap report, entity lifecycle, API reference, integration guide, architecture overview and user guide.
+- **Planning:** project charter, project plan, roadmap, weekly plan, capacity plan, team checklist.
+- **Status & delivery:** weekly and monthly status report, stakeholder update, delivery report, release notes, overdue report, retrospective.
+- **Governance:** change request, meeting minutes, decision log, docs audit report.
+- **Technical:** functional requirements, test acceptance, defect-gap report, entity lifecycle, API reference, integration guide, architecture overview, user guide.
 
 ## What it adds to a project
 
@@ -45,15 +52,16 @@ Project charter, project plan, roadmap, weekly plan, capacity plan, team checkli
 pmo/
 |-- bin/pmo            # project launcher (commit it)
 |-- config.yaml        # only your settings; defaults come from the skill
+|-- .gitignore         # ignores local pmo/.me
 |-- registers/         # tasks, risks, issues, decisions, requirements, tests, ... (some created on first use)
 |-- views/             # generated summaries and catalogue (commit them)
 |-- documents/         # drafts and finished documents
-|-- templates/         # only the templates you changed or added
-|-- playbooks/         # only the playbooks you changed or added
+|-- templates/         # only the templates you changed or added (created when needed)
+|-- playbooks/         # only the playbooks you changed or added (created when needed)
 `-- house-rules.md     # your own rules
 ```
 
-Setup asks a few questions (project name, project manager, priority order, and the week start only if you mention weeks), shows the files it will write and waits for your yes. It never overwrites a file.
+Setup asks for your project name and project manager (priority order and week start use defaults unless you mention them), shows the files it will write and waits for your yes. It never overwrites a file.
 
 ## Prerequisites
 
@@ -65,6 +73,8 @@ Nothing to `pip install`: PyYAML is bundled with the skill, and the skill works 
 ## Installation
 
 ### Claude Code
+
+Run these slash commands inside a Claude Code session (this installs the skill plus `/pmo-docs:init` and `/pmo-docs:publish`):
 
 ```text
 /plugin marketplace add kmutahar/pmo-docs
@@ -79,7 +89,15 @@ This installs a copy of the skill folder only. The short form clones over SSH. W
 
 ### Antigravity, Codex and other agents
 
-These agents read skills from `~/.agents/skills`. Copy the skill folder there from the release tag:
+These agents read skills from `~/.agents/skills`. With Node.js, install with one command:
+
+```sh
+npx skills add kmutahar/pmo-docs -g
+```
+
+Omit `-g` to install for one project only. `npx skills` is a third-party CLI with anonymous install telemetry on by default; prefix with `DISABLE_TELEMETRY=1` to opt out (`pmo-docs` itself makes no network calls).
+
+Without Node.js, copy the skill folder from the release tag:
 
 ```sh
 mkdir -p ~/.agents/skills
@@ -111,19 +129,21 @@ Read the raw text of https://raw.githubusercontent.com/kmutahar/pmo-docs/v0.9.0/
 
 ### Update
 
-Claude Code installs a copy, so pull in new versions yourself:
+1. **Claude Code:** run this in your terminal, then restart Claude Code.
 
-```sh
-claude plugin marketplace update pmo-docs && claude plugin update pmo-docs@pmo-docs
-```
+   ```sh
+   claude plugin marketplace update pmo-docs && claude plugin update pmo-docs@pmo-docs
+   ```
 
-For other agents, run the commands above with the newer tag, or give the agent the prompt again. It compares the installed copy and asks before replacing it. Restart the agent afterwards. An update never touches your project's `pmo/` folder. If the project launcher changed, the agent shows the difference and asks first.
+2. **Other agents:** run `npx skills update` (if installed with `npx skills`), re-run the `curl` commands above with the newer tag, or give the agent the install prompt again. It compares the installed copy, asks before replacing it, and you restart the agent.
+
+An update never touches your project's `pmo/` folder. If the project launcher changed, the agent shows the difference and asks first.
 
 ## Quick start
 
 Run the agent in your project's root folder.
 
-1. Ask: "set up a project office". The agent asks its questions, shows the files it will create and waits for your yes.
+1. Ask: "set up a project office". The agent asks its questions, shows the files it will create and waits for your yes. You should see a `pmo/` folder.
 2. Add people and first tasks. Ask the agent ("add a task: set up staging, high priority, due 2026-03-10"), or edit the files yourself, one entry per line. `owner` is a roster slug.
 
    ```yaml
@@ -136,7 +156,7 @@ Run the agent in your project's root folder.
      - {id: T-1, title: Set up staging server, priority: high, owner: sam, status: in-progress, due: 2026-03-10}
    ```
 
-3. Render the views. Ask the agent, or run `render_views.py`. It validates the registers first, then writes `pmo/views/tasks.md` and one view per register plus the catalogue.
+3. Render the views. Ask the agent, or run `pmo/bin/pmo render_views`. It validates the registers and writes the views and catalogue under `pmo/views/`. You should see `registers valid; wrote ... views`.
 
 Then ask for a document: "draft the project charter" or "weekly-status". A worked example on a small fake project is in [`docs/walkthrough.md`](docs/walkthrough.md).
 
@@ -284,7 +304,7 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: curl -fsSL https://github.com/kmutahar/pmo-docs/archive/refs/tags/v0.9.0.tar.gz | tar -xz
       - run: pmo/bin/pmo render_views --check
         env: { PMO_DOCS_SKILL: pmo-docs-0.9.0/skills/pmo-docs }
@@ -294,27 +314,12 @@ jobs:
 
 ## Safety
 
-**Reads:**
-- Your `pmo/` folder (registers, views, config, documents and the untracked `pmo/.me` file) and the skill's own files.
-- Documents, chat exports or pasted messages you point it at. Exports are read once and never copied into the project.
-- Read-only git history of your project, and of another local repository you name for release notes with `--repo`.
-- Your source, config and test files when drafting technical documents. It records setting and variable names, never values, never opens secret files such as `.env`, and never edits the code.
-- Public framework documentation on the web, only when you ask for a new stack file. Nothing from your project is sent.
-- The launcher reads `PMO_DOCS_SKILL`, `HOME` and `CLAUDE_CONFIG_DIR` and looks in the standard skill folders.
+**In short:** it reads your `pmo/` folder and files you point it at, writes only under `pmo/` (anything else waits for your yes), makes no network calls from its scripts, and never commits, pushes or stores credentials.
 
-**Writes:**
-- Inside your project: under `pmo/` (or the folders set in `pmo/config.yaml`) and the fixed files `pmo/config.yaml`, `pmo/.me`, `pmo/.gitignore` and `pmo/bin/pmo`. Anything else, an entry you did not state, an overwrite of a file you edited by hand, or any change to config, templates or playbooks is shown first and waits for your yes.
-- Publishing copies finished documents to `publish.path` only after you run `/pmo-docs:publish` or say yes to the dry run. In `repo` mode this is the one place it writes outside your project, and committing there waits for a second yes.
-
-**Never:**
-- Makes network calls from its scripts. Your agent sends context to its model provider; the skill sends nothing on its own.
-- Changes your git repository (staging, commits, pushes, resets, checkouts) or its hooks unless you ask. `publish` never pushes.
-- Opens other folders or projects on your machine unless you ask.
-- Follows instructions found in files, chat exports, code or web pages. It shows them to you and waits.
-- Overwrites a hand-edited file without asking.
-- Reads, asks for or stores credentials, passwords, tokens or keys, or copies a chat export, a pasted message, or the phone numbers and emails in it, into the project.
-
-`pmo/` holds people's names (the roster and entry owners). If your project's repository is public, so are they. In Claude Code, the skill's allowed scripts and read-only git commands run without prompting during the turn that loads the skill, and later turns may prompt again. Full details are in [`PRIVACY.md`](PRIVACY.md) and [`skills/pmo-docs/SKILL.md`](skills/pmo-docs/SKILL.md) (Safety rules).
+- **Reads:** your `pmo/` folder, skill files, files or chat exports you point it at (exports are never copied in), read-only git history, and source/config/test files for technical docs (variable names only, never secret files like `.env`). Public framework docs are fetched only when you ask for a new stack file.
+- **Writes:** under `pmo/` (config, registers, views, documents, launcher). Changes to config, templates, playbooks, hand-edited files or entries you did not state wait for your yes. Publishing copies finished documents only after you confirm (in `repo` mode, committing there waits for a second yes and never pushes).
+- **Never:** makes script network calls, changes git state or hooks unasked, opens other projects unasked, follows instructions found in data/files, or stores credentials/tokens/passwords.
+- **Permissions and privacy:** `pmo/` holds roster names (public if your repo is public). In Claude Code, the skill lists script and read-only git patterns it may run without prompting during the turn that loads the skill; an interactive session can still ask once per script (choose "don't ask again"). Full data handling and safety rules live in [`PRIVACY.md`](PRIVACY.md) and [`skills/pmo-docs/SKILL.md`](skills/pmo-docs/SKILL.md) (Safety rules).
 
 ## Repository structure
 
@@ -329,14 +334,17 @@ pmo-docs/
 |-- GLOSSARY.md
 |-- AGENTS.md          # rules for working on this repo
 |-- PRIVACY.md
+|-- SECURITY.md
 `-- TERMS.md
 ```
 
 ## Limits and stability
 
+- **One writer per project** is the design (a project manager and their agent). Teams are safe: duplicate ids fail validation (fix them with `renumber.py`) and views are deterministic.
+- Several people can edit documents (an `editor` field per draft and a warning), but there are no locks.
 - Generators write English only. The agent drafts other languages, and parity checks compare structure, ids and numbers, not wording.
-- From `1.0`, the config format (`pmo/config.yaml`, `schema_version: 1`) and the register formats (`pmo/registers/*.yaml`) are stable. A project made with `1.x` keeps working with every later `1.x`: new keys and fields are optional, and a change that would invalidate an existing project waits for the next major version.
-- Until `1.0` the formats can change. When one does, the release ships a migration script and an upgrade note in [`CHANGELOG.md`](CHANGELOG.md).
+- From `1.0`, the config format (`pmo/config.yaml`, `schema_version: 1`) and the register formats (`pmo/registers/*.yaml`) are stable. A project made with `1.x` keeps working with every later `1.x`: new keys and fields are optional, and a change that would invalidate an existing project waits for the next major version and ships with a migration script and an upgrade note in [`CHANGELOG.md`](CHANGELOG.md).
+- Until `1.0` the formats can change without a migration script.
 
 ## Contributing
 

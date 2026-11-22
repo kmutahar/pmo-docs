@@ -228,11 +228,11 @@ _Avoid_: dictionary, term base
 Said of a draft whose registers changed since it was made, or of a translation whose original changed after it was translated. `docs_audit.py` lists a behind draft under its Stale heading, as "draft is behind: register `<register>` changed since the draft was made", and a behind translation under Translation behind.
 _Avoid_: stale (that word is for finished documents and views), outdated
 
+## Agent work
+
 **Intake**:
 Reading a chat export and proposing register entries from it; nothing is written before the user confirms.
 _Avoid_: import, ingest
-
-## Agent work
 
 **Made by**:
 The catalogue column that says whether a document type is filled by a script (`generator`) or by the agent (`agent`).

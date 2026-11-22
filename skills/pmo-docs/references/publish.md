@@ -10,7 +10,7 @@ Copies finished documents to the configured folder or git repository. With the p
 
 ## Without the plugin
 
-Use the launcher: `pmo/bin/pmo publish [--as-of YYYY-MM-DD]` is the dry run. Show its listing with the `target:` folder and explain each line in plain words (copied, skipped, stale, conflict, invalid). Ask one question: "Copy these now?". Only on a yes, run the same command with `--apply` (and `--overwrite REL` or `--include REL` for the paths the user named). Never run `--apply` without a yes to that listing in this conversation.
+Use the launcher: `pmo/bin/pmo publish [--as-of YYYY-MM-DD]` is the dry run. Show its listing with the `target:` folder and explain each line in plain words (`new`, `unchanged`, `stale`, `conflict`, `stale, conflict`, `invalid`, plus `drafts:` and `excluded:`). Ask one question: "Copy these now?". Only on a yes, run the same command with `--apply` (and `--overwrite REL` or `--include REL` for the paths the user named). Never run `--apply` without a yes to that listing in this conversation.
 
 ## Steps
 

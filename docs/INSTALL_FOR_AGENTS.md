@@ -95,13 +95,18 @@ Ask the user: *"Do you want to proceed with installing/updating pmo-docs?"*
 Once confirmed:
 
 ### For Claude Code
-For a fresh install, instruct the user or run:
+For a fresh install from the terminal (the short form clones over SSH; without a GitHub SSH key, replace `kmutahar/pmo-docs` with `https://github.com/kmutahar/pmo-docs.git`):
 ```sh
+claude plugin marketplace add kmutahar/pmo-docs && claude plugin install pmo-docs@pmo-docs
+```
+
+Or instruct the user to run these slash commands inside a Claude Code session (do not pass `/plugin` to a shell):
+```text
 /plugin marketplace add kmutahar/pmo-docs
 /plugin install pmo-docs@pmo-docs
 ```
 
-To update an existing install:
+To update an existing install from the terminal:
 ```sh
 claude plugin marketplace update pmo-docs && claude plugin update pmo-docs@pmo-docs
 ```
@@ -110,7 +115,7 @@ Restart Claude Code afterwards.
 *Note:* Never touch the Claude plugin cache by hand.
 
 ### For all other agents
-Download and extract the `skills/pmo-docs` folder from the GitHub release tag `v0.9.0`:
+Download and extract the `skills/pmo-docs` folder from the GitHub release tag `v0.9.0` (for a project-level install, replace `~/.agents/skills` with `.agents/skills`):
 
 ```sh
 # Create parent directory

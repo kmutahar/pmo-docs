@@ -1,6 +1,6 @@
 # Terms of Service
 
-Last updated: 2026-11-06 (UTC)
+Last updated: 2026-11-19 (UTC)
 
 These terms cover your use of pmo-docs, a project-office and documentation workflow packaged as an Agent Skill (the "Software"). By installing or using it, you agree to them. If you do not agree, do not use it.
 
@@ -46,7 +46,7 @@ The Software works inside AI agents and tools that you choose and that other par
 
 ## 9. Support
 
-Support is provided on a best-effort basis by the community and the maintainer, with no service level and no guaranteed response time. Ask questions and report bugs or security concerns at <https://github.com/kmutahar/pmo-docs/issues>. Do not post private data or secrets in a public issue.
+Support is provided on a best-effort basis by the community and the maintainer, with no service level and no guaranteed response time. Ask questions and report bugs at <https://github.com/kmutahar/pmo-docs/issues> (never post private data or secrets in a public issue). To report a security vulnerability privately, follow [`SECURITY.md`](SECURITY.md) (open the **Security** tab on the repository page and choose **Report a vulnerability**).
 
 ## 10. Contributions
 
@@ -58,7 +58,7 @@ New versions of the Software are published on GitHub, and changes are listed in 
 
 ## 12. Ending use
 
-You can stop at any time by uninstalling the plugin. Your files stay with you. The maintainer may stop maintaining the Software or archive the repository at any time; copies you already have remain yours to use under the MIT License.
+You can stop at any time by uninstalling the plugin or deleting the installed skill folder. Your files stay with you. The maintainer may stop maintaining the Software or archive the repository at any time; copies you already have remain yours to use under the MIT License.
 
 ## 13. General
 

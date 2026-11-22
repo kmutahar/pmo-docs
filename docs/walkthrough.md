@@ -2,12 +2,24 @@
 
 `examples/acme` is a small made-up project, "Acme Portal", with a project manager and two team leads. The tests use the same files. This page runs the skill's scripts on a copy of it, so you can see what each one does before you use it on a real project. The date for Acme is 2026-03-15.
 
-Every command and output below was run on a fresh copy. Work on a copy, not in the repo:
+Every command and output below was run on a fresh copy. From the root of a clone of this repo, copy Acme and point `SKILL` at the skill folder:
 
 ```sh
+SKILL="$PWD/skills/pmo-docs"
 cp -r examples/acme /tmp/acme && cd /tmp/acme
-SKILL=/path/to/skills/pmo-docs     # the skill folder in a clone of this repo: skills/pmo-docs
 ```
+
+**The 7 sections (about 15 minutes in all):**
+
+| # | You do | You see |
+|---|---|---|
+| 1 | Validate the registers | `registers valid, views current` |
+| 2 | Edit one task, render | a stale-view error, then clean views |
+| 3 | Ask what is overdue | a list of late tasks, actions and issues |
+| 4 | Ask where a document lives | its file, template and source registers |
+| 5 | Check the documents | `Total findings: 0` |
+| 6 | Look at the Arabic translation | its path and a parity check |
+| 7 | Try it with the agent | drafts, edits and a finished document |
 
 The skill's behaviour rules are in [`SKILL.md`](../skills/pmo-docs/SKILL.md); this page only shows the results. The words (register, view, document, ...) are defined in [`GLOSSARY.md`](../GLOSSARY.md).
 
@@ -39,6 +51,8 @@ A task is one line. Its `owner` is a roster slug:
 
 ## 1. Validate the registers and compare the views
 
+**Run:** `render_views.py --check`. **You should see:** `registers valid, views current`.
+
 ```
 $ python3 "$SKILL/scripts/render_views.py" --check
 registers valid, views current
@@ -48,6 +62,8 @@ registers valid, views current
 `--check` writes nothing. It exits 1 when a register has an error or a view is stale.
 
 ## 2. Change a register, then render
+
+**Do:** edit one task, check, render, check again. **You should see:** `ERROR stale view`, then `wrote 21 views`, then `views current`.
 
 Mark the login page design (`T-2`) done by editing its line in `pmo/registers/tasks.yaml`: change `status: not-started` to `status: done`. The view still shows the old state, so the check fails:
 
@@ -94,6 +110,8 @@ A view is plain Markdown. This is `pmo/views/risks.md`:
 
 ## 3. What is overdue
 
+**Run:** `overdue.py --as-of 2026-03-15`. **You should see:** 1 overdue task (`T-1`, 5 days late) and 1 open action past due.
+
 ```
 $ python3 "$SKILL/scripts/overdue.py" --as-of 2026-03-15
 # Overdue - as of 2026-03-15
@@ -118,6 +136,8 @@ Overdue tasks: 1, open actions past due: 1, milestones due within 14 days or ove
 The output continues with the milestones, open issues by severity and open risks (shortened here). Without `--as-of` the script uses today's date. The agent turns this into a document with the `overdue-report` recipe.
 
 ## 4. Where a document lives
+
+**Run:** `where.py status-report 2026-03 --hashes`. **You should see:** `document: pmo/documents/2026-03 - Status report.md` and one hash per register.
 
 `where.py` answers "which file, which template, which registers" so nobody works the paths out by hand:
 
@@ -146,6 +166,8 @@ The `template` line shows the full path on your machine; it is shortened here. `
 
 ## 5. Check the documents
 
+**Run:** `structure_check.py`, then `docs_audit.py`. **You should see:** `0 file(s) with structure errors` and `Total findings: 0`.
+
 ```
 $ python3 "$SKILL/scripts/structure_check.py"
 ok    pmo/documents/2026-03 - Status report.md
@@ -166,6 +188,8 @@ warn  pmo/documents/2026-03 - Status report.md: extra sections: Overview
 1 file(s) with structure errors
 [exit 1]
 ```
+
+Put `## Summary` back before going on.
 
 The status report is a draft; the decision log and its Arabic translation are finished. `docs_audit.py` looks for stale, old and broken documents and exits 1 when it finds any:
 
@@ -208,6 +232,8 @@ None
 ```
 
 ## 6. Languages and translations
+
+**Run:** `where.py decision-log --lang ar --hashes`, then `parity_check.py`. **You should see:** the path `Decision log.ar.md` and `0 file(s) differ from their originals`.
 
 Acme's `pmo/config.yaml` declares Arabic (`ar`) as a translation language with an approved glossary (`pmo/data/glossary-ar.md`):
 
@@ -272,11 +298,13 @@ The agent writes the translation with the `translate` playbook, and only when as
 
 ## 7. With the agent
 
-In Claude Code, with the plugin installed, open a copy of Acme as a project and ask:
+**Do:** ask the agent the 4 prompts below. **You should see:** a draft report, a question before `T-1` changes, a finished report, and a list to confirm before anything is written.
+
+Open a copy of Acme in your agent (Claude Code, Antigravity or Codex) with `pmo-docs` installed and ask:
 
 - "weekly-status" or "monthly-status": a draft report from the registers.
 - "mark T-1 done": the agent first asks for QA or test evidence (the definition of done) and changes nothing until you answer. Then it changes that one line, sets `done_on` to the date the work was finished, and renders the views.
 - "finish the status report": Finish records the template version and the hashes, removes the template's comments and checks, and marks the document finished. With the `languages` block of section 6, it then asks once whether to translate the report now.
 - "take the tasks from this chat export": the agent reads the export, shows the entries it proposes and writes nothing until you confirm. It never copies a password or token from the chat.
 
-The agent never commits or pushes unless you ask. When you want a check before every commit, see "Check the registers in your own git hook" in the [README](../README.md).
+The agent never commits or pushes unless you ask. When you want a check before every commit, see [Working with git](../README.md#working-with-git) in the README.
