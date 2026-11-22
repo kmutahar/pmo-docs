@@ -6,7 +6,7 @@
 set -euo pipefail
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cp -R "$here/../../examples/acme/." .
-sed -i.bak 's|ar: { label: AR, dir: rtl, glossary: pmo/data/glossary-ar.md }|ar: { label: AR, dir: rtl, glossary: pmo/data/glossary-ar.md, digits: "٠١٢٣٤٥٦٧٨٩" }|' pmo/config.yaml
+sed -i.bak 's|ar: { label: AR, dir: rtl, glossary: pmo/data/glossary-ar.md, names: pmo/data/names-ar.yaml }|ar: { label: AR, dir: rtl, glossary: pmo/data/glossary-ar.md, names: pmo/data/names-ar.yaml, digits: "٠١٢٣٤٥٦٧٨٩" }|' pmo/config.yaml
 rm -f pmo/config.yaml.bak
 sed -i.bak '/id: DEC-2,/s/consequences: Lower cost,/consequences: Lower cost by 20 percent,/' pmo/registers/decisions.yaml
 rm -f pmo/registers/decisions.yaml.bak

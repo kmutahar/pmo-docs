@@ -351,6 +351,14 @@ def glossary_path(cfg, lang: str) -> str | None:
     return g if isinstance(g, str) and g.strip() else None
 
 
+def names_path(cfg, lang: str) -> str | None:
+    """The language's names file path as written in the config, or None without one."""
+    langs = cfg.get("languages") if isinstance(cfg, dict) else None
+    block = langs.get(lang) if isinstance(langs, dict) else None
+    n = block.get("names") if isinstance(block, dict) else None
+    return n if isinstance(n, str) and n.strip() else None
+
+
 def doc_type(text):
     """A document's type is its front-matter `type` (a string), or None."""
     t = (split_front_matter(text)[0] or {}).get("type")

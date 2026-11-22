@@ -142,6 +142,7 @@ class Audit(unittest.TestCase):
 
     def test_missing_registers_and_documents_folder(self):
         shutil.rmtree(self.p / "pmo/registers")
+        (self.p / "pmo/data/names-ar.yaml").unlink()
         self.assertEqual(da.register_hash(self.p, pc.load_config(self.p), "tasks"), "none")
         shutil.rmtree(self.docs)
         code, _ = self.run_audit()
@@ -557,6 +558,23 @@ class Translations(unittest.TestCase):
         self.assertIn("missing the `## Proposed` section", out)
         g.write_text("## Approved\n\n" + hdr + "| G-001 | A | a | |\n\n## Proposed\n\n" + hdr, encoding="utf-8")
         self.assertIn("## Glossary (0)", self.run_audit()[1])
+
+    def test_names_file_checked(self):
+        tf.enable_languages(self.p, ("xx",))
+        cfg = self.p / "pmo/config.yaml"
+        cfg.write_text(cfg.read_text(encoding="utf-8").replace("  xx:\n    label: XX\n", "  xx:\n    names: pmo/data/names-xx.yaml\n    label: XX\n"), encoding="utf-8")
+        n = self.p / "pmo" / "data" / "names-xx.yaml"
+        n.parent.mkdir(parents=True, exist_ok=True)
+        n.write_text("approved:\n  roster:\n    alice: {name: A, role: B}\n  tasks:\n    T-1: {title: x}\nproposed: {}\n", encoding="utf-8")
+        self.assertIn("## Names (0)", self.run_audit()[1])
+        n.write_text("approved:\n  tasks:\n    T-1: {title: x, nope: y}\n    T-999: {title: z}\n  bogus: {}\nproposed:\n  tasks:\n    T-1: {title: w}\n", encoding="utf-8")
+        code, out = self.run_audit()
+        self.assertEqual(code, 1)
+        self.assertIn("## Names (4)", out)
+        self.assertIn("nope is not a field of tasks", out)
+        self.assertIn("T-999 is not an id in tasks", out)
+        self.assertIn("bogus is not a register", out)
+        self.assertIn("tasks.T-1 is in both", out)
 
     def test_translation_behind(self):
         tf.enable_languages(self.p, ("xx",))

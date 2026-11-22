@@ -1,0 +1,8 @@
+# Arabic wording of register text: register -> id (the roster uses its slug) -> field -> text.
+# The agent only adds entries under `proposed`; moving one up to `approved` is your step.
+approved:
+  roster:
+    sam: {name: سام إكزامبل, role: مدير المشروع}
+  tasks:
+    T-1: {title: إعداد خادم الاختبار}
+proposed: {}

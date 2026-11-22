@@ -354,6 +354,7 @@ class WhereTranslations(unittest.TestCase):
         self.assertEqual(f["dir"], "rtl")
         self.assertEqual(f["glossary"], "pmo/data/glossary-xx.md")
         self.assertNotIn("glossary_proposed", f)
+        self.assertEqual(f["names"], "none")
 
     def test_lang_hashes_prints_source_hash(self):
         tf.enable_languages(self.root, ("xx",))

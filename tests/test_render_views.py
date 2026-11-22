@@ -410,6 +410,12 @@ class LanguageConfig(unittest.TestCase):
         errs2 = render_views.config_errors(cfg2, root=self.root)
         self.assertTrue(any("must be a string ending in .md" in e for e in errs2))
 
+    def test_names_outside_project_or_not_yaml(self):
+        e1 = render_views.config_errors(pc.merge(self.defaults, {"languages": {"en": {"names": "../n.yaml"}}}), root=self.root)
+        self.assertTrue(any("names `../n.yaml` must stay inside the project" in e for e in e1))
+        e2 = render_views.config_errors(pc.merge(self.defaults, {"languages": {"en": {"names": "n.txt"}}}), root=self.root)
+        self.assertTrue(any("must be a string ending in .yaml" in e for e in e2))
+
     def test_translate_sometimes(self):
         cfg = pc.merge(self.defaults, {"doc_types": {"status-report": {"translate": "sometimes"}}})
         errs = render_views.config_errors(cfg, root=self.root)

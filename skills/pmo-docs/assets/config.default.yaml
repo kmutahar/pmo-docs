@@ -36,6 +36,7 @@ technical:
 # draft: the code of the language documents are written in. translations: the codes of the other languages.
 # Every code has a block: label (short name) and dir (ltr or rtl). Optional keys per language:
 #   glossary: term list, a Markdown file inside the project with an Approved and a Proposed section
+#   names: a YAML file inside the project with the language's wording of register text (roster names, task titles)
 #   digits: the ten characters for 0 to 9, when the language does not write 0123456789
 #   connectors: the words for of, to and and between two numbers, as in 3 of 5
 #   separators: characters used as a decimal or thousands mark between digits (en has the comma; another draft language declares its own)

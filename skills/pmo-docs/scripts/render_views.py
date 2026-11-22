@@ -276,6 +276,12 @@ def config_errors(cfg, root=None):
                         errors.append(f"config: languages.{code}.glossary `{g}` must be a string ending in .md")
                     elif root is not None and pc.outside(root, g):
                         errors.append(f"config: languages.{code}.glossary `{g}` must stay inside the project")
+                if "names" in block:
+                    nm = block.get("names")
+                    if not isinstance(nm, str) or not nm.endswith((".yaml", ".yml")):
+                        errors.append(f"config: languages.{code}.names `{nm}` must be a string ending in .yaml")
+                    elif root is not None and pc.outside(root, nm):
+                        errors.append(f"config: languages.{code}.names `{nm}` must stay inside the project")
                 if "digits" in block:
                     digs = block.get("digits")
                     if not isinstance(digs, str) or len(digs) != 10 or len(set(digs)) != 10:

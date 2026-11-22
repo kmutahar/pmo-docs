@@ -45,7 +45,7 @@ def _unquote(s):
     return re.sub(r"(?:%[0-9A-Fa-f]{2})+", lambda m: bytes.fromhex(m[0].replace("%", "")).decode("utf-8", "replace"), s)
 
 
-CHECKS = ("front matter", "stale", "old", "broken links", "override drift", "translation behind", "parity", "glossary")
+CHECKS = ("front matter", "stale", "old", "broken links", "override drift", "translation behind", "parity", "glossary", "names")
 STALE_CHECKS = ("stale", "translation behind")
 
 
@@ -325,6 +325,47 @@ def glossary_problems(root, cfg) -> list[str]:
     return out
 
 
+def names_problems(root, cfg) -> list[str]:
+    """Each language's names file: `approved` and `proposed` maps of register -> id (the roster's slug) -> field -> text. The register, id and field must exist, and an id is not in both maps."""
+    out = []
+    for lang in (cfg.get("languages") or {}):
+        n = pc.names_path(cfg, lang)
+        f = Path(root) / n if n else None
+        if not f or not f.is_file():
+            continue
+        try:
+            data = pc.load_yaml(f.read_text(encoding="utf-8")) or {}
+        except Exception as e:  # noqa: BLE001 - any YAML error is a finding
+            out.append(f"{n}: not valid YAML ({str(e).splitlines()[0]})")
+            continue
+        if not isinstance(data, dict) or set(data) - {"approved", "proposed"}:
+            out.append(f"{n}: top level must be only `approved` and `proposed`")
+            continue
+        seen = set()
+        for sec in ("approved", "proposed"):
+            body = data.get(sec) or {}
+            if not isinstance(body, dict):
+                out.append(f"{n}: `{sec}` must be a map of register names")
+                continue
+            for reg, ids in body.items():
+                rcfg = cfg["registers"].get(reg)
+                if not rcfg:
+                    out.append(f"{n}: {sec}.{reg} is not a register")
+                    continue
+                key = "slug" if reg == "roster" else "id"
+                known = {str(e.get(key)) for e in pc.load_register(root, cfg, reg) if isinstance(e, dict)}
+                for eid, fields in (ids or {}).items() if isinstance(ids, dict) else []:
+                    if str(eid) not in known:
+                        out.append(f"{n}: {sec}.{reg}.{eid} is not an id in {reg}")
+                    if (reg, str(eid)) in seen:
+                        out.append(f"{n}: {reg}.{eid} is in both approved and proposed")
+                    seen.add((reg, str(eid)))
+                    for fld in (fields if isinstance(fields, dict) else {}):
+                        if fld not in rcfg["fields"]:
+                            out.append(f"{n}: {sec}.{reg}.{eid}.{fld} is not a field of {reg}")
+    return out
+
+
 def audit(root, cfg, today):
     """(files scanned, {check: [message]})."""
     base = Path(root) / cfg["paths"]["documents"]
@@ -337,6 +378,7 @@ def audit(root, cfg, today):
     p_drift = playbook_drift(root, cfg)
     found["override drift"].extend(t_drift + p_drift)
     found["glossary"].extend(glossary_problems(root, cfg))
+    found["names"].extend(names_problems(root, cfg))
     return len(files), found
 
 

@@ -86,6 +86,7 @@ def main(argv=None):
         lang_info = pc.languages(cfg)["info"].get(args.lang, {})
         lang_dir = lang_info.get("dir", "ltr")
         g_app = pc.glossary_path(cfg, args.lang)
+        n_app = pc.names_path(cfg, args.lang)
     else:
         doc_rel_print = doc_rel
         doc_exists = "yes" if (Path(args.project) / doc_rel).exists() else "no"
@@ -142,6 +143,7 @@ def main(argv=None):
             ("lang", args.lang),
             ("dir", lang_dir),
             ("glossary", g_app if g_app else "none"),
+            ("names", n_app if n_app else "none"),
         ])
     fields.extend([
         ("template", template_str),

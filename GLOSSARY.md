@@ -224,6 +224,10 @@ _Avoid_: match, sync
 The term list of one language: one file with an Approved and a Proposed section. The agent uses the Approved rows and only appends to Proposed.
 _Avoid_: dictionary, term base
 
+**Names file**:
+The optional YAML file of one language with the wording of register text (roster names, task titles): `approved:` and `proposed:`, each register to id to field to text. Same rules as the translation glossary.
+_Avoid_: name map, side map
+
 **Behind**:
 Said of a draft whose registers changed since it was made, or of a translation whose original changed after it was translated. `docs_audit.py` lists a behind draft under its Stale heading, as "draft is behind: register `<register>` changed since the draft was made", and a behind translation under Translation behind.
 _Avoid_: stale (that word is for finished documents and views), outdated

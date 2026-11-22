@@ -14,7 +14,7 @@ The rules for translations live in `SKILL.md` (Translations) and `references/con
    Ask when any is unclear. A language not in the type's `translations` goes to `references/extend.md` first.
 
 2. **Find the paths**
-   Run `python3 ${CLAUDE_SKILL_DIR}/scripts/where.py <type> [period] --lang <code> --hashes`. Note `document`, `original`, `translation_of`, `dir`, `glossary` and `source_hash`. The original must exist. If it is a draft, the translation can be drafted but not finished.
+   Run `python3 ${CLAUDE_SKILL_DIR}/scripts/where.py <type> [period] --lang <code> --hashes`. Note `document`, `original`, `translation_of`, `dir`, `glossary`, `names` and `source_hash`. The original must exist. If it is a draft, the translation can be drafted but not finished.
 
 3. **Decide the case**
    - No translation file: translate (step 5).
@@ -29,7 +29,7 @@ The rules for translations live in `SKILL.md` (Translations) and `references/con
 
 6. **Write the translation**
    Front matter is the original's, minus `checks` and `source_hashes`, with `title` translated and `lang`, `dir`, `translation_of`, `source_hash` added (the values `where.py` printed; if it cannot run, leave `source_hash` out and say so); `status: draft`; `last_updated` today.
-   Body: the same headings in the same order and levels, the same tables (same columns and rows, in the same order), the same fields and checkboxes. Translate the heading text, the column names and the field labels (`Status`, `Date`) with the glossary; only the structure is compared, not the words. Keep the same ids (in backticks where the original has them), the same numbers (written with the language's digits when the config has `digits`), the same dates (`YYYY-MM-DD`), links, paths and code. Translate the words `not set`, `not provided`, `not recorded`, `None` and the `Open questions` section consistently with the glossary. Names from the roster stay as the roster has them. Add nothing the original does not say; leave nothing out. Keep the original's comments out of the translation.
+   Body: the same headings in the same order and levels, the same tables (same columns and rows, in the same order), the same fields and checkboxes. Translate the heading text, the column names and the field labels (`Status`, `Date`) with the glossary; only the structure is compared, not the words. Keep the same ids (in backticks where the original has them), the same numbers (written with the language's digits when the config has `digits`), the same dates (`YYYY-MM-DD`), links, paths and code. Translate the words `not set`, `not provided`, `not recorded`, `None` and the `Open questions` section consistently with the glossary. Register text that appears in the body (roster names and roles, task titles, any other field) is used as the Approved entry of the names file says (`names` from `where.py`: `approved:` and `proposed:`, each register -> id (the roster's slug) -> field -> text). Text not in the file: a person's name is transliterated or kept as the roster has it, anything else is translated consistently; either way add one entry under `proposed:` for each new id and field (targeted edit, never change `approved:`), and create the file with both keys if the config names it and it is missing. With no `names` file the roster names stay as they are and nothing is added. Add nothing the original does not say; leave nothing out. Keep the original's comments out of the translation.
 
 7. **Check**
    Run `python3 ${CLAUDE_SKILL_DIR}/scripts/parity_check.py "<file>"` and `python3 ${CLAUDE_SKILL_DIR}/scripts/structure_check.py "<file>"`. Fix every difference by changing the translation, never the original. Do not finish while parity reports anything.
@@ -38,7 +38,7 @@ The rules for translations live in `SKILL.md` (Translations) and `references/con
    Finish only when the user says so, or says yes when you ask. Do it as `SKILL.md` defines it for a translation (Finish, step 8). The original must be finished first.
 
 9. **Reply**
-   Path, parity and structure results, the terms added under Proposed (count and file), what is left for the user (move rows up to Approved, review the translation), and that the user commits it.
+   Path, parity and structure results, the terms and names added under Proposed (counts and files), what is left for the user (move rows up to Approved, review the translation), and that the user commits it.
 
 ## Do not
 
