@@ -541,6 +541,9 @@ def validate(data, cfg, root=None):
                 ok = allowed(cfg, vname)
                 if values is None and field != "status" or not ok:
                     continue
+                if values is None:
+                    errors.append(f"{who}: {field} is missing; use one of {ok}")
+                    continue
                 for v in values if isinstance(values, list) else [values]:
                     if v not in ok:
                         errors.append(f"{who}: {field} {v!r} not in {ok}")

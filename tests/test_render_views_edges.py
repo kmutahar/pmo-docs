@@ -321,7 +321,7 @@ class Validate(Base):
     def test_enum_null_allowed_except_status_and_lists_checked(self):
         t = [{"id": "T-1", "title": "a", "status": None}]
         errs = self.check("tasks", t)
-        self.assertTrue(any("status None" in e for e in errs), errs)
+        self.assertTrue(any("status is missing; use one of [" in e and "None" not in e for e in errs), errs)
         t = [{"id": "T-1", "title": "a", "status": "not-started", "priority": None}]
         self.assertEqual(self.check("tasks", t), [])
 
