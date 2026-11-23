@@ -43,6 +43,8 @@ class TestGenerate(unittest.TestCase):
         code, _, err = tool("generate.py", self.root, "roadmap")
         self.assertEqual(code, 2)
         self.assertIn("no generator configured", err)
+        self.assertIn("references/draft.md", err)
+        self.assertNotIn("generator: true", err)
 
     def test_subproject_names_the_file_and_filters_entries(self):
         sys.path.insert(0, str(REPO / "tests"))

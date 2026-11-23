@@ -1023,7 +1023,7 @@ def main(argv=None) -> int:
 
     info = doc_types[args.type]
     if info.get("generator") is not True or args.type not in GENERATORS:
-        print(f"ERROR doc type `{args.type}` has no generator configured (generator: true)", file=sys.stderr)
+        print(f"ERROR doc type `{args.type}` has no generator configured; the agent drafts this document from its template (references/draft.md)", file=sys.stderr)
         return 2
 
     try:
