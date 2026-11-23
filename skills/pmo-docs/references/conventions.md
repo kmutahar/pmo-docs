@@ -20,6 +20,7 @@ All paths come from the config (`paths`), relative to the project root. Defaults
 | `playbooks` | `pmo/playbooks` | the project's own playbooks (overrides) |
 | `documents` | `pmo/documents` | drafts and finished documents |
 | `house_rules` | `pmo/house-rules.md` | the project's own rules |
+| `snapshots` | `pmo/snapshots` | one JSON file per Finish run (`<YYYY-MM-DD>.json`): each register's hash, and the id and status of every task, risk, issue and action (no text); written by `snapshot.py` |
 
 Templates and playbooks follow the lookup rule: the project's file in `paths.templates` or `paths.playbooks` wins over the skill's default. Playbook lookup includes subfolders such as `stacks/`: `<paths.playbooks>/stacks/<stack>.md` overrides `references/stacks/<stack>.md`.
 
@@ -30,6 +31,8 @@ The project launcher `pmo/bin/pmo` (mode 755) is written at setup. It is checked
 ## Where a document lives
 
 Run `python3 ${CLAUDE_SKILL_DIR}/scripts/where.py <type> [period] [--week] [--as-of YYYY-MM-DD] [--hashes] [--title TEXT] [--lang CODE] [--subproject ID]`. It prints `key: value` lines: the document path and whether it exists, the template path and whether it is the skill's or the project's, `template_version`, `based_on`, `drift`, `generated_from`, `stale_days`, `window` (`YYYY-MM-DD..YYYY-MM-DD`), `translations` (the codes the type translates into, or `none`), `translate` (`in-period` or `after-close`) and, with `--hashes`, `source_hashes`. With `--lang CODE`, `document` is the translation's path and these lines follow it: `original`, `original_exists`, `translation_of` (the value for the front matter, quoted), `lang`, `dir`, `glossary`, `names` (`none` when not configured); `--hashes` then prints `source_hash` (the hash of the original's body, or `none`) instead of `source_hashes`. A code the type does not translate into exits 2. When the config has `subprojects`, one `subproject: <id> kind=<kind> stack=<stack> docs_dir=<docs_dir>` line follows per sub-project (unset parts left out). For a `per_subproject` type, `--subproject ID` (required, one of the `subprojects` ids) fills `{subproject}` in the path and adds one `entries_<register>: <ids>` line per `generated_from` register that has a `subproject` field, listing the entries tagged with that id.
+
+`where.py --delta [--as-of DATE]` (no type) compares the tasks, risks, issues and actions with the latest snapshot dated before the as-of date (default today). It prints `delta: since <date>`, then `changed_<register>: <ID> <old>-><new>`, `added_<register>: <ID> <status>` and `removed_<register>: <ID> <status>` lines (comma-separated ids; a register with no difference has no line), or `delta: no snapshot` when there is none.
 
 The file name comes from the doc type's `name` in the config. Tokens: `{title}` is the type's `title` (or overridden by `--title`); `{subproject}` is the id given with `--subproject` (only for a type with `per_subproject: true`); `{period}` is the month `YYYY-MM` (or the week `YYYY-Www` with `--week`, starting on `project.week_start`); `{date}` is the as-of date. With no period, the current month is used. The project plan and the team checklist are kept per month (`{period} - {title}.md`) and the documentation audit report per date (`{date} - {title}.md`), so earlier ones stay as history. Types named by `{date}` (change request, meeting minutes, documentation audit report) need `--as-of` set to the date of the event. A week starts on `project.week_start` (default Monday) and is named by the ISO week of its fourth day.
 
@@ -78,7 +81,7 @@ A translation is a file next to its original, named `<name>.<lang>.md` (for exam
 ## Config keys
 
 - `project.name`, `project.manager`: the project's name and its project manager (default `null`; asked at setup).
-- `paths.registers`, `paths.views`, `paths.house_rules`: folders and file as in the Folders table (defaults `pmo/registers`, `pmo/views`, `pmo/house-rules.md`).
+- `paths.registers`, `paths.views`, `paths.house_rules`, `paths.snapshots`: folders and file as in the Folders table (defaults `pmo/registers`, `pmo/views`, `pmo/house-rules.md`, `pmo/snapshots`).
 - `registers.<name>.file`, `registers.<name>.view`: the register's YAML file and its view file in the views folder (for example `tasks.yaml`, `tasks.md`).
 - `registers.<name>.fields`: the list of fields an entry may hold; any other field is a validation error. `registers.<name>.enums`: field name to the `vocab` list that field's values come from (or `{from: <list>, extra: [values]}` to add values to that list).
 - `registers.<name>.dates`: fields that hold a date (`YYYY-MM-DD`). `registers.<name>.months`: fields that hold a month (`YYYY-MM`).
@@ -152,6 +155,7 @@ Run from the project root, or pass `--project DIR`. Every script answers `--help
 | `python3 ${CLAUDE_SKILL_DIR}/scripts/parity_check.py [files]` | checks that a translation has the same headings, tables, ids, numbers, list items and ticked boxes as its original (default: every translation) | 0 all match or none found, 1 a difference or a pair that cannot be compared, 2 usage or a config the skill refuses |
 | `python3 ${CLAUDE_SKILL_DIR}/scripts/docs_audit.py [--as-of DATE]` | front matter, stale, old, broken-link, template/playbook drift, translation-behind, parity, glossary-ID, names-file and `registers_xref` checks | 0 clean, 1 findings, 2 usage or a config the skill refuses |
 | `python3 ${CLAUDE_SKILL_DIR}/scripts/overdue.py [--as-of DATE] [--days N]` | overdue tasks, actions and milestones, open risks and issues | 0 ok, 2 usage, or a config the skill refuses |
+| `python3 ${CLAUDE_SKILL_DIR}/scripts/snapshot.py [--as-of DATE]` | writes `<paths.snapshots>/<date>.json` (default today, replaced when it exists): each register's hash and the id and status of every task, risk, issue and action; prints the path | 0 ok, 2 usage, an unreadable register, or a config the skill refuses |
 | `python3 ${CLAUDE_SKILL_DIR}/scripts/team_review.py [--csv] [--lang CODE] [--import FILE.csv]` | per-person review checklist of open entries with description and question (Markdown, or CSV with `--csv`; `--lang` takes them from the language's names file); `--import` prints the status changes a reviewer's CSV proposes and writes nothing | 0 ok, 2 usage, an unreadable import file, or a config the skill refuses |
 
 

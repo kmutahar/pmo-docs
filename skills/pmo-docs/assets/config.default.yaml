@@ -13,6 +13,8 @@ paths:
   views: pmo/views
   templates: pmo/templates
   documents: pmo/documents
+  # snapshots of register hashes and entry statuses, written by Finish for where.py --delta
+  snapshots: pmo/snapshots
   house_rules: pmo/house-rules.md
   # project playbooks that replace the skill playbook of the same path
   playbooks: pmo/playbooks

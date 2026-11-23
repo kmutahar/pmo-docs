@@ -3,6 +3,9 @@
 
 Usage:
     python3 where.py <type> [period] [--week] [--as-of YYYY-MM-DD] [--hashes] [--title TEXT] [--lang CODE] [--subproject ID] [--project ROOT]
+    python3 where.py --delta [--as-of YYYY-MM-DD] [--project ROOT]
+
+--delta needs no type. It prints what changed in the tasks, risks, issues and actions registers since the latest snapshot before the as-of date (snapshot.py writes them): `delta: since DATE`, then `changed_<register>: ID old->new`, `added_<register>: ID status` and `removed_<register>: ID status` lines; or `delta: no snapshot` when there is none.
 
 --subproject is for a doc type with per_subproject: true (required for it): it fills {subproject} in the name and adds an `entries_<register>` line (ids) per generated_from register whose `subproject` field matches.
 
@@ -22,12 +25,13 @@ sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import pmo_common as pc  # noqa: E402
 from docs_audit import drift_state, register_hash  # noqa: E402
+from snapshot import delta  # noqa: E402
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     pc.add_project_arg(ap)
-    ap.add_argument("type", help="document type (e.g. status-report)")
+    ap.add_argument("type", nargs="?", help="document type (e.g. status-report)")
     ap.add_argument("period", nargs="?", default=None, help="period string (e.g. 2026-03)")
     ap.add_argument("--week", action="store_true", help="use ISO week as period (YYYY-Www)")
     ap.add_argument("--as-of", type=pc.as_of, default=datetime.date.today(),
@@ -36,8 +40,17 @@ def main(argv=None):
                     help="also print source_hashes: the Finish value for the type's generated_from registers")
     ap.add_argument("--title", help="override the doc type's title in the file name")
     ap.add_argument("--lang", metavar="CODE", help="language code for a translation")
+    ap.add_argument("--delta", action="store_true", help="print what changed in the tasks, risks, issues and actions since the latest snapshot (no type needed)")
     ap.add_argument("--subproject", metavar="ID", help="for a per_subproject doc type: the sub-project the document is about")
     args = ap.parse_args(argv)
+
+    if args.delta:
+        if not Path(args.project).is_dir():
+            ap.error(f"project folder not found: {args.project}")
+        print("\n".join(delta(args.project, pc.load_config(args.project), args.as_of)))
+        return 0
+    if not args.type:
+        ap.error("the following arguments are required: type")
 
     if args.title is not None and not args.title.strip():
         ap.error("title cannot be empty")
