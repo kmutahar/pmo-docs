@@ -75,6 +75,12 @@ def safe_write(root, rel, text):
     write(Path(root) / rel, text)
 
 
+def enum_source_ok(v) -> bool:
+    """True for an `enums` value of the form {from: text, extra: [text, ...]} (extra optional)."""
+    return (isinstance(v, dict) and isinstance(v.get("from"), str) and set(v) <= {"from", "extra"}
+            and (v.get("extra") is None or isinstance(v["extra"], list) and all(isinstance(x, str) for x in v["extra"])))
+
+
 def config_type_errors(cfg) -> list[str]:
     """Type checks on cfg: project, registers, vocab, doc_types. Returns list of messages without prefix."""
     errors = []
@@ -96,8 +102,8 @@ def config_type_errors(cfg) -> list[str]:
                     errors.append(f"registers.{name}.{k} must be a list of text")
         if "enums" in r:
             val = r["enums"]
-            if not isinstance(val, dict) or not all(isinstance(v, str) for v in val.values()):
-                errors.append(f"registers.{name}.enums must be a map of text")
+            if not isinstance(val, dict) or not all(isinstance(v, str) or enum_source_ok(v) for v in val.values()):
+                errors.append(f"registers.{name}.enums must be a map of text or of {{from: text, extra: [text, ...]}}")
 
     for k, v in cfg.get("vocab", {}).items():
         if not isinstance(v, list):

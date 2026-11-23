@@ -432,6 +432,19 @@ class LanguageConfig(unittest.TestCase):
         self.assertIn("subproject 'ios' not in ['api', 'web']", v)
         self.assertNotIn("T-1", v.replace("T-1: status", ""))
 
+    def test_subprojects_take_a_name_and_enums_can_add_extra_values(self):
+        cfg = pc.merge(self.defaults, {"subprojects": {"api": {"name": "API"}, "web": {}}})
+        self.assertEqual(render_views.config_errors(cfg, root=self.root), [])
+        self.assertIn("must be lowercase", " | ".join(render_views.config_errors(pc.merge(self.defaults, {"subprojects": {"API": {}}}), root=self.root)))
+        cfg["registers"]["tasks"]["fields"] = cfg["registers"]["tasks"]["fields"] + ["subproject"]
+        cfg["registers"]["tasks"]["enums"]["subproject"] = {"from": "subprojects", "extra": ["shared"]}
+        self.assertEqual(pc.config_type_errors(cfg), [])
+        data = {"tasks": [{"id": "T-1", "title": "a", "status": "done", "subproject": s} for s in ("web", "shared", "ios")]}
+        self.assertEqual([e for e in render_views.validate(data, cfg) if "subproject" in e], ["tasks T-1: subproject 'ios' not in ['api', 'web', 'shared']"])
+        for bad in ({"from": 1}, {"extra": ["x"]}, {"from": "subprojects", "extra": "x"}, {"from": "subprojects", "more": 1}):
+            cfg["registers"]["tasks"]["enums"]["subproject"] = bad
+            self.assertIn("registers.tasks.enums must be a map of text or of {from: text, extra: [text, ...]}", pc.config_type_errors(cfg), bad)
+
     def test_per_subproject_checked(self):
         def errs(subs, **dt):
             cfg = pc.merge(self.defaults, {"subprojects": subs, "doc_types": {"user-guide": dt}})

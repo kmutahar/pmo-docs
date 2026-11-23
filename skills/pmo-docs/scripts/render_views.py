@@ -148,16 +148,16 @@ def config_errors(cfg, root=None):
 
     subs = cfg.get("subprojects")
     if subs is not None and not isinstance(subs, dict):
-        errors.append("config: subprojects must be a map of id to {kind, stack, docs_dir}")
+        errors.append("config: subprojects must be a map of id to {name, kind, stack, docs_dir}")
     for sid, sp in (subs.items() if isinstance(subs, dict) else ()):
         if not isinstance(sid, str) or not re.fullmatch(r"[a-z0-9][a-z0-9-]*", sid):
-            errors.append(f"config: subprojects id `{sid}` must match [a-z0-9][a-z0-9-]*")
+            errors.append(f"config: subprojects id `{sid}` must be lowercase, matching [a-z0-9][a-z0-9-]*; put a capitalised display form in `name`")
         if not isinstance(sp, dict):
             errors.append(f"config: subprojects.{sid} must be a map")
             continue
         for k in sp:
-            if k not in ("kind", "stack", "docs_dir"):
-                errors.append(f"config: subprojects.{sid} has unknown key `{k}` (kind, stack, docs_dir)")
+            if k not in ("name", "kind", "stack", "docs_dir"):
+                errors.append(f"config: subprojects.{sid} has unknown key `{k}` (name, kind, stack, docs_dir)")
             elif not isinstance(sp[k], str) or not sp[k].strip():
                 errors.append(f"config: subprojects.{sid}.{k} must be non-empty text")
         d = sp.get("docs_dir")
@@ -444,7 +444,9 @@ def credential_labels(value) -> list[str]:
 
 
 def allowed(cfg, name):
-    """Allowed values for an `enums` entry: a vocab name, or a config path such as domain.roles or subprojects (a map gives its keys). [] means any value."""
+    """Allowed values for an `enums` entry: a vocab name, or a config path such as domain.roles or subprojects (a map gives its keys), or {from: <that>, extra: [values]}. [] means any value."""
+    if isinstance(name, dict):
+        return [*allowed(cfg, name["from"]), *(name.get("extra") or [])]
     if "." not in name and name not in cfg:  # a top-level config key such as subprojects is a path too
         return cfg["vocab"].get(name) or []
     node = cfg

@@ -78,7 +78,7 @@ A translation is a file next to its original, named `<name>.<lang>.md` (for exam
 - `project.name`, `project.manager`: the project's name and its project manager (default `null`; asked at setup).
 - `paths.registers`, `paths.views`, `paths.house_rules`: folders and file as in the Folders table (defaults `pmo/registers`, `pmo/views`, `pmo/house-rules.md`).
 - `registers.<name>.file`, `registers.<name>.view`: the register's YAML file and its view file in the views folder (for example `tasks.yaml`, `tasks.md`).
-- `registers.<name>.fields`: the list of fields an entry may hold; any other field is a validation error. `registers.<name>.enums`: field name to the `vocab` list that field's values come from.
+- `registers.<name>.fields`: the list of fields an entry may hold; any other field is a validation error. `registers.<name>.enums`: field name to the `vocab` list that field's values come from (or `{from: <list>, extra: [values]}` to add values to that list).
 - `registers.<name>.dates`: fields that hold a date (`YYYY-MM-DD`). `registers.<name>.months`: fields that hold a month (`YYYY-MM`).
 - `registers.<name>.closed`: statuses that mean the entry is closed. `registers.<name>.pending`: statuses that still need a decision.
 - `registers.<name>.defaults`: a map of field to value filled in when an entry leaves the field out. `registers.<name>.defaults.status` is `planned` for `tests`. `task` in `tests` may be one id or a list of ids.
@@ -91,7 +91,7 @@ A translation is a file next to its original, named `<name>.<lang>.md` (for exam
 - `domain.roles`: list of permission roles as named in code (for example `[admin, editor, viewer]`).
 - `technical.stacks`: list of stack names the project code is built on (such as `[nextjs]`).
 - `technical.consumers`: list of systems or teams that call the API, one section each in `integration-guide`.
-- `subprojects`: map of sub-project id to `{kind, stack, docs_dir}`, all optional text, `docs_dir` inside the project (default `{}`). Tag entries with a `subproject` field and `enums: {subproject: subprojects}` (`references/extend.md`).
+- `subprojects`: map of sub-project id (lowercase letters, digits and hyphens) to `{name, kind, stack, docs_dir}`, all optional text, `name` the display form such as `API`, `docs_dir` inside the project (default `{}`). Tag entries with a `subproject` field and `enums: {subproject: subprojects}` (`references/extend.md`); `enums: {subproject: {from: subprojects, extra: [shared]}}` also accepts the extra values.
 - `registers.<name>.refs`: mapping of register field names to a target register name (e.g. `tests: tests`) or a list of register names (e.g. `related: [tasks, risks]`; an id is valid when it exists in any of them). Validation checks that referenced IDs exist in the target registers when those register files exist. `null` for a field turns its check off.
 - `registers.tasks.done`: status values marking tasks as done (default `[done]`).
 - `registers.tasks.blocked`: status values that count as blocked (default `[blocked]`).
