@@ -172,3 +172,5 @@ Exit codes:
 `structure_check.py` takes the checks from the winning template, never from the draft. It reports an error for a missing or out-of-order heading, changed table columns, a leftover `{{placeholder}}`, an HTML comment (only when the status is not `draft`), a repeated id in one table, or a declared check that fails (including one that names a section the document lacks). It warns about an HTML comment in a draft, a missing or different `template_version`, extra `##` sections and empty tables.
 
 Migrating an old document: run `structure_check.py --suggest <file>` (it writes nothing). Each `hint` line names a missing template heading, in template order, and an unexpected heading at the same place that looks like a rename; add the heading or rename the old one, keep the old text under it, then run the check again without `--suggest`.
+
+Migrating weekly documents: an old front-matter `period` that holds only the month (`2026-03`) must be rewritten to the week label (`2026-W10`, the ISO week of the week's last day) before `docs_audit.py` and the stale checks can place the document.
