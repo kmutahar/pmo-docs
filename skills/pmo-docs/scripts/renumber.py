@@ -35,6 +35,12 @@ import pmo_common as pc  # noqa: E402
 import render_views  # noqa: E402
 
 
+def read_raw(path):
+    """Reads a UTF-8 file keeping its line endings, and closes it."""
+    with open(path, encoding="utf-8", newline="") as f:
+        return f.read()
+
+
 def field_contains_id(val, rx):
     """True when val (string, or strings in list/dict) matches regex rx."""
     if isinstance(val, str):
@@ -272,7 +278,7 @@ def pad_text(text, rx, width, fenced):
 def refresh_hashes(root, cfg, pending):
     """Moves the recorded hashes of documents that were current (source_hashes of registers, source_hash of a translation) to the values after the rewrite, so padding does not make them stale. Adds changed documents to pending."""
     sha = lambda t: hashlib.sha256(t.encode("utf-8").replace(b"\r\n", b"\n")).hexdigest()[:8]  # noqa: E731
-    read = lambda rel: open(Path(root) / rel, encoding="utf-8", newline="").read()  # noqa: E731
+    read = lambda rel: read_raw(Path(root) / rel)  # noqa: E731
     body = lambda t: pc.body_hash(t.replace("\r\n", "\n"))  # noqa: E731
     reg_dir, docs = cfg["paths"]["registers"], cfg["paths"]["documents"]
     moved = {}  # register name -> (old hash, new hash)
@@ -308,7 +314,7 @@ def pad_main(args, cfg):
     pending, counts = {}, {}
     for rel in pad_files(args.project, cfg):
         try:
-            text = open(Path(args.project) / rel, encoding="utf-8", newline="").read()
+            text = read_raw(Path(args.project) / rel)
         except UnicodeDecodeError:
             print(f"skipped (not UTF-8 text): {rel}")
             continue
@@ -605,7 +611,7 @@ def main(argv=None):
 
     for rel_file in sorted(files_to_edit):
         fpath = Path(args.project) / rel_file
-        orig_text = open(fpath, encoding="utf-8", newline="").read()
+        orig_text = read_raw(fpath)
         orig_lines = orig_text.split("\n")
 
         moving_copies_for_file = []
