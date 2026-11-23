@@ -3,7 +3,7 @@ playbook_version: 1
 ---
 Detected by: *.csproj with Microsoft.AspNetCore.App or PackageReference to Microsoft.AspNetCore
 Checked against: ASP.NET Core 10.0 (LTS), Overview of ASP.NET Core MVC, Minimal APIs overview, Authentication and authorization, Configuration in ASP.NET Core, 2026-11-11
-Unverified: ASP.NET Core 11.0 (released 2026-11-10) changes, MapGroup, test project conventions
+Unverified: ASP.NET Core 11.0 changes, MapGroup, test project conventions
 
 # ASP.NET Core
 

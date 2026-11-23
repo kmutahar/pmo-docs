@@ -4,7 +4,7 @@ type: retrospective
 project: "{{project}}"
 manager: "{{manager}}"
 period: "{{period}}"
-template_version: 1
+template_version: 2
 status: draft
 last_updated: "{{date}}"
 ---
@@ -17,9 +17,9 @@ last_updated: "{{date}}"
 
 ## Facts
 <!-- Every line has a number or an id. -->
-- Planned vs delivered: 
-- Changes during the period: 
-- Issues and incidents: 
+- Planned vs delivered: {{n}}
+- Changes during the period: {{n}}
+- Issues and incidents: {{n}}
 
 ## What went well
 <!-- Only what the team said; do not invent. -->

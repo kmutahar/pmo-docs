@@ -35,5 +35,5 @@ A cross-platform framework for building client applications across mobile, web a
 - **Record as:** tests entries as proposals only when the user asks for them
 
 ## List the API live
-- **Ask first:** inspect client calls in dio, http, retrofit; backend OpenAPI spec is source of truth
+- **Ask first:** no command to run; read the client calls in dio, http, retrofit (the backend OpenAPI spec is the source of truth)
 - **Without running:** read backend endpoint calls found in code and say the list was read from the code, not run
