@@ -221,6 +221,12 @@ class Common(unittest.TestCase):
         self.assertEqual(pc.cell("x\ny"), "x y")
         self.assertEqual(pc.to_date("2026-01-02").day, 2)
 
+    def test_cell_and_inline_escape_lt(self):
+        self.assertEqual(pc.cell("<!-- x --> <b>hi</b>"), "&lt;!-- x --> &lt;b>hi&lt;/b>")
+        self.assertEqual(pc.cell(["<a", {"k": "<v"}]), "&lt;a, k: &lt;v")
+        self.assertEqual(pc.inline("a  <script>\nb"), "a &lt;script> b")
+        self.assertEqual(pc.inline("a  b"), "a b")
+
 
 class Helpers(unittest.TestCase):
     def test_subproject_token_filter_and_check(self):
@@ -1012,6 +1018,34 @@ class ConfigGuards(unittest.TestCase):
         roster_file = self.root / "pmo/registers/roster.yaml"
         roster_file.write_text("team:\n  - slug: alice\n    name: Alice\n", encoding="utf-8")
         self.assertEqual(pc.roster_names(self.root, cfg), {})
+
+    def config(self, extra):
+        """Deep-merges the YAML `extra` into the project's config."""
+        cfg = pc.yaml.safe_load(self.cfg_file.read_text(encoding="utf-8"))
+        self.cfg_file.write_text(pc.yaml.safe_dump(pc.merge(cfg, pc.yaml.safe_load(extra))), encoding="utf-8")
+
+    def load_fails(self, extra):
+        self.config(extra)
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err), self.assertRaises(SystemExit) as cm:
+            pc.load_config(self.root)
+        self.assertEqual(cm.exception.code, 2)
+        return err.getvalue()
+
+    def test_project_null_is_a_clear_error(self):
+        self.cfg_file.write_text("schema_version: 2\nproject: null\n", encoding="utf-8")
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err), self.assertRaises(SystemExit) as cm:
+            pc.load_config(self.root)
+        self.assertEqual(cm.exception.code, 2)
+        self.assertIn("project must be a map", err.getvalue())
+
+    def test_glossary_and_names_paths_must_stay_inside(self):
+        err = self.load_fails("languages:\n  ar: {glossary: ../outside.md}\n")
+        self.assertIn("languages.ar.glossary", err)
+        shutil.copy(Path(__file__).resolve().parents[1] / "examples/acme/pmo/config.yaml", self.cfg_file)
+        err = self.load_fails("languages:\n  ar: {names: ../outside.yaml}\n")
+        self.assertIn("languages.ar.names", err)
 
 
 if __name__ == "__main__":

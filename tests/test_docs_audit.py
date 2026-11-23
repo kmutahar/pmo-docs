@@ -502,6 +502,13 @@ class Audit(unittest.TestCase):
         crlf_hash = da.register_hash(self.p, cfg, "tasks")
         self.assertEqual(crlf_hash, lf_hash)
 
+    def test_refs_may_list_several_registers(self):
+        cfg_file = self.p / "pmo/config.yaml"
+        cfg = pc.yaml.safe_load(cfg_file.read_text(encoding="utf-8"))
+        extra = pc.yaml.safe_load("registers:\n  tasks:\n    refs: {related: [risks, issues]}\n")
+        cfg_file.write_text(pc.yaml.safe_dump(pc.merge(cfg, extra)), encoding="utf-8")
+        self.assertIsInstance(da.xref_problems(self.p, pc.load_config(self.p)), list)
+
 
 class Translations(unittest.TestCase):
     def setUp(self):
@@ -591,6 +598,17 @@ class Translations(unittest.TestCase):
         self.assertIn("T-999 is not an id in tasks", out)
         self.assertIn("bogus is not a register", out)
         self.assertIn("tasks.T-001 is in both", out)
+
+    def test_audit_survives_an_unreadable_register_with_a_names_file(self):
+        cfg = pc.load_config(self.p)
+        names = self.p / "pmo/names.ar.yaml"
+        names.write_text("approved:\n  tasks: {}\nproposed: {}\n", encoding="utf-8")
+        cfg_file = self.p / "pmo/config.yaml"
+        raw = pc.yaml.safe_load(cfg_file.read_text(encoding="utf-8"))
+        extra = pc.yaml.safe_load("languages:\n  ar: {names: pmo/names.ar.yaml}\n")
+        cfg_file.write_text(pc.yaml.safe_dump(pc.merge(raw, extra)), encoding="utf-8")
+        (self.p / cfg["paths"]["registers"] / cfg["registers"]["tasks"]["file"]).write_text("- {id: [unclosed\n", encoding="utf-8")
+        self.assertIsInstance(da.names_problems(self.p, pc.load_config(self.p)), list)
 
     def test_translation_behind(self):
         tf.enable_languages(self.p, ("xx",))

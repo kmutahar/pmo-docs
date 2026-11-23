@@ -341,6 +341,10 @@ class Overdue(unittest.TestCase):
         self.assertLess(out.index("| R-009 |"), out.index("| R-010 |"))
         self.assertLess(out.index("| T-009 |"), out.index("| T-010 |"))
 
+    def test_accepts_a_severity_vocab_with_extra(self):
+        self.merge_config({"registers": {"issues": {"enums": {"severity": {"from": "issue_severity", "extra": ["blocker"]}}}}})
+        self.assertEqual(self.run_tool("--as-of", "2026-03-15")[0], 0)
+
 
 if __name__ == "__main__":
     unittest.main()
