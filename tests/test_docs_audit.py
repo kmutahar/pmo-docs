@@ -558,9 +558,11 @@ class Translations(unittest.TestCase):
         self.assertIn("missing the `## Proposed` section", out)
         g.write_text("## Approved\n\n" + hdr + "| G-001 | A | a | |\n\n## Proposed\n\n" + hdr, encoding="utf-8")
         self.assertIn("## Glossary (0)", self.run_audit()[1])
+        g.write_text("## Approved\n\n" + hdr + "\n## Proposed\n\n" + hdr + "\n## Do not translate\n\n- Acme Portal\n", encoding="utf-8")
+        self.assertIn("## Glossary (0)", self.run_audit()[1])
         g.write_text("## Approved\n\n" + hdr + "\n## proposed terms\n\n" + hdr, encoding="utf-8")
         out = self.run_audit()[1]
-        self.assertIn("glossary-xx.md:6: heading `## proposed terms` must match exactly `## Approved` or `## Proposed`", out)
+        self.assertIn("glossary-xx.md:6: heading `## proposed terms` must match exactly `## Approved`, `## Proposed` or `## Do not translate`", out)
 
     def test_names_file_checked(self):
         tf.enable_languages(self.p, ("xx",))
