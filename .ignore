@@ -5,3 +5,4 @@ graft/.cache/
 graft/.graph/
 !tmp/
 !.agy/
+!claude-tests

@@ -30,7 +30,7 @@ A project-office and documentation workflow packaged as an Agent Skill (`skills/
 - `examples/acme/` — the fake project used by tests, evals and `docs/walkthrough.md`.
 - `PRIVACY.md` and `TERMS.md` — linked from `plugin.json`; update when the skill reads or writes something new.
 - `dev/`, `tests/`, `docs/`, `evals/` — maintainer tools, tests, guides and evals (not shipped).
-- `.trail/` and `tmp/` — local and untracked (`.gitignore`).
+- `.trail/`, `tmp/` and `claude-tests/` — local and untracked (`.gitignore`). `claude-tests/` holds an agent's scratch checks during development; the test suite is `tests/`.
 - `CLAUDE.md` — imports `AGENTS.md` and `memory.md` only.
 
 ## Settled design choices

@@ -19,6 +19,7 @@ graphify-out/
 tmp/
 .trail/
 /graft/
+claude-tests/
 
 # secrets
 .env
