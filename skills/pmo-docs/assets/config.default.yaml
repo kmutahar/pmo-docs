@@ -205,7 +205,7 @@ registers:
   roster:
     file: roster.yaml
     view: roster.md
-    fields: [slug, name, role, origin]
+    fields: [slug, name, role, areas, origin]
     enums: {origin: origin}
   # tests, environments and permissions hold names and ids only. Never put a secret value in a register.
   requirements:

@@ -62,6 +62,12 @@ class RenderViews(unittest.TestCase):
         code, out = run(self.root)
         self.assertEqual(code, 0, out)
 
+    def test_roster_entry_takes_areas(self):
+        self.append("roster", "  - {slug: dee, name: Dee Example, role: Tester, areas: [api, web], origin: stated}")
+        code, out = run(self.root)
+        self.assertEqual(code, 0, out)
+        self.assertIn("| dee | Dee Example | Tester | api, web | stated |", (self.views / "roster.md").read_text(encoding="utf-8"))
+
     def test_missing_register_is_not_an_error(self):
         (self.reg / "teams.yaml").unlink()
         (self.reg / "priorities.yaml").unlink()
