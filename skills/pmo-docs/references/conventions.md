@@ -174,3 +174,5 @@ Exit codes:
 Migrating an old document: run `structure_check.py --suggest <file>` (it writes nothing). Each `hint` line names a missing template heading, in template order, and an unexpected heading at the same place that looks like a rename; add the heading or rename the old one, keep the old text under it, then run the check again without `--suggest`.
 
 Migrating weekly documents: an old front-matter `period` that holds only the month (`2026-03`) must be rewritten to the week label (`2026-W10`, the ISO week of the week's last day) before `docs_audit.py` and the stale checks can place the document.
+
+Migrating the agent permissions: an old `.claude/settings.json` that allows `python3 pmo/tools/*.py` must allow the launcher instead (`Bash(pmo/bin/pmo:*)`), or every script asks for permission.
