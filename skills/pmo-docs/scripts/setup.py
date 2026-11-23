@@ -76,7 +76,7 @@ def main(argv=None):
         if v == pc.SCHEMA_VERSION:
             print("schema_version is current")
         elif v < pc.SCHEMA_VERSION:
-            print("a migration is due: run scripts/migrate/0001_pad_ids.py (pads ids to project.id_width, then sets schema_version 2), then 0002_goals_register.py")
+            print("a migration is due: run scripts/migrate/0001_pad_ids.py (pads ids to project.id_width, then sets schema_version 2), then 0002_goals_register.py and 0003_status_report_heading.py")
         else:
             print("the skill is out of date, update it")
             return 2

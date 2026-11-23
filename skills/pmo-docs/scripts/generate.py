@@ -1167,6 +1167,8 @@ def main(argv=None) -> int:
         doc_text = fill(template_text, filled)
     except MissingSection as e:
         print(f"ERROR template missing section `{e}` required by generator; set `generator: null` in config to draft manually", file=sys.stderr)
+        if str(e) == "Risks and issues: changes since last report" and re.search(r"^## Risks and issues[ \t]*$", template_text, re.M):
+            print("the template still has the old heading `## Risks and issues`; rename it to `## Risks and issues: changes since last report` (scripts/migrate/0003_status_report_heading.py does it)", file=sys.stderr)
         return 2
 
     if info.get("generated_from"):
