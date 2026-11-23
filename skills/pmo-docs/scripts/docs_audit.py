@@ -298,7 +298,8 @@ def drift_state(root, cfg, tpl_path: Path, tpl_source: str) -> str:
 
 
 def glossary_problems(root, cfg) -> list[str]:
-    """Each language's glossary file: the `## Approved` and `## Proposed` sections exist, and every row has a `G-nnn` ID that no other row uses."""
+    """Each language's glossary file: the `## Approved` and `## Proposed` sections exist, and every row has a `G-nnn` ID that no other row uses.
+    Any other `##` heading is reported: the section names must match exactly."""
     out = []
     for lang in (cfg.get("languages") or {}):
         g = pc.glossary_path(cfg, lang)
@@ -309,6 +310,9 @@ def glossary_problems(root, cfg) -> list[str]:
         for sec in ("Approved", "Proposed"):
             if f"## {sec}" not in (ln.strip() for ln in lines):
                 out.append(f"{g}: missing the `## {sec}` section")
+        for n, line in enumerate(lines, 1):
+            if re.match(r"##\s", line) and line.strip() not in ("## Approved", "## Proposed"):
+                out.append(f"{g}:{n}: heading `{line.strip()}` must match exactly `## Approved` or `## Proposed`")
         seen = {}
         for n, line in enumerate(lines, 1):
             if not line.startswith("|"):
