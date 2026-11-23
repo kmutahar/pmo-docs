@@ -58,6 +58,7 @@ class Filled:
     sections: dict[str, str]    # exact '## ' heading text -> new body (without the heading line)
     slots: dict[str, str]       # exact '## {{...}}' slot heading text -> the generated '## ...' blocks that replace the slot
     notes: list[str] = field(default_factory=list)  # printed to stderr as 'note: ...' for the agent to put in Open questions
+    extra: dict[str, str] = field(default_factory=dict)  # '## ' heading text -> a '## ...' block inserted before it; skipped when the template has no such heading
 
 
 class MissingSection(Exception):
@@ -200,6 +201,9 @@ def fill(template_text: str, filled: Filled) -> str:
         heading_title = heading_line[3:].strip()
         block_text = "\n".join(block_lines)
         old_body = "\n".join(block_lines[1:])
+
+        if heading_title in filled.extra:
+            out_blocks.append(filled.extra[heading_title])
 
         # Check slots first
         slot_key = None
@@ -725,6 +729,18 @@ def generate_status_report(ctx: Ctx) -> Filled:
 
     progress_by_team_body = pc.md_table(["Team", "Done / Total", "In progress", "Blocked", "Main changes"], team_rows).strip()
 
+    # 2b. Progress by sub-project: only when sub-projects are configured and tasks carry the field
+    extra = {}
+    if ctx.cfg.get("subprojects") and any(t.get("subproject") for t in counted):
+        sp_rows = []
+        for sp in [*ctx.cfg["subprojects"], None]:
+            sp_tasks = [t for t in counted if (t.get("subproject") or None) == sp]
+            if sp_tasks:
+                sp_rows.append([sp or "not set", str(sum(1 for t in sp_tasks if t.get("status") not in task_dropped)),
+                                str(sum(1 for t in sp_tasks if t.get("status") in task_done)),
+                                str(sum(1 for t in sp_tasks if t.get("status") in task_blocked))])
+        extra["Completed since last report"] = "## Progress by sub-project\n\n" + pc.md_table(["Sub-project", "Tasks", "Done", "Blocked"], sp_rows).strip()
+
     # 3. Planned next
     unclosed = [t for t in counted if t.get("status") not in task_closed]
     def due_sort_key(t):
@@ -840,6 +856,7 @@ def generate_status_report(ctx: Ctx) -> Filled:
         },
         slots={},
         notes=notes,
+        extra=extra,
     )
 
 

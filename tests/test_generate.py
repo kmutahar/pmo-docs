@@ -304,6 +304,23 @@ class TestGenerate(unittest.TestCase):
         self.assertEqual(code, 0, err)
         self.assertIn("1 open tasks have no due date", err)
 
+    def test_status_report_progress_by_sub_project_only_when_tagged(self):
+        args = ("status-report", "2026-03", "--as-of", "2026-03-15", "--stdout")
+        out = tool("generate.py", self.root, *args)[1]
+        self.assertNotIn("Progress by sub-project", out)
+        cfg_file = self.root / "pmo/config.yaml"
+        cfg_file.write_text(cfg_file.read_text(encoding="utf-8")
+                            + "\nsubprojects:\n  api: {}\n  web: {}\nregisters:\n  tasks:\n    fields: [id, title, team, group, priority, owner, status, due, done_on, period, notes, origin, tests, subproject]\n    enums: {subproject: subprojects}\n",
+                            encoding="utf-8")
+        self.assertNotIn("Progress by sub-project", tool("generate.py", self.root, *args)[1])  # configured, but no task is tagged
+        tasks_file = self.root / "pmo/registers/tasks.yaml"
+        tasks_file.write_text(tasks_file.read_text(encoding="utf-8").replace("{id: T-3,", "{id: T-3, subproject: api,").replace("{id: T-4,", "{id: T-4, subproject: web,"), encoding="utf-8")
+        code, out, err = tool("generate.py", self.root, *args)
+        self.assertEqual(code, 0, err)
+        self.assertRegex(out, r"## Progress by sub-project\n\n\| Sub-project \| Tasks \| Done \| Blocked \|\n\|---\|---\|---\|---\|\n\| api \| 1 \| 1 \| 0 \|\n\| web \| 1 \| 0 \| 1 \|\n\| not set \|")
+        self.assertLess(out.index("## Progress by team"), out.index("## Progress by sub-project"))
+        self.assertLess(out.index("## Progress by sub-project"), out.index("## Completed since last report"))
+
     def test_status_report_month_on_acme(self):
         code, out, err = tool("generate.py", self.root, "status-report", "2026-03", "--as-of", "2026-03-15", "--stdout")
         self.assertEqual(code, 0, err)
