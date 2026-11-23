@@ -2,7 +2,7 @@
 """Check that documents keep the structure of their template (the template is the contract).
 
 Usage:
-    python3 structure_check.py [--project ROOT] [--suggest] [FILE ...]   # default: every .md under paths.documents
+    python3 structure_check.py [--project ROOT] [--suggest] [--dashes] [FILE ...]   # default: every .md under paths.documents
 
 --suggest also prints, per file, a `hint` line for each missing template heading (in template order), naming an unexpected
 heading of the same level at the same position as a likely rename. It writes nothing and does not change the exit code.
@@ -40,6 +40,9 @@ filled cell is "None" is exempt. Kinds:
     listed_in: Risks at a glance
     sections_in: Risks
     level: 3
+
+`--dashes` instead reports look-alike dashes (en dash, em dash, minus sign) inside ids such as T-14, as
+`file:line: look-alike dash in <id>, use -`; text in fenced code is skipped.
 
 Exit codes: 0 clean (warnings allowed), 1 findings, 2 usage (including a project folder that does not exist).
 """
@@ -203,6 +206,17 @@ def run_checks(checks, dsec):
     return errors
 
 
+DASHES = "\u2013\u2014\u2212"
+
+
+def lookalike_dashes(text, cfg):
+    """(line, id) for each id written with an en dash, em dash or minus sign; fenced code is skipped, lines are kept."""
+    text = FENCE.sub(lambda m: "\n" * m.group().count("\n"), text)
+    prefixes = "|".join([re.escape(p) for p in pc.register_prefixes(cfg)] + ["[A-Z]{1,4}"])
+    rx = re.compile(rf"(?<![A-Za-z0-9])(?:{prefixes})[{DASHES}][0-9]+[A-Za-z]?")
+    return [(n, m.group()) for n, line in enumerate(text.splitlines(), 1) for m in rx.finditer(line)]
+
+
 def duplicate_ids(text, cfg=None):
     id_rx = re.compile(r"[A-Z]{1,4}-[0-9]+[A-Za-z]?")
     cfg_rx = None
@@ -330,6 +344,7 @@ def main(argv=None):
     pc.add_project_arg(ap)
     ap.add_argument("--suggest", action="store_true", help="also print a hint per missing template heading (writes nothing)")
     ap.add_argument("files", nargs="*", help="documents to check (default: every .md under paths.documents)")
+    ap.add_argument("--dashes", action="store_true", help="report look-alike dashes in ids instead of the structure checks")
     a = ap.parse_args(argv)
     root = Path(a.project).resolve()
     if not root.is_dir():
@@ -337,6 +352,23 @@ def main(argv=None):
     cfg = pc.load_config(root)
     files = [Path(f) for f in a.files] or sorted((root / cfg["paths"]["documents"]).rglob("*.md"))
     bad = 0
+    if a.dashes:
+        for f in files:
+            if not f.is_file():
+                print(f"ERROR {f}: not a file")
+                bad += 1
+                continue
+            try:
+                hits = lookalike_dashes(pc.read(f), cfg)
+            except UnicodeDecodeError:
+                print(f"ERROR {f}: not UTF-8 text")
+                bad += 1
+                continue
+            rel = f.resolve().relative_to(root) if root in f.resolve().parents else f
+            print("\n".join(f"{rel}:{n}: look-alike dash in {i}, use -" for n, i in hits))
+            bad += len(hits)
+        print(f"\n{bad} finding(s)")
+        return 1 if bad else 0
     for f in files:
         if not f.is_file():
             print(f"ERROR {f}: not a file")

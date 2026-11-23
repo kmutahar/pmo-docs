@@ -282,6 +282,18 @@ class Cli(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("2 file(s) with structure errors", out)
 
+    def test_dashes_reports_lookalike_dashes_in_ids_outside_fences(self):
+        f = self.docs / "Notes.md"
+        f.write_text("# a\nSee T\u201314 and DEC\u22122, ok T-3, plain \u2014 dash.\n```\nT\u20141\n```\nCR\u20147b\n", encoding="utf-8")
+        code, out = main("--project", str(self.root), "--dashes")
+        self.assertEqual(code, 1)
+        self.assertIn("pmo/documents/Notes.md:2: look-alike dash in T\u201314, use -", out)
+        self.assertIn("pmo/documents/Notes.md:2: look-alike dash in DEC\u22122, use -", out)
+        self.assertIn("pmo/documents/Notes.md:6: look-alike dash in CR\u20147b, use -", out)
+        self.assertEqual(out.count("look-alike dash in"), 3)  # not T-3, not the bare dash, not the fenced one
+        f.write_text("# a\nT-14\n", encoding="utf-8")
+        self.assertEqual(main("--project", str(self.root), "--dashes")[0], 0)
+
     def test_no_documents_is_clean(self):
         code, out = main("--project", str(self.root))
         self.assertEqual(code, 0)
