@@ -31,7 +31,7 @@ When the default template advances its version, `docs_audit.py` reports drift. C
 
 ## Add a stack file
 
-1. To support a new framework or technology, write `pmo/playbooks/stacks/<stack>.md` with front matter `playbook_version: 1`, followed by `Detected by: ...` and `Checked against: ...`, a `#` title, and the six standard `##` headings in order: `Routes, pages or screens`, `Data models`, `Permissions and auth`, `Config and environments`, `Tests`, `List the API live`.
+1. To support a new framework or technology, write `pmo/playbooks/stacks/<stack>.md` with front matter `playbook_version: 1`, followed by `Detected by: ...` and `Checked against: ...`, a `#` title, and the six standard `##` headings in order: `Routes, pages or screens`, `Data models`, `Permissions and auth`, `Config and environments`, `Tests`, `List the API live`. If you need public framework docs from the web, show the pages to the user first, read them only after a yes, and record them in `Checked against:`.
 2. To override a shipped stack file, copy `references/stacks/<stack>.md` to `pmo/playbooks/stacks/<stack>.md` and record `based_on: stacks/<stack>@<version>` in its front matter.
 3. Add the stack slug to `technical.stacks` in `pmo/config.yaml`.
 

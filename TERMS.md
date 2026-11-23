@@ -18,7 +18,7 @@ pmo-docs gives an AI agent instructions, templates and scripts for keeping proje
 
 Everything you put into `pmo/` or into documents belongs to you (or to whoever owns it today). The Software does not claim any rights in it. You are responsible for having the right to use that content, and for not putting in anything you may not share with the AI agent and provider you use.
 
-Documents and registers produced by the Software are your own work product. The MIT licence of the Software does not apply to them.
+Documents and registers produced by the Software are your own work product; you do not have to license them under MIT.
 
 ## 4. Use at your own risk
 
@@ -30,7 +30,7 @@ AI agents can make mistakes, and so can scripts and templates. The Software draf
 
 ## 5. Acceptable use
 
-You agree not to use the Software to break the law, to infringe the rights of others, or to process data you have no right to process. As a request, not a licence condition: please do not present a modified version as the original project or use the maintainer's name to suggest an endorsement you do not have. The MIT licence itself adds no limit beyond keeping the copyright notice and licence text.
+You are responsible for complying with the law, respecting the rights of others and processing only data you have the right to process; this responsibility is separate from and does not revoke your MIT licence rights. As a request, not a licence condition: please do not present a modified version as the original project or use the maintainer's name to suggest an endorsement you do not have. The MIT licence itself adds no limit beyond keeping the copyright notice and licence text.
 
 ## 6. No warranty
 
