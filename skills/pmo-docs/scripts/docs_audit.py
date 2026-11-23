@@ -309,7 +309,11 @@ def glossary_problems(root, cfg) -> list[str]:
         f = Path(root) / g if g else None
         if not f or not f.is_file():
             continue
-        lines = f.read_text(encoding="utf-8").splitlines()
+        try:
+            lines = pc.read(f).splitlines()
+        except (UnicodeDecodeError, OSError):
+            out.append(f"{g}: not readable as UTF-8 text")
+            continue
         for sec in ("Approved", "Proposed"):
             if f"## {sec}" not in (ln.strip() for ln in lines):
                 out.append(f"{g}: missing the `## {sec}` section")
@@ -341,7 +345,12 @@ def names_problems(root, cfg) -> list[str]:
         if not f or not f.is_file():
             continue
         try:
-            data = pc.load_yaml(f.read_text(encoding="utf-8")) or {}
+            text = pc.read(f)
+        except (UnicodeDecodeError, OSError):
+            out.append(f"{n}: not readable as UTF-8 text")
+            continue
+        try:
+            data = pc.load_yaml(text) or {}
         except Exception as e:  # noqa: BLE001 - any YAML error is a finding
             out.append(f"{n}: not valid YAML ({str(e).splitlines()[0]})")
             continue
@@ -364,7 +373,12 @@ def names_problems(root, cfg) -> list[str]:
                     known = {str(e.get(key)) for e in pc.load_register(root, cfg, reg) if isinstance(e, dict)}
                 except (pc.yaml.YAMLError, AttributeError, ValueError):
                     continue  # render_views.py reports an unreadable register
-                for eid, fields in (ids or {}).items() if isinstance(ids, dict) else []:
+                if ids is None:
+                    continue
+                if not isinstance(ids, dict):
+                    out.append(f"{n}: {sec}.{reg} must be a map of ids")
+                    continue
+                for eid, fields in ids.items():
                     if str(eid) not in known:
                         out.append(f"{n}: {sec}.{reg}.{eid} is not an id in {reg}")
                     if (reg, str(eid)) in seen:
@@ -376,12 +390,20 @@ def names_problems(root, cfg) -> list[str]:
     return out
 
 
-GONE = ("dropped", "closed", "superseded")  # shortcut: fixed status words, not per-register config; move to the config if a project needs others
+GONE = ("dropped", "closed", "superseded")
+
+
+def _gone_statuses(cfg, target: str) -> set[str]:
+    tcfg = cfg.get("registers", {}).get(target)
+    if isinstance(tcfg, dict) and "gone" in tcfg and tcfg["gone"] is not None:
+        return set(pc.statuses(cfg, target, "gone"))
+    return set(GONE)
 
 
 def xref_problems(root, cfg) -> list[str]:
-    """An open entry whose `registers.<name>.refs` field points at an entry that is dropped, closed or superseded. Names ids only."""
+    """An open entry whose `registers.<name>.refs` field points at an entry whose status is in the target's `gone` list (default: dropped, closed, superseded). Names ids only."""
     out = []
+    seen = set()
     for name, rcfg in cfg["registers"].items():
         if not isinstance(rcfg, dict) or not rcfg.get("refs"):
             continue
@@ -391,8 +413,9 @@ def xref_problems(root, cfg) -> list[str]:
             gone = {}
             for target in {t for v in rcfg["refs"].values() for t in (v if isinstance(v, list) else [v]) if isinstance(t, str)}:
                 tkey = "slug" if target == "roster" else "id"
+                gone_set = _gone_statuses(cfg, target)
                 gone[target] = {str(e.get(tkey)): e.get("status") for e in pc.load_register(root, cfg, target)
-                                if isinstance(e, dict) and e.get("status") in GONE}
+                                if isinstance(e, dict) and e.get("status") in gone_set}
         except (pc.yaml.YAMLError, AttributeError, ValueError):
             continue  # render_views.py reports an unreadable register
         for e in entries:
@@ -403,7 +426,11 @@ def xref_problems(root, cfg) -> list[str]:
                 for v in value if isinstance(value, list) else [value]:
                     for t in target if isinstance(target, list) else [target]:
                         if v is not None and t in gone and str(v) in gone[t]:
-                            out.append(f"{name} {e.get(key)}: `{field}` points at {v}, which is {gone[t][str(v)]}")
+                            sig = (name, e.get(key), field, str(v))
+                            if sig not in seen:
+                                seen.add(sig)
+                                out.append(f"{name} {e.get(key)}: `{field}` points at {v}, which is {gone[t][str(v)]}")
+                            break
     return out
 
 

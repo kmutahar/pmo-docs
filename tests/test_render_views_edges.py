@@ -731,6 +731,18 @@ class TestsRegisterDefaults(Base):
         self.assertEqual(code, 1, out + err)
         self.assertIn("tests TST-001: status is missing", out)
 
+    def test_nested_unknown_keys_and_defaults_field_check(self):
+        cfg_file = self.root / "pmo/config.yaml"
+        mine = pc.load_yaml(cfg_file.read_text(encoding="utf-8")) or {}
+        mine = pc.merge(mine, {"project": {"id_widht": 3}, "registers": {"tasks": {"typo_key": True, "defaults": {"nope": "x"}}}})
+        cfg_file.write_text(pc.yaml.safe_dump(mine), encoding="utf-8")
+        code, out, err = cli("--project", str(self.root))
+        self.assertEqual(code, 2, out + err)
+        combined = out + err
+        self.assertIn("project has unknown key `id_widht`", combined)
+        self.assertIn("registers.tasks has unknown key `typo_key`", combined)
+        self.assertIn("registers.tasks.defaults key `nope` is not in fields", combined)
+
 
 if __name__ == "__main__":
     unittest.main()

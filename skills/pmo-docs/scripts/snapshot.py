@@ -41,7 +41,15 @@ def changes(root, cfg, as_of):
     files = sorted(f for f in d.glob("????-??-??.json") if f.stem < str(as_of)) if d.is_dir() else []
     if not files:
         return None, {}
-    old = json.loads(pc.read(files[-1]))["entries"]
+    try:
+        loaded = json.loads(pc.read(files[-1]))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as e:
+        raise ValueError(f"{files[-1].name}: corrupt snapshot ({str(e).splitlines()[0]})") from e
+    if not isinstance(loaded, dict) or not isinstance(loaded.get("entries"), dict):
+        raise ValueError(f"{files[-1].name}: corrupt snapshot (expected a JSON object with an `entries` map)")
+    old = loaded["entries"]
+    if not all(isinstance(old[r], dict) for r in TRACKED if r in old):
+        raise ValueError(f"{files[-1].name}: corrupt snapshot (each register in `entries` must be an id-to-status map)")
     new = take(root, cfg, as_of)["entries"]
     out = {}
     for r in TRACKED:

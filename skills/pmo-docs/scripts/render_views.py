@@ -78,6 +78,17 @@ def config_errors(cfg, root=None):
     known = pc.load_yaml(pc.read(pc.SKILL / "assets" / "config.default.yaml"))
     errors += [f"config: unknown key `{k}` (not a config key of the skill; a typo or a setting from an older format)"
                for k in cfg if k not in known]
+    known_project = set(known.get("project") or {})
+    if isinstance(cfg.get("project"), dict):
+        for k in cfg["project"]:
+            if k not in known_project:
+                errors.append(f"config: project has unknown key `{k}`")
+    known_reg_keys = {k for rv in (known.get("registers") or {}).values() if isinstance(rv, dict) for k in rv} | {"defaults", "gone"}
+    for n, r in cfg.get("registers", {}).items():
+        if isinstance(r, dict):
+            for k in r:
+                if k not in known_reg_keys:
+                    errors.append(f"config: registers.{n} has unknown key `{k}`")
     prefixes = {}
     for n, r in cfg.get("registers", {}).items():
         if isinstance(r, dict):
@@ -105,9 +116,15 @@ def config_errors(cfg, root=None):
                     errors.append(f"config: registers {views[v]} and {n} both use view {v}")
                 else:
                     views[v] = n
-            if r.get("defaults") is not None and not isinstance(r.get("defaults"), dict):
-                errors.append(f"config: registers.{n}.defaults must be a map of field to value")
+            defaults = r.get("defaults")
             fields = r.get("fields")
+            if defaults is not None:
+                if not isinstance(defaults, dict):
+                    errors.append(f"config: registers.{n}.defaults must be a map of field to value")
+                elif isinstance(fields, list):
+                    for dk in defaults:
+                        if dk not in fields:
+                            errors.append(f"config: registers.{n}.defaults key `{dk}` is not in fields")
             if isinstance(fields, list) and "id" in fields:
                 p = r.get("prefix")
                 if not p or not isinstance(p, str) or not p.strip():
@@ -424,9 +441,7 @@ def read_registers(root, cfg):
         elif not one_line_entries(text):
             errors.append(f"{reg['file']}: every entry must be on one line (`- {{id: ..., title: ...}}`)")
         else:
-            for e in entries:   # registers.<name>.defaults fills a field an entry leaves out
-                for k, v in (reg.get("defaults") if isinstance(reg.get("defaults"), dict) else {}).items():
-                    e.setdefault(k, v)
+            pc.apply_defaults(reg, entries)   # registers.<name>.defaults fills a field an entry leaves out
             data[name] = entries
     return data, errors
 

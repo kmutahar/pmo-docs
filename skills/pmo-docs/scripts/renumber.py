@@ -11,7 +11,8 @@ Finished documents are left alone.
 With --apply, rewrites confirmed references, moves changed entries to the end of their list,
 and re-renders views.
 With --pad, pads every id with fewer digits than project.id_width (T-4 becomes T-004) in registers,
-documents (and their translations), views, snapshots and names files, outside code fences. It prints a summary
+documents (and their translations), views, snapshots and names files. It leaves ids inside URLs, decimals such as T-1.5
+and code fences alone, and warns about a fence that is never closed. It prints a summary
 and asks yes or no on a terminal; --yes skips the question, and without a terminal and without --yes it
 stops after the summary (that is the dry run).
 Exit codes: 0 no duplicates, nothing to pad, or --apply or --pad succeeded, 1 dry run found duplicates or unreadable registers,
@@ -256,8 +257,11 @@ def pad_files(root, cfg):
     return [r for r in dict.fromkeys(rels) if (Path(root) / r).is_file() and not pc.outside(root, r)]
 
 
-def pad_text(text, rx, width, fenced):
-    """(new text, number of ids padded). With fenced, lines between ``` or ~~~ fences are left as they are."""
+URL_RX = re.compile(r"(https?://[^\s|,}\])]+)")  # a URL ends at white space or a table, list or link delimiter
+
+
+def pad_text(text, rx, width, fenced, *, warn_file=None):
+    """(new text, number of ids padded). With fenced, lines between ``` or ~~~ fences are left as they are. URLs are left untouched."""
     count, out, fence = 0, [], None
 
     def sub(m):
@@ -270,8 +274,11 @@ def pad_text(text, rx, width, fenced):
         if marker and fence in (None, marker[1]):
             fence = None if fence else marker[1]
         elif not fence:
-            line = rx.sub(sub, line)
+            parts = URL_RX.split(line)
+            line = "".join(p if i % 2 else rx.sub(sub, p) for i, p in enumerate(parts))
         out.append(line)
+    if fence is not None and warn_file:
+        print(f"WARNING {warn_file}: unclosed code fence ({fence}); lines after it were skipped", file=sys.stderr)
     return "\n".join(out), count
 
 
@@ -317,7 +324,7 @@ def pad_main(args, cfg):
         print(f"project.id_width is {width}: no id is too short, nothing to do")
         return 0
     prefixes = "|".join(re.escape(p) for p in pc.register_prefixes(cfg))
-    rx = re.compile(r"(?<![A-Za-z0-9])(" + prefixes + r")-([0-9]{1,%d})(?![A-Za-z0-9])" % (width - 1))
+    rx = re.compile(r"(?<![A-Za-z0-9])(" + prefixes + r")-([0-9]{1,%d})(?![A-Za-z0-9]|\.[0-9])" % (width - 1))
     pending, counts = {}, {}
     for rel in pad_files(args.project, cfg):
         try:
@@ -325,7 +332,7 @@ def pad_main(args, cfg):
         except UnicodeDecodeError:
             print(f"skipped (not UTF-8 text): {rel}")
             continue
-        new, n = pad_text(text, rx, width, fenced=rel.endswith(".md"))
+        new, n = pad_text(text, rx, width, fenced=rel.endswith(".md"), warn_file=rel)
         if n:
             pending[rel], counts[rel] = new, n
     if not pending:

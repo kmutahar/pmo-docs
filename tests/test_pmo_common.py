@@ -1047,6 +1047,37 @@ class ConfigGuards(unittest.TestCase):
         err = self.load_fails("languages:\n  ar: {names: ../outside.yaml}\n")
         self.assertIn("languages.ar.names", err)
 
+    def test_cell_and_inline_defang_dangerous_link_schemes(self):
+        for scheme in ("javascript:alert(1)", "JAVASCRIPT:alert(1)", "data:text/html,hi", "vbscript:msgbox(1)"):
+            text = f"[click]({scheme})"
+            self.assertEqual(pc.cell(text), f"[click]\\({scheme})")
+            self.assertEqual(pc.inline(text), f"[click]\\({scheme})")
+        self.assertEqual(pc.cell("[ok](https://example.com)"), "[ok](https://example.com)")
+        self.assertEqual(pc.inline("[ok](https://example.com)"), "[ok](https://example.com)")
+
+    def test_cell_and_inline_defang_encoded_split_and_reference_links(self):
+        for dest in ("&#106;avascript:alert(1)", "&#x6A;avascript:alert(1)", "java&#9;script:alert(1)", "java\tscript:alert(1)",
+                     "javascript&colon;alert(1)", "  JaVa script:alert(1)", "file:///etc/passwd", "ftp://x"):
+            text = f"[click]({dest})"
+            for fn in (pc.cell, pc.inline):
+                self.assertTrue(fn(text).startswith("[click]\\("), (fn.__name__, dest))
+        for dest in ("javascript:alert(1)", "java&#9;script:alert(1)", "&#106;avascript:alert(1)"):
+            text = f"[x]: {dest}"
+            for fn in (pc.cell, pc.inline):
+                self.assertEqual(fn(text), f"\\[x]: {dest}")
+        for ok in ("[a](https://example.com/x)", "[a](HTTP://example.com)", "[a](mailto:someone)", "[a](#anchor)",
+                   "[a](../docs/a.md)", "[a](docs/a b.md)", "[x]: https://example.com", "see [1]: later"):
+            self.assertEqual(pc.cell(ok), ok)
+            self.assertEqual(pc.inline(ok), ok)
+
+    def test_load_register_applies_defaults(self):
+        cfg = pc.load_config(self.root)
+        (self.root / "pmo/registers/tests.yaml").write_text(
+            "tests:\n  - {id: TST-001, title: Login, kind: smoke}\n", encoding="utf-8"
+        )
+        entries = pc.load_register(self.root, cfg, "tests")
+        self.assertEqual(entries[0]["status"], "planned")
+
 
 if __name__ == "__main__":
     unittest.main()

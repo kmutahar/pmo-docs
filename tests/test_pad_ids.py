@@ -228,6 +228,29 @@ class Pad(PadTest):
         self.assertIn(f'source_hash: "{new_body}"', trans_text)
 
 
+    def test_pad_skips_urls_and_decimals_and_warns_on_unclosed_fence(self):
+        doc = self.root / "pmo/documents/Notes.md"
+        doc.write_text(
+            "---\ntitle: Notes\ntype: x\nstatus: draft\n---\n\n# Notes\n\n"
+            "See T-4. Also https://example.com/issues/T-4 and version T-1.5 stay.\n\n"
+            "```\nT-4 in unclosed fence\n",
+            encoding="utf-8",
+        )
+        code, out = run("renumber.py", self.root, "--pad", "--yes")
+        self.assertEqual(code, 0, out)
+        self.assertIn("WARNING pmo/documents/Notes.md: unclosed code fence", out)
+        text = doc.read_text(encoding="utf-8")
+        self.assertIn("See T-004.", text)
+        self.assertIn("https://example.com/issues/T-4", text)
+        self.assertIn("T-1.5", text)
+        self.assertIn("T-4 in unclosed fence", text)
+
+    def test_pad_ends_a_url_at_a_table_pipe_or_bracket(self):
+        text, count = renumber.pad_text("|T-4|https://x.example/a|T-5| [l](https://x.example/T-6) T-7", renumber.re.compile(r"\b(T)-([0-9]+)\b"), 3, True)
+        self.assertEqual(text, "|T-004|https://x.example/a|T-005| [l](https://x.example/T-6) T-007")
+        self.assertEqual(count, 3)
+
+
 class Upgrade(PadTest):
     def test_migration_pads_and_sets_schema_2(self):
         script = SCRIPTS / "migrate/0001_pad_ids.py"
@@ -246,6 +269,21 @@ class Upgrade(PadTest):
                            capture_output=True, text=True, encoding="utf-8", stdin=subprocess.DEVNULL)
         self.assertEqual(p.returncode, 2)
         self.assertTrue(self.cfg.read_text(encoding="utf-8").startswith("schema_version: 1\n"))
+
+    def test_migration_rejects_invalid_config_cleanly(self):
+        self.cfg.write_text("schema_version: 1\nproject:\n  name: Acme\n  manager: Sam\nregisters:\n  tasks: bad\n", encoding="utf-8")
+        p = subprocess.run([sys.executable, str(SCRIPTS / "migrate/0001_pad_ids.py"), "--project", str(self.root), "--yes"],
+                           capture_output=True, text=True, encoding="utf-8", stdin=subprocess.DEVNULL)
+        self.assertEqual(p.returncode, 2)
+        self.assertIn("ERROR config:", p.stderr)
+        self.assertNotIn("AttributeError", p.stderr)
+
+    def test_migration_preserves_crlf_without_schema_line(self):
+        self.cfg.write_bytes(b"project:\r\n  name: Acme Portal\r\n  manager: Sam Example\r\n")
+        p = subprocess.run([sys.executable, str(SCRIPTS / "migrate/0001_pad_ids.py"), "--project", str(self.root), "--yes"],
+                           capture_output=True, text=True, encoding="utf-8", stdin=subprocess.DEVNULL)
+        self.assertEqual(p.returncode, 0, p.stdout + p.stderr)
+        self.assertTrue(self.cfg.read_bytes().startswith(b"schema_version: 2\r\nproject:\r\n"))
 
 
 if __name__ == "__main__":

@@ -89,6 +89,24 @@ class Snapshot(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertIn("type", err)
 
+    def test_delta_reports_corrupt_snapshot_cleanly(self):
+        snaps = self.root / "pmo/snapshots"
+        snaps.mkdir(parents=True, exist_ok=True)
+        (snaps / "2026-03-01.json").write_text("{not json", encoding="utf-8")
+        code, _, err = run("where.py", self.root, "--delta", "--as-of", "2026-03-08")
+        self.assertEqual(code, 2)
+        self.assertIn("corrupt snapshot", err)
+
+        (snaps / "2026-03-01.json").write_text('{"date": "2026-03-01"}\n', encoding="utf-8")
+        code, _, err = run("where.py", self.root, "--delta", "--as-of", "2026-03-08")
+        self.assertEqual(code, 2)
+        self.assertIn("corrupt snapshot", err)
+
+        (snaps / "2026-03-01.json").write_text('{"entries": {"tasks": ["T-001"]}}\n', encoding="utf-8")
+        code, _, err = run("where.py", self.root, "--delta", "--as-of", "2026-03-08")
+        self.assertEqual(code, 2)
+        self.assertIn("corrupt snapshot", err)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -10,6 +10,7 @@ import argparse
 import copy
 import datetime
 import hashlib
+import html
 import os
 import re
 from pathlib import Path
@@ -99,7 +100,7 @@ def config_type_errors(cfg) -> list[str]:
             errors.append(f"registers.{name}.file must be non-empty text")
         if "prefix" in r and not isinstance(r["prefix"], str):
             errors.append(f"registers.{name}.prefix must be text")
-        for k in ("fields", "dates", "months", "closed", "done", "blocked", "active", "accepted"):
+        for k in ("fields", "dates", "months", "closed", "done", "blocked", "active", "accepted", "pending", "gone"):
             if k in r:
                 val = r[k]
                 if not isinstance(val, list) or not all(isinstance(x, str) for x in val):
@@ -397,8 +398,19 @@ def load_register(root, cfg, name):
     if not isinstance(data, dict) or name not in data:
         msg = f"{f.name}: top key must be {name}:"
         raise ValueError(msg)
-    entries = data.get(name)
-    return entries or []
+    entries = data.get(name) or []
+    if isinstance(entries, list):
+        apply_defaults(reg, entries)
+    return entries
+
+
+def apply_defaults(reg, entries):
+    """Fills registers.<name>.defaults into every entry (map) that leaves the field out."""
+    defaults = reg.get("defaults") if isinstance(reg.get("defaults"), dict) else {}
+    for e in entries:
+        if isinstance(e, dict):
+            for k, v in defaults.items():
+                e.setdefault(k, v)
 
 
 def to_date(v):
@@ -424,21 +436,39 @@ def as_of(s):
         raise argparse.ArgumentTypeError(str(e)) from e
 
 
+# Link destinations are allowlisted: only http(s), mailto, #anchors and relative paths survive.
+_LINK_DEST = re.compile(r"\]\((?=([^)]{0,100}))")
+_REF_DEF = re.compile(r"\[[^\]]*\]:(?=(.{0,100}))")
+_SAFE_SCHEMES = ("http", "https", "mailto")
+
+
+def _unsafe_dest(dest: str) -> bool:
+    """True when the destination starts with a scheme outside the allowlist, after entities are decoded and white space and control characters removed."""
+    d = "".join(c for c in html.unescape(dest) if c.isprintable() and not c.isspace()).lower()
+    m = re.match(r"[a-z][a-z0-9+.-]*:", d)
+    return bool(m) and m.group(0)[:-1] not in _SAFE_SCHEMES
+
+
+def _defang_links(s: str) -> str:
+    s = _LINK_DEST.sub(lambda m: "]\\(" if _unsafe_dest(m.group(1)) else m.group(0), s)
+    return _REF_DEF.sub(lambda m: "\\" + m.group(0) if _unsafe_dest(m.group(1)) else m.group(0), s)
+
+
 def cell(v):
-    """A value as one Markdown table cell: lists joined, `<` written as `&lt;` (so raw HTML and comments stay text), pipes escaped (and the backslashes right before one), carriage returns and newlines flattened."""
+    """A value as one Markdown table cell: lists joined, `<` written as `&lt;` (so raw HTML and comments stay text), dangerous link schemes defanged, pipes escaped (and the backslashes right before one), carriage returns and newlines flattened."""
     if v is None or v == "":
         return ""
     if isinstance(v, (list, tuple)):
         return ", ".join(cell(x) for x in v)
     if isinstance(v, dict):
         return "; ".join(f"{k}: {cell(x)}" for k, x in v.items())
-    s = str(v).replace("\r\n", " ").replace("\r", " ").replace("\n", " ").replace("<", "&lt;")
+    s = _defang_links(str(v).replace("\r\n", " ").replace("\r", " ").replace("\n", " ").replace("<", "&lt;"))
     return re.sub(r"(\\*)\|", lambda m: m.group(1) * 2 + "\\|", s)
 
 
 def inline(v):
-    """A value as one line of text: any run of white space becomes one space, `<` becomes `&lt;`."""
-    return " ".join(str(v).split()).replace("<", "&lt;")
+    """A value as one line of text: any run of white space becomes one space, `<` becomes `&lt;`, dangerous link schemes defanged."""
+    return _defang_links(" ".join(str(v).split()).replace("<", "&lt;"))
 
 
 def week_start(cfg) -> int:

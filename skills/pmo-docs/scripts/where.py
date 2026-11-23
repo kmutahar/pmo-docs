@@ -47,7 +47,11 @@ def main(argv=None):
     if args.delta:
         if not Path(args.project).is_dir():
             ap.error(f"project folder not found: {args.project}")
-        print("\n".join(delta(args.project, pc.load_config(args.project), args.as_of)))
+        try:
+            print("\n".join(delta(args.project, pc.load_config(args.project), args.as_of)))
+        except ValueError as e:
+            print(f"ERROR {e}", file=sys.stderr)
+            return 2
         return 0
     if not args.type:
         ap.error("the following arguments are required: type")

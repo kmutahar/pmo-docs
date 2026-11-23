@@ -20,6 +20,7 @@ if sys.version_info < (3, 10):
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import pmo_common as pc  # noqa: E402
+import render_views  # noqa: E402
 import renumber  # noqa: E402
 
 
@@ -32,8 +33,15 @@ def main(argv=None):
         ap.error(f"project folder not found: {args.project}")
 
     cfg = pc.load_config(args.project)
-    text = pc.read(Path(args.project) / pc.CONFIG)
-    mine = pc.load_yaml(text) or {}
+    if bad := render_views.config_errors(cfg, root=args.project):
+        for err in bad:
+            print("ERROR", err, file=sys.stderr)
+        return 2
+    cfg_path = Path(args.project) / pc.CONFIG
+    with cfg_path.open("r", encoding="utf-8-sig", newline="") as fh:
+        raw_text = fh.read()
+    eol = "\r\n" if "\r\n" in raw_text else "\n"
+    mine = pc.load_yaml(raw_text) or {}
     if mine.get("schema_version", 1) >= 2:
         print("schema_version is already 2, nothing to migrate")
         return 0
@@ -42,8 +50,8 @@ def main(argv=None):
     code = renumber.pad_main(args, cfg)
     if code != 0:
         return code
-    new, n = re.subn(r"^schema_version:.*$", "schema_version: 2", text, count=1, flags=re.M)
-    pc.safe_write(args.project, pc.CONFIG.as_posix(), new if n else "schema_version: 2\n" + text)
+    new, n = re.subn(r"^schema_version:[^\r\n]*", "schema_version: 2", raw_text, count=1, flags=re.M)
+    pc.safe_write(args.project, pc.CONFIG.as_posix(), new if n else f"schema_version: 2{eol}" + raw_text)
     print("schema_version is now 2")
     return 0
 

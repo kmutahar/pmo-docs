@@ -55,6 +55,42 @@ class Audit(unittest.TestCase):
         self.assertNotIn("I-004", out)
         self.assertNotIn("Staging server", out)  # ids only
 
+    def test_xref_custom_gone_and_multi_target_dedupe(self):
+        self.finish()
+        cfg_file = self.p / "pmo/config.yaml"
+        cfg_file.write_text(
+            cfg_file.read_text(encoding="utf-8")
+            + "\nregisters:\n  tasks:\n    gone: [blocked]\n  issues:\n    refs:\n      related_tasks: [tasks, tasks]\n",
+            encoding="utf-8",
+        )
+        t = self.p / "pmo/registers/tasks.yaml"
+        t.write_text(t.read_text(encoding="utf-8").replace("status: in-progress, due: 2026-03-10", "status: blocked, due: 2026-03-10"), encoding="utf-8")
+        code, out = self.run_audit()
+        self.assertEqual(code, 1)
+        self.assertEqual(out.count("issues I-003: `related_tasks` points at T-001, which is blocked"), 1)
+
+    def test_glossary_and_names_handle_bom_bad_utf8_and_non_dict_ids(self):
+        self.finish()
+        cfg_file = self.p / "pmo/config.yaml"
+        mine = pc.load_yaml(cfg_file.read_text(encoding="utf-8")) or {}
+        mine = pc.merge(mine, {"languages": {"translations": ["xx"], "xx": {"label": "XX", "dir": "ltr", "glossary": "pmo/data/glossary-xx.md", "names": "pmo/data/names-xx.yaml"}}})
+        cfg_file.write_text(pc.yaml.safe_dump(mine), encoding="utf-8")
+        data_dir = self.p / "pmo/data"
+        data_dir.mkdir(parents=True, exist_ok=True)
+        (data_dir / "glossary-xx.md").write_bytes("\ufeff## Approved\n| ID | EN | XX |\n|---|---|---|\n\n## Proposed\n| ID | EN | XX |\n|---|---|---|\n".encode("utf-8"))
+        (data_dir / "names-xx.yaml").write_text("approved:\n  tasks: not-a-map\n", encoding="utf-8")
+        code, out = self.run_audit()
+        self.assertEqual(code, 1)
+        self.assertNotIn("missing the `## Approved`", out)
+        self.assertIn("approved.tasks must be a map of ids", out)
+
+        (data_dir / "glossary-xx.md").write_bytes(b"\xff\xfe")
+        (data_dir / "names-xx.yaml").write_bytes(b"\xff\xfe")
+        code, out = self.run_audit()
+        self.assertEqual(code, 1)
+        self.assertIn("glossary-xx.md: not readable as UTF-8 text", out)
+        self.assertIn("names-xx.yaml: not readable as UTF-8 text", out)
+
     def test_clean_project_exits_0(self):
         self.finish()
         code, out = self.run_audit()

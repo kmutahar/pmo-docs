@@ -15,7 +15,7 @@ Run as `docs-audit [--fix]` (`--fix` is a recipe flag, not a script flag: `docs_
 
 2. **Run the mechanical checks**
    - `python3 ${CLAUDE_SKILL_DIR}/scripts/render_views.py --check`: register validity and stale views.
-   - `python3 ${CLAUDE_SKILL_DIR}/scripts/docs_audit.py`: front matter, stale, old, broken links, template and playbook drift (including stack files), translations behind their original, translation parity, and glossary IDs (unique, `G-001` form) and section headings (exactly `## Approved` and `## Proposed`, plus an optional `## Do not translate`), the names file (registers, ids and fields exist), and `registers_xref` (an open entry whose reference field points at a dropped, closed or superseded id).
+   - `python3 ${CLAUDE_SKILL_DIR}/scripts/docs_audit.py`: front matter, stale, old, broken links, template and playbook drift (including stack files), translations behind their original, translation parity, and glossary IDs (unique, `G-001` form) and section headings (exactly `## Approved` and `## Proposed`, plus an optional `## Do not translate`), the names file (registers, ids and fields exist), and `registers_xref` (an open entry whose reference field points at a dropped, closed or superseded id; a register's `registers.<name>.gone` list replaces those three statuses for entries of that register).
    - `python3 ${CLAUDE_SKILL_DIR}/scripts/structure_check.py`: documents against their templates.
 
    Each exits 1 on findings. A non-zero exit is a result to report, not a failure of the audit. A draft keeps its template comments and `structure_check.py` reports them as a warning. Report every error.
