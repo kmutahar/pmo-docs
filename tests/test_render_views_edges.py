@@ -706,3 +706,12 @@ class RegisterGuards(Base):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestsRegisterDefaults(Base):
+    def test_missing_test_status_is_planned_and_task_may_be_a_list(self):
+        (self.reg / "tests.yaml").write_text(
+            "tests:\n  - {id: TST-1, title: Login, kind: smoke, task: [T-2, T-3], label: [ui], regression: true}\n", encoding="utf-8")
+        code, out, err = cli("--project", str(self.root))
+        self.assertEqual(code, 0, out + err)
+        self.assertIn("planned", (self.views / "tests.md").read_text(encoding="utf-8"))

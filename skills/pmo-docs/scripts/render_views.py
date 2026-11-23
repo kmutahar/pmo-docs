@@ -396,6 +396,9 @@ def read_registers(root, cfg):
         elif not one_line_entries(text):
             errors.append(f"{reg['file']}: every entry must be on one line (`- {{id: ..., title: ...}}`)")
         else:
+            for e in entries:   # registers.<name>.defaults fills a field an entry leaves out
+                for k, v in (reg.get("defaults") or {}).items():
+                    e.setdefault(k, v)
             data[name] = entries
     return data, errors
 

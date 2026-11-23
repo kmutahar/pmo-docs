@@ -2,7 +2,7 @@
 
 # Tests
 
-| id | title | kind | requirement | task | issue | steps | expected | area | status | run_on | owner | evidence | notes | origin |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| TST-1 | API outline matches the API | acceptance |  | T-3 |  |  | The outline lists every public endpoint |  | passed | 2026-03-06 | alice | Reviewed against staging |  | stated |
-| TST-2 | Login with valid credentials | acceptance | REQ-1 | T-2 | I-3 |  | The home page opens |  | failed | 2026-03-12 | bob |  |  | stated |
+| id | title | kind | requirement | task | issue | steps | expected | area | label | regression | status | run_on | owner | evidence | notes | origin |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| TST-1 | API outline matches the API | acceptance |  | T-3 |  |  | The outline lists every public endpoint |  |  |  | passed | 2026-03-06 | alice | Reviewed against staging |  | stated |
+| TST-2 | Login with valid credentials | acceptance | REQ-1 | T-2 | I-3 |  | The home page opens |  |  |  | failed | 2026-03-12 | bob |  |  | stated |
