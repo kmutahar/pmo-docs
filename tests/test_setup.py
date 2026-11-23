@@ -88,7 +88,7 @@ class Setup(unittest.TestCase):
     def test_never_overwrites(self):
         tool("setup.py", self.root, "--name", "First")
         reg = self.root / "pmo/registers/tasks.yaml"
-        reg.write_text("tasks:\n  - {id: T-1, title: Mine, status: done}\n", encoding="utf-8")
+        reg.write_text("tasks:\n  - {id: T-001, title: Mine, status: done}\n", encoding="utf-8")
         before = (self.root / "pmo/config.yaml").read_text(encoding="utf-8")
         code, out, _ = tool("setup.py", self.root, "--name", "Second")
         self.assertEqual(code, 0)
@@ -99,7 +99,7 @@ class Setup(unittest.TestCase):
     def test_existing_register_is_kept_when_config_is_missing(self):
         (self.root / "pmo/registers").mkdir(parents=True)
         reg = self.root / "pmo/registers/tasks.yaml"
-        reg.write_text("tasks:\n  - {id: T-1, title: Mine, status: done}\n", encoding="utf-8")
+        reg.write_text("tasks:\n  - {id: T-001, title: Mine, status: done}\n", encoding="utf-8")
         self.assertEqual(tool("setup.py", self.root)[0], 0)
         self.assertIn("Mine", reg.read_text(encoding="utf-8"))
 
@@ -111,7 +111,7 @@ class Setup(unittest.TestCase):
 
     def test_failing_view_render_exits_1_with_errors(self):
         (self.root / "pmo/registers").mkdir(parents=True)
-        (self.root / "pmo/registers/tasks.yaml").write_text("tasks:\n  - {id: T-1, title: x, bogus_field: 1}\n", encoding="utf-8")
+        (self.root / "pmo/registers/tasks.yaml").write_text("tasks:\n  - {id: T-001, title: x, bogus_field: 1}\n", encoding="utf-8")
         code, out, _ = tool("setup.py", self.root)
         self.assertEqual(code, 1)
         self.assertIn("ERROR", out)
@@ -209,9 +209,9 @@ class Setup(unittest.TestCase):
         cfg = self.root / "pmo/config.yaml"
         for text, expect, want in (
             ("schema_version: 0\n", "a migration is due", 0),
-            ("schema_version: abc\n", "schema_version is current", 0),  # not an int counts as 1
-            ("- a list\n", "schema_version is current", 0),  # not a mapping counts as 1
-            ("", "schema_version is current", 0),
+            ("schema_version: abc\n", "a migration is due", 0),  # not an int counts as 1
+            ("- a list\n", "a migration is due", 0),  # not a mapping counts as 1
+            ("", "a migration is due", 0),  # no key counts as 1
             (f"schema_version: {pc.SCHEMA_VERSION}\n", "schema_version is current", 0),
             (f"schema_version: {pc.SCHEMA_VERSION + 1}\n", "out of date", 2),
         ):

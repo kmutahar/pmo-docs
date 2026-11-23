@@ -44,10 +44,10 @@ cd "$TRY/scripts-acme"; run() { echo "\$ $*"; "$@" 2>&1; echo "[exit $?]"; echo;
 T=pmo/registers/tasks.yaml; R="pmo/documents/2026-03 - Status report.md"
 {
 echo "## 1"; run python3 "$SKILL/scripts/render_views.py" --check
-echo "## 2"; sed -i 's/\(id: T-2,.*\)status: not-started/\1status: done/' $T; run python3 "$SKILL/scripts/render_views.py" --check
+echo "## 2"; sed -i 's/\(id: T-002,.*\)status: not-started/\1status: done/' $T; run python3 "$SKILL/scripts/render_views.py" --check
 run python3 "$SKILL/scripts/render_views.py"; run python3 "$SKILL/scripts/render_views.py" --check
-sed -i 's/\(id: T-2,.*\)status: done/\1status: bogus/' $T; run python3 "$SKILL/scripts/render_views.py" --check
-sed -i 's/\(id: T-2,.*\)status: bogus/\1status: not-started/' $T; run python3 "$SKILL/scripts/render_views.py"
+sed -i 's/\(id: T-002,.*\)status: done/\1status: bogus/' $T; run python3 "$SKILL/scripts/render_views.py" --check
+sed -i 's/\(id: T-002,.*\)status: bogus/\1status: not-started/' $T; run python3 "$SKILL/scripts/render_views.py"
 echo "## 3"; run python3 "$SKILL/scripts/overdue.py" --as-of 2026-03-15
 echo "## 4"; run python3 "$SKILL/scripts/where.py" status-report 2026-03 --hashes
 echo "## 5"; run python3 "$SKILL/scripts/structure_check.py"
@@ -70,10 +70,10 @@ cd "$TRY/acme" && claude --debug-file "$LOG/session.log"
 ```
 Sign in with `/login` if asked. Type these one at a time and read each answer before the next.
 
-1. `Treat 2026-03-15 as today. mark T-1 done`
+1. `Treat 2026-03-15 as today. mark T-001 done`
    Expect: the skill fires and asks for QA or test evidence. No file changes.
 2. `QA passed, it was tested on staging`
-   Expect: only the T-1 line changes, to `status: done` and `done_on: 2026-03-15`. The views are rendered with `render_views.py`, never edited by hand.
+   Expect: only the T-001 line changes, to `status: done` and `done_on: 2026-03-15`. The views are rendered with `render_views.py`, never edited by hand.
 3. `weekly-status for the week of 2026-03-09`
    Expect: a new draft weekly status, with numbers from the registers.
    It may first ask which roster person you are: answer `sam` (it writes `pmo/.me`, which `pmo/.gitignore` hides from git).

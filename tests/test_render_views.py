@@ -47,15 +47,15 @@ class RenderViews(unittest.TestCase):
 
     def test_origin_is_accepted_on_every_register(self):
         entries = {
-            "tasks": "{id: T-90, title: x, status: not-started, origin: proposed}",
-            "actions": "{id: ACT-90, text: x, status: open, origin: proposed}",
-            "decisions": "{id: DEC-90, title: x, status: proposed, origin: proposed}",
-            "changes": "{id: CR-90, title: x, status: proposed, origin: proposed}",
-            "meetings": "{id: MTG-90, title: x, origin: proposed}",
-            "milestones": "{id: M-90, title: x, status: not-started, origin: proposed}",
-            "dependencies": "{id: D-90, text: x, origin: proposed}",
-            "teams": "{id: TM-90, heading: x, origin: proposed}",
-            "priorities": "{id: P-90, title: x, status: not-started, origin: proposed}",
+            "tasks": "{id: T-090, title: x, status: not-started, origin: proposed}",
+            "actions": "{id: ACT-090, text: x, status: open, origin: proposed}",
+            "decisions": "{id: DEC-090, title: x, status: proposed, origin: proposed}",
+            "changes": "{id: CR-090, title: x, status: proposed, origin: proposed}",
+            "meetings": "{id: MTG-090, title: x, origin: proposed}",
+            "milestones": "{id: M-090, title: x, status: not-started, origin: proposed}",
+            "dependencies": "{id: D-090, text: x, origin: proposed}",
+            "teams": "{id: TM-090, heading: x, origin: proposed}",
+            "priorities": "{id: P-090, title: x, status: not-started, origin: proposed}",
         }
         for name, line in entries.items():
             self.append(name, "  - " + line)
@@ -75,7 +75,7 @@ class RenderViews(unittest.TestCase):
         self.assertFalse((self.views / "teams.md").exists())
 
     def test_bad_enum_date_and_unknown_field(self):
-        self.append("tasks", "  - {id: T-9, title: x, status: finished, due: TBD, colour: red}")
+        self.append("tasks", "  - {id: T-009, title: x, status: finished, due: TBD, colour: red}")
         code, out = run(self.root)
         self.assertEqual(code, 1)
         for part in ("status 'finished'", "due 'TBD'", "unexpected field 'colour'"):
@@ -83,39 +83,39 @@ class RenderViews(unittest.TestCase):
         self.assertFalse((self.views / "tasks.md").exists())  # nothing written on errors
 
     def test_task_priority_must_be_in_priority_order(self):
-        self.append("tasks", "  - {id: T-9, title: x, status: open, priority: urgent}")
+        self.append("tasks", "  - {id: T-009, title: x, status: open, priority: urgent}")
         code, out = run(self.root)
         self.assertEqual(code, 1)
         self.assertIn("priority 'urgent'", out)
 
     def test_impossible_date_is_reported(self):
-        self.append("tasks", "  - {id: T-9, title: x, status: done, due: 2026-02-30}")
+        self.append("tasks", "  - {id: T-009, title: x, status: done, due: 2026-02-30}")
         code, out = run(self.root)
         self.assertEqual(code, 1)
         self.assertIn("tasks.yaml: not readable", out)
 
     def test_priority_and_owner_checks(self):
-        self.append("risks", "  - {id: R-9, title: x, probability: huge, owner: zed, status: open}")
+        self.append("risks", "  - {id: R-009, title: x, probability: huge, owner: zed, status: open}")
         out = run(self.root)[1]
         self.assertIn("probability 'huge'", out)
         self.assertIn("owner 'zed' is not in the roster", out)
 
     def test_owner_that_is_a_map_is_an_error_not_a_crash(self):
-        self.append("risks", "  - {id: R-9, title: x, owner: {name: alice}, status: open}")
+        self.append("risks", "  - {id: R-009, title: x, owner: {name: alice}, status: open}")
         code, out = run(self.root)
         self.assertIn("is not in the roster", out)
         self.assertNotIn("Traceback", out)
 
     def test_duplicate_id_across_registers(self):
-        self.append("actions", "  - {id: T-1, text: x, status: open}")
+        self.append("actions", "  - {id: T-001, text: x, status: open}")
         code, out = run(self.root)
         self.assertEqual(code, 1)
-        self.assertNotIn("duplicate id T-1", out)
-        self.assertIn("actions T-1: id must look like ACT-1", out)
+        self.assertNotIn("duplicate id T-001", out)
+        self.assertIn("actions T-001: id must look like ACT-001", out)
 
     def test_conflict_markers_reported_with_file_and_line_and_exit_1(self):
         (self.reg / "tasks.yaml").write_text(
-            "tasks:\n<<<<<<< HEAD\n  - {id: T-1, title: a}\n=======\n  - {id: T-1, title: b}\n>>>>>>> branch\n",
+            "tasks:\n<<<<<<< HEAD\n  - {id: T-001, title: a}\n=======\n  - {id: T-001, title: b}\n>>>>>>> branch\n",
             encoding="utf-8",
         )
         code, out = run(self.root)
@@ -125,36 +125,36 @@ class RenderViews(unittest.TestCase):
     def test_duplicate_id_reports_all_copies_with_positions_titles_and_hint(self):
         self.append(
             "tasks",
-            '  - {id: T-5, title: "Write release notes", status: not-started}\n  - {id: T-5, title: "Fix login timeout", status: not-started}',
+            '  - {id: T-005, title: "Write release notes", status: not-started}\n  - {id: T-005, title: "Fix login timeout", status: not-started}',
         )
         code, out = run(self.root)
         self.assertEqual(code, 1)
         self.assertIn(
-            'duplicate id T-5: pmo/registers/tasks.yaml:6 "Write release notes", pmo/registers/tasks.yaml:7 "Fix login timeout"; run renumber.py',
+            'duplicate id T-005: pmo/registers/tasks.yaml:6 "Write release notes", pmo/registers/tasks.yaml:7 "Fix login timeout"; run renumber.py',
             out,
         )
 
     def test_duplicate_id_with_three_copies(self):
         self.append(
             "tasks",
-            '  - {id: T-5, title: "First", status: not-started}\n  - {id: T-5, title: "Second", status: not-started}\n  - {id: T-5, title: "Third", status: not-started}',
+            '  - {id: T-005, title: "First", status: not-started}\n  - {id: T-005, title: "Second", status: not-started}\n  - {id: T-005, title: "Third", status: not-started}',
         )
         code, out = run(self.root)
         self.assertEqual(code, 1)
         self.assertIn(
-            'duplicate id T-5: pmo/registers/tasks.yaml:6 "First", pmo/registers/tasks.yaml:7 "Second", pmo/registers/tasks.yaml:8 "Third"; run renumber.py',
+            'duplicate id T-005: pmo/registers/tasks.yaml:6 "First", pmo/registers/tasks.yaml:7 "Second", pmo/registers/tasks.yaml:8 "Third"; run renumber.py',
             out,
         )
 
     def test_duplicate_id_with_text_label(self):
         self.append(
             "actions",
-            '  - {id: ACT-3, text: "First action", status: open}\n  - {id: ACT-3, text: "Second action", status: open}',
+            '  - {id: ACT-003, text: "First action", status: open}\n  - {id: ACT-003, text: "Second action", status: open}',
         )
         code, out = run(self.root)
         self.assertEqual(code, 1)
         self.assertIn(
-            'duplicate id ACT-3: pmo/registers/actions.yaml:4 "First action", pmo/registers/actions.yaml:5 "Second action"; run renumber.py',
+            'duplicate id ACT-003: pmo/registers/actions.yaml:4 "First action", pmo/registers/actions.yaml:5 "Second action"; run renumber.py',
             out,
         )
 
@@ -171,17 +171,17 @@ class RenderViews(unittest.TestCase):
         dec_file = self.reg / "decisions.yaml"
         original = (
             "decisions:\n"
-            "  - {id: DEC-3, title: Third decision, date: 2026-03-01, status: accepted}\n"
-            "  - {id: DEC-1, title: First decision, date: 2026-03-01, status: accepted}\n"
-            "  - {id: DEC-2, title: Second decision, date: 2026-03-01, status: accepted}\n"
+            "  - {id: DEC-003, title: Third decision, date: 2026-03-01, status: accepted}\n"
+            "  - {id: DEC-001, title: First decision, date: 2026-03-01, status: accepted}\n"
+            "  - {id: DEC-002, title: Second decision, date: 2026-03-01, status: accepted}\n"
         )
         dec_file.write_text(original, encoding="utf-8")
         code, out = run(self.root)
         self.assertEqual(code, 0, out)
         view_text = (self.views / "decisions.md").read_text(encoding="utf-8")
-        dec1_idx = view_text.index("DEC-1")
-        dec2_idx = view_text.index("DEC-2")
-        dec3_idx = view_text.index("DEC-3")
+        dec1_idx = view_text.index("DEC-001")
+        dec2_idx = view_text.index("DEC-002")
+        dec3_idx = view_text.index("DEC-003")
         self.assertLess(dec1_idx, dec2_idx)
         self.assertLess(dec2_idx, dec3_idx)
         self.assertEqual(dec_file.read_text(encoding="utf-8"), original)
@@ -190,21 +190,21 @@ class RenderViews(unittest.TestCase):
         tasks_file = self.reg / "tasks.yaml"
         tasks_content = (
             "tasks:\n"
-            "  - {id: T-1, title: Set up staging server, team: platform, group: infra, priority: high, owner: alice, status: in-progress, due: 2026-03-10, period: 2026-03, notes: Overdue on purpose}\n"
-            '  - {id: T-4, title: Fourth, team: web, group: ui, priority: medium, owner: bob, status: not-started, due: 2026-04-01, period: 2026-03}\n'
-            '  - {id: T-2, title: Second, team: web, group: ui, priority: medium, owner: bob, status: not-started, due: 2026-03-25, period: 2026-03}\n'
-            '  - {id: T-3, title: Write API outline, team: platform, group: docs, priority: low, owner: alice, status: done, due: 2026-03-05, period: 2026-03, tests: [TST-1]}\n'
+            "  - {id: T-001, title: Set up staging server, team: platform, group: infra, priority: high, owner: alice, status: in-progress, due: 2026-03-10, period: 2026-03, notes: Overdue on purpose}\n"
+            '  - {id: T-004, title: Fourth, team: web, group: ui, priority: medium, owner: bob, status: not-started, due: 2026-04-01, period: 2026-03}\n'
+            '  - {id: T-002, title: Second, team: web, group: ui, priority: medium, owner: bob, status: not-started, due: 2026-03-25, period: 2026-03}\n'
+            '  - {id: T-003, title: Write API outline, team: platform, group: docs, priority: low, owner: alice, status: done, due: 2026-03-05, period: 2026-03, tests: [TST-001]}\n'
         )
         tasks_file.write_text(tasks_content, encoding="utf-8")
         code, out = run(self.root)
         self.assertEqual(code, 0, out)
         view_text = (self.views / "tasks.md").read_text(encoding="utf-8")
-        t2_idx = view_text.index("T-2")
-        t4_idx = view_text.index("T-4")
+        t2_idx = view_text.index("T-002")
+        t4_idx = view_text.index("T-004")
         self.assertLess(t2_idx, t4_idx)
 
     def test_multi_line_entry_fails(self):
-        self.append("tasks", "  - {id: T-9, title: x,\n      status: done}")
+        self.append("tasks", "  - {id: T-009, title: x,\n      status: done}")
         code, out = run(self.root)
         self.assertEqual(code, 1)
         self.assertIn("one line", out)
@@ -222,12 +222,12 @@ class RenderViews(unittest.TestCase):
         self.assertFalse((self.views / "tasks.md").exists())
         run(self.root)
         self.assertEqual(run(self.root, "--check")[0], 0)
-        self.append("tasks", "  - {id: T-9, title: New, status: not-started}")
+        self.append("tasks", "  - {id: T-009, title: New, status: not-started}")
         self.assertEqual(run(self.root, "--check")[0], 1)
 
     def test_check_fails_on_validation_error(self):
         self.assertEqual(run(self.root)[0], 0)
-        self.append("tasks", "  - {id: T-9, title: x, status: nope}")
+        self.append("tasks", "  - {id: T-009, title: x, status: nope}")
         code, out = run(self.root, "--check")
         self.assertEqual(code, 1)
         self.assertIn("status 'nope' not in", out)
@@ -242,7 +242,7 @@ class RenderViews(unittest.TestCase):
     def test_task_statuses_come_from_the_registers_enum_and_null_priority_order(self):
         (self.root / "pmo/config.yaml").write_text(
             "schema_version: 1\nvocab: {priority_order: null, my_status: [todo, done]}\nregisters: {tasks: {enums: {status: my_status}}}\n", encoding="utf-8")
-        (self.reg / "tasks.yaml").write_text("tasks:\n  - {id: T-1, title: a, status: todo, priority: high}\n", encoding="utf-8")
+        (self.reg / "tasks.yaml").write_text("tasks:\n  - {id: T-001, title: a, status: todo, priority: high}\n", encoding="utf-8")
         (self.reg / "tests.yaml").unlink(missing_ok=True)
         (self.reg / "requirements.yaml").unlink(missing_ok=True)
         (self.reg / "issues.yaml").unlink(missing_ok=True)
@@ -330,20 +330,20 @@ class RenderViews(unittest.TestCase):
     def test_done_on_date_error_and_acme_task_valid(self):
         code, out = run(self.root)
         self.assertEqual(code, 0, out)
-        self.append("tasks", "  - {id: T-99, title: x, status: done, done_on: '2026-13-01'}")
+        self.append("tasks", "  - {id: T-099, title: x, status: done, done_on: '2026-13-01'}")
         code, out = run(self.root)
         self.assertEqual(code, 1)
         self.assertIn("done_on '2026-13-01' is not a YYYY-MM-DD date", out)
 
     def test_unknown_origin_is_an_error(self):
-        self.append("tasks", "  - {id: T-99, title: x, status: not-started, origin: kickoff}")
+        self.append("tasks", "  - {id: T-099, title: x, status: not-started, origin: kickoff}")
         code, out = run(self.root, "--check")
         self.assertEqual(code, 1)
         self.assertIn("origin 'kickoff' not in ['stated', 'proposed']", out)
 
     def test_stated_and_proposed_pass(self):
-        self.append("tasks", "  - {id: T-98, title: x, status: not-started, origin: stated}")
-        self.append("tasks", "  - {id: T-99, title: y, status: not-started, origin: proposed}")
+        self.append("tasks", "  - {id: T-098, title: x, status: not-started, origin: stated}")
+        self.append("tasks", "  - {id: T-099, title: y, status: not-started, origin: proposed}")
         code, out = run(self.root)
         self.assertEqual(code, 0, out)
 
@@ -432,11 +432,11 @@ class LanguageConfig(unittest.TestCase):
         cfg = pc.merge(self.defaults, ok)
         cfg["registers"]["tasks"]["fields"] = cfg["registers"]["tasks"]["fields"] + ["subproject"]
         cfg["registers"]["tasks"]["enums"]["subproject"] = "subprojects"
-        data = {"tasks": [{"id": "T-1", "title": "a", "status": "done", "subproject": "web"},
-                          {"id": "T-2", "title": "b", "status": "done", "subproject": "ios"}]}
+        data = {"tasks": [{"id": "T-001", "title": "a", "status": "done", "subproject": "web"},
+                          {"id": "T-002", "title": "b", "status": "done", "subproject": "ios"}]}
         v = " | ".join(render_views.validate(data, cfg))
         self.assertIn("subproject 'ios' not in ['api', 'web']", v)
-        self.assertNotIn("T-1", v.replace("T-1: status", ""))
+        self.assertNotIn("T-001", v.replace("T-001: status", ""))
 
     def test_subprojects_take_a_name_and_enums_can_add_extra_values(self):
         cfg = pc.merge(self.defaults, {"subprojects": {"api": {"name": "API"}, "web": {}}})
@@ -445,8 +445,8 @@ class LanguageConfig(unittest.TestCase):
         cfg["registers"]["tasks"]["fields"] = cfg["registers"]["tasks"]["fields"] + ["subproject"]
         cfg["registers"]["tasks"]["enums"]["subproject"] = {"from": "subprojects", "extra": ["shared"]}
         self.assertEqual(pc.config_type_errors(cfg), [])
-        data = {"tasks": [{"id": "T-1", "title": "a", "status": "done", "subproject": s} for s in ("web", "shared", "ios")]}
-        self.assertEqual([e for e in render_views.validate(data, cfg) if "subproject" in e], ["tasks T-1: subproject 'ios' not in ['api', 'web', 'shared']"])
+        data = {"tasks": [{"id": "T-001", "title": "a", "status": "done", "subproject": s} for s in ("web", "shared", "ios")]}
+        self.assertEqual([e for e in render_views.validate(data, cfg) if "subproject" in e], ["tasks T-001: subproject 'ios' not in ['api', 'web', 'shared']"])
         for bad in ({"from": 1}, {"extra": ["x"]}, {"from": "subprojects", "extra": "x"}, {"from": "subprojects", "more": 1}):
             cfg["registers"]["tasks"]["enums"]["subproject"] = bad
             self.assertIn("registers.tasks.enums must be a map of text or of {from: text, extra: [text, ...]}", pc.config_type_errors(cfg), bad)
@@ -492,7 +492,7 @@ class Credentials(unittest.TestCase):
         shutil.rmtree(self.root.parent)
 
     def check_secret(self, secret):
-        data = {"tasks": [{"id": "T-1", "title": "x", "status": "not-started", "notes": secret}]}
+        data = {"tasks": [{"id": "T-001", "title": "x", "status": "not-started", "notes": secret}]}
         return render_views.validate(data, self.cfg)
 
     def test_pattern_private_key_header(self):
@@ -537,27 +537,27 @@ class Credentials(unittest.TestCase):
 
     def test_found_in_any_field(self):
         token = "gh" + "p_" + "x" * 25
-        d1 = {"tasks": [{"id": "T-1", "title": "t", "status": "not-started", "notes": token}]}
+        d1 = {"tasks": [{"id": "T-001", "title": "t", "status": "not-started", "notes": token}]}
         errs1 = render_views.validate(d1, self.cfg)
         self.assertTrue(any("notes looks like a credential" in e for e in errs1))
 
-        d2 = {"tasks": [{"id": "T-1", "title": "t", "status": "not-started", "x_extra": token}]}
+        d2 = {"tasks": [{"id": "T-001", "title": "t", "status": "not-started", "x_extra": token}]}
         errs2 = render_views.validate(d2, self.cfg)
         self.assertTrue(any("x_extra looks like a credential" in e for e in errs2))
 
-        d3 = {"tasks": [{"id": "T-1", "title": "t", "status": "not-started", "notes": ["keep", token]}]}
+        d3 = {"tasks": [{"id": "T-001", "title": "t", "status": "not-started", "notes": ["keep", token]}]}
         errs3 = render_views.validate(d3, self.cfg)
         self.assertTrue(any("notes looks like a credential" in e for e in errs3))
 
     def test_message_never_repeats_the_secret(self):
         secret = "s" + "k-" + "supersecretstring1234567890"
-        data = {"tasks": [{"id": "T-42", "title": "t", "status": "not-started", "notes": secret}]}
+        data = {"tasks": [{"id": "T-042", "title": "t", "status": "not-started", "notes": secret}]}
         errs = render_views.validate(data, self.cfg)
         cred_errs = [e for e in errs if "looks like a credential" in e]
         self.assertTrue(cred_errs)
         for e in cred_errs:
             self.assertNotIn(secret, e)
-            self.assertIn("tasks T-42", e)
+            self.assertIn("tasks T-042", e)
             self.assertIn("notes", e)
 
     def test_ordinary_text_is_not_flagged(self):
@@ -572,7 +572,7 @@ class Credentials(unittest.TestCase):
             "Secret: rotated on Friday",
         ]
         for phrase in phrases:
-            data = {"tasks": [{"id": "T-1", "title": phrase, "status": "not-started", "notes": phrase}]}
+            data = {"tasks": [{"id": "T-001", "title": phrase, "status": "not-started", "notes": phrase}]}
             errs = render_views.validate(data, self.cfg)
             cred_errs = [e for e in errs if "looks like a credential" in e]
             self.assertEqual(cred_errs, [], f"flagged ordinary text: {phrase}")
@@ -584,7 +584,7 @@ class Credentials(unittest.TestCase):
         secret = "gh" + "p_" + "z" * 30
         task_file = self.root / "pmo/registers/tasks.yaml"
         with open(task_file, "a", encoding="utf-8") as f:
-            f.write(f'  - {{id: T-99, title: leak, status: not-started, notes: "{secret}"}}\n')
+            f.write(f'  - {{id: T-099, title: leak, status: not-started, notes: "{secret}"}}\n')
         code, out = run(self.root)
         self.assertEqual(code, 1)
         self.assertIn("looks like a credential", out)
@@ -647,20 +647,20 @@ class RegisterLinks(unittest.TestCase):
         code, out = run(self.root, "--check")
         self.assertEqual(code, 0, out)
 
-        issue_line = "  - {id: I-99, title: Bad task ref, description: none, severity: low, owner: bob, status: open, origin: stated, raised: 2026-03-10, resolved: null, related_tasks: [T-99]}"
+        issue_line = "  - {id: I-099, title: Bad task ref, description: none, severity: low, owner: bob, status: open, origin: stated, raised: 2026-03-10, resolved: null, related_tasks: [T-099]}"
         self.append("issues", issue_line)
         code, out = run(self.root)
         self.assertEqual(code, 1)
-        self.assertIn("related_tasks 'T-99' is not an id in tasks", out)
+        self.assertIn("related_tasks 'T-099' is not an id in tasks", out)
 
         issues_path = self.reg / "issues.yaml"
         lines = issues_path.read_text(encoding="utf-8").splitlines()
-        lines[-1] = "  - {id: I-99, title: Empty task ref, description: none, severity: low, owner: bob, status: open, origin: stated, raised: 2026-03-10, resolved: null, related_tasks: []}"
+        lines[-1] = "  - {id: I-099, title: Empty task ref, description: none, severity: low, owner: bob, status: open, origin: stated, raised: 2026-03-10, resolved: null, related_tasks: []}"
         issues_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
         code, out = run(self.root)
         self.assertEqual(code, 0, out)
 
-        lines[-1] = "  - {id: I-99, title: Null task ref, description: none, severity: low, owner: bob, status: open, origin: stated, raised: 2026-03-10, resolved: null, related_tasks: null}"
+        lines[-1] = "  - {id: I-099, title: Null task ref, description: none, severity: low, owner: bob, status: open, origin: stated, raised: 2026-03-10, resolved: null, related_tasks: null}"
         issues_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
         code, out = run(self.root)
         self.assertEqual(code, 0, out)
@@ -687,18 +687,18 @@ class RegisterLinks(unittest.TestCase):
         cfg = pc.load_config(self.root)
         fields = [f for f in cfg["registers"]["tasks"]["fields"] if f != "tests"]
         self.write_config({"registers": {"tasks": {"fields": fields}}})
-        lines = (self.reg / "tasks.yaml").read_text(encoding="utf-8").replace(", tests: [TST-1]", "")
+        lines = (self.reg / "tasks.yaml").read_text(encoding="utf-8").replace(", tests: [TST-001]", "")
         (self.reg / "tasks.yaml").write_text(lines, encoding="utf-8")
         code, out = run(self.root)
         self.assertEqual(code, 0, out)
 
     def test_refs_may_list_several_registers(self):
         self.write_config({"registers": {"issues": {"refs": {"related_tasks": ["tasks", "risks"]}}}})
-        issue = "  - {id: I-99, title: Two targets, description: none, severity: low, owner: bob, status: open, origin: stated, raised: 2026-03-10, resolved: null, related_tasks: [%s]}"
-        self.append("issues", issue % "T-1, R-1")
+        issue = "  - {id: I-099, title: Two targets, description: none, severity: low, owner: bob, status: open, origin: stated, raised: 2026-03-10, resolved: null, related_tasks: [%s]}"
+        self.append("issues", issue % "T-001, R-001")
         code, out = run(self.root)
         self.assertEqual(code, 0, out)
-        (self.reg / "issues.yaml").write_text((self.reg / "issues.yaml").read_text(encoding="utf-8").replace("[T-1, R-1]", "[T-1, X-9]"), encoding="utf-8")
+        (self.reg / "issues.yaml").write_text((self.reg / "issues.yaml").read_text(encoding="utf-8").replace("[T-001, R-001]", "[T-001, X-9]"), encoding="utf-8")
         code, out = run(self.root)
         self.assertEqual(code, 1)
         self.assertIn("related_tasks 'X-9' is not an id in tasks, risks; refs can list several registers (refs: {field: [a, b]}) or be turned off with refs: {field: null}", out)
@@ -709,7 +709,7 @@ class RegisterLinks(unittest.TestCase):
 
     def test_refs_field_null_turns_the_check_off(self):
         self.write_config({"registers": {"issues": {"refs": {"related_tasks": None}}}})
-        self.append("issues", "  - {id: I-99, title: Off, description: none, severity: low, owner: bob, status: open, origin: stated, raised: 2026-03-10, resolved: null, related_tasks: [T-999]}")
+        self.append("issues", "  - {id: I-099, title: Off, description: none, severity: low, owner: bob, status: open, origin: stated, raised: 2026-03-10, resolved: null, related_tasks: [T-999]}")
         code, out = run(self.root)
         self.assertEqual(code, 0, out)
 
@@ -725,14 +725,14 @@ class RegisterLinks(unittest.TestCase):
         tasks = self.reg / "tasks.yaml"
         tests = self.reg / "tests.yaml"
         tasks_text, tests_text = tasks.read_text(encoding="utf-8"), tests.read_text(encoding="utf-8")
-        for bad in ("{TST-1}", "[[TST-1]]", "{a: b}"):
-            tasks.write_text(tasks_text.replace("tests: [TST-1]", f"tests: {bad}"), encoding="utf-8")
-            tests.write_text(tests_text.replace("task: T-3", f"task: {bad}"), encoding="utf-8")
+        for bad in ("{TST-001}", "[[TST-001]]", "{a: b}"):
+            tasks.write_text(tasks_text.replace("tests: [TST-001]", f"tests: {bad}"), encoding="utf-8")
+            tests.write_text(tests_text.replace("task: T-003", f"task: {bad}"), encoding="utf-8")
             p = subprocess.run([sys.executable, str(TOOL), "--project", str(self.root)], capture_output=True, text=True, encoding="utf-8")
             self.assertEqual(p.returncode, 1, bad)
             self.assertNotIn("Traceback", p.stderr)
-            self.assertIn("tasks T-3: tests must be an id or a list of ids", p.stdout)
-            self.assertIn("tests TST-1: task must be an id or a list of ids", p.stdout)
+            self.assertIn("tasks T-003: tests must be an id or a list of ids", p.stdout)
+            self.assertIn("tests TST-001: task must be an id or a list of ids", p.stdout)
 
     def test_domain_and_technical_config_errors(self):
         self.write_config({"technical": {"stacks": ["Next.js"]}})

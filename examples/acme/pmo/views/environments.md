@@ -4,5 +4,5 @@
 
 | id | name | kind | location | branch | deploy | variables | owner | status | notes | origin |
 |---|---|---|---|---|---|---|---|---|---|---|
-| ENV-1 | Staging | staging | staging.example.test | develop | Automatic on merge | DATABASE_URL, API_KEY | alice | active |  | stated |
-| ENV-2 | Production | production | portal.example.test | main | Manual release | DATABASE_URL, API_KEY | alice | planned |  | stated |
+| ENV-001 | Staging | staging | staging.example.test | develop | Automatic on merge | DATABASE_URL, API_KEY | alice | active |  | stated |
+| ENV-002 | Production | production | portal.example.test | main | Manual release | DATABASE_URL, API_KEY | alice | planned |  | stated |

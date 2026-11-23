@@ -4,5 +4,5 @@
 
 | id | title | description | kind | priority | source | owner | acceptance | status | related_tasks | origin |
 |---|---|---|---|---|---|---|---|---|---|---|
-| REQ-1 | Users can log in | A user signs in with email and password | functional | high | sam | bob | Valid credentials open the home page | accepted | T-2 | stated |
-| REQ-2 | Pages load fast | The home page loads in under two seconds | quality | medium | sam | alice | Median load time under 2 s on staging | proposed |  | stated |
+| REQ-001 | Users can log in | A user signs in with email and password | functional | high | sam | bob | Valid credentials open the home page | accepted | T-002 | stated |
+| REQ-002 | Pages load fast | The home page loads in under two seconds | quality | medium | sam | alice | Median load time under 2 s on staging | proposed |  | stated |

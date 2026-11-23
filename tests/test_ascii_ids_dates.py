@@ -13,7 +13,7 @@ import pmo_common as pc  # noqa: E402
 import render_views  # noqa: E402
 
 ARABIC_DATE = "٢٠٢٦-٠٣-٠١"  # 2026-03-01 in Arabic-Indic digits
-ARABIC_ID = "T-١٢"                                          # T-12
+ARABIC_ID = "T-١٢"                                          # T-012
 
 
 class AsciiOnly(unittest.TestCase):
@@ -31,9 +31,9 @@ class AsciiOnly(unittest.TestCase):
         self.assertFalse(render_views.real_date(datetime.datetime(2026, 3, 1, 9, 30)))
 
     def test_id_numbers_ignore_other_digits(self):
-        self.assertEqual(pc.id_num("T-12"), 12)
+        self.assertEqual(pc.id_num("T-012"), 12)
         self.assertEqual(pc.id_num(ARABIC_ID), 0)
-        self.assertEqual(generate.id_number("T-12"), 12)
+        self.assertEqual(generate.id_number("T-012"), 12)
         self.assertEqual(generate.id_number(ARABIC_ID), 0)
 
 

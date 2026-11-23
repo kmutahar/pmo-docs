@@ -4,5 +4,5 @@
 
 | id | resource | action | admin | editor | viewer | condition | source | notes | origin |
 |---|---|---|---|---|---|---|---|---|---|
-| PERM-1 | Profile | view own | x | own profile only | own profile only |  | src/auth/profile.js |  | stated |
-| PERM-2 | Profile | reset password | x |  |  |  | src/auth/admin.js |  | stated |
+| PERM-001 | Profile | view own | x | own profile only | own profile only |  | src/auth/profile.js |  | stated |
+| PERM-002 | Profile | reset password | x |  |  |  | src/auth/admin.js |  | stated |

@@ -4,5 +4,5 @@
 
 | id | item | low | medium | high | note | origin |
 |---|---|---|---|---|---|---|
-| B-1 | Hosting | 100 | 150 | 250 | Per month | stated |
-| B-2 | Payment vendor fee | 0 | 50 | 120 | Per month | stated |
+| B-001 | Hosting | 100 | 150 | 250 | Per month | stated |
+| B-002 | Payment vendor fee | 0 | 50 | 120 | Per month | stated |

@@ -1,3 +1,3 @@
 dependencies:
-  - {id: D-1, type: internal, from: T-2, to: T-1, text: Login page needs staging, status: open}
-  - {id: D-2, type: external, from: T-4, to: vendor, text: Contract terms from vendor, status: open}
+  - {id: D-001, type: internal, from: T-002, to: T-001, text: Login page needs staging, status: open}
+  - {id: D-002, type: external, from: T-004, to: vendor, text: Contract terms from vendor, status: open}

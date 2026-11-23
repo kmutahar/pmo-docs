@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Copies the fake Acme project (examples/acme) into the working folder, removes the due date of task T-2
+# Copies the fake Acme project (examples/acme) into the working folder, removes the due date of task T-002
 # in the copy (never in examples/acme) and updates pmo/views/tasks.md so it matches. No Python, no network.
 # Needs `claude plugin eval --scaffold`. Uses only the repo's fixture, no real data.
 set -euo pipefail
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cp -R "$here/../../examples/acme/." .
-sed -i.bak '/id: T-2,/s/ due: 2026-03-25,//' pmo/registers/tasks.yaml
+sed -i.bak '/id: T-002,/s/ due: 2026-03-25,//' pmo/registers/tasks.yaml
 rm -f pmo/registers/tasks.yaml.bak
-sed -i.bak '/^| T-2 |/s/| 2026-03-25 |$/|  |/' pmo/views/tasks.md
+sed -i.bak '/^| T-002 |/s/| 2026-03-25 |$/|  |/' pmo/views/tasks.md
 rm -f pmo/views/tasks.md.bak

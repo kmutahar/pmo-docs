@@ -28,12 +28,12 @@ PER_SUB_CFG = '\nsubprojects:\n  api: {}\n  web: {}\nregisters:\n  decisions:\n 
 
 
 def make_per_subproject(root):
-    """Make decision-log one document per sub-project; DEC-1 is tagged api, DEC-2 web."""
+    """Make decision-log one document per sub-project; DEC-001 is tagged api, DEC-002 web."""
     cfg_file = root / "pmo/config.yaml"
     cfg_file.write_text(cfg_file.read_text(encoding="utf-8") + PER_SUB_CFG, encoding="utf-8")
     reg = root / "pmo/registers/decisions.yaml"
     lines = reg.read_text(encoding="utf-8").splitlines()
-    lines = [l[:-1] + ", subproject: " + ("api" if "DEC-1," in l else "web") + "}" if l.lstrip().startswith("- {id:") else l for l in lines]
+    lines = [l[:-1] + ", subproject: " + ("api" if "DEC-001," in l else "web") + "}" if l.lstrip().startswith("- {id:") else l for l in lines]
     reg.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
@@ -321,8 +321,8 @@ class Where(unittest.TestCase):
         f = fields(out)
         self.assertEqual(code, 0)
         self.assertEqual(f["document"], "pmo/documents/api - Decision log.md")
-        self.assertEqual(f["entries_decisions"], "DEC-1")
-        self.assertEqual(fields(run(self.root, "decision-log", "--subproject", "web")[1])["entries_decisions"], "DEC-2")
+        self.assertEqual(f["entries_decisions"], "DEC-001")
+        self.assertEqual(fields(run(self.root, "decision-log", "--subproject", "web")[1])["entries_decisions"], "DEC-002")
 
     def test_per_subproject_flag_is_checked(self):
         self.assertEqual(run(self.root, "decision-log")[0], 0)  # not per_subproject: no flag needed

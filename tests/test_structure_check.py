@@ -183,7 +183,7 @@ class StructureCheck(unittest.TestCase):
         self.assertIn("HTML comment", self.errs(finished))
 
     def test_duplicate_ids_in_backticks(self):
-        self.assertEqual(sc.duplicate_ids("| ID |\n|---|\n| `DEC-1` |\n| `DEC-1` |\n"), ["DEC-1"])
+        self.assertEqual(sc.duplicate_ids("| ID |\n|---|\n| `DEC-001` |\n| `DEC-001` |\n"), ["DEC-001"])
 
     def test_invalid_template_front_matter_is_an_error(self):
         (self.root / "pmo/templates/roadmap.md").write_text("---\nperiod: {{x}}\n---\n# t\n", encoding="utf-8")

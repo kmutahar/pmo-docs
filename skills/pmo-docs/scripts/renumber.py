@@ -3,17 +3,23 @@
 
 Usage:
     python3 renumber.py [<ID>] [--line FILE:N] [--apply] [--rewrite FILE:N=NEW-ID]... [--keep FILE:N[=OLD-ID]]... [--project ROOT]
+    python3 renumber.py --pad [--yes] [--project ROOT]
 
 Finds duplicate ids in registers, assigns the keeper and next free numbers for the prefix,
 and lists ready-made flags for every reference in registers and draft documents.
 Finished documents are left alone.
 With --apply, rewrites confirmed references, moves changed entries to the end of their list,
 and re-renders views.
-Exit codes: 0 no duplicates or --apply succeeded, 1 dry run found duplicates or unreadable registers,
-2 usage errors or unconfirmed references.
+With --pad, pads every id with fewer digits than project.id_width (T-4 becomes T-004) in registers,
+documents (and their translations), views, snapshots and names files, outside code fences. It prints a summary
+and asks yes or no on a terminal; --yes skips the question, and without a terminal and without --yes it
+stops after the summary (that is the dry run).
+Exit codes: 0 no duplicates, nothing to pad, or --apply or --pad succeeded, 1 dry run found duplicates or unreadable registers,
+2 usage errors, unconfirmed references, or --pad without a yes.
 """
 import argparse
 import contextlib
+import hashlib
 import io
 import re
 import shlex
@@ -229,6 +235,133 @@ def collect_references(root, cfg, data, handled_dups):
     return references_by_id, all_references
 
 
+def pad_files(root, cfg):
+    """Relative paths of the files that can hold ids: registers, documents, views, snapshots and names files."""
+    paths = cfg["paths"]
+    rels = [f"{paths['registers']}/{reg.get('file')}" for reg in cfg.get("registers", {}).values()]
+    for key, pat in (("documents", "*.md"), ("views", "*.md"), ("snapshots", "*.json")):
+        base = Path(root) / paths[key]
+        if base.is_dir():
+            rels += [p.relative_to(root).as_posix() for p in sorted(base.rglob(pat)) if p.is_file()]
+    for block in (cfg.get("languages") or {}).values():
+        names = block.get("names") if isinstance(block, dict) else None
+        if isinstance(names, str):
+            rels.append(names)
+    return [r for r in dict.fromkeys(rels) if (Path(root) / r).is_file() and not pc.outside(root, r)]
+
+
+def pad_text(text, rx, width, fenced):
+    """(new text, number of ids padded). With fenced, lines between ``` or ~~~ fences are left as they are."""
+    count, out, fence = 0, [], None
+
+    def sub(m):
+        nonlocal count
+        count += 1
+        return f"{m[1]}-{m[2].zfill(width)}"
+
+    for line in text.split("\n"):
+        marker = re.match(r"\s*(```|~~~)", line) if fenced else None
+        if marker and fence in (None, marker[1]):
+            fence = None if fence else marker[1]
+        elif not fence:
+            line = rx.sub(sub, line)
+        out.append(line)
+    return "\n".join(out), count
+
+
+def refresh_hashes(root, cfg, pending):
+    """Moves the recorded hashes of documents that were current (source_hashes of registers, source_hash of a translation) to the values after the rewrite, so padding does not make them stale. Adds changed documents to pending."""
+    sha = lambda t: hashlib.sha256(t.encode("utf-8").replace(b"\r\n", b"\n")).hexdigest()[:8]  # noqa: E731
+    read = lambda rel: open(Path(root) / rel, encoding="utf-8", newline="").read()  # noqa: E731
+    body = lambda t: pc.body_hash(t.replace("\r\n", "\n"))  # noqa: E731
+    reg_dir, docs = cfg["paths"]["registers"], cfg["paths"]["documents"]
+    moved = {}  # register name -> (old hash, new hash)
+    for name, reg in cfg["registers"].items():
+        rel = f"{reg_dir}/{reg.get('file')}"
+        if rel in pending:
+            moved[name] = (sha(read(rel)), sha(pending[rel]))
+    doc_rels = [r for r in pad_files(root, cfg) if r.startswith(docs + "/") and r.endswith(".md")]
+    old = {r: read(r) for r in doc_rels}
+    new = {r: pending.get(r, old[r]) for r in doc_rels}
+    for rel in doc_rels:
+        fm, _ = pc.split_front_matter(pc.read(Path(root) / rel))
+        fm = fm or {}
+        text = new[rel]
+        hashes = fm.get("source_hashes")
+        for reg, h in (hashes.items() if isinstance(hashes, dict) else ()):
+            if reg in moved and moved[reg][0] == h:
+                text = re.sub(r'^(\s+' + re.escape(reg) + r':\s*"?)' + re.escape(h), lambda m, reg=reg: m[1] + moved[reg][1], text, count=1, flags=re.M)
+        orig = f"{docs}/{fm.get('translation_of')}"
+        if orig in old and fm.get("source_hash") == body(old[orig]):
+            text = text.replace(f'"{fm["source_hash"]}"', f'"{body(new[orig])}"', 1)
+        if text != new[rel]:
+            pending[rel] = text
+
+
+def pad_main(args, cfg):
+    width = pc.id_width(cfg)
+    if width < 2:
+        print(f"project.id_width is {width}: no id is too short, nothing to do")
+        return 0
+    prefixes = "|".join(re.escape(p) for p in pc.register_prefixes(cfg))
+    rx = re.compile(r"(?<![A-Za-z0-9])(" + prefixes + r")-([0-9]{1,%d})(?![A-Za-z0-9])" % (width - 1))
+    pending, counts = {}, {}
+    for rel in pad_files(args.project, cfg):
+        try:
+            text = open(Path(args.project) / rel, encoding="utf-8", newline="").read()
+        except UnicodeDecodeError:
+            print(f"skipped (not UTF-8 text): {rel}")
+            continue
+        new, n = pad_text(text, rx, width, fenced=rel.endswith(".md"))
+        if n:
+            pending[rel], counts[rel] = new, n
+    if not pending:
+        print(f"no ids to pad (width {width})")
+        return 0
+    reg_dir = cfg["paths"]["registers"] + "/"
+    others = {"documents": [0, 0], "views": [0, 0], "snapshots": [0, 0], "other files": [0, 0]}
+    print(f"ids with fewer than {width} digits, to be padded to {width}:")
+    for rel, n in counts.items():
+        if rel.startswith(reg_dir):
+            print(f"  register {rel[len(reg_dir):]}: {n}")
+            continue
+        key = next((k for k in ("documents", "views", "snapshots") if rel.startswith(cfg["paths"][k] + "/")), "other files")
+        others[key][0] += 1
+        others[key][1] += n
+    for key, (files, n) in others.items():
+        if files:
+            print(f"  {key}: {n} in {files} files")
+    print("recorded source hashes of documents that were current are moved along, so they stay current")
+    if not args.yes:
+        if not sys.stdin.isatty():
+            print("ERROR no terminal to ask on; run with --yes to pad these ids", file=sys.stderr)
+            return 2
+        if input("Pad these ids and write the files? [y/N] ").strip().lower() not in ("y", "yes"):
+            print("nothing changed")
+            return 2
+    refresh_hashes(args.project, cfg, pending)
+    for rel in pending:
+        pc.safe_write(args.project, rel, pending[rel])
+    print(f"padded {sum(counts.values())} ids in {len(counts)} files")
+    return render_main(args.project)[0]
+
+
+def render_main(project):
+    """(exit code, output) of render_views.main, its output also printed."""
+    out = io.StringIO()
+    try:
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(out):
+            rv_code = render_views.main(["--project", str(project)])
+    except SystemExit as e:
+        rv_code = e.code or 0
+        if isinstance(rv_code, str):
+            out.write(rv_code + "\n")
+            rv_code = 1
+    if out.getvalue():
+        sys.stdout.write(out.getvalue())
+    return rv_code, out.getvalue()
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     pc.add_project_arg(ap)
@@ -236,6 +369,8 @@ def main(argv=None):
     ap.add_argument("--line", default=None, metavar="FILE:N", help="line of the copy that keeps the id")
     ap.add_argument("--apply", action="store_true", help="apply the changes")
     ap.add_argument("--rewrite", action="append", default=[], metavar="FILE:N=NEW-ID", help="rewrite reference to new id")
+    ap.add_argument("--pad", action="store_true", help="pad every id to project.id_width digits (T-4 becomes T-004)")
+    ap.add_argument("--yes", action="store_true", help="with --pad: do not ask")
     ap.add_argument("--keep", action="append", default=[], metavar="FILE:N[=OLD-ID]", help="keep reference as old id (name OLD-ID if line mentions several)")
 
     args = ap.parse_args(argv)
@@ -248,6 +383,13 @@ def main(argv=None):
         for err in bad:
             print("ERROR", err)
         return 2
+
+    if args.pad:
+        if args.id or args.line or args.apply or args.rewrite or args.keep:
+            ap.error("--pad takes only --yes and --project")
+        return pad_main(args, cfg)
+    if args.yes:
+        ap.error("--yes goes with --pad")
 
     data, read_errors = render_views.read_registers(args.project, cfg)
     if read_errors:
@@ -302,7 +444,7 @@ def main(argv=None):
         reg_name = dinfo["reg_name"]
         curr = max(next_num.get(reg_name, 0), dinfo["max_num"])
         prefix = dinfo["prefix"]
-        width = len(d_id.rsplit("-", 1)[1]) if "-" in d_id else 1
+        width = max(len(d_id.rsplit("-", 1)[1]) if "-" in d_id else 1, pc.id_width(cfg))
         for c in moving:
             curr += 1
             num_str = str(curr).zfill(width)
@@ -571,18 +713,7 @@ def main(argv=None):
     for rel_file, lineno, line in all_changed_lines:
         print(f"changed: {rel_file}:{lineno}  {line.strip()}")
 
-    out = io.StringIO()
-    try:
-        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(out):
-            rv_code = render_views.main(["--project", str(args.project)])
-    except SystemExit as e:
-        rv_code = e.code or 0
-        if isinstance(rv_code, str):
-            out.write(rv_code + "\n")
-            rv_code = 1
-    rv_out = out.getvalue()
-    if rv_out:
-        sys.stdout.write(rv_out)
+    rv_code, rv_out = render_main(args.project)
 
     if rv_code != 0:
         print("registers were changed and views were not written")

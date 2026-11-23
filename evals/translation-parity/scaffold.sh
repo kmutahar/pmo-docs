@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Copies the fake Acme project (examples/acme) into the working folder, keeps its finished decision log, drops its Arabic translation, enables
 # the invented language xx and adds an xx translation with two deliberate faults: the Summary table has one
-# row fewer and the date of DEC-1 differs by one digit. The source_hash is the body hash of the original
+# row fewer and the date of DEC-001 differs by one digit. The source_hash is the body hash of the original
 # (tests/test_eval_translation_parity.py fails when an Acme change moves it). No Python, no network.
 # Needs `claude plugin eval --scaffold`. Uses only the repo's fixture, no real data.
 set -euo pipefail
@@ -29,7 +29,7 @@ last_updated: '2026-03-15'
 lang: xx
 dir: rtl
 translation_of: Decision log.md
-source_hash: "f1bea050"
+source_hash: "01a627b2"
 ---
 
 # Decisioba log - Acme Portal
@@ -37,18 +37,18 @@ source_hash: "f1bea050"
 ## Sumariox
 | ID | Decisioba | Statux | Datox | Decidat per |
 |---|---|---|---|---|
-| DEC-1 | Livrar omni die jovis | acceptato | 2026-02-12 | sam |
+| DEC-001 | Livrar omni die jovis | acceptato | 2026-02-12 | sam |
 
 ## Decisiobaes
-### DEC-2 - Hostar sur nubia
+### DEC-002 - Hostar sur nubia
 - **Statux:** proposito - **Datox:** 2026-03-09 - **Decidat per:** sam
 - **Contexto:** Besoing hospitatione barata
 - **Decisioba:** Usar computum nubis
 - **Optiones consideratas:** partito, proprio
 - **Consequentias:** Costo minor
-- **Supersedex et relato:** DEC-1
+- **Supersedex et relato:** DEC-001
 
-### DEC-1 - Usar livrationes hebdomadales
+### DEC-001 - Usar livrationes hebdomadales
 - **Statux:** acceptato - **Datox:** 2026-02-13 - **Decidat per:** sam
 - **Contexto:** Equipa vol livraison constante
 - **Decisioba:** Livrar omni die jovis

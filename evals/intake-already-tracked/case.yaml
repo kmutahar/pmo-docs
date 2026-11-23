@@ -1,5 +1,5 @@
 schema_version: "1.0"
 name: intake-already-tracked
-description: "Intake from a chat export with one request already tracked (T-2), one message about an existing task (T-4, status only proposed) and one new task: nothing is written before the user answers."
+description: "Intake from a chat export with one request already tracked (T-002), one message about an existing task (T-004, status only proposed) and one new task: nothing is written before the user answers."
 context:
   scaffold_script: scaffold.sh

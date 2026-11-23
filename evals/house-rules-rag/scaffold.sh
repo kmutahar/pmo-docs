@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Copies the fake Acme project (examples/acme) into the working folder, removes the March status report (so it can
 # be drafted again) and adds pmo/house-rules.md with a RAG rule that replaces the default one. As of 2026-03-15 the
-# default rule gives red (task T-1 is overdue); this rule gives amber (a task is overdue, no milestone is: M-1 is due
+# default rule gives red (task T-001 is overdue); this rule gives amber (a task is overdue, no milestone is: M-001 is due
 # 2026-03-20).
 # Needs `claude plugin eval --scaffold`. Uses only the repo's fixture, no real data.
 set -euo pipefail

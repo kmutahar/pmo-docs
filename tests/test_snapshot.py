@@ -30,8 +30,8 @@ class Snapshot(unittest.TestCase):
         self.assertEqual((code, out.strip()), (0, "pmo/snapshots/2026-03-01.json"))
         text = (self.root / out.strip()).read_text(encoding="utf-8")
         snap = json.loads(text)
-        self.assertEqual(snap["entries"]["tasks"]["T-1"], "in-progress")
-        self.assertEqual(snap["entries"]["tasks"]["T-3"], "done")
+        self.assertEqual(snap["entries"]["tasks"]["T-001"], "in-progress")
+        self.assertEqual(snap["entries"]["tasks"]["T-003"], "done")
         self.assertEqual(set(snap["entries"]), {"tasks", "risks", "issues", "actions"})
         self.assertIn("tasks", snap["hashes"])
         self.assertEqual(len(snap["hashes"]["tasks"]), 8)
@@ -64,17 +64,17 @@ class Snapshot(unittest.TestCase):
     def test_delta_lists_changed_added_and_removed(self):
         run("snapshot.py", self.root, "--as-of", "2026-03-01")
         text = self.tasks.read_text(encoding="utf-8")
-        text = text.replace("owner: alice, status: in-progress", "owner: alice, status: done")  # T-1 changes
-        text = "\n".join(l for l in text.splitlines() if "{id: T-2," not in l) + "\n"  # T-2 removed
-        text += "  - {id: T-9, title: New, owner: bob, status: not-started}\n"  # T-9 added
+        text = text.replace("owner: alice, status: in-progress", "owner: alice, status: done")  # T-001 changes
+        text = "\n".join(l for l in text.splitlines() if "{id: T-002," not in l) + "\n"  # T-002 removed
+        text += "  - {id: T-009, title: New, owner: bob, status: not-started}\n"  # T-009 added
         self.tasks.write_text(text, encoding="utf-8")
         code, out, _ = run("where.py", self.root, "--delta", "--as-of", "2026-03-08")
         self.assertEqual(code, 0)
         self.assertEqual(out.splitlines(), [
             "delta: since 2026-03-01",
-            "changed_tasks: T-1 in-progress->done",
-            "added_tasks: T-9 not-started",
-            "removed_tasks: T-2 not-started",
+            "changed_tasks: T-001 in-progress->done",
+            "added_tasks: T-009 not-started",
+            "removed_tasks: T-002 not-started",
         ])
 
     def test_delta_uses_the_latest_earlier_snapshot(self):

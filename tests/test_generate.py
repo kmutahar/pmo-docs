@@ -55,8 +55,8 @@ class TestGenerate(unittest.TestCase):
         self.assertEqual(tool("generate.py", self.root, "decision-log", "--subproject", "ios")[0], 2)
         code, out, _ = tool("generate.py", self.root, "decision-log", "--subproject", "api", "--stdout")
         self.assertEqual(code, 0)
-        self.assertIn("DEC-1", out)
-        self.assertNotIn("DEC-2", out)
+        self.assertIn("DEC-001", out)
+        self.assertNotIn("DEC-002", out)
         code, out, _ = tool("generate.py", self.root, "decision-log", "--subproject", "web")
         self.assertEqual((code, out.strip()), (0, "wrote pmo/documents/web - Decision log.md"))
 
@@ -68,8 +68,8 @@ class TestGenerate(unittest.TestCase):
         self.assertEqual(code, 0, err)
         self.assertTrue(doc.exists())
         text = doc.read_text(encoding="utf-8")
-        self.assertIn("### DEC-1 - Use weekly releases", text)
-        self.assertIn("### DEC-2 - Host on shared cloud", text)
+        self.assertIn("### DEC-001 - Use weekly releases", text)
+        self.assertIn("### DEC-002 - Host on shared cloud", text)
         self.assertIn("Sam Example", text)
         self.assertNotIn("decided_by: sam", text)
         # Check summary table has 2 rows
@@ -153,7 +153,7 @@ class TestGenerate(unittest.TestCase):
         if doc.exists():
             doc.unlink()
         dec_file = self.root / "pmo/registers/decisions.yaml"
-        dec_file.write_text("decisions:\n  - {id: DEC-1, title: a}\n  - {id: DEC-1, title: b}\n", encoding="utf-8")
+        dec_file.write_text("decisions:\n  - {id: DEC-001, title: a}\n  - {id: DEC-001, title: b}\n", encoding="utf-8")
         code, out, err = tool("generate.py", self.root, "decision-log")
         self.assertEqual(code, 1)
         self.assertIn("duplicate id", err)
@@ -196,7 +196,7 @@ class TestGenerate(unittest.TestCase):
         # Add a task with unknown team in temp copy
         tasks_file = self.root / "pmo/registers/tasks.yaml"
         tasks_text = tasks_file.read_text(encoding="utf-8")
-        tasks_file.write_text(tasks_text + "  - {id: T-99, title: Orphan task, team: unknown, status: not-started, due: 2026-03-20, period: 2026-03}\n", encoding="utf-8")
+        tasks_file.write_text(tasks_text + "  - {id: T-099, title: Orphan task, team: unknown, status: not-started, due: 2026-03-20, period: 2026-03}\n", encoding="utf-8")
 
         code, out, err = tool("generate.py", self.root, "team-checklist", "2026-03", "--as-of", "2026-03-15", "--stdout")
         self.assertEqual(code, 0, err)
@@ -210,12 +210,12 @@ class TestGenerate(unittest.TestCase):
         self.assertIn("**docs**", out)
         self.assertIn("**infra**", out)
 
-        # T-3 line starts with - [x]
-        self.assertTrue(re.search(r"-\s*\[x\].*`T-3`", out))
+        # T-003 line starts with - [x]
+        self.assertTrue(re.search(r"-\s*\[x\].*`T-003`", out))
 
         # Check unknown team appears under ## No team - not set
         self.assertIn("## No team - not set", out)
-        self.assertGreater(out.index("`T-99`"), out.index("## No team - not set"))
+        self.assertGreater(out.index("`T-099`"), out.index("## No team - not set"))
 
         # Verify progress counts match Acme's march tasks from register
         cfg = pc.load_config(self.root)
@@ -238,12 +238,12 @@ class TestGenerate(unittest.TestCase):
     def test_team_checklist_week_counts_only_the_week(self):
         tasks_file = self.root / "pmo/registers/tasks.yaml"
         tasks_file.write_text(tasks_file.read_text(encoding="utf-8")
-                              + "  - {id: T-90, title: In week, status: not-started, due: 2026-03-12}\n"
-                              + "  - {id: T-91, title: Later in month, status: not-started, due: 2026-03-30}\n", encoding="utf-8")
+                              + "  - {id: T-090, title: In week, status: not-started, due: 2026-03-12}\n"
+                              + "  - {id: T-091, title: Later in month, status: not-started, due: 2026-03-30}\n", encoding="utf-8")
         code, out, err = tool("generate.py", self.root, "team-checklist", "--week", "--as-of", "2026-03-15", "--stdout")
         self.assertEqual(code, 0, err)
-        self.assertIn("`T-90`", out)
-        self.assertNotIn("`T-91`", out)
+        self.assertIn("`T-090`", out)
+        self.assertNotIn("`T-091`", out)
 
     def test_names_with_quotes_keep_the_front_matter_valid(self):
         cfg_path = self.root / "pmo/config.yaml"
@@ -270,7 +270,7 @@ class TestGenerate(unittest.TestCase):
     def test_project_plan_on_acme(self):
         risks_file = self.root / "pmo/registers/risks.yaml"
         risks_text = risks_file.read_text(encoding="utf-8")
-        risks_file.write_text(risks_text + "  - {id: R-99, title: Fake closed risk, probability: low, impact: low, owner: sam, mitigation: none, status: closed, origin: stated, raised: 2026-02-10, closed: 2026-03-01}\n", encoding="utf-8")
+        risks_file.write_text(risks_text + "  - {id: R-099, title: Fake closed risk, probability: low, impact: low, owner: sam, mitigation: none, status: closed, origin: stated, raised: 2026-02-10, closed: 2026-03-01}\n", encoding="utf-8")
 
         code, out, err = tool("generate.py", self.root, "project-plan", "--as-of", "2026-03-15", "--stdout")
         self.assertEqual(code, 0, err)
@@ -281,14 +281,14 @@ class TestGenerate(unittest.TestCase):
         self.assertIn("Bob Example", out)
 
         # Every Acme goal appears as a ### block
-        self.assertIn("### P-1 - Launch portal beta", out)
-        self.assertIn("### P-2 - Publish user guide", out)
+        self.assertIn("### P-001 - Launch portal beta", out)
+        self.assertIn("### P-002 - Publish user guide", out)
 
         # Open risks only
-        self.assertIn("R-1", out)
+        self.assertIn("R-001", out)
         self.assertIn("Vendor delay", out)
-        self.assertNotIn("R-2", out)
-        self.assertNotIn("R-99", out)
+        self.assertNotIn("R-002", out)
+        self.assertNotIn("R-099", out)
 
         # The change-log row comes from an approved change
         self.assertIn("Drop the export page", out)
@@ -314,7 +314,7 @@ class TestGenerate(unittest.TestCase):
                             encoding="utf-8")
         self.assertNotIn("Progress by sub-project", tool("generate.py", self.root, *args)[1])  # configured, but no task is tagged
         tasks_file = self.root / "pmo/registers/tasks.yaml"
-        tasks_file.write_text(tasks_file.read_text(encoding="utf-8").replace("{id: T-3,", "{id: T-3, subproject: api,").replace("{id: T-4,", "{id: T-4, subproject: web,"), encoding="utf-8")
+        tasks_file.write_text(tasks_file.read_text(encoding="utf-8").replace("{id: T-003,", "{id: T-003, subproject: api,").replace("{id: T-004,", "{id: T-004, subproject: web,"), encoding="utf-8")
         code, out, err = tool("generate.py", self.root, *args)
         self.assertEqual(code, 0, err)
         self.assertRegex(out, r"## Progress by sub-project\n\n\| Sub-project \| Tasks \| Done \| Blocked \|\n\|---\|---\|---\|---\|\n\| api \| 1 \| 1 \| 0 \|\n\| web \| 1 \| 0 \| 1 \|\n\| not set \|")
@@ -325,8 +325,8 @@ class TestGenerate(unittest.TestCase):
         code, out, err = tool("generate.py", self.root, "status-report", "2026-03", "--as-of", "2026-03-15", "--stdout")
         self.assertEqual(code, 0, err)
 
-        # Overall is red with T-1 in reason
-        self.assertRegex(out, r"\*\*Overall:\*\* red - top-priority task T-1 is overdue")
+        # Overall is red with T-001 in reason
+        self.assertRegex(out, r"\*\*Overall:\*\* red - top-priority task T-001 is overdue")
 
         # Priority table has rows high, medium, low in that order
         idx_high = out.index("| high |")
@@ -334,7 +334,7 @@ class TestGenerate(unittest.TestCase):
         idx_low = out.index("| low |")
         self.assertTrue(idx_high < idx_med < idx_low)
 
-        # Blocked count for medium is 1 (T-4)
+        # Blocked count for medium is 1 (T-004)
         self.assertRegex(out, r"\|\s*medium\s*\|\s*0\s*/\s*2\s*\|\s*0\s*\|\s*1\s*\|\s*amber\s*\|\s*\{\{comment\}\}\s*\|")
 
         # {{comment}}, {{changes}}, {{delta}} remain
@@ -350,24 +350,24 @@ class TestGenerate(unittest.TestCase):
         self.assertEqual(code, 0, err)
         section = out[out.index("## Risks and issues: changes since last report"):out.index("## Milestones")]
         self.assertIn("No snapshot yet: every open risk and issue is listed.", section)
-        self.assertIn("- Vendor delay `R-1` - open", section)
-        self.assertIn("- Slow search `I-2` - in-progress", section)
-        self.assertNotIn("R-2", section)  # closed
-        self.assertNotIn("I-4", section)  # resolved
+        self.assertIn("- Vendor delay `R-001` - open", section)
+        self.assertIn("- Slow search `I-002` - in-progress", section)
+        self.assertNotIn("R-002", section)  # closed
+        self.assertNotIn("I-004", section)  # resolved
 
     def test_status_report_risks_and_issues_since_a_snapshot(self):
         tool("snapshot.py", self.root, "--as-of", "2026-03-01")
         risks = self.root / "pmo/registers/risks.yaml"
         risks.write_text(risks.read_text(encoding="utf-8").replace("status: open, origin: stated, raised: 2026-02-10", "status: closed, origin: stated, raised: 2026-02-10", 1), encoding="utf-8")
         issues = self.root / "pmo/registers/issues.yaml"
-        issues.write_text(issues.read_text(encoding="utf-8") + "  - {id: I-9, title: Broken link, severity: low, owner: bob, status: open, origin: stated, raised: 2026-03-10}\n", encoding="utf-8")
+        issues.write_text(issues.read_text(encoding="utf-8") + "  - {id: I-009, title: Broken link, severity: low, owner: bob, status: open, origin: stated, raised: 2026-03-10}\n", encoding="utf-8")
         code, out, err = tool("generate.py", self.root, "status-report", "2026-03", "--as-of", "2026-03-15", "--stdout")
         self.assertEqual(code, 0, err)
         section = out[out.index("## Risks and issues: changes since last report"):out.index("## Milestones")]
-        self.assertIn("- Vendor delay `R-1` - closed (open->closed)", section)
-        self.assertIn("- Broken link `I-9` - added, open", section)
+        self.assertIn("- Vendor delay `R-001` - closed (open->closed)", section)
+        self.assertIn("- Broken link `I-009` - added, open", section)
         self.assertNotIn("No snapshot", section)
-        self.assertNotIn("I-2", section)  # unchanged
+        self.assertNotIn("I-002", section)  # unchanged
 
     def test_status_report_risks_and_issues_no_changes(self):
         tool("snapshot.py", self.root, "--as-of", "2026-03-01")
@@ -422,17 +422,17 @@ class TestGenerate(unittest.TestCase):
     def test_scope_wbs_groups_tasks_by_area(self):
         self._assert_generated_draft_placeholders(("scope-wbs",), {"deliverable", "exclusion", "assumption"})
         code, out, _ = tool("generate.py", self.root, "scope-wbs", "--stdout")
-        self.assertIn("| ui | Design login page; Pick a payment vendor | Bob Example | not set | `T-2`, `T-4`, `REQ-1` |", out)
-        self.assertIn("| docs | Write API outline | Alice Example | not set | `T-3` |", out)
+        self.assertIn("| ui | Design login page; Pick a payment vendor | Bob Example | not set | `T-002`, `T-004`, `REQ-001` |", out)
+        self.assertIn("| docs | Write API outline | Alice Example | not set | `T-003` |", out)
 
     def test_work_order_lists_open_tasks_by_person_then_due_date(self):
         self._assert_generated_draft_placeholders(("work-order",), {"title", "purpose", "scope item", "criterion", "budget and constraints"})
         code, out, _ = tool("generate.py", self.root, "work-order", "--as-of", "2026-03-15", "--stdout")
         self.assertIn("**Assigned to:** Alice Example, Bob Example", out)
         self.assertIn("**Due:** 2026-04-01", out)
-        self.assertLess(out.index("`T-1`"), out.index("`T-2`"))  # grouped by person in roster order
-        self.assertLess(out.index("`T-2`"), out.index("`T-4`"))  # then by due date
-        self.assertNotIn("`T-3`", out)  # done, so not open
+        self.assertLess(out.index("`T-001`"), out.index("`T-002`"))  # grouped by person in roster order
+        self.assertLess(out.index("`T-002`"), out.index("`T-004`"))  # then by due date
+        self.assertNotIn("`T-003`", out)  # done, so not open
 
     def test_delivery_report_counts_and_carries_over(self):
         self._assert_generated_draft_placeholders(
@@ -440,9 +440,9 @@ class TestGenerate(unittest.TestCase):
             {"id", "output", "lead", "delivered", "acceptance_met", "evidence", "title", "status", "item", "reason", "plan"})
         code, out, _ = tool("generate.py", self.root, "delivery-report", "2026-03", "--as-of", "2026-03-15", "--stdout")
         self.assertIn("**Planned:** 4 tasks - **Delivered:** 1 (25%) - **Dropped:** 0 - **Carried over:** 3", out)
-        self.assertIn("- Write API outline `T-3` - Alice Example - 2026-03-05", out)
-        self.assertIn("| M-1 | Staging ready | 2026-03-20 | in-progress |", out)
-        self.assertIn("- Pick a payment vendor `T-4`", out.split("## Carried to next period")[1])
+        self.assertIn("- Write API outline `T-003` - Alice Example - 2026-03-05", out)
+        self.assertIn("| M-001 | Staging ready | 2026-03-20 | in-progress |", out)
+        self.assertIn("- Pick a payment vendor `T-004`", out.split("## Carried to next period")[1])
 
     def test_defect_gap_report_lists_failed_tests_issues_and_gaps(self):
         self._assert_generated_draft_placeholders(
@@ -450,11 +450,11 @@ class TestGenerate(unittest.TestCase):
             {"At most three sentences summarizing quality state, critical defects, and release readiness.", "recommendation naming an ID"})
         code, out, _ = tool("generate.py", self.root, "defect-gap-report", "2026-03", "--as-of", "2026-03-15", "--stdout")
         self.assertIn("**Failed tests:** 1 - **Open issues:** 3 - **Requirements without a passing test:** 2", out)
-        self.assertIn("| TST-2 | Login with valid credentials | REQ-1 | I-3 | high | Bob Example |", out)
-        self.assertLess(out.index("| I-3 |"), out.index("| I-1 |"))  # most severe first
-        self.assertNotIn("| I-4 |", out)  # resolved
-        self.assertIn("| REQ-1 | Users can log in | high | test failed |", out)
-        self.assertIn("| REQ-2 | Pages load fast | medium | no test |", out)
+        self.assertIn("| TST-002 | Login with valid credentials | REQ-001 | I-003 | high | Bob Example |", out)
+        self.assertLess(out.index("| I-003 |"), out.index("| I-001 |"))  # most severe first
+        self.assertNotIn("| I-004 |", out)  # resolved
+        self.assertIn("| REQ-001 | Users can log in | high | test failed |", out)
+        self.assertIn("| REQ-002 | Pages load fast | medium | no test |", out)
 
     def test_non_english_draft_language_exits_2(self):
         cfg_path = self.root / "pmo/config.yaml"

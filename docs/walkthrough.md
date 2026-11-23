@@ -46,7 +46,7 @@ roster:
 A task is one line. Its `owner` is a roster slug:
 
 ```yaml
-  - {id: T-1, title: Set up staging server, team: platform, group: infra, priority: high, owner: alice, status: in-progress, due: 2026-03-10, period: 2026-03, notes: Overdue on purpose}
+  - {id: T-001, title: Set up staging server, team: platform, group: infra, priority: high, owner: alice, status: in-progress, due: 2026-03-10, period: 2026-03, notes: Overdue on purpose}
 ```
 
 ## 1. Validate the registers and compare the views
@@ -65,7 +65,7 @@ registers valid, views current
 
 **Do:** edit one task, check, render, check again. **You should see:** `ERROR stale view`, then `wrote 21 views`, then `views current`.
 
-Mark the login page design (`T-2`) done by editing its line in `pmo/registers/tasks.yaml`: change `status: not-started` to `status: done`. The view still shows the old state, so the check fails:
+Mark the login page design (`T-002`) done by editing its line in `pmo/registers/tasks.yaml`: change `status: not-started` to `status: done`. The view still shows the old state, so the check fails:
 
 ```
 $ python3 "$SKILL/scripts/render_views.py" --check
@@ -89,7 +89,7 @@ A value that is not in the vocabulary is reported instead. With `status: bogus` 
 
 ```
 $ python3 "$SKILL/scripts/render_views.py" --check
-ERROR tasks T-2: status 'bogus' not in ['not-started', 'in-progress', 'blocked', 'done', 'dropped']
+ERROR tasks T-002: status 'bogus' not in ['not-started', 'in-progress', 'blocked', 'done', 'dropped']
 [exit 1]
 ```
 
@@ -104,13 +104,13 @@ A view is plain Markdown. This is `pmo/views/risks.md`:
 
 | id | title | description | probability | impact | owner | mitigation | status | origin | raised | closed |
 |---|---|---|---|---|---|---|---|---|---|---|
-| R-1 | Vendor delay | Payment vendor may reply late | high | high | bob | Ask two vendors | open | stated | 2026-02-10 |  |
-| R-2 | Key person away | Alice may be on leave in April | low | medium | sam | Share the setup notes | closed | stated | 2026-02-10 | 2026-03-01 |
+| R-001 | Vendor delay | Payment vendor may reply late | high | high | bob | Ask two vendors | open | stated | 2026-02-10 |  |
+| R-002 | Key person away | Alice may be on leave in April | low | medium | sam | Share the setup notes | closed | stated | 2026-02-10 | 2026-03-01 |
 ```
 
 ## 3. What is overdue
 
-**Run:** `overdue.py --as-of 2026-03-15`. **You should see:** 1 overdue task (`T-1`, 5 days late) and 1 open action past due.
+**Run:** `overdue.py --as-of 2026-03-15`. **You should see:** 1 overdue task (`T-001`, 5 days late) and 1 open action past due.
 
 ```
 $ python3 "$SKILL/scripts/overdue.py" --as-of 2026-03-15
@@ -122,13 +122,13 @@ Overdue tasks: 1, open actions past due: 1, milestones due within 14 days or ove
 
 | ID | Task | Owner | Due | Days late | Priority |
 |---|---|---|---|---|---|
-| T-1 | Set up staging server | alice | 2026-03-10 | 5 | high |
+| T-001 | Set up staging server | alice | 2026-03-10 | 5 | high |
 
 ## Open actions past due
 
 | ID | Action | Owner | Due |
 |---|---|---|---|
-| ACT-1 | Send vendor shortlist | bob | 2026-03-12 |
+| ACT-001 | Send vendor shortlist | bob | 2026-03-12 |
 ...
 [exit 0]
 ```
@@ -297,12 +297,12 @@ The agent writes the translation with the `translate` playbook, and only when as
 
 ## 7. With the agent
 
-**Do:** ask the agent the 4 prompts below. **You should see:** a draft report, a question before `T-1` changes, a finished report, and a list to confirm before anything is written.
+**Do:** ask the agent the 4 prompts below. **You should see:** a draft report, a question before `T-001` changes, a finished report, and a list to confirm before anything is written.
 
 Open a copy of Acme in your agent (Claude Code, Antigravity or Codex) with `pmo-docs` installed and ask:
 
 - "weekly-status" or "monthly-status": a draft report from the registers.
-- "mark T-1 done": the agent first asks for QA or test evidence (the definition of done) and changes nothing until you answer. Then it changes that one line, sets `done_on` to the date the work was finished, and renders the views.
+- "mark T-001 done": the agent first asks for QA or test evidence (the definition of done) and changes nothing until you answer. Then it changes that one line, sets `done_on` to the date the work was finished, and renders the views.
 - "finish the status report": Finish records the template version and the hashes, removes the template's comments and checks, and marks the document finished. With the `languages` block of section 6, it then asks once whether to translate the report now.
 - "take the tasks from this chat export": the agent reads the export, shows the entries it proposes and writes nothing until you confirm. It never copies a password or token from the chat.
 

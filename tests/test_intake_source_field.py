@@ -44,27 +44,27 @@ class IntakeSourceField(unittest.TestCase):
             (
                 "tasks",
                 "notes",
-                '  - {id: T-5, title: Send vendor shortlist, team: web, group: ui, priority: medium, owner: bob, status: not-started, due: 2026-03-25, period: 2026-03, notes: "from chat export, intake 2026-03-16", origin: stated}\n',
+                '  - {id: T-005, title: Send vendor shortlist, team: web, group: ui, priority: medium, owner: bob, status: not-started, due: 2026-03-25, period: 2026-03, notes: "from chat export, intake 2026-03-16", origin: stated}\n',
             ),
             (
                 "actions",
                 "source",
-                '  - {id: ACT-3, text: Follow up with vendor, owner: bob, due: 2026-03-25, status: open, source: "from chat export, intake 2026-03-16", origin: stated}\n',
+                '  - {id: ACT-003, text: Follow up with vendor, owner: bob, due: 2026-03-25, status: open, source: "from chat export, intake 2026-03-16", origin: stated}\n',
             ),
             (
                 "decisions",
                 "context",
-                '  - {id: DEC-3, title: Confirm release window, context: "from chat export, intake 2026-03-16", decision: Keep Thursday releases, options: [Thursday, Friday], consequences: Predictable cadence, decided_by: sam, date: 2026-03-16, status: accepted, supersedes: null, related: [], origin: stated}\n',
+                '  - {id: DEC-003, title: Confirm release window, context: "from chat export, intake 2026-03-16", decision: Keep Thursday releases, options: [Thursday, Friday], consequences: Predictable cadence, decided_by: sam, date: 2026-03-16, status: accepted, supersedes: null, related: [], origin: stated}\n',
             ),
             (
                 "risks",
                 "description",
-                '  - {id: R-3, title: Late vendor reply, description: "from chat export, intake 2026-03-16", probability: medium, impact: high, owner: bob, mitigation: Follow up weekly, status: open, origin: stated, raised: 2026-03-16, closed: null}\n',
+                '  - {id: R-003, title: Late vendor reply, description: "from chat export, intake 2026-03-16", probability: medium, impact: high, owner: bob, mitigation: Follow up weekly, status: open, origin: stated, raised: 2026-03-16, closed: null}\n',
             ),
             (
                 "issues",
                 "description",
-                '  - {id: I-5, title: Staging login timeout, description: "from chat export, intake 2026-03-16", severity: medium, owner: alice, status: open, origin: stated, raised: 2026-03-16, resolved: null, related_tasks: []}\n',
+                '  - {id: I-005, title: Staging login timeout, description: "from chat export, intake 2026-03-16", severity: medium, owner: alice, status: open, origin: stated, raised: 2026-03-16, resolved: null, related_tasks: []}\n',
             ),
         )
         for register, field, entry_line in cases:
@@ -80,7 +80,7 @@ class IntakeSourceField(unittest.TestCase):
 
     def test_unknown_source_field_on_task_is_rejected(self):
         tasks_file = self.reg / "tasks.yaml"
-        bad_line = '  - {id: T-5, title: Send vendor shortlist, team: web, group: ui, priority: medium, owner: bob, status: not-started, due: 2026-03-25, period: 2026-03, source: "from chat export, intake 2026-03-16", origin: stated}\n'
+        bad_line = '  - {id: T-005, title: Send vendor shortlist, team: web, group: ui, priority: medium, owner: bob, status: not-started, due: 2026-03-25, period: 2026-03, source: "from chat export, intake 2026-03-16", origin: stated}\n'
         self._append_entry(tasks_file, bad_line)
         code, out = run_render(self.root, "--check")
         self.assertEqual(code, 1, out)

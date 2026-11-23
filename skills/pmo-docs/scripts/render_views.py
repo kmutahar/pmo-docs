@@ -470,6 +470,8 @@ def validate(data, cfg, root=None):
     id_occurrences = {}
     id_order = []
     reg_lines = {}
+    width = pc.id_width(cfg)
+    prefixes = set(pc.register_prefixes(cfg))
 
     def entry_pos(reg_name, entry_index):
         lineno = reg_lines.get(reg_name, [])[entry_index - 1] if reg_name in reg_lines and entry_index - 1 < len(reg_lines[reg_name]) else None
@@ -523,7 +525,9 @@ def validate(data, cfg, root=None):
                     desc = f'{pos} "{label_val}"' if label_val is not None else pos
                     id_occurrences[key].append(desc)
                 if rid and isinstance(rid, str) and prefix and not re.fullmatch(re.escape(prefix) + r"-[0-9]+", str(rid)):
-                    errors.append(f"{who}: id must look like {prefix}-1")
+                    errors.append(f"{who}: id must look like {prefix}-{'1'.zfill(width)}")
+                elif rid and isinstance(rid, str) and prefix and (padded := pc.unpadded(rid, width)):
+                    errors.append(f"{who}: id {rid} is not padded; use {padded}, or run renumber.py --pad")
             if name == "roster":
                 slug_val = r.get("slug")
                 if slug_val is None or (isinstance(slug_val, str) and not slug_val.strip()):
@@ -577,7 +581,9 @@ def validate(data, cfg, root=None):
                     if not isinstance(v, (str, int)):
                         errors.append(f"{who}: {field} must be an id or a list of ids")
                         break
-                    if not any(v in ids[t] for t in targets):
+                    if isinstance(v, str) and v.rpartition("-")[0] in prefixes and (padded := pc.unpadded(v, width)):
+                        errors.append(f"{who}: {field} {v} is not padded; use {padded}, or run renumber.py --pad")
+                    elif not any(v in ids[t] for t in targets):
                         errors.append(f"{who}: {field} {v!r} is not an id in {', '.join(targets)}; refs can list several registers (refs: {{field: [a, b]}}) or be turned off with refs: {{field: null}}")
             owners = r.get("owner")
             for o in owners if isinstance(owners, list) else [owners]:

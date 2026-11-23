@@ -190,7 +190,7 @@ class Evals(unittest.TestCase):
         p = subprocess.run([sys.executable, str(REPO / "skills/pmo-docs/scripts/render_views.py"), "--check"], cwd=tmp, capture_output=True)
         if scaffold.parent.name in ("renumber-batch-confirm", "renumber-no-references"):
             self.assertEqual(p.returncode, 1)
-            self.assertIn("duplicate id T-5", p.stdout.decode("utf-8"))
+            self.assertIn("duplicate id T-005", p.stdout.decode("utf-8"))
             return
         if scaffold.parent.name in ("merge-conflict-markers", "merge-conflict-same-entry"):
             self.assertEqual(p.returncode, 1)

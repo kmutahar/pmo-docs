@@ -7,7 +7,7 @@ template_version: 1
 status: finished
 last_updated: "2026-03-15"
 source_hashes:
-  decisions: "988ad57c"
+  decisions: "55ed11b4"
 ---
 
 # Decision log - Acme Portal
@@ -15,19 +15,19 @@ source_hashes:
 ## Summary
 | ID | Decision | Status | Date | Decided by |
 |---|---|---|---|---|
-| DEC-2 | Use the shared cloud account | proposed | 2026-03-09 | sam |
-| DEC-1 | Release every Thursday | accepted | 2026-02-12 | sam |
+| DEC-002 | Use the shared cloud account | proposed | 2026-03-09 | sam |
+| DEC-001 | Release every Thursday | accepted | 2026-02-12 | sam |
 
 ## Decisions
-### DEC-2 - Host on shared cloud
+### DEC-002 - Host on shared cloud
 - **Status:** proposed - **Date:** 2026-03-09 - **Decided by:** sam
 - **Context:** Need cheap hosting
 - **Decision:** Use the shared cloud account
 - **Options considered:** shared, own
 - **Consequences:** Lower cost
-- **Supersedes / related:** DEC-1
+- **Supersedes / related:** DEC-001
 
-### DEC-1 - Use weekly releases
+### DEC-001 - Use weekly releases
 - **Status:** accepted - **Date:** 2026-02-12 - **Decided by:** sam
 - **Context:** Team wants steady delivery
 - **Decision:** Release every Thursday

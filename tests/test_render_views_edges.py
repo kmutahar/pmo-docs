@@ -177,19 +177,19 @@ class Helpers(Base):
         self.assertFalse(rv.real_date(20260101))
 
     def test_one_line_entries(self):
-        self.assertTrue(rv.one_line_entries("risks:\n  - {id: R-1}\n# c\n\n  - {id: R-2}\n"))
+        self.assertTrue(rv.one_line_entries("risks:\n  - {id: R-001}\n# c\n\n  - {id: R-002}\n"))
         self.assertTrue(rv.one_line_entries(""))
-        self.assertTrue(rv.one_line_entries("---\nrisks:\n  - {id: R-1}\n"))
-        self.assertFalse(rv.one_line_entries("risks:\n  - {id: R-1,\n    title: x}\n"))
+        self.assertTrue(rv.one_line_entries("---\nrisks:\n  - {id: R-001}\n"))
+        self.assertFalse(rv.one_line_entries("risks:\n  - {id: R-001,\n    title: x}\n"))
 
     def test_entry_lines(self):
-        text = "# Top comment\n\ntasks:\n\n  # Inner comment\n  - {id: T-1, title: a}\n\n  - {id: T-2, title: b}\n# Trailing\n"
+        text = "# Top comment\n\ntasks:\n\n  # Inner comment\n  - {id: T-001, title: a}\n\n  - {id: T-002, title: b}\n# Trailing\n"
         self.assertEqual(rv.entry_lines(text), [6, 8])
         self.assertEqual(rv.entry_lines(""), [])
         self.assertEqual(rv.entry_lines("tasks:\n# only comments\n"), [])
 
     def test_id_num(self):
-        self.assertEqual(rv._id_num("T-12"), 12)
+        self.assertEqual(rv._id_num("T-012"), 12)
         self.assertEqual(rv._id_num("none"), 0)
         self.assertEqual(rv._id_num(7), 7)
 
@@ -220,20 +220,20 @@ class Helpers(Base):
         self.assertEqual(rv.credential_labels("xoxb-" + "1" * 12), ["chat or bearer token"])
 
     def test_linked_tests_shapes(self):
-        data = {"tasks": [{"id": "T-1", "tests": ["TS-1", "TS-ghost", {"a": 1}]}, {"id": "T-2", "tests": "TS-2"}, {"id": "T-3", "tests": None}],
-                "tests": [{"id": "TS-1"}, {"id": "TS-2", "task": ["T-3"]}, {"id": 9, "task": "T-1"}, {"task": "T-1"}, {"id": ["x"], "task": "T-1"}]}
-        self.assertEqual(rv.linked_tests(data, "T-1"), ["TS-1", 9])
-        self.assertEqual(rv.linked_tests(data, "T-2"), ["TS-2"])
-        self.assertEqual(rv.linked_tests(data, "T-3"), ["TS-2"])
+        data = {"tasks": [{"id": "T-001", "tests": ["TS-1", "TS-ghost", {"a": 1}]}, {"id": "T-002", "tests": "TS-2"}, {"id": "T-003", "tests": None}],
+                "tests": [{"id": "TS-1"}, {"id": "TS-2", "task": ["T-003"]}, {"id": 9, "task": "T-001"}, {"task": "T-001"}, {"id": ["x"], "task": "T-001"}]}
+        self.assertEqual(rv.linked_tests(data, "T-001"), ["TS-1", 9])
+        self.assertEqual(rv.linked_tests(data, "T-002"), ["TS-2"])
+        self.assertEqual(rv.linked_tests(data, "T-003"), ["TS-2"])
         self.assertEqual(rv.linked_tests(data, 5), [])
         self.assertEqual(rv.linked_tests(data, None), [])
-        self.assertEqual(rv.linked_tests({}, "T-1"), [])
+        self.assertEqual(rv.linked_tests({}, "T-001"), [])
 
     def test_done_without_test_rules(self):
         done = self.cfg["registers"]["tasks"]["done"][0]
-        data = {"tasks": [{"id": "T-2", "status": done}, {"id": "T-10", "status": done}, {"id": "T-3", "status": done}, {"id": 4, "status": done}, {"status": done}, {"id": "T-5", "status": "x"}],
-                "tests": [{"id": "TS-1", "task": "T-3"}]}
-        self.assertEqual(rv.done_without_test(self.cfg, data), ["T-2", "T-10"])
+        data = {"tasks": [{"id": "T-002", "status": done}, {"id": "T-010", "status": done}, {"id": "T-003", "status": done}, {"id": 4, "status": done}, {"status": done}, {"id": "T-005", "status": "x"}],
+                "tests": [{"id": "TS-1", "task": "T-003"}]}
+        self.assertEqual(rv.done_without_test(self.cfg, data), ["T-002", "T-010"])
         self.assertEqual(rv.done_without_test(self.cfg, {"tasks": data["tasks"], "tests": []}), [])
         self.assertEqual(rv.done_without_test(self.cfg, {"tasks": data["tasks"]}), [])
 
@@ -249,10 +249,10 @@ class Rendering(Base):
 
     def test_view_tasks_missing_none_and_list(self):
         self.assertIn("**Done without a linked test:** none", rv.view_tasks([], self.cfg, missing=[]))
-        self.assertIn("**Done without a linked test:** T-1, T-2", rv.view_tasks([], self.cfg, missing=["T-1", "T-2"]))
+        self.assertIn("**Done without a linked test:** T-001, T-002", rv.view_tasks([], self.cfg, missing=["T-001", "T-002"]))
 
     def test_view_tasks_no_team_group_priority_and_unicode_and_pipe(self):
-        rows = [{"id": "T-1", "title": "مهمة | pipe", "status": "not-started"}, {"id": "T-2", "title": "ünï", "status": "not-started", "team": "A", "group": "g", "priority": "high"}]
+        rows = [{"id": "T-001", "title": "مهمة | pipe", "status": "not-started"}, {"id": "T-002", "title": "ünï", "status": "not-started", "team": "A", "group": "g", "priority": "high"}]
         text = rv.view_tasks(rows, self.cfg)
         self.assertIn("### no team", text)
         self.assertIn("**no group**", text)
@@ -262,7 +262,7 @@ class Rendering(Base):
         self.assertIn("ünï", text)
 
     def test_view_tasks_unknown_priority_sorts_after_known(self):
-        rows = [{"id": "T-1", "status": "not-started", "priority": "zzz"}, {"id": "T-2", "status": "not-started", "priority": None}, {"id": "T-3", "status": "not-started", "priority": self.cfg["vocab"]["priority_order"][0]}]
+        rows = [{"id": "T-001", "status": "not-started", "priority": "zzz"}, {"id": "T-002", "status": "not-started", "priority": None}, {"id": "T-003", "status": "not-started", "priority": self.cfg["vocab"]["priority_order"][0]}]
         text = rv.view_tasks(rows, self.cfg).split("## By team")[0]
         self.assertLess(text.index(self.cfg["vocab"]["priority_order"][0]), text.index("zzz"))
         self.assertLess(text.index("zzz"), text.index("not set"))
@@ -295,47 +295,47 @@ class Validate(Base):
         return rv.validate(data, self.cfg)
 
     def test_missing_id_and_non_text_id(self):
-        errs = self.check("risks", [{"title": "x"}, {"id": 5, "title": "y"}, {"id": ["R-1"], "title": "z"}])
+        errs = self.check("risks", [{"title": "x"}, {"id": 5, "title": "y"}, {"id": ["R-001"], "title": "z"}])
         self.assertTrue(any("missing id" in e for e in errs), errs)
         self.assertTrue(any("must be text" in e for e in errs), errs)
 
     def test_id_prefix_shape(self):
         prefix = self.cfg["registers"]["risks"]["prefix"]
-        errs = self.check("risks", [{"id": f"{prefix}-x", "title": "a"}, {"id": f"{prefix}-1", "title": "b"}, {"id": f"{prefix}-01", "title": "c"}])
+        errs = self.check("risks", [{"id": f"{prefix}-x", "title": "a"}, {"id": f"{prefix}-001", "title": "b"}, {"id": f"{prefix}-01", "title": "c"}])
         self.assertEqual(sum("id must look like" in e for e in errs), 1, errs)
 
     def test_duplicate_id_in_one_register(self):
         prefix = self.cfg["registers"]["risks"]["prefix"]
-        errs = self.check("risks", [{"id": f"{prefix}-1"}, {"id": f"{prefix}-1"}])
+        errs = self.check("risks", [{"id": f"{prefix}-001"}, {"id": f"{prefix}-001"}])
         self.assertTrue(any("duplicate id" in e for e in errs), errs)
 
     def test_validate_without_root_reports_entry_positions(self):
-        errs = rv.validate({"tasks": [{"id": "T-1", "title": "A"}, {"id": "T-1", "title": "B"}]}, self.cfg)
-        self.assertTrue(any('duplicate id T-1: tasks entry 1 "A", tasks entry 2 "B"; run renumber.py' in e for e in errs), errs)
+        errs = rv.validate({"tasks": [{"id": "T-001", "title": "A"}, {"id": "T-001", "title": "B"}]}, self.cfg)
+        self.assertTrue(any('duplicate id T-001: tasks entry 1 "A", tasks entry 2 "B"; run renumber.py' in e for e in errs), errs)
 
     def test_x_fields_are_allowed_and_credentials_still_checked(self):
         prefix = self.cfg["registers"]["risks"]["prefix"]
-        self.assertEqual(self.check("risks", [{"id": f"{prefix}-1", "status": "open", "x_note": "hi"}]), [])
-        errs = self.check("risks", [{"id": f"{prefix}-1", "status": "open", "x_note": "ghp_" + "b" * 24}])
+        self.assertEqual(self.check("risks", [{"id": f"{prefix}-001", "status": "open", "x_note": "hi"}]), [])
+        errs = self.check("risks", [{"id": f"{prefix}-001", "status": "open", "x_note": "ghp_" + "b" * 24}])
         self.assertTrue(any("looks like a credential" in e for e in errs), errs)
 
     def test_enum_null_allowed_except_status_and_lists_checked(self):
-        t = [{"id": "T-1", "title": "a", "status": None}]
+        t = [{"id": "T-001", "title": "a", "status": None}]
         errs = self.check("tasks", t)
         self.assertTrue(any("status is missing; use one of [" in e and "None" not in e for e in errs), errs)
-        t = [{"id": "T-1", "title": "a", "status": "not-started", "priority": None}]
+        t = [{"id": "T-001", "title": "a", "status": "not-started", "priority": None}]
         self.assertEqual(self.check("tasks", t), [])
 
     def test_owner_list_checked_against_roster(self):
         slug = self.cfg and rv.pc.yaml.safe_load((self.reg / "roster.yaml").read_text(encoding="utf-8"))["roster"][0]["slug"]
-        roster = [{"id": "P-1", "slug": slug}] if "id" in self.cfg["registers"]["roster"]["fields"] else [{"slug": slug}]
-        ok = self.check("tasks", [{"id": "T-1", "status": "not-started", "owner": [slug]}], {"roster": roster})
+        roster = [{"id": "P-001", "slug": slug}] if "id" in self.cfg["registers"]["roster"]["fields"] else [{"slug": slug}]
+        ok = self.check("tasks", [{"id": "T-001", "status": "not-started", "owner": [slug]}], {"roster": roster})
         self.assertEqual([e for e in ok if "owner" in e], [])
-        bad = self.check("tasks", [{"id": "T-1", "status": "not-started", "owner": [slug, "nobody"]}], {"roster": roster})
+        bad = self.check("tasks", [{"id": "T-001", "status": "not-started", "owner": [slug, "nobody"]}], {"roster": roster})
         self.assertTrue(any("'nobody' is not in the roster" in e for e in bad), bad)
 
     def test_owner_not_checked_without_roster_entries(self):
-        errs = self.check("tasks", [{"id": "T-1", "status": "not-started", "owner": "anyone"}])
+        errs = self.check("tasks", [{"id": "T-001", "status": "not-started", "owner": "anyone"}])
         self.assertEqual([e for e in errs if "roster" in e], [])
 
     def test_ref_to_empty_string_and_none_is_skipped_and_dict_reported(self):
@@ -343,7 +343,7 @@ class Validate(Base):
         if not refs:
             self.skipTest("acme tasks declare no refs")
         field = next(iter(refs))
-        rows = [{"id": "T-1", "status": "not-started", field: ""}, {"id": "T-2", "status": "not-started", field: None}, {"id": "T-3", "status": "not-started", field: {"a": 1}}]
+        rows = [{"id": "T-001", "status": "not-started", field: ""}, {"id": "T-002", "status": "not-started", field: None}, {"id": "T-003", "status": "not-started", field: {"a": 1}}]
         errs = self.check("tasks", rows, {refs[field]: []})
         self.assertEqual(sum("must be an id or a list of ids" in e for e in errs), 1, errs)
 
@@ -360,7 +360,7 @@ class Validate(Base):
         self.assertIn("roster #4: missing slug", out)
 
     def test_two_registers_with_same_id_give_no_duplicate(self):
-        errs = rv.validate({"tasks": [{"id": "T-1"}], "actions": [{"id": "T-1"}]}, self.cfg)
+        errs = rv.validate({"tasks": [{"id": "T-001"}], "actions": [{"id": "T-001"}]}, self.cfg)
         self.assertFalse(any("duplicate id" in e for e in errs), errs)
 
 
@@ -369,7 +369,7 @@ class Files(Base):
         (self.reg / f"{name}.yaml").write_text(text, encoding="utf-8")
 
     def test_non_utf8_register_exits_1_with_message_and_writes_nothing(self):
-        (self.reg / "risks.yaml").write_bytes(b"risks:\n  - {id: R-1, title: \xff\xfe}\n")
+        (self.reg / "risks.yaml").write_bytes(b"risks:\n  - {id: R-001, title: \xff\xfe}\n")
         before = sorted(p.name for p in self.views.glob("*"))
         mtimes = {p.name: p.stat().st_mtime_ns for p in self.views.glob("*")}
         code, out, err = cli("--project", str(self.root))
@@ -421,7 +421,7 @@ class Files(Base):
             self.assertNotIn("Traceback", out + err)
 
     def test_register_with_impossible_yaml_date_is_an_error(self):
-        self.write_reg("risks", "risks:\n  - {id: R-1, raised: 2026-02-30}\n")
+        self.write_reg("risks", "risks:\n  - {id: R-001, raised: 2026-02-30}\n")
         code, out, _ = cli("--project", str(self.root))
         self.assertEqual(code, 1)
         self.assertIn("risks.yaml: not readable", out)
@@ -434,7 +434,7 @@ class Files(Base):
         prefix = self.cfg["registers"]["risks"]["prefix"]
         fields = self.cfg["registers"]["risks"]["fields"]
         title = "مخاطرة ← «ünï»"
-        self.write_reg("risks", f"risks:\n  - {{id: {prefix}-1, status: open, title: \"{title}\"}}\n" if "title" in fields else "risks: []\n")
+        self.write_reg("risks", f"risks:\n  - {{id: {prefix}-001, status: open, title: \"{title}\"}}\n" if "title" in fields else "risks: []\n")
         code, out, _ = cli("--project", str(self.root))
         self.assertEqual(code, 0, out)
         if "title" in fields:
@@ -515,7 +515,7 @@ class Files(Base):
             self.assertTrue(any(text in e for e in errs), (entry, errs))
 
     def test_register_repeated_key_exits_1(self):
-        self.write_reg("risks", "risks:\n  - {id: R-1, title: A, status: open, status: closed}\n")
+        self.write_reg("risks", "risks:\n  - {id: R-001, title: A, status: open, status: closed}\n")
         code, out, _ = cli("--project", str(self.root))
         self.assertEqual(code, 1)
         self.assertIn("risks.yaml", out)
@@ -527,7 +527,7 @@ class Files(Base):
         for i in range(1, 8):
             lines.append(f"a{i}: &a{i} " + "[" + ", ".join([f"*a{i-1}"] * 9) + "]")
         lines.append("risks:")
-        lines.append("  - {id: R-1, title: *a7}\n")
+        lines.append("  - {id: R-001, title: *a7}\n")
         self.write_reg("risks", "\n".join(lines))
         t0 = time.monotonic()
         code, out, _ = cli("--project", str(self.root))
@@ -542,14 +542,14 @@ class Files(Base):
         tasks_file.write_text(orig_tasks.replace("priority: high", "priority: [high, medium]"), encoding="utf-8")
         code, out, err = cli("--project", str(self.root))
         self.assertEqual(code, 1)
-        self.assertIn("ERROR tasks T-1: priority must be one value, not a list", out)
+        self.assertIn("ERROR tasks T-001: priority must be one value, not a list", out)
         self.assertNotIn("Traceback", out + err)
 
         # 2. team: [web]
-        tasks_file.write_text(orig_tasks.replace("id: T-1, title: Set up staging server, team: platform", "id: T-1, title: Set up staging server, team: [web]"), encoding="utf-8")
+        tasks_file.write_text(orig_tasks.replace("id: T-001, title: Set up staging server, team: platform", "id: T-001, title: Set up staging server, team: [web]"), encoding="utf-8")
         code, out, err = cli("--project", str(self.root))
         self.assertEqual(code, 1)
-        self.assertIn("ERROR tasks T-1: team must be one value, not a list", out)
+        self.assertIn("ERROR tasks T-001: team must be one value, not a list", out)
         self.assertNotIn("Traceback", out + err)
         tasks_file.write_text(orig_tasks, encoding="utf-8")
 
@@ -563,13 +563,13 @@ class Files(Base):
         self.assertNotIn("Traceback", out + err)
         roster_file.write_text(orig_roster, encoding="utf-8")
 
-        # 4. T-1 priority: [high, medium] and T-2 due: someday prints both errors and returns 1 (render never ran)
+        # 4. T-001 priority: [high, medium] and T-002 due: someday prints both errors and returns 1 (render never ran)
         replaced = orig_tasks.replace("priority: high", "priority: [high, medium]").replace("due: 2026-03-25", "due: someday")
         tasks_file.write_text(replaced, encoding="utf-8")
         code, out, err = cli("--project", str(self.root))
         self.assertEqual(code, 1)
-        self.assertIn("ERROR tasks T-1: priority must be one value, not a list", out)
-        self.assertIn("ERROR tasks T-2: due 'someday' is not a YYYY-MM-DD date", out)
+        self.assertIn("ERROR tasks T-001: priority must be one value, not a list", out)
+        self.assertIn("ERROR tasks T-002: due 'someday' is not a YYYY-MM-DD date", out)
         self.assertNotIn("Traceback", out + err)
 
     def test_view_clash_cli_run_exits_2(self):
@@ -597,18 +597,18 @@ class Files(Base):
     def test_reference_fields_issues_and_milestones(self):
         issues_file = self.reg / "issues.yaml"
         orig_issues = issues_file.read_text(encoding="utf-8")
-        issues_file.write_text(orig_issues.replace("related_tasks: [T-2]", "related_tasks: [T-999]"), encoding="utf-8")
+        issues_file.write_text(orig_issues.replace("related_tasks: [T-002]", "related_tasks: [T-999]"), encoding="utf-8")
         code, out, _ = cli("--project", str(self.root))
         self.assertEqual(code, 1)
-        self.assertIn("ERROR issues I-1: related_tasks 'T-999' is not an id in tasks", out)
+        self.assertIn("ERROR issues I-001: related_tasks 'T-999' is not an id in tasks", out)
         issues_file.write_text(orig_issues, encoding="utf-8")
 
         milestones_file = self.reg / "milestones.yaml"
         orig_m = milestones_file.read_text(encoding="utf-8")
-        milestones_file.write_text(orig_m.replace("depends_on: []", "depends_on: [M-77]"), encoding="utf-8")
+        milestones_file.write_text(orig_m.replace("depends_on: []", "depends_on: [M-077]"), encoding="utf-8")
         code, out, _ = cli("--project", str(self.root))
         self.assertEqual(code, 1)
-        self.assertIn("ERROR milestones M-1: depends_on 'M-77' is not an id in milestones", out)
+        self.assertIn("ERROR milestones M-001: depends_on 'M-077' is not an id in milestones", out)
 
 
 class Cli(Base):
@@ -676,8 +676,8 @@ class RegisterGuards(Base):
         code, out, err = cli("--project", str(self.root))
         self.assertEqual(code, 1)
         self.assertIn("is not a YYYY-MM month", out)
-        self.assertIn("tasks T-1: period 'March' is not a YYYY-MM month", out)
-        self.assertIn("tasks T-2: period '2026-3' is not a YYYY-MM month", out)
+        self.assertIn("tasks T-001: period 'March' is not a YYYY-MM month", out)
+        self.assertIn("tasks T-002: period '2026-3' is not a YYYY-MM month", out)
 
         text_without_period = "".join(lines).replace("period: March, ", "").replace("period: 2026-3, ", "")
         tasks_file.write_text(text_without_period, encoding="utf-8")
@@ -699,8 +699,8 @@ class RegisterGuards(Base):
 
     def test_form_feed_does_not_shift_entry_lines(self):
         ff = chr(12)
-        text_ff = f"tasks:\n  - {{id: T-1, title: hello{ff}world}}\n  - {{id: T-2, title: next}}\n"
-        text_sp = "tasks:\n  - {id: T-1, title: hello world}\n  - {id: T-2, title: next}\n"
+        text_ff = f"tasks:\n  - {{id: T-001, title: hello{ff}world}}\n  - {{id: T-002, title: next}}\n"
+        text_sp = "tasks:\n  - {id: T-001, title: hello world}\n  - {id: T-002, title: next}\n"
         self.assertEqual(rv.entry_lines(text_ff), rv.entry_lines(text_sp))
         self.assertEqual(rv.entry_lines(text_ff), [2, 3])
 
@@ -712,7 +712,7 @@ if __name__ == "__main__":
 class TestsRegisterDefaults(Base):
     def test_missing_test_status_is_planned_and_task_may_be_a_list(self):
         (self.reg / "tests.yaml").write_text(
-            "tests:\n  - {id: TST-1, title: Login, kind: smoke, task: [T-2, T-3], label: [ui], regression: true}\n", encoding="utf-8")
+            "tests:\n  - {id: TST-001, title: Login, kind: smoke, task: [T-002, T-003], label: [ui], regression: true}\n", encoding="utf-8")
         code, out, err = cli("--project", str(self.root))
         self.assertEqual(code, 0, out + err)
         self.assertIn("planned", (self.views / "tests.md").read_text(encoding="utf-8"))

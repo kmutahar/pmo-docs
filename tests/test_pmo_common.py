@@ -174,7 +174,7 @@ class Common(unittest.TestCase):
             self.assertEqual(cm.exception.code, 2, f"for bad={bad!r}")
             self.assertIn("schema_version must be a whole number of 1 or more", err.getvalue(), f"for bad={bad!r}")
 
-        d2 = self.project("schema_version: 2\n")
+        d2 = self.project("schema_version: 3\n")
         err2 = io.StringIO()
         with contextlib.redirect_stderr(err2):
             with self.assertRaises(SystemExit) as cm2:
@@ -193,9 +193,9 @@ class Common(unittest.TestCase):
         self.assertEqual(pc.load_register(d, c, "nope"), [])
 
     def test_register_and_override_lookup(self):
-        d = self.project(register="tasks:\n  - {id: T-1, title: x, due: 2026-01-02}\n")
+        d = self.project(register="tasks:\n  - {id: T-001, title: x, due: 2026-01-02}\n")
         c = pc.load_config(d)
-        self.assertEqual(pc.load_register(d, c, "tasks")[0]["id"], "T-1")
+        self.assertEqual(pc.load_register(d, c, "tasks")[0]["id"], "T-001")
         self.assertEqual(pc.find_asset(d, c, "templates", "roadmap.md")[1], "skill")
         (d / "pmo/templates").mkdir()
         (d / "pmo/templates/roadmap.md").write_text("x", encoding="utf-8")
@@ -233,8 +233,8 @@ class Helpers(unittest.TestCase):
         self.assertIsNone(pc.subproject_error(cfg, "plain", None))
         for args in (("guide", None), ("guide", "ios"), ("plain", "api")):
             self.assertIsNotNone(pc.subproject_error(cfg, *args), args)
-        data = {"tasks": [{"id": "T-1", "subproject": "api"}, {"id": "T-2", "subproject": "web"}, {"id": "T-3"}], "teams": [{"id": "A"}]}
-        self.assertEqual(pc.for_subproject(cfg, data, "api"), {"tasks": [{"id": "T-1", "subproject": "api"}], "teams": [{"id": "A"}]})
+        data = {"tasks": [{"id": "T-001", "subproject": "api"}, {"id": "T-002", "subproject": "web"}, {"id": "T-003"}], "teams": [{"id": "A"}]}
+        self.assertEqual(pc.for_subproject(cfg, data, "api"), {"tasks": [{"id": "T-001", "subproject": "api"}], "teams": [{"id": "A"}]})
 
     def test_week_of(self):
         # Monday start (0)
@@ -273,8 +273,8 @@ class Helpers(unittest.TestCase):
 
     def test_md_table(self):
         # header and separator format, | in cell escaped
-        res = pc.md_table(["ID", "Name"], [["T-1", "A|B"]])
-        self.assertEqual(res, "| ID | Name |\n|---|---|\n| T-1 | A\\|B |\n")
+        res = pc.md_table(["ID", "Name"], [["T-001", "A|B"]])
+        self.assertEqual(res, "| ID | Name |\n|---|---|\n| T-001 | A\\|B |\n")
         # no rows gives | None |  | style row with the right number of cells
         empty_res = pc.md_table(["ID", "Name", "Extra"], [])
         self.assertEqual(empty_res, "| ID | Name | Extra |\n|---|---|---|\n| None |  |  |\n")
@@ -300,19 +300,19 @@ class Helpers(unittest.TestCase):
         issues = pc.load_register(acme, cfg, "issues")
         risks = pc.load_register(acme, cfg, "risks")
 
-        # Acme as of 2026-03-15: T-1 (high, due 03-10, in progress) is overdue -> red, reason names T-1
+        # Acme as of 2026-03-15: T-001 (high, due 03-10, in progress) is overdue -> red, reason names T-001
         val, reason = pc.rag(cfg, datetime.date(2026, 3, 15), tasks, milestones, issues, risks)
         self.assertEqual(val, "red")
-        self.assertIn("T-1", reason)
+        self.assertIn("T-001", reason)
 
         # In-memory amber case: a blocked medium task only
-        amber_tasks = [{"id": "T-2", "priority": "medium", "status": "blocked", "due": "2026-04-01"}]
+        amber_tasks = [{"id": "T-002", "priority": "medium", "status": "blocked", "due": "2026-04-01"}]
         val, reason = pc.rag(cfg, datetime.date(2026, 3, 15), amber_tasks)
         self.assertEqual(val, "amber")
-        self.assertIn("T-2", reason)
+        self.assertIn("T-002", reason)
 
         # In-memory green case: nothing open is late
-        green_tasks = [{"id": "T-3", "priority": "low", "status": "done", "due": "2026-03-01"}]
+        green_tasks = [{"id": "T-003", "priority": "low", "status": "done", "due": "2026-03-01"}]
         val, reason = pc.rag(cfg, datetime.date(2026, 3, 15), green_tasks)
         self.assertEqual(val, "green")
         self.assertIn("all items on track", reason)
@@ -321,12 +321,12 @@ class Helpers(unittest.TestCase):
         acme = Path(__file__).resolve().parents[1] / "examples/acme"
         cfg = pc.load_config(acme)
         cfg["vocab"]["priority_order"] = []
-        val, _ = pc.rag(cfg, datetime.date(2026, 3, 15), [{"id": "T-9", "status": "in-progress", "due": "2026-03-01"}])
+        val, _ = pc.rag(cfg, datetime.date(2026, 3, 15), [{"id": "T-009", "status": "in-progress", "due": "2026-03-01"}])
         self.assertEqual(val, "amber")
 
     def test_rag_without_risk_levels_ignores_unrated_risks(self):
         cfg = {"vocab": {"risk_level": []}}
-        self.assertEqual(pc.rag(cfg, datetime.date(2026, 3, 15), [], risks=[{"id": "R-1", "status": "open"}]), ("green", "all items on track"))
+        self.assertEqual(pc.rag(cfg, datetime.date(2026, 3, 15), [], risks=[{"id": "R-001", "status": "open"}]), ("green", "all items on track"))
 
     def test_week_and_period_helpers_refuse_a_start_outside_0_to_6(self):
         for bad in (-1, 7):
@@ -419,26 +419,26 @@ class Helpers(unittest.TestCase):
         d = datetime.date(2026, 3, 15)
         t = lambda i, **kw: {"id": i, "priority": "low", "status": "todo", **kw}  # noqa: E731
         # red: a top-priority task that is blocked (not overdue)
-        self.assertEqual(pc.rag(cfg, d, [t("T-1", priority=top, status="blocked")]), ("red", "top-priority task T-1 is blocked"))
+        self.assertEqual(pc.rag(cfg, d, [t("T-001", priority=top, status="blocked")]), ("red", "top-priority task T-001 is blocked"))
         # red: several top-priority tasks overdue -> plural
-        self.assertEqual(pc.rag(cfg, d, [t("T-1", priority=top, due="2026-03-01"), t("T-2", priority=top, due="2026-03-02")])[1], "top-priority tasks T-1, T-2 are overdue")
+        self.assertEqual(pc.rag(cfg, d, [t("T-001", priority=top, due="2026-03-01"), t("T-002", priority=top, due="2026-03-02")])[1], "top-priority tasks T-001, T-002 are overdue")
         # a closed top-priority task counts for nothing
-        self.assertEqual(pc.rag(cfg, d, [t("T-1", priority=top, status="done", due="2026-03-01")])[0], "green")
+        self.assertEqual(pc.rag(cfg, d, [t("T-001", priority=top, status="done", due="2026-03-01")])[0], "green")
         # red: an overdue milestone
-        self.assertEqual(pc.rag(cfg, d, [], [{"id": "M-1", "status": "open", "due": "2026-03-14"}]), ("red", "milestone M-1 is overdue"))
+        self.assertEqual(pc.rag(cfg, d, [], [{"id": "M-001", "status": "open", "due": "2026-03-14"}]), ("red", "milestone M-001 is overdue"))
         # a closed milestone is not overdue
         closed = cfg["registers"]["milestones"]["closed"][0]
-        self.assertEqual(pc.rag(cfg, d, [], [{"id": "M-1", "status": closed, "due": "2026-03-14"}])[0], "green")
+        self.assertEqual(pc.rag(cfg, d, [], [{"id": "M-001", "status": closed, "due": "2026-03-14"}])[0], "green")
         # red: three late tasks (and five capped at three ids)
-        late = [t(f"T-{n}", due="2026-03-01") for n in range(1, 6)]
-        self.assertEqual(pc.rag(cfg, d, late[:3]), ("red", "3 or more tasks are blocked or overdue (T-1, T-2, T-3)"))
-        self.assertEqual(pc.rag(cfg, d, late), ("red", "3 or more tasks are blocked or overdue (T-1, T-2, T-3)"))
-        mix = [t("T-1", status="blocked"), t("T-2", status="blocked"), t("T-3", due="2026-03-01")]
-        self.assertEqual(pc.rag(cfg, d, mix), ("red", "3 or more tasks are blocked or overdue (T-1, T-2, T-3)"))
+        late = [t(f"T-{n:03d}", due="2026-03-01") for n in range(1, 6)]
+        self.assertEqual(pc.rag(cfg, d, late[:3]), ("red", "3 or more tasks are blocked or overdue (T-001, T-002, T-003)"))
+        self.assertEqual(pc.rag(cfg, d, late), ("red", "3 or more tasks are blocked or overdue (T-001, T-002, T-003)"))
+        mix = [t("T-001", status="blocked"), t("T-002", status="blocked"), t("T-003", due="2026-03-01")]
+        self.assertEqual(pc.rag(cfg, d, mix), ("red", "3 or more tasks are blocked or overdue (T-001, T-002, T-003)"))
         # amber: two late tasks, a task due today is not overdue
-        self.assertEqual(pc.rag(cfg, d, late[:2]), ("amber", "tasks T-1, T-2 are overdue"))
-        self.assertEqual(pc.rag(cfg, d, [t("T-1", due="2026-03-15")])[0], "green")
-        self.assertEqual(pc.rag(cfg, d, [t("T-1", due="2026-03-14")])[0], "amber")
+        self.assertEqual(pc.rag(cfg, d, late[:2]), ("amber", "tasks T-001, T-002 are overdue"))
+        self.assertEqual(pc.rag(cfg, d, [t("T-001", due="2026-03-15")])[0], "green")
+        self.assertEqual(pc.rag(cfg, d, [t("T-001", due="2026-03-14")])[0], "amber")
 
     def test_rag_issue_severity_and_risk_impact_rules(self):
         cfg = pc.load_config(Path(__file__).resolve().parents[1] / "examples/acme")
@@ -447,33 +447,33 @@ class Helpers(unittest.TestCase):
         impact = cfg["vocab"]["risk_level"][-1]
         closed_issue = cfg["registers"]["issues"]["closed"][0]
         closed_risk = cfg["registers"]["risks"]["closed"][0]
-        self.assertEqual(pc.rag(cfg, d, [], issues=[{"id": "I-1", "status": "open", "severity": sev[-1]}]), ("amber", "open issue I-1 has high severity"))
-        self.assertEqual(pc.rag(cfg, d, [], issues=[{"id": "I-1", "status": "open", "severity": sev[-2]}])[0], "amber")
-        self.assertEqual(pc.rag(cfg, d, [], issues=[{"id": "I-1", "status": "open", "severity": sev[0]}])[0], "green")
-        self.assertEqual(pc.rag(cfg, d, [], issues=[{"id": "I-1", "status": closed_issue, "severity": sev[-1]}])[0], "green")
-        self.assertEqual(pc.rag(cfg, d, [], risks=[{"id": "R-1", "status": "open", "impact": impact}, {"id": "R-2", "status": "open", "impact": impact}]),
-                         ("amber", "open risks R-1, R-2 have high impact"))
-        self.assertEqual(pc.rag(cfg, d, [], risks=[{"id": "R-1", "status": closed_risk, "impact": impact}])[0], "green")
+        self.assertEqual(pc.rag(cfg, d, [], issues=[{"id": "I-001", "status": "open", "severity": sev[-1]}]), ("amber", "open issue I-001 has high severity"))
+        self.assertEqual(pc.rag(cfg, d, [], issues=[{"id": "I-001", "status": "open", "severity": sev[-2]}])[0], "amber")
+        self.assertEqual(pc.rag(cfg, d, [], issues=[{"id": "I-001", "status": "open", "severity": sev[0]}])[0], "green")
+        self.assertEqual(pc.rag(cfg, d, [], issues=[{"id": "I-001", "status": closed_issue, "severity": sev[-1]}])[0], "green")
+        self.assertEqual(pc.rag(cfg, d, [], risks=[{"id": "R-001", "status": "open", "impact": impact}, {"id": "R-002", "status": "open", "impact": impact}]),
+                         ("amber", "open risks R-001, R-002 have high impact"))
+        self.assertEqual(pc.rag(cfg, d, [], risks=[{"id": "R-001", "status": closed_risk, "impact": impact}])[0], "green")
 
     def test_rag_milestone_due_within_seven_days_boundaries(self):
         cfg = pc.load_config(Path(__file__).resolve().parents[1] / "examples/acme")
         d = datetime.date(2026, 3, 15)
         for due, want in (("2026-03-15", "amber"), ("2026-03-22", "amber"), ("2026-03-23", "green"), ("2026-03-14", "red")):
             with self.subTest(due=due):
-                self.assertEqual(pc.rag(cfg, d, [], [{"id": "M-1", "status": "open", "due": due}])[0], want)
-        self.assertEqual(pc.rag(cfg, d, [], [{"id": "M-1", "status": "open", "due": "2026-03-20"}])[1], "milestone M-1 is due within 7 days")
+                self.assertEqual(pc.rag(cfg, d, [], [{"id": "M-001", "status": "open", "due": due}])[0], want)
+        self.assertEqual(pc.rag(cfg, d, [], [{"id": "M-001", "status": "open", "due": "2026-03-20"}])[1], "milestone M-001 is due within 7 days")
         # a milestone with an unreadable or missing date is ignored
         for due in ("not a date", None, 5):
-            self.assertEqual(pc.rag(cfg, d, [], [{"id": "M-1", "status": "open", "due": due}])[0], "green")
+            self.assertEqual(pc.rag(cfg, d, [], [{"id": "M-001", "status": "open", "due": due}])[0], "green")
 
     def test_rag_with_a_short_or_custom_vocabulary(self):
         base = {"registers": {"tasks": {"closed": ["done"], "blocked": ["blocked"]}}, "vocab": {"priority_order": ["p1"]}}
         d = datetime.date(2026, 3, 15)
-        red = [{"id": "T-1", "priority": "p1", "status": "blocked"}]
+        red = [{"id": "T-001", "priority": "p1", "status": "blocked"}]
         for rag_vocab, want in ((["G"], "red"), (["G", "A"], "red"), (["G", "A", "R"], "R"), (None, "red")):
             cfg = {**base, "vocab": {**base["vocab"], **({"rag": rag_vocab} if rag_vocab else {})}}
             self.assertEqual(pc.rag(cfg, d, red)[0], want if want != "red" else "red")
-        amber = [{"id": "T-1", "priority": "p2", "status": "blocked"}]
+        amber = [{"id": "T-001", "priority": "p2", "status": "blocked"}]
         self.assertEqual(pc.rag({**base, "vocab": {**base["vocab"], "rag": ["G"]}}, d, amber)[0], "amber")
         self.assertEqual(pc.rag({**base, "vocab": {**base["vocab"], "rag": ["G", "A", "R"]}}, d, amber)[0], "A")
         self.assertEqual(pc.rag({**base, "vocab": {**base["vocab"], "rag": ["G", "A", "R"]}}, d, [])[0], "G")
@@ -542,7 +542,7 @@ class Helpers(unittest.TestCase):
         with self.assertRaises(pc.yaml.YAMLError):
             pc.load_yaml("a: 1\na: 2\n")
         with self.assertRaises(pc.yaml.YAMLError):
-            pc.load_yaml("risks:\n- {id: R-1, status: open, status: closed}\n")
+            pc.load_yaml("risks:\n- {id: R-001, status: open, status: closed}\n")
         self.assertEqual(pc.load_yaml("a: [1, 2]\nb: {c: 1}\n"), {"a": [1, 2], "b": {"c": 1}})
         self.assertIsNone(pc.load_yaml(""))
 
@@ -729,7 +729,7 @@ class Languages(unittest.TestCase):
                 pc.run(lambda: 1 / 0)
 
     def test_id_num(self):
-        self.assertEqual(pc.id_num("R-10"), 10)
+        self.assertEqual(pc.id_num("R-010"), 10)
         self.assertEqual(pc.id_num("none"), 0)
 
 
@@ -892,7 +892,7 @@ class ConfigGuards(unittest.TestCase):
             self.assertEqual(cm.exception.code, 2)
             self.assertIn("no pmo/config.yaml here", mock_stderr.getvalue())
         defaults = pc.load_config(empty, must_exist=False)
-        self.assertEqual(defaults["schema_version"], 1)
+        self.assertEqual(defaults["schema_version"], 2)
 
     def test_unreadable_config_exits_2(self):
         self.cfg_file.unlink()
@@ -965,7 +965,7 @@ class ConfigGuards(unittest.TestCase):
     def test_register_wrong_top_key(self):
         cfg = pc.load_config(self.root)
         risks_file = self.root / "pmo/registers/risks.yaml"
-        risks_file.write_text("risk:\n  - id: R-1\n", encoding="utf-8")
+        risks_file.write_text("risk:\n  - id: R-001\n", encoding="utf-8")
         with self.assertRaises(ValueError) as cm:
             pc.load_register(self.root, cfg, "risks")
         self.assertIn("top key must be risks:", str(cm.exception))

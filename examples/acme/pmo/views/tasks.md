@@ -22,13 +22,13 @@
 
 | id | title | priority | owner | status | due |
 |---|---|---|---|---|---|
-| T-3 | Write API outline | low | alice | done | 2026-03-05 |
+| T-003 | Write API outline | low | alice | done | 2026-03-05 |
 
 **infra**
 
 | id | title | priority | owner | status | due |
 |---|---|---|---|---|---|
-| T-1 | Set up staging server | high | alice | in-progress | 2026-03-10 |
+| T-001 | Set up staging server | high | alice | in-progress | 2026-03-10 |
 
 ### web
 
@@ -36,5 +36,5 @@
 
 | id | title | priority | owner | status | due |
 |---|---|---|---|---|---|
-| T-2 | Design login page | medium | bob | not-started | 2026-03-25 |
-| T-4 | Pick a payment vendor | medium | bob | blocked | 2026-04-01 |
+| T-002 | Design login page | medium | bob | not-started | 2026-03-25 |
+| T-004 | Pick a payment vendor | medium | bob | blocked | 2026-04-01 |

@@ -31,7 +31,7 @@ def run(project, *args):
 
 class Helpers(unittest.TestCase):
     def test_id_number(self):
-        for v, want in (("T-12", 12), ("T-007", 7), ("T-", 0), ("T", 0), ("T-x", 0), (None, 0), (5, 0), ("A-B-3", 3), ("T-12b", 12), ("", 0)):
+        for v, want in (("T-012", 12), ("T-007", 7), ("T-", 0), ("T", 0), ("T-x", 0), (None, 0), (5, 0), ("A-B-003", 3), ("T-12b", 12), ("", 0)):
             self.assertEqual(gen.id_number(v), want, v)
 
     def test_majority_month_follows_the_fourth_day(self):
@@ -46,37 +46,37 @@ class Helpers(unittest.TestCase):
         self.assertEqual(gen.format_id_list(None), "none")
         self.assertEqual(gen.format_id_list([]), "none")
         self.assertEqual(gen.format_id_list([None, ""]), "none")
-        self.assertEqual(gen.format_id_list("D-1"), "`D-1`")
-        self.assertEqual(gen.format_id_list(["D-1", "D-2"]), "`D-1`, `D-2`")
-        self.assertEqual(gen.format_id_list(("D-1", 2)), "`D-1`, `2`")
+        self.assertEqual(gen.format_id_list("D-001"), "`D-001`")
+        self.assertEqual(gen.format_id_list(["D-001", "D-002"]), "`D-001`, `D-002`")
+        self.assertEqual(gen.format_id_list(("D-001", 2)), "`D-001`, `2`")
 
     def test_sort_key_priority_then_due_then_id(self):
         key = gen.task_sort_key_for({"vocab": {"priority_order": ["high", "low"]}})
         tasks = [
-            {"id": "T-3", "priority": "low", "due": "2026-01-01"},
-            {"id": "T-2", "priority": "high"},
-            {"id": "T-1", "priority": "high", "due": "2026-05-01"},
-            {"id": "T-4", "priority": "weird", "due": "2026-01-01"},
-            {"id": "T-5"},
-            {"id": "T-10", "priority": "high", "due": "2026-05-01"},
+            {"id": "T-003", "priority": "low", "due": "2026-01-01"},
+            {"id": "T-002", "priority": "high"},
+            {"id": "T-001", "priority": "high", "due": "2026-05-01"},
+            {"id": "T-004", "priority": "weird", "due": "2026-01-01"},
+            {"id": "T-005"},
+            {"id": "T-010", "priority": "high", "due": "2026-05-01"},
         ]
-        self.assertEqual([t["id"] for t in sorted(tasks, key=key)], ["T-1", "T-10", "T-2", "T-3", "T-5", "T-4"])  # unknown priorities last, by name
+        self.assertEqual([t["id"] for t in sorted(tasks, key=key)], ["T-001", "T-010", "T-002", "T-003", "T-005", "T-004"])  # unknown priorities last, by name
 
     def test_sort_key_without_a_priority_vocab(self):
         key = gen.task_sort_key_for({})
-        self.assertEqual([t["id"] for t in sorted([{"id": "T-2", "due": "2026-02-01"}, {"id": "T-1"}, {"id": "T-3", "due": "2026-01-01"}], key=key)],
-                         ["T-3", "T-2", "T-1"])
+        self.assertEqual([t["id"] for t in sorted([{"id": "T-002", "due": "2026-02-01"}, {"id": "T-001"}, {"id": "T-003", "due": "2026-01-01"}], key=key)],
+                         ["T-003", "T-002", "T-001"])
 
     def test_partition_matches_team_id_or_heading_ignoring_case(self):
         teams = [{"id": "b", "heading": "Back End", "order": 2}, {"id": "a", "heading": "Front", "order": 1}, {"id": "c"}]
-        tasks = [{"id": "T-1", "team": "A"}, {"id": "T-2", "team": " back end "}, {"id": "T-3", "team": "zzz"}, {"id": "T-4"}, {"id": "T-5", "team": ""}]
+        tasks = [{"id": "T-001", "team": "A"}, {"id": "T-002", "team": " back end "}, {"id": "T-003", "team": "zzz"}, {"id": "T-004"}, {"id": "T-005", "team": ""}]
         ordered, by_team, none = gen.partition_tasks_by_team(tasks, teams)
         self.assertEqual([t["id"] for t in ordered], ["a", "b", "c"])
-        self.assertEqual({k: [t["id"] for t in v] for k, v in by_team.items()}, {"a": ["T-1"], "b": ["T-2"], "c": []})
-        self.assertEqual([t["id"] for t in none], ["T-3", "T-4", "T-5"])
+        self.assertEqual({k: [t["id"] for t in v] for k, v in by_team.items()}, {"a": ["T-001"], "b": ["T-002"], "c": []})
+        self.assertEqual([t["id"] for t in none], ["T-003", "T-004", "T-005"])
 
     def test_partition_with_no_teams(self):
-        self.assertEqual(gen.partition_tasks_by_team([{"id": "T-1", "team": "a"}], []), ([], {}, [{"id": "T-1", "team": "a"}]))
+        self.assertEqual(gen.partition_tasks_by_team([{"id": "T-001", "team": "a"}], []), ([], {}, [{"id": "T-001", "team": "a"}]))
 
     def test_extract_comments(self):
         self.assertEqual(gen.extract_comments("a <!-- one --> b <!--\ntwo\n-->"), "<!-- one -->\n\n<!--\ntwo\n-->")
@@ -232,7 +232,7 @@ class Cli(unittest.TestCase):
             self.assertTrue(out.startswith("---\n"), t)
 
     def test_invalid_register_yaml_exits_1(self):
-        (self.root / "pmo/registers/tasks.yaml").write_text("- id: T-1\n  title: [unclosed\n", encoding="utf-8")
+        (self.root / "pmo/registers/tasks.yaml").write_text("- id: T-001\n  title: [unclosed\n", encoding="utf-8")
         code, _, err = run(self.root, "status-report", "2026-06", "--stdout")
         self.assertEqual(code, 1)
         self.assertIn("ERROR", err)
@@ -251,7 +251,7 @@ class Cli(unittest.TestCase):
 
         code_chk, out_chk, err_chk = run(self.root, "team-checklist", "2026-03", "--stdout")
         self.assertEqual(code_chk, 0, err_chk)
-        t2_lines = [ln for ln in out_chk.splitlines() if "`T-2`" in ln]
+        t2_lines = [ln for ln in out_chk.splitlines() if "`T-002`" in ln]
         self.assertTrue(t2_lines)
         self.assertFalse(any(ln.strip().startswith("- [x]") for ln in t2_lines))
         self.assertTrue(any(ln.strip().startswith("- [ ]") for ln in t2_lines))
@@ -260,11 +260,11 @@ class Cli(unittest.TestCase):
         code, out, err = run(self.root, "status-report", "--week", "--as-of", "2026-03-31", "--stdout")
         self.assertEqual(code, 0, err)
         blockers_section = out.split("## Blockers and decisions needed")[1].split("## ")[0]
-        self.assertIn("T-4", blockers_section)
+        self.assertIn("T-004", blockers_section)
         progress_line = [ln for ln in out.splitlines() if ln.startswith("**Progress:**")][0]
         self.assertIn("0/0 tasks done (0%)", progress_line)
         priority_section = out.split("## Progress by priority")[1].split("## Planned next")[0]
-        self.assertNotIn("T-4", priority_section)
+        self.assertNotIn("T-004", priority_section)
 
     def test_name_with_dotdot_exits_2(self):
         self.add_config("\ndoc_types:\n  decision-log:\n    name: '../../../escaped-{title}.md'\n")
@@ -313,20 +313,20 @@ class Odd(unittest.TestCase):
 
     def test_tasks_with_no_team_no_group_no_priority_or_unknown_priority(self):
         self.put("tasks", "tasks:\n"
-                 "  - {id: T-1, title: Lone, status: not-started, period: 2026-03}\n"
-                 "  - {id: T-2, title: Odd team, team: ghost, group: g1, status: not-started, period: 2026-03}\n"
-                 "  - {id: T-3, title: Known, team: platform, priority: high, status: not-started, period: 2026-03}\n")
+                 "  - {id: T-001, title: Lone, status: not-started, period: 2026-03}\n"
+                 "  - {id: T-002, title: Odd team, team: ghost, group: g1, status: not-started, period: 2026-03}\n"
+                 "  - {id: T-003, title: Known, team: platform, priority: high, status: not-started, period: 2026-03}\n")
         plan, _ = self.gen("project-plan", "2026-03")
         self.assertIn("### No team - not set", plan)
         no_team = plan[plan.index("### No team"):]
         self.assertLess(no_team.index("**g1**"), no_team.index("**no group**"))  # "no group" sorts last
-        self.assertIn("- Lone `T-1`", plan)
+        self.assertIn("- Lone `T-001`", plan)
         report, _ = self.gen("status-report", "2026-03")
-        self.assertIn("| not set | 0 / 2 | 0 | 0 |", report)  # T-1 and T-2 have no priority
+        self.assertIn("| not set | 0 / 2 | 0 | 0 |", report)  # T-001 and T-002 have no priority
         self.assertIn("| No team | 0 / 2 | 0 | 0 |", report)
 
     def test_team_without_tasks_is_left_out_of_the_checklist(self):
-        self.put("tasks", "tasks:\n  - {id: T-1, title: A, team: platform, status: not-started, period: 2026-03}\n  - {id: T-2, title: B, team: platform, status: not-started, period: 2026-03}\n")
+        self.put("tasks", "tasks:\n  - {id: T-001, title: A, team: platform, status: not-started, period: 2026-03}\n  - {id: T-002, title: B, team: platform, status: not-started, period: 2026-03}\n")
         for t in ("project-plan", "team-checklist"):
             out, _ = self.gen(t, "2026-03")
             self.assertIn("Platform", out)
@@ -334,40 +334,40 @@ class Odd(unittest.TestCase):
 
     def test_tasks_dated_only_by_due_are_counted_by_the_window(self):
         self.put("tasks", "tasks:\n"
-                 "  - {id: T-1, title: In week, status: not-started, due: 2026-03-11}\n"
-                 "  - {id: T-2, title: Next week, status: not-started, due: 2026-03-18}\n"
-                 "  - {id: T-4, title: Undated, status: not-started}\n")
+                 "  - {id: T-001, title: In week, status: not-started, due: 2026-03-11}\n"
+                 "  - {id: T-002, title: Next week, status: not-started, due: 2026-03-18}\n"
+                 "  - {id: T-004, title: Undated, status: not-started}\n")
         out, err = self.gen("status-report", "2026-W11")
-        self.assertIn("`T-1`", out)
-        self.assertNotIn("`T-2`", out)
-        self.assertIn("1 tasks have no period or due date: T-4", err)
+        self.assertIn("`T-001`", out)
+        self.assertNotIn("`T-002`", out)
+        self.assertIn("1 tasks have no period or due date: T-004", err)
 
     def test_more_than_ten_unplaced_tasks_are_summarised(self):
-        rows = "".join(f"  - {{id: T-{i}, title: x, status: not-started}}\n" for i in range(1, 13))
+        rows = "".join(f"  - {{id: T-{i:03d}, title: x, status: not-started}}\n" for i in range(1, 13))
         self.put("tasks", "tasks:\n" + rows)
         _, err = self.gen("status-report", "2026-03")
-        self.assertIn("12 tasks have no period or due date: T-1, T-2, T-3, T-4, T-5, T-6, T-7, T-8, T-9, T-10, and 2 more", err)
+        self.assertIn("12 tasks have no period or due date: T-001, T-002, T-003, T-004, T-005, T-006, T-007, T-008, T-009, T-010, and 2 more", err)
 
     def test_done_tasks_from_earlier_periods_are_counted_before(self):
         self.put("tasks", "tasks:\n"
-                 "  - {id: T-1, title: a, status: done, period: 2026-01}\n"
-                 "  - {id: T-2, title: b, status: done, due: 2026-02-10}\n"
-                 "  - {id: T-3, title: c, status: done}\n"
-                 "  - {id: T-4, title: d, status: done, period: 2026-03}\n"
-                 "  - {id: T-5, title: e, status: done, period: 2026-04}\n")
+                 "  - {id: T-001, title: a, status: done, period: 2026-01}\n"
+                 "  - {id: T-002, title: b, status: done, due: 2026-02-10}\n"
+                 "  - {id: T-003, title: c, status: done}\n"
+                 "  - {id: T-004, title: d, status: done, period: 2026-03}\n"
+                 "  - {id: T-005, title: e, status: done, period: 2026-04}\n")
         out, _ = self.gen("status-report", "2026-03")
         self.assertIn("completed before 2026-03: 2.", out)
 
     def test_milestones_by_period_by_due_and_closed_ones(self):
         self.put("milestones", "milestones:\n"
-                 "  - {id: M-1, title: By period, period: 2026-03, status: done}\n"
-                 "  - {id: M-2, title: By due, due: 2026-03-31, status: not-started}\n"
-                 "  - {id: M-3, title: Outside, due: 2026-05-31, status: not-started}\n"
-                 "  - {id: M-5, title: Undated, status: not-started}\n")
+                 "  - {id: M-001, title: By period, period: 2026-03, status: done}\n"
+                 "  - {id: M-002, title: By due, due: 2026-03-31, status: not-started}\n"
+                 "  - {id: M-003, title: Outside, due: 2026-05-31, status: not-started}\n"
+                 "  - {id: M-005, title: Undated, status: not-started}\n")
         out, _ = self.gen("team-checklist", "2026-03")
-        self.assertIn("- [x] By period `M-1`", out)
-        self.assertIn("- [ ] By due `M-2`", out)
-        for gone in ("M-3", "M-5"):
+        self.assertIn("- [x] By period `M-001`", out)
+        self.assertIn("- [ ] By due `M-002`", out)
+        for gone in ("M-003", "M-005"):
             self.assertNotIn(gone, out)
         self.put("milestones", "milestones: []\n")
         self.assertIn("- None", self.gen("team-checklist", "2026-03")[0])
@@ -375,41 +375,41 @@ class Odd(unittest.TestCase):
     def test_status_report_milestones_use_the_14_day_look_ahead(self):
         # window 2026-W11 is 9-15 March; the cutoff is 29 March
         self.put("milestones", "milestones:\n"
-                 "  - {id: M-1, title: Soon, due: 2026-03-29, status: not-started}\n"
-                 "  - {id: M-2, title: Later, due: 2026-03-30, status: not-started}\n"
-                 "  - {id: M-3, title: Done in week, due: 2026-03-10, status: done}\n"
-                 "  - {id: M-4, title: Done outside, due: 2026-03-20, status: done}\n"
-                 "  - {id: M-5, title: Overdue, due: 2025-01-01, status: not-started}\n")
+                 "  - {id: M-001, title: Soon, due: 2026-03-29, status: not-started}\n"
+                 "  - {id: M-002, title: Later, due: 2026-03-30, status: not-started}\n"
+                 "  - {id: M-003, title: Done in week, due: 2026-03-10, status: done}\n"
+                 "  - {id: M-004, title: Done outside, due: 2026-03-20, status: done}\n"
+                 "  - {id: M-005, title: Overdue, due: 2025-01-01, status: not-started}\n")
         out, _ = self.gen("status-report", "2026-W11")
         ms = out[out.index("## Milestones"):out.index("## Notes on data")]
-        for want in ("M-1", "M-3", "M-5"):
+        for want in ("M-001", "M-003", "M-005"):
             self.assertIn(want, ms)
-        for gone in ("M-2", "M-4"):
+        for gone in ("M-002", "M-004"):
             self.assertNotIn(gone, ms)
 
     def test_decision_shapes(self):
         self.put("decisions", "decisions:\n"
-                 "  - {id: DEC-0, status: accepted, date: 2026-02-01}\n"
-                 "  - {id: DEC-1, status: accepted, options: one, supersedes: DEC-0, related: [DEC-2, null], date: 2026-03-01}\n"
-                 "  - {id: DEC-2, status: proposed, options: [], consequences: x, supersedes: [DEC-1], date: 2026-03-02}\n"
-                 "  - {id: DEC-3, status: proposed}\n")
+                 "  - {id: DEC-000, status: accepted, date: 2026-02-01}\n"
+                 "  - {id: DEC-001, status: accepted, options: one, supersedes: DEC-000, related: [DEC-002, null], date: 2026-03-01}\n"
+                 "  - {id: DEC-002, status: proposed, options: [], consequences: x, supersedes: [DEC-001], date: 2026-03-02}\n"
+                 "  - {id: DEC-003, status: proposed}\n")
         out, _ = self.gen("decision-log")
-        self.assertIn("`DEC-0`, `DEC-2`", out)
-        self.assertIn("`DEC-1`", out)
+        self.assertIn("`DEC-000`, `DEC-002`", out)
+        self.assertIn("`DEC-001`", out)
         self.assertIn("not recorded", out)
-        self.assertEqual(out.count("DEC-3"), out.count("DEC-3"))
+        self.assertEqual(out.count("DEC-003"), out.count("DEC-003"))
 
     def test_priority_goals_as_text_as_list_and_missing(self):
         self.put("priorities", "priorities:\n"
-                 "  - {id: P-1, status: done, title: Text goal, goals: Ship it}\n"
-                 "  - {id: P-2, status: done, title: List goal, goals: [A, null, B]}\n"
-                 "  - {id: P-3, status: done, title: No goal}\n"
-                 "  - {id: P-10, status: done, title: Last}\n")
+                 "  - {id: P-001, status: done, title: Text goal, goals: Ship it}\n"
+                 "  - {id: P-002, status: done, title: List goal, goals: [A, null, B]}\n"
+                 "  - {id: P-003, status: done, title: No goal}\n"
+                 "  - {id: P-010, status: done, title: Last}\n")
         out, _ = self.gen("project-plan")
         self.assertIn("- Ship it", out)
         self.assertIn("- A\n- B", out)
         self.assertIn("- not recorded", out)
-        self.assertLess(out.index("P-3"), out.index("P-10"))
+        self.assertLess(out.index("P-003"), out.index("P-010"))
 
     def test_roster_entries_without_role_or_name(self):
         with open(self.reg / "roster.yaml", "a", encoding="utf-8") as f:
@@ -419,12 +419,12 @@ class Odd(unittest.TestCase):
         self.assertIn("| Lead | lead |", out)
 
     def test_changes_and_decisions_outside_the_week_are_left_out(self):
-        self.put("changes", "changes:\n  - {id: CR-1, title: In, status: proposed, date: 2026-03-09}\n  - {id: CR-2, title: Out, status: proposed, date: 2026-03-16}\n  - {id: CR-3, title: No date, status: proposed}\n")
+        self.put("changes", "changes:\n  - {id: CR-001, title: In, status: proposed, date: 2026-03-09}\n  - {id: CR-002, title: Out, status: proposed, date: 2026-03-16}\n  - {id: CR-003, title: No date, status: proposed}\n")
         out, _ = self.gen("status-report", "2026-W11")
         section = out[out.index("## Decisions and changes"):out.index("## Risks")]
-        self.assertIn("CR-1", section)
-        self.assertNotIn("CR-2", section)
-        self.assertNotIn("CR-3", section)
+        self.assertIn("CR-001", section)
+        self.assertNotIn("CR-002", section)
+        self.assertNotIn("CR-003", section)
 
     def test_schedule_naming_project_playbook_passes_config_errors(self):
         playbooks = self.root / "pmo/playbooks"
@@ -475,8 +475,8 @@ class Odd(unittest.TestCase):
         cfg_file.write_text(reordered, encoding="utf-8")
         out, _ = self.gen("status-report", "2026-03")
         blockers = out.split("## Blockers and decisions needed")[1].split("## ")[0]
-        self.assertIn("DEC-2", blockers)
-        self.assertNotIn("DEC-1", blockers)
+        self.assertIn("DEC-002", blockers)
+        self.assertNotIn("DEC-001", blockers)
 
     def test_milestone_period_takes_precedence_over_due(self):
         ms = (self.reg / "milestones.yaml").read_text(encoding="utf-8")
@@ -484,23 +484,23 @@ class Odd(unittest.TestCase):
         (self.reg / "milestones.yaml").write_text(ms_mod, encoding="utf-8")
         out, _ = self.gen("team-checklist", "2026-03")
         target_check = out.split("## End-of-period target check")[1]
-        self.assertNotIn("M-2", target_check)
-        self.assertIn("M-1", target_check)
+        self.assertNotIn("M-002", target_check)
+        self.assertIn("M-001", target_check)
 
     def test_closed_period_report_drops_later_raised_issues_and_risks(self):
         out, _ = self.gen("status-report", "2026-02", "--as-of", "2026-03-15")
-        self.assertNotIn("I-3", out)
-        self.assertIn("**Overall:** amber - open risk R-1 has high impact", out)
+        self.assertNotIn("I-003", out)
+        self.assertIn("**Overall:** amber - open risk R-001 has high impact", out)
         self.assertIn("overdue measured at 2026-02-28; registers read on 2026-03-15", out)
 
         issues = (self.reg / "issues.yaml").read_text(encoding="utf-8")
         (self.reg / "issues.yaml").write_text(issues.replace("raised: 2026-03-08", "raised: 2026-02-20"), encoding="utf-8")
         out2, _ = self.gen("status-report", "2026-02", "--as-of", "2026-03-15")
-        self.assertIn("open issue I-3 has high severity", out2)
+        self.assertIn("open issue I-003 has high severity", out2)
 
         (self.reg / "issues.yaml").write_text(issues.replace("raised: 2026-03-08", "raised: null"), encoding="utf-8")
         out3, _ = self.gen("status-report", "2026-02", "--as-of", "2026-03-15")
-        self.assertIn("open issue I-3 has high severity", out3)
+        self.assertIn("open issue I-003 has high severity", out3)
 
 
 if __name__ == "__main__":

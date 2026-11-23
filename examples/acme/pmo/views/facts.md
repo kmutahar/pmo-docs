@@ -4,5 +4,5 @@
 
 | id | item | value | owner | status | notes | origin |
 |---|---|---|---|---|---|---|
-| FACT-1 | Test customer account | demo-customer on staging | alice | active | Created by the seed script | stated |
-| FACT-2 | Seed script | scripts/seed.sh | alice | outdated | Replaced by the fixtures loader | stated |
+| FACT-001 | Test customer account | demo-customer on staging | alice | active | Created by the seed script | stated |
+| FACT-002 | Seed script | scripts/seed.sh | alice | outdated | Replaced by the fixtures loader | stated |

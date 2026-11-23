@@ -4,5 +4,5 @@
 
 | id | order | heading | owners | note | output | origin |
 |---|---|---|---|---|---|---|
-| TM-1 | 1 | Platform | alice | Servers and API | Staging and API |  |
-| TM-2 | 2 | Web | bob | Pages and design | Login and home pages |  |
+| TM-001 | 1 | Platform | alice | Servers and API | Staging and API |  |
+| TM-002 | 2 | Web | bob | Pages and design | Login and home pages |  |

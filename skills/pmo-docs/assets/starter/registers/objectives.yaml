@@ -1,4 +1,4 @@
 # objectives: one entry per line, e.g.
 #   - {id: ..., title: ..., kind: ..., measure: ..., target: ..., due: ..., status: ..., origin: ...}
-# ids look like O-1
+# ids look like O-001
 objectives: []

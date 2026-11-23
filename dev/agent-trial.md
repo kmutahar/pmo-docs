@@ -86,7 +86,7 @@ The expected files come from `docs/walkthrough.md` and the scripts. To build the
 | # | Prompt | Folder | Expected file changes | Pass when |
 |---|---|---|---|---|
 | 1 | setup | `~/pmo-trial/setup` | `pmo/config.yaml`, `pmo/house-rules.md`, `pmo/documents/.gitkeep`, the starter registers under `pmo/registers/`, `pmo/views/` (one view per register plus the catalogue), `pmo/bin/pmo` | Files match the reference. The agent asked for the project name and manager, and did not overwrite anything. |
-| 2 | track | `acme` | Two turns. Turn 1 ("mark T-1 done"): asks for QA evidence and changes nothing. Turn 2 (give the evidence): only the `T-1` line in `pmo/registers/tasks.yaml` changes (`status: done`, `done_on` set); `pmo/views/tasks.md` is re-rendered. | No change before the evidence. Then only that line and that view change. |
+| 2 | track | `acme` | Two turns. Turn 1 ("mark T-001 done"): asks for QA evidence and changes nothing. Turn 2 (give the evidence): only the `T-001` line in `pmo/registers/tasks.yaml` changes (`status: done`, `done_on` set); `pmo/views/tasks.md` is re-rendered. | No change before the evidence. Then only that line and that view change. |
 | 3 | render | `acme` | Hand-edit one status in `tasks.yaml`, then ask for a re-render. Only `pmo/views/tasks.md` changes. | `render_views.py --check` exits 0 after the prompt. No view was edited by hand. |
 | 4 | draft | `acme` | One new draft under `pmo/documents/`, at the path `where.py status-report --week` gives. The 2026-03 report is untouched. No register changes. | `structure_check.py` passes on the new file. Its status is `draft`. |
 | 5 | finish | `acme` | Only `pmo/documents/2026-03 - Status report.md`: `status` becomes `finished`, the template version and hashes are recorded, template comments are removed. Acme configures `ar` under `languages`, so Finish asks once whether to translate into `ar` (answer `no`). | `structure_check.py` passes. The new draft from prompt 4 is still a draft. |
@@ -94,7 +94,7 @@ The expected files come from `docs/walkthrough.md` and the scripts. To build the
 The prompt texts for the agent:
 
 - Setup: `Set up pmo-docs for this project. The project is Acme Portal, the manager is Sam Example.`
-- Track: `Mark T-1 done.` Then, after it asks: `The QA evidence is the staging checklist, signed off on 2026-03-15.`
+- Track: `Mark T-001 done.` Then, after it asks: `The QA evidence is the staging checklist, signed off on 2026-03-15.`
 - Render: `I changed a status by hand in tasks.yaml. Check the registers and re-render the views.`
 - Draft: `Draft this week's status report.`
 - Finish: `Finish the 2026-03 status report.`

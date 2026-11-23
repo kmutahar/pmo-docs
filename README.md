@@ -33,7 +33,7 @@ Terms such as register, view, draft and Finish are defined in [`GLOSSARY.md`](GL
 
 | Part | What it is |
 | --- | --- |
-| Registers | Plain YAML files, the only source of facts. Each entry is one line with its own id (for example `T-14`). |
+| Registers | Plain YAML files, the only source of facts. Each entry is one line with its own id (for example `T-014`). |
 | Views | Read-only summaries rendered from registers by scripts. Never edit them by hand. |
 | Templates | Required sections and rules per document type. |
 | Documents | Drafted for one period (a week, a month) or once. They stay drafts until you ask to Finish them. |
@@ -155,7 +155,7 @@ Run the agent in your project's root folder.
 
    # pmo/registers/tasks.yaml
    tasks:
-     - {id: T-1, title: Set up staging server, priority: high, owner: sam, status: in-progress, due: 2026-03-10}
+     - {id: T-001, title: Set up staging server, priority: high, owner: sam, status: in-progress, due: 2026-03-10}
    ```
 
 3. Render the views. Ask the agent, or run `pmo/bin/pmo render_views`. It validates the registers and writes the views and catalogue under `pmo/views/`. You should see `registers valid; wrote ... views`.

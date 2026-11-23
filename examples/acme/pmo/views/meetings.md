@@ -4,5 +4,5 @@
 
 | id | title | date | attendees | decisions | actions | minutes_doc | origin |
 |---|---|---|---|---|---|---|---|
-| MTG-1 | Weekly sync | 2026-03-09 | sam, alice, bob | DEC-2 | ACT-1, ACT-2 |  |  |
-| MTG-2 | Kickoff | 2026-02-10 | sam, alice, bob | DEC-1 |  |  |  |
+| MTG-001 | Weekly sync | 2026-03-09 | sam, alice, bob | DEC-002 | ACT-001, ACT-002 |  |  |
+| MTG-002 | Kickoff | 2026-02-10 | sam, alice, bob | DEC-001 |  |  |  |

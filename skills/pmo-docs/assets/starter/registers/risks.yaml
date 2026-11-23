@@ -1,4 +1,4 @@
 # risks: one entry per line, e.g.
 #   - {id: ..., title: ..., description: ..., probability: ..., impact: ..., owner: ..., mitigation: ..., status: ..., origin: ..., raised: ..., closed: ...}
-# ids look like R-1
+# ids look like R-001
 risks: []

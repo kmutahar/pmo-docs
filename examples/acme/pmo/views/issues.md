@@ -4,7 +4,7 @@
 
 | id | title | description | severity | owner | status | origin | raised | resolved | related_tasks |
 |---|---|---|---|---|---|---|---|---|---|
-| I-1 | Typo on home page | Heading is misspelled | low | bob | open | stated | 2026-03-02 |  | T-2 |
-| I-2 | Slow search | Search takes seconds | medium | alice | in-progress | stated | 2026-03-03 |  |  |
-| I-3 | Login fails on staging | Users get an error page | high | alice | open | stated | 2026-03-08 |  | T-1 |
-| I-4 | Staging down | Server crashed once | critical | alice | resolved | stated | 2026-03-04 | 2026-03-06 | T-1 |
+| I-001 | Typo on home page | Heading is misspelled | low | bob | open | stated | 2026-03-02 |  | T-002 |
+| I-002 | Slow search | Search takes seconds | medium | alice | in-progress | stated | 2026-03-03 |  |  |
+| I-003 | Login fails on staging | Users get an error page | high | alice | open | stated | 2026-03-08 |  | T-001 |
+| I-004 | Staging down | Server crashed once | critical | alice | resolved | stated | 2026-03-04 | 2026-03-06 | T-001 |

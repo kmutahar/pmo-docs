@@ -62,10 +62,10 @@ class NewRegisters(unittest.TestCase):
             entries = pc.yaml.safe_load(original)[name]
             self.assertTrue(entries and all(e["id"].startswith(prefix + "-") for e in entries), name)
             first = [ln for ln in original.splitlines() if ln.startswith("  - ")][0]
-            self.append(name, first.replace(f"id: {prefix}-1,", f"id: {prefix}-x,"))
+            self.append(name, first.replace(f"id: {prefix}-001,", f"id: {prefix}-x,"))
             code, out, _ = run_render(self.root)
             self.assertEqual(code, 1, name)
-            self.assertIn(f"id must look like {prefix}-1", out)
+            self.assertIn(f"id must look like {prefix}-001", out)
             path.write_text(original, encoding="utf-8")
 
     def test_starter_files_validate_once_copied(self):
@@ -83,7 +83,7 @@ class NewRegisters(unittest.TestCase):
             shutil.rmtree(empty_dir.parent)
 
     def test_permission_role_must_be_in_domain_roles(self):
-        self.append("permissions", '  - {id: PERM-99, resource: Profile, action: delete, roles: [owner], condition: "", source: src/auth.js, notes: "", origin: stated}')
+        self.append("permissions", '  - {id: PERM-099, resource: Profile, action: delete, roles: [owner], condition: "", source: src/auth.js, notes: "", origin: stated}')
         code, out, _ = run_render(self.root)
         self.assertEqual(code, 1)
         self.assertIn("roles 'owner' not in", out)
@@ -94,7 +94,7 @@ class NewRegisters(unittest.TestCase):
         self.assertEqual(code, 0, out)
 
     def test_permission_roles_map_keys_are_checked_and_conditions_are_text(self):
-        self.append("permissions", '  - {id: PERM-99, resource: Profile, action: delete, roles: {owner: all}, condition: "", source: src/auth.js, notes: "", origin: stated}')
+        self.append("permissions", '  - {id: PERM-099, resource: Profile, action: delete, roles: {owner: all}, condition: "", source: src/auth.js, notes: "", origin: stated}')
         code, out, _ = run_render(self.root)
         self.assertEqual(code, 1)
         self.assertIn("roles 'owner' not in", out)
@@ -105,58 +105,58 @@ class NewRegisters(unittest.TestCase):
         self.assertIn("roles 'admin' must map to text", out)
 
     def test_permissions_view_has_one_column_per_role(self):
-        self.append("permissions", '  - {id: PERM-99, resource: Order, action: view, roles: [viewer], condition: "", source: "", notes: "", origin: stated}')  # a plain list still works
+        self.append("permissions", '  - {id: PERM-099, resource: Order, action: view, roles: [viewer], condition: "", source: "", notes: "", origin: stated}')  # a plain list still works
         code, out, _ = run_render(self.root)
         self.assertEqual(code, 0, out)
         view = (self.views / "permissions.md").read_text(encoding="utf-8")
         self.assertIn("| id | resource | action | admin | editor | viewer | condition |", view)
-        self.assertIn("| PERM-1 | Profile | view own | x | own profile only | own profile only |", view)
-        self.assertIn("| PERM-99 | Order | view |  |  | x |", view)
+        self.assertIn("| PERM-001 | Profile | view own | x | own profile only | own profile only |", view)
+        self.assertIn("| PERM-099 | Order | view |  |  | x |", view)
 
     def test_fact_status_is_checked_and_outdated_is_closed(self):
-        self.append("facts", '  - {id: FACT-99, item: x, value: y, owner: alice, status: stale, notes: "", origin: stated}')
+        self.append("facts", '  - {id: FACT-099, item: x, value: y, owner: alice, status: stale, notes: "", origin: stated}')
         code, out, _ = run_render(self.root)
         self.assertEqual(code, 1)
         self.assertIn("status 'stale' not in ['active', 'outdated']", out)
         self.assertEqual(pc.load_config(self.root)["registers"]["facts"]["closed"], ["outdated"])
 
     def test_test_links_must_exist(self):
-        # task: T-99 fails
+        # task: T-099 fails
         tests_path = self.reg / "tests.yaml"
         original = tests_path.read_text(encoding="utf-8")
 
-        self.append("tests", '  - {id: TST-99, title: Bad task, kind: acceptance, requirement: null, task: T-99, issue: null, expected: ok, status: passed, run_on: 2026-03-06, owner: alice, evidence: "", notes: "", origin: stated}')
+        self.append("tests", '  - {id: TST-099, title: Bad task, kind: acceptance, requirement: null, task: T-099, issue: null, expected: ok, status: passed, run_on: 2026-03-06, owner: alice, evidence: "", notes: "", origin: stated}')
         code, out, _ = run_render(self.root)
         self.assertEqual(code, 1)
-        self.assertIn("task 'T-99' is not an id in tasks", out)
+        self.assertIn("task 'T-099' is not an id in tasks", out)
 
-        # requirement: REQ-9 fails
+        # requirement: REQ-009 fails
         tests_path.write_text(original, encoding="utf-8")
-        self.append("tests", '  - {id: TST-99, title: Bad req, kind: acceptance, requirement: REQ-9, task: null, issue: null, expected: ok, status: passed, run_on: 2026-03-06, owner: alice, evidence: "", notes: "", origin: stated}')
+        self.append("tests", '  - {id: TST-099, title: Bad req, kind: acceptance, requirement: REQ-009, task: null, issue: null, expected: ok, status: passed, run_on: 2026-03-06, owner: alice, evidence: "", notes: "", origin: stated}')
         code, out, _ = run_render(self.root)
         self.assertEqual(code, 1)
-        self.assertIn("requirement 'REQ-9' is not an id in requirements", out)
+        self.assertIn("requirement 'REQ-009' is not an id in requirements", out)
 
-        # issue: I-9 fails
+        # issue: I-009 fails
         tests_path.write_text(original, encoding="utf-8")
-        self.append("tests", '  - {id: TST-99, title: Bad issue, kind: acceptance, requirement: null, task: null, issue: I-9, expected: ok, status: passed, run_on: 2026-03-06, owner: alice, evidence: "", notes: "", origin: stated}')
+        self.append("tests", '  - {id: TST-099, title: Bad issue, kind: acceptance, requirement: null, task: null, issue: I-009, expected: ok, status: passed, run_on: 2026-03-06, owner: alice, evidence: "", notes: "", origin: stated}')
         code, out, _ = run_render(self.root)
         self.assertEqual(code, 1)
-        self.assertIn("issue 'I-9' is not an id in issues", out)
+        self.assertIn("issue 'I-009' is not an id in issues", out)
 
     def test_task_tests_field_is_checked(self):
         tasks_path = self.reg / "tasks.yaml"
         original = tasks_path.read_text(encoding="utf-8")
 
-        # tests: [TST-9] fails
-        self.append("tasks", '  - {id: T-99, title: Bad test ref, team: platform, group: infra, priority: low, owner: alice, status: not-started, due: 2026-03-20, period: 2026-03, notes: "", tests: [TST-9]}')
+        # tests: [TST-009] fails
+        self.append("tasks", '  - {id: T-099, title: Bad test ref, team: platform, group: infra, priority: low, owner: alice, status: not-started, due: 2026-03-20, period: 2026-03, notes: "", tests: [TST-009]}')
         code, out, _ = run_render(self.root)
         self.assertEqual(code, 1)
-        self.assertIn("tests 'TST-9' is not an id in tests", out)
+        self.assertIn("tests 'TST-009' is not an id in tests", out)
 
-        # tests: [TST-1] passes
+        # tests: [TST-001] passes
         tasks_path.write_text(original, encoding="utf-8")
-        self.append("tasks", '  - {id: T-99, title: Good test ref, team: platform, group: infra, priority: low, owner: alice, status: not-started, due: 2026-03-20, period: 2026-03, notes: "", tests: [TST-1]}')
+        self.append("tasks", '  - {id: T-099, title: Good test ref, team: platform, group: infra, priority: low, owner: alice, status: not-started, due: 2026-03-20, period: 2026-03, notes: "", tests: [TST-001]}')
         code, out, _ = run_render(self.root)
         self.assertEqual(code, 0, out)
 
@@ -185,7 +185,7 @@ class NewRegisters(unittest.TestCase):
                 p.unlink()
         tasks_file = self.reg / "tasks.yaml"
         text = tasks_file.read_text(encoding="utf-8")
-        text = text.replace(", tests: [TST-1]", "")
+        text = text.replace(", tests: [TST-001]", "")
         tasks_file.write_text(text, encoding="utf-8")
         tasks_view = self.views / "tasks.md"
         if tasks_view.exists():

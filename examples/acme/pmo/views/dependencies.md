@@ -4,5 +4,5 @@
 
 | id | type | from | to | text | status | origin |
 |---|---|---|---|---|---|---|
-| D-1 | internal | T-2 | T-1 | Login page needs staging | open |  |
-| D-2 | external | T-4 | vendor | Contract terms from vendor | open |  |
+| D-001 | internal | T-002 | T-001 | Login page needs staging | open |  |
+| D-002 | external | T-004 | vendor | Contract terms from vendor | open |  |

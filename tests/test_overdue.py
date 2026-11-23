@@ -76,24 +76,24 @@ class Overdue(unittest.TestCase):
         self.sync_views()
         code, out = self.run_tool("--as-of", "2026-03-15")
         self.assertEqual(code, 0)
-        self.assertIn("| T-1 | Set up staging server | alice | 2026-03-10 | 5 | high |", out)
-        self.assertNotIn("T-3", out)  # done
-        self.assertNotIn("T-2", out)  # not due yet
-        self.assertIn("ACT-1", out)
-        self.assertNotIn("ACT-2", out)  # done
-        self.assertIn("M-1", out)
-        self.assertNotIn("M-2", out)
+        self.assertIn("| T-001 | Set up staging server | alice | 2026-03-10 | 5 | high |", out)
+        self.assertNotIn("T-003", out)  # done
+        self.assertNotIn("T-002", out)  # not due yet
+        self.assertIn("ACT-001", out)
+        self.assertNotIn("ACT-002", out)  # done
+        self.assertIn("M-001", out)
+        self.assertNotIn("M-002", out)
 
     def test_null_cells_say_not_set(self):
-        self.replace_task("T-1", "{id: T-1, title: a, priority: null, owner: null, status: blocked, due: 2026-03-10}")
+        self.replace_task("T-001", "{id: T-001, title: a, priority: null, owner: null, status: blocked, due: 2026-03-10}")
         self.sync_views()
         _, out = self.run_tool("--as-of", "2026-03-15")
-        self.assertIn("| T-1 | a | not set | 2026-03-10 | 5 | not set |", out)
+        self.assertIn("| T-001 | a | not set | 2026-03-10 | 5 | not set |", out)
 
     def test_days_window(self):
         self.sync_views()
         _, out = self.run_tool("--as-of", "2026-03-15", "--days", "60")
-        self.assertIn("M-2", out)
+        self.assertIn("M-002", out)
 
     def test_closed_statuses_come_from_config(self):
         self.merge_config({"registers": {"tasks": {"closed": ["done", "dropped", "in-progress"]}}})
@@ -102,12 +102,12 @@ class Overdue(unittest.TestCase):
         self.assertNotIn("Set up staging", out)
 
     def test_priority_order_from_config(self):
-        self.replace_task("T-1", "{id: T-1, title: a, priority: high, status: blocked, due: 2026-03-01}")
-        self.replace_task("T-2", "{id: T-2, title: b, priority: low, status: blocked, due: 2026-03-01}")
+        self.replace_task("T-001", "{id: T-001, title: a, priority: high, status: blocked, due: 2026-03-01}")
+        self.replace_task("T-002", "{id: T-002, title: b, priority: low, status: blocked, due: 2026-03-01}")
         self.merge_config({"vocab": {"priority_order": ["low", "high", "medium"]}})
         self.sync_views()
         _, out = self.run_tool("--as-of", "2026-03-15")
-        self.assertLess(out.index("T-2"), out.index("T-1"))
+        self.assertLess(out.index("T-002"), out.index("T-001"))
 
     def test_missing_registers_give_none_rows(self):
         shutil.rmtree(self.p / "pmo/registers")
@@ -119,20 +119,20 @@ class Overdue(unittest.TestCase):
         (self.p / "pmo/registers/tasks.yaml").write_text("tasks:\n" + "".join(f"  - {x}\n" for x in lines), encoding="utf-8")
 
     def test_bad_and_datetime_due_dates(self):
-        self.tasks("{id: T-1, title: a, status: blocked, due: TBD}",
-                   "{id: T-2, title: b, status: blocked, due: 2026-03-01 10:00:00}")
+        self.tasks("{id: T-001, title: a, status: blocked, due: TBD}",
+                   "{id: T-002, title: b, status: blocked, due: 2026-03-01 10:00:00}")
         code, out = self.run_tool("--as-of", "2026-03-15")
         self.assertEqual(code, 0)
         self.assertIn("## Bad due dates", out)
-        self.assertIn("| tasks | T-1 | TBD |", out)
-        self.assertIn("| T-2 | b |", out)
+        self.assertIn("| tasks | T-001 | TBD |", out)
+        self.assertIn("| T-002 | b |", out)
 
     def test_register_removed_from_config(self):
         self.merge_config({"registers": {"actions": None}})
         self.sync_views()
         code, out = self.run_tool("--as-of", "2026-03-15")
         self.assertEqual(code, 0)
-        self.assertNotIn("ACT-1", out)
+        self.assertNotIn("ACT-001", out)
 
     def test_unreadable_register_exits_2(self):
         (self.p / "pmo/registers/tasks.yaml").write_text("tasks: [\n", encoding="utf-8")
@@ -147,44 +147,44 @@ class Overdue(unittest.TestCase):
         _, out = self.run_tool("--as-of", "2026-03-15")
         a, b = out.index("## Open issues by severity"), out.index("## Open risks")
         issues, risks = out[a:b], out[b:]
-        self.assertLess(issues.index("I-3"), issues.index("I-2"))
-        self.assertLess(issues.index("I-2"), issues.index("I-1"))
-        self.assertNotIn("I-4", issues)  # resolved
-        self.assertIn("R-1", risks)
-        self.assertNotIn("R-2", risks)  # closed
+        self.assertLess(issues.index("I-003"), issues.index("I-002"))
+        self.assertLess(issues.index("I-002"), issues.index("I-001"))
+        self.assertNotIn("I-004", issues)  # resolved
+        self.assertIn("R-001", risks)
+        self.assertNotIn("R-002", risks)  # closed
 
     def test_milestone_window_is_inclusive_and_sorted(self):
         ms = self.p / "pmo/registers/milestones.yaml"
         ms.write_text(
             ms.read_text(encoding="utf-8").rstrip("\n") + "\n"
-            "  - {id: M-9, title: b, status: not-started, due: 2026-03-29}\n"
-            "  - {id: M-8, title: a, status: not-started, due: 2026-03-20}\n",
+            "  - {id: M-009, title: b, status: not-started, due: 2026-03-29}\n"
+            "  - {id: M-008, title: a, status: not-started, due: 2026-03-20}\n",
             encoding="utf-8",
         )
         self.sync_views()
         _, out = self.run_tool("--as-of", "2026-03-15")
-        self.assertLess(out.index("M-8"), out.index("M-9"))  # 14 days after 03-15 is 03-29
+        self.assertLess(out.index("M-008"), out.index("M-009"))  # 14 days after 03-15 is 03-29
 
     def test_blocked_tasks_and_tasks_with_no_due_date_have_their_own_tables(self):
-        self.tasks("{id: T-1, title: a, status: blocked, due: 2026-03-01}", "{id: T-2, title: b, status: in-progress}",
-                   "{id: T-3, title: c, status: done}", "{id: T-4, title: d, status: not-started, due: TBD}")
+        self.tasks("{id: T-001, title: a, status: blocked, due: 2026-03-01}", "{id: T-002, title: b, status: in-progress}",
+                   "{id: T-003, title: c, status: done}", "{id: T-004, title: d, status: not-started, due: TBD}")
         _, out = self.run_tool("--as-of", "2026-03-15")
         blocked = out[out.index("## Blocked tasks"):out.index("## Tasks with no due date")]
         undated = out[out.index("## Tasks with no due date"):out.index("## Bad due dates")]
-        self.assertIn("| T-1 | a | not set | 2026-03-01 | not set |", blocked)
-        self.assertNotIn("T-2", blocked)
-        self.assertIn("| T-2 | b | not set | in-progress | not set |", undated)
-        self.assertNotIn("T-3", undated)  # closed
-        self.assertNotIn("T-4", undated)  # bad dates are listed under Bad due dates
-        self.assertNotIn("T-1", undated)
+        self.assertIn("| T-001 | a | not set | 2026-03-01 | not set |", blocked)
+        self.assertNotIn("T-002", blocked)
+        self.assertIn("| T-002 | b | not set | in-progress | not set |", undated)
+        self.assertNotIn("T-003", undated)  # closed
+        self.assertNotIn("T-004", undated)  # bad dates are listed under Bad due dates
+        self.assertNotIn("T-001", undated)
 
     def test_blocked_statuses_come_from_config(self):
         self.merge_config({"registers": {"tasks": {"blocked": ["waiting"]}}})
-        self.tasks("{id: T-1, title: a, status: blocked, due: 2026-03-20}", "{id: T-2, title: b, status: waiting, due: 2026-03-20}")
+        self.tasks("{id: T-001, title: a, status: blocked, due: 2026-03-20}", "{id: T-002, title: b, status: waiting, due: 2026-03-20}")
         _, out = self.run_tool("--as-of", "2026-03-15")
         blocked = out[out.index("## Blocked tasks"):out.index("## Tasks with no due date")]
-        self.assertIn("T-2", blocked)
-        self.assertNotIn("T-1", blocked)
+        self.assertIn("T-002", blocked)
+        self.assertNotIn("T-001", blocked)
 
     def test_missing_project_is_a_usage_error(self):
         with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as e:
@@ -200,12 +200,12 @@ class Overdue(unittest.TestCase):
         self.assertEqual(e.exception.code, 2)
 
     def test_due_on_the_as_of_date_is_not_overdue_and_the_day_before_is_one_day_late(self):
-        self.replace_task("T-1", "{id: T-1, title: a, status: in-progress, due: 2026-03-15}")
-        self.replace_task("T-2", "{id: T-2, title: b, status: in-progress, due: 2026-03-14}")
+        self.replace_task("T-001", "{id: T-001, title: a, status: in-progress, due: 2026-03-15}")
+        self.replace_task("T-002", "{id: T-002, title: b, status: in-progress, due: 2026-03-14}")
         self.sync_views()
         _, out = self.run_tool("--as-of", "2026-03-15")
-        self.assertNotIn("| T-1 |", out)
-        self.assertIn("| T-2 | b | not set | 2026-03-14 | 1 | not set |", out)
+        self.assertNotIn("| T-001 |", out)
+        self.assertIn("| T-002 | b | not set | 2026-03-14 | 1 | not set |", out)
 
     def test_as_of_before_every_due_date_lists_no_overdue_work(self):
         self.sync_views()
@@ -213,23 +213,23 @@ class Overdue(unittest.TestCase):
         self.assertIn("Overdue tasks: 0, open actions past due: 0", out)
 
     def test_days_late_across_a_leap_day(self):
-        self.replace_task("T-1", "{id: T-1, title: a, status: blocked, due: 2024-02-28}")
+        self.replace_task("T-001", "{id: T-001, title: a, status: blocked, due: 2024-02-28}")
         self.sync_views()
         self.assertIn("| 2 |", self.run_tool("--as-of", "2024-03-01")[1])  # 28th, 29th
-        self.replace_task("T-1", "{id: T-1, title: a, status: blocked, due: 2023-02-28}")
+        self.replace_task("T-001", "{id: T-001, title: a, status: blocked, due: 2023-02-28}")
         self.sync_views()
         self.assertIn("| 1 |", self.run_tool("--as-of", "2023-03-01")[1])
         self.assertIn("as of 2024-02-29", self.run_tool("--as-of", "2024-02-29")[1])
 
     def test_days_zero_keeps_only_milestones_due_by_the_as_of_date(self):
         (self.p / "pmo/registers/milestones.yaml").write_text(
-            "milestones:\n  - {id: M-1, title: a, status: not-started, due: 2026-03-14}\n"
-            "  - {id: M-2, title: b, status: not-started, due: 2026-03-15}\n"
-            "  - {id: M-3, title: c, status: not-started, due: 2026-03-16}\n", encoding="utf-8")
+            "milestones:\n  - {id: M-001, title: a, status: not-started, due: 2026-03-14}\n"
+            "  - {id: M-002, title: b, status: not-started, due: 2026-03-15}\n"
+            "  - {id: M-003, title: c, status: not-started, due: 2026-03-16}\n", encoding="utf-8")
         self.sync_views()
         _, out = self.run_tool("--as-of", "2026-03-15", "--days", "0")
         self.assertIn("milestones due within 0 days or overdue: 2", out)
-        self.assertNotIn("M-3", out)
+        self.assertNotIn("M-003", out)
 
     def test_days_must_be_an_integer(self):
         for bad in ("x", "1.5", ""):
@@ -245,32 +245,32 @@ class Overdue(unittest.TestCase):
         self.assertIn("--days cannot be negative", err.getvalue())
 
     def test_unicode_pipe_and_list_cells(self):
-        self.replace_task("T-1", "{id: T-1, title: \"عنوان | x\", status: blocked, due: 2026-03-01, owner: [alice, bob]}")
+        self.replace_task("T-001", "{id: T-001, title: \"عنوان | x\", status: blocked, due: 2026-03-01, owner: [alice, bob]}")
         self.sync_views()
         _, out = self.run_tool("--as-of", "2026-03-15")
-        self.assertIn("| T-1 | عنوان \\| x | alice, bob | 2026-03-01 | 14 | not set |", out)
+        self.assertIn("| T-001 | عنوان \\| x | alice, bob | 2026-03-01 | 14 | not set |", out)
 
     def test_task_order_is_days_late_then_priority_then_id_and_unknown_priority_last(self):
-        self.tasks("{id: T-4, title: d, status: blocked, due: 2026-03-01}",
-                   "{id: T-3, title: c, status: blocked, due: 2026-03-01, priority: high}",
-                   "{id: T-2, title: b, status: blocked, due: 2026-03-01, priority: bogus}",
-                   "{id: T-1, title: a, status: blocked, due: 2026-03-01, priority: high}",
-                   "{id: T-0, title: z, status: blocked, due: 2026-02-01, priority: low}")
+        self.tasks("{id: T-004, title: d, status: blocked, due: 2026-03-01}",
+                   "{id: T-003, title: c, status: blocked, due: 2026-03-01, priority: high}",
+                   "{id: T-002, title: b, status: blocked, due: 2026-03-01, priority: bogus}",
+                   "{id: T-001, title: a, status: blocked, due: 2026-03-01, priority: high}",
+                   "{id: T-000, title: z, status: blocked, due: 2026-02-01, priority: low}")
         _, out = self.run_tool("--as-of", "2026-03-15")
-        ids = [out.index(f"| T-{n} |") for n in (0, 1, 3, 2, 4)]
+        ids = [out.index(f"| T-{n:03d} |") for n in (0, 1, 3, 2, 4)]
         self.assertEqual(ids, sorted(ids))
 
     def test_unusable_due_values(self):
         # falsy values mean "not set"; other values that do not parse are listed under Bad due dates
-        self.tasks("{id: T-1, title: a, status: blocked, due: \"\"}", "{id: T-2, title: b, status: blocked, due: 0}",
-                   "{id: T-3, title: c, status: blocked}", "{id: T-4, title: d, status: blocked, due: true}",
-                   "{id: T-5, title: e, status: blocked, due: \"2026-02-30\"}", "{id: T-6, title: f, status: blocked, due: \"15/03/2026\"}")
+        self.tasks("{id: T-001, title: a, status: blocked, due: \"\"}", "{id: T-002, title: b, status: blocked, due: 0}",
+                   "{id: T-003, title: c, status: blocked}", "{id: T-004, title: d, status: blocked, due: true}",
+                   "{id: T-005, title: e, status: blocked, due: \"2026-02-30\"}", "{id: T-006, title: f, status: blocked, due: \"15/03/2026\"}")
         code, out = self.run_tool("--as-of", "2026-03-15")
         self.assertEqual(code, 0)
         bad = out[out.index("## Bad due dates"):]
-        for tid in ("T-4", "T-5", "T-6"):
+        for tid in ("T-004", "T-005", "T-006"):
             self.assertIn(f"| tasks | {tid} |", bad)
-        for tid in ("T-1", "T-2", "T-3"):
+        for tid in ("T-001", "T-002", "T-003"):
             self.assertNotIn(f"| tasks | {tid} |", bad)
         self.assertIn("Overdue tasks: 0", out)
 
@@ -304,14 +304,14 @@ class Overdue(unittest.TestCase):
 
     def test_issues_without_severity_or_without_severity_vocab_still_list(self):
         (self.p / "pmo/registers/issues.yaml").write_text(
-            "issues:\n  - {id: I-2, title: b, status: open}\n  - {id: I-1, title: a, status: open, severity: high}\n"
-            "  - {id: I-0, title: z, status: open, severity: unheard-of}\n", encoding="utf-8")
+            "issues:\n  - {id: I-002, title: b, status: open}\n  - {id: I-001, title: a, status: open, severity: high}\n"
+            "  - {id: I-000, title: z, status: open, severity: unheard-of}\n", encoding="utf-8")
         _, out = self.run_tool("--as-of", "2026-03-15")
-        self.assertLess(out.index("| I-1 |"), out.index("| I-0 |"))  # a known severity sorts before an unknown one
-        self.assertLess(out.index("| I-0 |"), out.index("| I-2 |"))  # ties by id
+        self.assertLess(out.index("| I-001 |"), out.index("| I-000 |"))  # a known severity sorts before an unknown one
+        self.assertLess(out.index("| I-000 |"), out.index("| I-002 |"))  # ties by id
         (self.p / "pmo/config.yaml").write_text("schema_version: 1\nregisters: {issues: {enums: null}}\n", encoding="utf-8")
         _, out = self.run_tool("--as-of", "2026-03-15")
-        self.assertLess(out.index("| I-0 |"), out.index("| I-1 |"))  # no vocab: plain id order
+        self.assertLess(out.index("| I-000 |"), out.index("| I-001 |"))  # no vocab: plain id order
 
     def test_help_exits_0_and_a_bad_flag_exits_2(self):
         import subprocess
@@ -322,24 +322,24 @@ class Overdue(unittest.TestCase):
     def test_ids_sort_by_number(self):
         risks_file = self.p / "pmo/registers/risks.yaml"
         rtext = risks_file.read_text(encoding="utf-8")
-        r1_line = next(ln for ln in rtext.splitlines() if "id: R-1," in ln or "id: R-1}" in ln)
+        r1_line = next(ln for ln in rtext.splitlines() if "id: R-001," in ln or "id: R-001}" in ln)
         risks_file.write_text(
-            rtext.rstrip("\n") + "\n" + r1_line.replace("R-1", "R-10") + "\n" + r1_line.replace("R-1", "R-9") + "\n",
+            rtext.rstrip("\n") + "\n" + r1_line.replace("R-001", "R-010") + "\n" + r1_line.replace("R-001", "R-009") + "\n",
             encoding="utf-8",
         )
         tasks_file = self.p / "pmo/registers/tasks.yaml"
         ttext = tasks_file.read_text(encoding="utf-8")
         tasks_file.write_text(
             ttext.rstrip("\n") + "\n"
-            "  - {id: T-10, title: Task ten, priority: high, owner: alice, status: in-progress, due: 2026-03-01}\n"
-            "  - {id: T-9, title: Task nine, priority: high, owner: alice, status: in-progress, due: 2026-03-01}\n",
+            "  - {id: T-010, title: Task ten, priority: high, owner: alice, status: in-progress, due: 2026-03-01}\n"
+            "  - {id: T-009, title: Task nine, priority: high, owner: alice, status: in-progress, due: 2026-03-01}\n",
             encoding="utf-8",
         )
         self.sync_views()
         code, out = self.run_tool("--as-of", "2026-03-15")
         self.assertEqual(code, 0)
-        self.assertLess(out.index("| R-9 |"), out.index("| R-10 |"))
-        self.assertLess(out.index("| T-9 |"), out.index("| T-10 |"))
+        self.assertLess(out.index("| R-009 |"), out.index("| R-010 |"))
+        self.assertLess(out.index("| T-009 |"), out.index("| T-010 |"))
 
 
 if __name__ == "__main__":

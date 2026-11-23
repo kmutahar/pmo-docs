@@ -68,7 +68,7 @@ class ParityCheck(unittest.TestCase):
         trans_text = tf.make_translation(self.orig_text)
         # remove one Summary table row
         lines = trans_text.splitlines()
-        filtered = [ln for ln in lines if "DEC-2 |" not in ln]
+        filtered = [ln for ln in lines if "DEC-002 |" not in ln]
         (self.docs / "Decision log.xx.md").write_text("\n".join(filtered) + "\n", encoding="utf-8")
 
         code, out = run(self.proj)
@@ -99,7 +99,7 @@ class ParityCheck(unittest.TestCase):
     def test_heading_level_changed(self):
         tf.enable_languages(self.proj, ("xx",))
         trans_text = tf.make_translation(self.orig_text)
-        modified = trans_text.replace("### DEC-2", "#### DEC-2")
+        modified = trans_text.replace("### DEC-002", "#### DEC-002")
         (self.docs / "Decision log.xx.md").write_text(modified, encoding="utf-8")
 
         code, out = run(self.proj)
@@ -120,7 +120,7 @@ class ParityCheck(unittest.TestCase):
     def test_changed_number_is_reported(self):
         tf.enable_languages(self.proj, ("xx",))
         trans_text = tf.make_translation(self.orig_text)
-        # change date in DEC-2 bullet from 2026-03-09 to 2026-03-10
+        # change date in DEC-002 bullet from 2026-03-09 to 2026-03-10
         modified = trans_text.replace("2026-03-09 - **Decidat per:** sam", "2026-03-10 - **Decidat per:** sam")
         (self.docs / "Decision log.xx.md").write_text(modified, encoding="utf-8")
 
@@ -132,7 +132,7 @@ class ParityCheck(unittest.TestCase):
     def test_changed_id_is_reported(self):
         tf.enable_languages(self.proj, ("xx",))
         trans_text = tf.make_translation(self.orig_text)
-        modified = trans_text.replace("DEC-1", "DEC-7")
+        modified = trans_text.replace("DEC-001", "DEC-007")
         (self.docs / "Decision log.xx.md").write_text(modified, encoding="utf-8")
 
         code, out = run(self.proj)
@@ -161,8 +161,8 @@ class ParityCheck(unittest.TestCase):
         tf.enable_languages(self.proj, ("xx",), block="    connectors:\n      of: med\n")
         # Add a cell '3 of 5' to both documents
         orig_with_cell = self.orig_text.replace(
-            "| DEC-2 | Use the shared cloud account |",
-            "| DEC-2 | Use the shared cloud account (3 of 5) |"
+            "| DEC-002 | Use the shared cloud account |",
+            "| DEC-002 | Use the shared cloud account (3 of 5) |"
         )
         self.dec_log.write_text(orig_with_cell, encoding="utf-8")
 

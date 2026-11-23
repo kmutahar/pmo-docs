@@ -34,7 +34,7 @@ class TranslationParityEval(unittest.TestCase):
         p = subprocess.run([sys.executable, str(PARITY), "--project", str(self.tmp)], capture_output=True, text=True, encoding="utf-8")
         self.assertEqual(p.returncode, 1, p.stdout + p.stderr)
         self.assertRegex(p.stdout, r"`Summary` table 1: rows count differs")
-        self.assertRegex(p.stdout, r"DEC-1 - Use weekly releases`: numbers differ")
+        self.assertRegex(p.stdout, r"DEC-001 - Use weekly releases`: numbers differ")
 
 
 if __name__ == "__main__":

@@ -1,11 +1,12 @@
 # Defaults for every project. pmo/config.yaml in a project holds only what differs.
 # Merge rule: maps merge, lists replace, null removes a map entry.
-schema_version: 1
+schema_version: 2
 
 project:
   name: null          # asked by setup
   manager: null       # the project manager, asked by setup
   week_start: monday  # first day of a week: monday to sunday; a week is named by the ISO week of its fourth day
+  id_width: 3         # minimum digits of an id number: T-001 (0 to 9; 0 = not padded; a longer number such as T-1000 is fine)
 
 # Folders, relative to the project root.
 paths:

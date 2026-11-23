@@ -80,10 +80,10 @@ class Helpers(unittest.TestCase):
         self.assertEqual(sc.data_rows(sp), [["1"], ["2"]])
 
     def test_duplicate_ids(self):
-        t = "| ID |\n|---|\n| T-1 |\n| `T-1` |\n| T-2 |\n| x-1 |\n| X-1 |\n| X-1 |\n| T-3b |\n| T-3b |\n"
-        self.assertEqual(sc.duplicate_ids(t), ["T-1", "T-3b", "X-1"])
-        self.assertEqual(sc.duplicate_ids("| ID |\n|---|\n| T-1 |\n\n| ID |\n|---|\n| T-1 |\n"), [])  # per table
-        self.assertEqual(sc.duplicate_ids("```\n| ID |\n|---|\n| T-1 |\n| T-1 |\n```\n"), [])
+        t = "| ID |\n|---|\n| T-001 |\n| `T-001` |\n| T-002 |\n| x-1 |\n| X-1 |\n| X-1 |\n| T-3b |\n| T-3b |\n"
+        self.assertEqual(sc.duplicate_ids(t), ["T-001", "T-3b", "X-1"])
+        self.assertEqual(sc.duplicate_ids("| ID |\n|---|\n| T-001 |\n\n| ID |\n|---|\n| T-001 |\n"), [])  # per table
+        self.assertEqual(sc.duplicate_ids("```\n| ID |\n|---|\n| T-001 |\n| T-001 |\n```\n"), [])
 
     def test_fences_of_both_kinds_are_ignored(self):
         errs, warns = [], []
@@ -211,9 +211,9 @@ class Checks(unittest.TestCase):
 
     def test_listed_ids_match_at_a_word_edge(self):
         checks = [{"kind": "listed_have_sections", "listed_in": "List", "sections_in": "Detail", "level": 3}]
-        body = "# T\n## List\n| ID |\n|---|\n| R-1 |\n## Detail\n### R-10 - other risk\n"
+        body = "# T\n## List\n| ID |\n|---|\n| R-001 |\n## Detail\n### R-010 - other risk\n"
         self.assertEqual(len(sc.run_checks(checks, sc.sections(body))), 1)
-        self.assertEqual(sc.run_checks(checks, sc.sections(body.replace("R-10 - other risk", "R-1 - title"))), [])
+        self.assertEqual(sc.run_checks(checks, sc.sections(body.replace("R-010 - other risk", "R-001 - title"))), [])
 
     def test_wrongly_typed_checks_give_one_error_each(self):
         dsec = sc.sections("# T\n## A\n| I |\n|---|\n| 1 |\n## B\n### one\n")
@@ -231,16 +231,16 @@ class Checks(unittest.TestCase):
 
     def test_milestone_with_no_dependency_message(self):
         checks = [{"kind": "required_cells", "section": "Milestones", "columns": ["Depends on"]}]
-        empty_doc = "# Roadmap\n\n## Milestones\n| ID | Depends on |\n|---|---|\n| M-1 |  |\n"
+        empty_doc = "# Roadmap\n\n## Milestones\n| ID | Depends on |\n|---|---|\n| M-001 |  |\n"
         errs = sc.run_checks(checks, sc.sections(empty_doc))
         self.assertEqual(len(errs), 1)
         self.assertIn('or "none" when there is nothing to list', errs[0])
-        none_doc = empty_doc.replace("| M-1 |  |", "| M-1 | none |")
+        none_doc = empty_doc.replace("| M-001 |  |", "| M-001 | none |")
         self.assertEqual(sc.run_checks(checks, sc.sections(none_doc)), [])
 
     def test_unreplaced_placeholders_comments_and_duplicate_ids(self):
         self.tpl("---\ntype: roadmap\n---\n# R\n")
-        errs = self.check("---\ntype: roadmap\nperiod: x\n---\n# R\n{{a}}\n<!-- c -->\n| ID |\n|---|\n| T-1 |\n| T-1 |\n")[0]
+        errs = self.check("---\ntype: roadmap\nperiod: x\n---\n# R\n{{a}}\n<!-- c -->\n| ID |\n|---|\n| T-001 |\n| T-001 |\n")[0]
         self.assertEqual(len(errs), 3, errs)
         many = "".join(f"| T-{i} |\n| T-{i} |\n" for i in range(1, 11))
         dup = [e for e in self.check("---\ntype: roadmap\n---\n# R\n| ID |\n|---|\n" + many)[0] if e.startswith("duplicate IDs")][0]
@@ -293,13 +293,13 @@ class Cli(unittest.TestCase):
 
     def test_dashes_reports_lookalike_dashes_in_ids_outside_fences(self):
         f = self.docs / "Notes.md"
-        f.write_text("# a\nSee T\u201314 and DEC\u22122, ok T-3, plain \u2014 dash.\n```\nT\u20141\n```\nCR\u20147b\n", encoding="utf-8")
+        f.write_text("# a\nSee T\u201314 and DEC\u22122, ok T-003, plain \u2014 dash.\n```\nT\u20141\n```\nCR\u20147b\n", encoding="utf-8")
         code, out = main("--project", str(self.root), "--dashes")
         self.assertEqual(code, 1)
         self.assertIn("pmo/documents/Notes.md:2: look-alike dash in T\u201314, use -", out)
         self.assertIn("pmo/documents/Notes.md:2: look-alike dash in DEC\u22122, use -", out)
         self.assertIn("pmo/documents/Notes.md:6: look-alike dash in CR\u20147b, use -", out)
-        self.assertEqual(out.count("look-alike dash in"), 3)  # not T-3, not the bare dash, not the fenced one
+        self.assertEqual(out.count("look-alike dash in"), 3)  # not T-003, not the bare dash, not the fenced one
         f.write_text("# a\nT-14\n", encoding="utf-8")
         self.assertEqual(main("--project", str(self.root), "--dashes")[0], 0)
 

@@ -51,8 +51,8 @@ class Audit(unittest.TestCase):
         code, out = self.run_audit()
         self.assertEqual(code, 1)
         self.assertIn("## Registers_xref (1)", out)
-        self.assertIn("- issues I-3: `related_tasks` points at T-1, which is dropped", out)  # I-4 is resolved, so not listed
-        self.assertNotIn("I-4", out)
+        self.assertIn("- issues I-003: `related_tasks` points at T-001, which is dropped", out)  # I-004 is resolved, so not listed
+        self.assertNotIn("I-004", out)
         self.assertNotIn("Staging server", out)  # ids only
 
     def test_clean_project_exits_0(self):
@@ -581,16 +581,16 @@ class Translations(unittest.TestCase):
         cfg.write_text(cfg.read_text(encoding="utf-8").replace("  xx:\n    label: XX\n", "  xx:\n    names: pmo/data/names-xx.yaml\n    label: XX\n"), encoding="utf-8")
         n = self.p / "pmo" / "data" / "names-xx.yaml"
         n.parent.mkdir(parents=True, exist_ok=True)
-        n.write_text("approved:\n  roster:\n    alice: {name: A, role: B}\n  tasks:\n    T-1: {title: x}\nproposed: {}\n", encoding="utf-8")
+        n.write_text("approved:\n  roster:\n    alice: {name: A, role: B}\n  tasks:\n    T-001: {title: x}\nproposed: {}\n", encoding="utf-8")
         self.assertIn("## Names (0)", self.run_audit()[1])
-        n.write_text("approved:\n  tasks:\n    T-1: {title: x, nope: y}\n    T-999: {title: z}\n  bogus: {}\nproposed:\n  tasks:\n    T-1: {title: w}\n", encoding="utf-8")
+        n.write_text("approved:\n  tasks:\n    T-001: {title: x, nope: y}\n    T-999: {title: z}\n  bogus: {}\nproposed:\n  tasks:\n    T-001: {title: w}\n", encoding="utf-8")
         code, out = self.run_audit()
         self.assertEqual(code, 1)
         self.assertIn("## Names (4)", out)
         self.assertIn("nope is not a field of tasks", out)
         self.assertIn("T-999 is not an id in tasks", out)
         self.assertIn("bogus is not a register", out)
-        self.assertIn("tasks.T-1 is in both", out)
+        self.assertIn("tasks.T-001 is in both", out)
 
     def test_translation_behind(self):
         tf.enable_languages(self.p, ("xx",))
@@ -625,7 +625,7 @@ class Translations(unittest.TestCase):
         _, orig_text = self.finish_decision_log()
         trans_file, trans_text = self.finish_translation(orig_text)
 
-        bad_trans = "\n".join([ln for ln in trans_text.splitlines() if "DEC-2 |" not in ln])
+        bad_trans = "\n".join([ln for ln in trans_text.splitlines() if "DEC-002 |" not in ln])
         trans_file.write_text(bad_trans, encoding="utf-8")
         code, out = self.run_audit()
         self.assertEqual(code, 1)

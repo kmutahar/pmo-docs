@@ -10,7 +10,7 @@ Run release-notes for the period 2026-03. Treat 2026-03-31 as today's date. Do n
 ```
 7f3a9c1e5b2d4a6c8e0f1a3b5c7d9e1f2a4b6c8d	feat!: remove the v1 login endpoint
 2b8d4f6a1c3e5a7b9d0f2a4c6e8b1d3f5a7c9e0b	feat: new login page design
-9c1e3a5b7d2f4a6c8e0b1d3f5a7c9e2b4d6f8a0c	fix: show the health page on staging (T-1)
+9c1e3a5b7d2f4a6c8e0b1d3f5a7c9e2b4d6f8a0c	fix: show the health page on staging (T-001)
 4e6a8c0b2d1f3a5c7e9b1d3f5a7c9e0b2d4f6a8c	chore: update the build scripts
 5a7c9e1b3d2f4a6c8e0b1d3f5a7c9e2b4d6f8a1d	Tidy the footer links
 ```

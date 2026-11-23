@@ -4,5 +4,5 @@ approved:
   roster:
     sam: {name: سام إكزامبل, role: مدير المشروع}
   tasks:
-    T-1: {title: إعداد خادم الاختبار}
+    T-001: {title: إعداد خادم الاختبار}
 proposed: {}

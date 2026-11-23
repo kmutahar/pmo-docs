@@ -63,23 +63,23 @@ class Helpers(unittest.TestCase):
 
     def test_numbers_remove_ids_first(self):
         rx = pt.id_regex({"registers": {"tasks": {"prefix": "T"}}})
-        self.assertEqual(pt.numbers("T-12 costs 5", {}, rx), ["5"])
+        self.assertEqual(pt.numbers("T-012 costs 5", {}, rx), ["5"])
 
     def test_id_regex_uses_config_prefixes_longest_first_and_falls_back(self):
         rx = pt.id_regex({"registers": {"a": {"prefix": "X"}, "b": {"prefix": "XY"}, "c": {"prefix": ""}, "d": "text", "e": {}}})
-        self.assertEqual(rx.findall("XY-1 X-2 T-3 aX-4"), ["XY-1", "X-2"])
+        self.assertEqual(rx.findall("XY-1 X-2 T-003 aX-4"), ["XY-1", "X-2"])
         for cfg in ({}, None, {"registers": {}}, {"registers": {"a": {"prefix": None}}}):
-            self.assertEqual(pt.id_regex(cfg).findall("DEC-1 TM-2 ZZ-3"), ["DEC-1", "TM-2"])
+            self.assertEqual(pt.id_regex(cfg).findall("DEC-001 TM-002 ZZ-3"), ["DEC-001", "TM-002"])
 
     def test_id_regex_matches_next_to_another_script_but_not_a_latin_letter(self):
         rx = pt.id_regex({})
-        self.assertEqual(rx.findall("مهمةT-1"), ["T-1"])
+        self.assertEqual(rx.findall("مهمةT-001"), ["T-001"])
         self.assertEqual(rx.findall("aT-1"), [])
         self.assertEqual(rx.findall("T-"), [])
 
     def test_prefixes_with_regex_characters_are_escaped(self):
         rx = pt.id_regex({"registers": {"a": {"prefix": "A.B"}}})
-        self.assertEqual(rx.findall("A.B-1 AxB-2"), ["A.B-1"])
+        self.assertEqual(rx.findall("A.B-001 AxB-2"), ["A.B-001"])
 
     def test_text_outside_tables(self):
         text = "intro\n| a | b |\n|---|---|\n| 1 | 2 |\nafter\n| lone line |\n"
@@ -93,7 +93,7 @@ class Compare(unittest.TestCase):
         return pt.compare(original, translation, info or {}, cfg or {})
 
     def test_identical_documents_match(self):
-        doc = "---\ntype: x\n---\n# T\n\n## A\n| a | b |\n|---|---|\n| 1 | T-1 |\n"
+        doc = "---\ntype: x\n---\n# T\n\n## A\n| a | b |\n|---|---|\n| 1 | T-001 |\n"
         self.assertEqual(self.cmp(doc, doc), [])
 
     def test_empty_documents_match(self):
@@ -140,7 +140,7 @@ class Compare(unittest.TestCase):
         self.assertNotEqual(self.cmp(o, "# T\n## A\nOn ١٣ May\n", info), [])
 
     def test_ids_in_a_heading_and_text_are_compared(self):
-        errs = self.cmp("# T\n## A T-1\ntext\n", "# T\n## A T-2\ntext\n")
+        errs = self.cmp("# T\n## A T-001\ntext\n", "# T\n## A T-002\ntext\n")
         self.assertTrue(any("ids differ" in e for e in errs), errs)
 
     def test_heading_level_change_names_the_original_heading(self):

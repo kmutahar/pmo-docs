@@ -20,7 +20,7 @@ import yaml  # noqa: E402  (vendored, loaded only with safe_load and the SafeLoa
 import yaml.composer  # noqa: E402
 import yaml.constructor  # noqa: E402
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 CONFIG = Path("pmo/config.yaml")
 WEEKDAYS = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
 LANG_CODE = re.compile(r"[a-z]{2,3}(-[A-Za-z0-9]{2,8})?")
@@ -86,6 +86,10 @@ def config_type_errors(cfg) -> list[str]:
     errors = []
     if "project" in cfg and not isinstance(cfg["project"], dict):
         errors.append("project must be a map")
+    elif "id_width" in cfg["project"]:
+        w = cfg["project"]["id_width"]
+        if type(w) is not int or not 0 <= w <= 9:
+            errors.append("project.id_width must be a whole number from 0 to 9 (0 = ids not padded)")
 
     for name, r in cfg.get("registers", {}).items():
         if not isinstance(r, dict):
@@ -197,6 +201,8 @@ def load_config(root=".", must_exist=True):
             print(f"{f}: schema_version {v!r} is newer than this skill knows ({SCHEMA_VERSION}). Update the skill.", file=sys.stderr)
             sys.exit(2)  # 2, not 1: callers read 1 as "findings"
         cfg = merge(cfg, mine)
+        if v < 2 and isinstance(cfg.get("project"), dict) and "id_width" not in (mine.get("project") or {}):
+            cfg["project"]["id_width"] = 0  # a schema 1 project has unpadded ids; the default width 3 starts at schema 2
     for key in ("paths", "registers", "doc_types", "vocab"):  # `paths: null` removes the key, a list or text is not a map
         if not isinstance(cfg.get(key), dict):
             print(f"{f}: `{key}` must be a map", file=sys.stderr)
@@ -565,7 +571,7 @@ def rag(cfg, as_of: datetime.date, tasks, milestones=(), issues=(), risks=()) ->
     green - none of these
     overdue = not closed and due < as_of; blocked = status in registers.tasks.blocked.
     vocab.rag is read by position: [0] green, [1] amber, [2] red.
-    The reason names the first rule that matched and up to three ids, e.g. 'top-priority task T-1 is overdue'."""
+    The reason names the first rule that matched and up to three ids, e.g. 'top-priority task T-001 is overdue'."""
     rag_vocab = cfg.get("vocab", {}).get("rag") or ["green", "amber", "red"]
     green_val = rag_vocab[0]
     amber_val = rag_vocab[1] if len(rag_vocab) > 1 else "amber"
@@ -591,7 +597,7 @@ def rag(cfg, as_of: datetime.date, tasks, milestones=(), issues=(), risks=()) ->
     top_pri = prio_order[0] if prio_order else None
 
     def say(noun, ids, verb, rest):
-        """'task T-1, T-2 are overdue': plural noun and verb when there is more than one id; at most three ids."""
+        """'task T-001, T-002 are overdue': plural noun and verb when there is more than one id; at most three ids."""
         many = len(ids) > 1
         return f"{noun}{'s' if many else ''} {', '.join(str(x) for x in ids[:3])} {({'is': 'are', 'has': 'have'}[verb] if many else verb)} {rest}"
 
@@ -642,6 +648,18 @@ def rag(cfg, as_of: datetime.date, tasks, milestones=(), issues=(), risks=()) ->
         return amber_val, say("milestone", soon_ms, "is", "due within 7 days")
 
     return green_val, "all items on track"
+
+
+def id_width(cfg):
+    """project.id_width: the minimum digits of an id number (0 = not padded)."""
+    w = (cfg.get("project") or {}).get("id_width", 0) if isinstance(cfg, dict) else 0
+    return w if type(w) is int and w >= 0 else 0
+
+
+def unpadded(rid, width):
+    """The padded form of rid when its number has fewer digits than width, else None. rid is 'PREFIX-digits'."""
+    m = re.fullmatch(r"(.+)-([0-9]+)", rid) if isinstance(rid, str) else None
+    return f"{m[1]}-{m[2].zfill(width)}" if m and len(m[2]) < width else None
 
 
 def id_num(tid):

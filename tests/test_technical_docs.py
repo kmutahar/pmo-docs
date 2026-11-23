@@ -38,20 +38,20 @@ DRAFT_BODIES = {
 ## Summary
 | ID | Requirement | Priority | Status |
 |---|---|---|---|
-| REQ-1 | User login | high | verified |
+| REQ-001 | User login | high | verified |
 
 ## Requirements
-### REQ-1 - User login
+### REQ-001 - User login
 - **Priority:** high - **Status:** verified - **Lead:** Alice
 - **Description:** User authentication flow
 - **Acceptance criteria:** Valid user can sign in
 - **Source:** Specification
-- **Linked tasks:** T-1
+- **Linked tasks:** T-001
 
 ## Quality and constraints
 | ID | Requirement | Kind | Acceptance | Status |
 |---|---|---|---|---|
-| REQ-2 | Response time | quality | Under 200ms | verified |
+| REQ-002 | Response time | quality | Under 200ms | verified |
 
 ## Out of scope
 - Native mobile login
@@ -69,12 +69,12 @@ Acceptance testing round for release 1.0.
 ## Test environment
 | ID | Environment | Location | Branch |
 |---|---|---|---|
-| ENV-1 | Staging | https://staging.example.com | main |
+| ENV-001 | Staging | https://staging.example.com | main |
 
 ## Test cases
 | ID | Test | Kind | Requirement | Expected | Status | Run on |
 |---|---|---|---|---|---|---|
-| TST-1 | Login test | automated | REQ-1 | Login succeeds | passed | 2026-03-10 |
+| TST-001 | Login test | automated | REQ-001 | Login succeeds | passed | 2026-03-10 |
 
 ## Results
 **Results:** 1 passed, 0 failed, 0 blocked, 0 not run. 0 skipped.
@@ -82,7 +82,7 @@ Acceptance testing round for release 1.0.
 ## Requirements coverage
 | Requirement | Title | Tests | Status |
 |---|---|---|---|
-| REQ-1 | User login | TST-1 | covered |
+| REQ-001 | User login | TST-001 | covered |
 
 ## Acceptance sign-off
 | Role | Name | Decision | Date |
@@ -104,20 +104,20 @@ Quality state summary for current period.
 ## Defects
 | ID | Failed test | Requirement | Issue | Severity | Lead |
 |---|---|---|---|---|---|
-| TST-2 | Slow query | REQ-2 | I-1 | high | Bob |
+| TST-002 | Slow query | REQ-002 | I-001 | high | Bob |
 
 ## Open issues
 | ID | Issue | Severity | Lead | Status | Raised |
 |---|---|---|---|---|---|
-| I-1 | Slow query on dashboard | high | Bob | open | 2026-03-10 |
+| I-001 | Slow query on dashboard | high | Bob | open | 2026-03-10 |
 
 ## Gaps
 | Requirement | Title | Priority | Gap |
 |---|---|---|---|
-| REQ-2 | Performance | high | test failed |
+| REQ-002 | Performance | high | test failed |
 
 ## Recommendations
-- Fix index for issue I-1
+- Fix index for issue I-001
 
 ## Open questions
 - None
@@ -263,7 +263,7 @@ Acme project architecture context.
 ## Key decisions
 | ID | Decision | Status |
 |---|---|---|
-| `DEC-1` | Use Express for API | approved |
+| `DEC-001` | Use Express for API | approved |
 
 ## Open questions
 - None

@@ -19,7 +19,7 @@ Always checked, from the template:
          starts with {{x}} is an optional repeatable slot; {{x}} inside other words matches any words)
   ERROR  a table's columns differ from the template's table in that section
   ERROR  an unreplaced {{placeholder}}, or an HTML comment in a document whose status is not draft
-  ERROR  the same ID (T-1) twice in one table
+  ERROR  the same ID (T-001) twice in one table
   WARN   no front matter; template_version missing or different; extra `##` sections; empty table; an HTML comment in a draft
 
 Declared checks: the template's front matter may carry a `checks:` list. A section is named by its
@@ -41,7 +41,7 @@ filled cell is "None" is exempt. Kinds:
     sections_in: Risks
     level: 3
 
-`--dashes` instead reports look-alike dashes (en dash, em dash, minus sign) inside ids such as T-14, as
+`--dashes` instead reports look-alike dashes (en dash, em dash, minus sign) inside ids such as T-014, as
 `file:line: look-alike dash in <id>, use -`; text in fenced code is skipped.
 
 Exit codes: 0 clean (warnings allowed), 1 findings, 2 usage (including a project folder that does not exist).
@@ -227,7 +227,7 @@ def duplicate_ids(text, cfg=None):
     for _, rows in tables(strip_fences(text)):
         seen = set()
         for r in rows:
-            cell = r[0].strip("`") if r else ""  # ids may be written as `DEC-1`
+            cell = r[0].strip("`") if r else ""  # ids may be written as `DEC-001`
             if id_rx.fullmatch(cell) or (cfg_rx and cfg_rx.fullmatch(cell)):
                 (dups if cell in seen else seen).add(cell)
     return sorted(dups)

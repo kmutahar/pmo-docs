@@ -54,7 +54,7 @@ checks:
 - **Errors:** {{error handling strategy with path:line}}
 
 ## Key decisions
-<!-- Architectural decisions from the decisions register; ID in backticks (`DEC-1`); write "not recorded" for an empty field. -->
+<!-- Architectural decisions from the decisions register; ID in backticks (`DEC-001`); write "not recorded" for an empty field. -->
 | ID | Decision | Status |
 |---|---|---|
 | `{{id}}` | {{decision}} | {{status}} |

@@ -136,13 +136,14 @@ class PlaybookWording(unittest.TestCase):
         self.assertNotIn("More than about ten", (pc.SKILL / "references/intake.md").read_text(encoding="utf-8"))
         self.assertNotIn("log a decision there", (pc.SKILL / "references/track.md").read_text(encoding="utf-8"))
 
-    def test_no_padded_id_examples(self):
-        pat = re.compile(r"\b(?:T|R|I|A|D|DEC|ACT|CR|MTG|M|P|O|B|TM|REQ|TST|ENV|PERM)-0[0-9]+\b")
+    def test_id_examples_are_padded(self):
+        pat = re.compile(r"\b(?:T|R|I|A|D|DEC|ACT|CR|MTG|M|P|O|B|TM|REQ|TST|ENV|PERM|FACT)-[0-9]{1,2}\b")
         files = [pc.SKILL / "SKILL.md", *(pc.SKILL / "references").rglob("*.md")]
         for f in files:
             with self.subTest(f.relative_to(pc.SKILL)):
                 for lineno, line in enumerate(f.read_text(encoding="utf-8").splitlines(), 1):
-                    self.assertIsNone(pat.search(line), f"{f.name}:{lineno}: {line}")
+                    if "unpadded" not in line and "short id" not in line:  # the lines that explain the old form
+                        self.assertIsNone(pat.search(line), f"{f.name}:{lineno}: {line}")
 
     def test_git_md_holds_the_workflow(self):
         text = (pc.SKILL / "references/git.md").read_text(encoding="utf-8")

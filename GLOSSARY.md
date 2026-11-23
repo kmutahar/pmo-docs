@@ -73,8 +73,12 @@ An optional entry of the `priorities` register: an output with acceptance criter
 _Avoid_: priority (for a goal)
 
 **Entry**:
-One unit in a register, with its own id (for example T-14).
+One unit in a register, with its own id (for example T-014).
 _Avoid_: row, record, item, line
+
+**Id width**:
+The minimum number of digits in an id's number, `project.id_width` (default 3, so `T-004`; 0 means not padded). A longer number such as `T-1000` is valid. `renumber.py --pad` rewrites older, shorter ids.
+_Avoid_: id length, padding (for the setting)
 
 **Origin**:
 An optional field on every entry that says where it came from: `stated` (the user said it) or `proposed` (the agent inferred it and the user has not confirmed it).
@@ -93,7 +97,7 @@ The rule for when a task may be marked `done` (the user confirms it was tested, 
 _Avoid_: DoD, exit criteria, done rule
 
 **Renumber**:
-Fixing duplicate ids after a merge with `renumber.py`: the first copy (or keeper) keeps the id, later copies get the next free numbers and move to the end of the list, and confirmed references are rewritten.
+Fixing duplicate ids after a merge with `renumber.py` (`renumber.py --pad` instead pads short ids to the id width): the first copy (or keeper) keeps the id, later copies get the next free numbers and move to the end of the list, and confirmed references are rewritten.
 _Avoid_: re-id, reassign, relabel
 
 **View**:
