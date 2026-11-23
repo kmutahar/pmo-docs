@@ -201,11 +201,7 @@ def load_config(root=".", must_exist=True):
             print(f"{f}: paths.{key} is missing", file=sys.stderr)
             sys.exit(2)
 
-    errs = config_type_errors(cfg)
-    if errs:
-        for err in errs:
-            print(f"ERROR config: {err}", file=sys.stderr)
-        sys.exit(2)
+    errs = [f"ERROR config: {e}" for e in config_type_errors(cfg)]
 
     def is_outside(*parts):
         return outside(root, *parts)
@@ -220,7 +216,14 @@ def load_config(root=".", must_exist=True):
                            or (isinstance(base, str) and base and is_outside(base, x))):
                 bad.append(f"registers.{n}.{k}: {x!r}")
     if bad:
-        print(f"{f}: these must stay inside the project (no absolute paths, '..', symlinks out or '.git'; register file and view bare file names): {'; '.join(bad)}", file=sys.stderr)
+        errs.append(f"{f}: these must stay inside the project (no absolute paths, '..', symlinks out or '.git'; register file and view bare file names): {'; '.join(bad)}")
+    if errs:
+        try:  # also report the other config problems at once; a config too broken for these checks reports the ones above
+            import render_views  # imported here because it imports this module
+            errs += ["ERROR " + e for e in render_views.config_errors(cfg, root=root)]
+        except Exception:
+            pass
+        print("\n".join(errs), file=sys.stderr)
         sys.exit(2)
     return cfg
 

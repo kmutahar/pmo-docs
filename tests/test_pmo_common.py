@@ -60,6 +60,15 @@ class Common(unittest.TestCase):
             self.assertEqual(cm.exception.code, 2, cfg)
             self.assertIn("must stay inside the project", err.getvalue(), cfg)
 
+    def test_load_config_reports_every_config_error_at_once(self):
+        d = self.project("schema_version: 1\nvocab: {task_status: x}\nproject: {week_start: someday}\npaths: {views: /abs}\n", "tasks: []\n")
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err), self.assertRaises(SystemExit) as cm:
+            pc.load_config(d)
+        self.assertEqual(cm.exception.code, 2)
+        for part in ("vocab.task_status must be a list", "must stay inside the project", "project.week_start `someday`"):
+            self.assertIn(part, err.getvalue())
+
     def test_render_views_touches_nothing_outside_the_project(self):
         d = self.project("schema_version: 1\nregisters: {tasks: {view: ../victim.md}}\n", "tasks: []\n")
         victim = d.parent / "victim.md"

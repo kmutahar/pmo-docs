@@ -23,7 +23,7 @@ All paths come from the config (`paths`), relative to the project root. Defaults
 
 Templates and playbooks follow the lookup rule: the project's file in `paths.templates` or `paths.playbooks` wins over the skill's default. Playbook lookup includes subfolders such as `stacks/`: `<paths.playbooks>/stacks/<stack>.md` overrides `references/stacks/<stack>.md`.
 
-A config the skill refuses (every script then exits 2 with one line on stderr): not valid YAML or not UTF-8 text, a value of the wrong type, a missing `paths` key, a path or a `doc_types.<type>.name` or `title` that leaves the project (a `/` or a backslash in `name` or `title`), or no `pmo/config.yaml` in the project.
+A config the skill refuses (every script then exits 2 with one line on stderr per problem; type errors, paths that leave the project and the other config checks are listed together): not valid YAML or not UTF-8 text, a value of the wrong type, a missing `paths` key, a path or a `doc_types.<type>.name` or `title` that leaves the project (a `/` or a backslash in `name` or `title`), or no `pmo/config.yaml` in the project.
 
 The project launcher `pmo/bin/pmo` (mode 755) is written at setup. It is checked into git and runs skill scripts without knowing where the skill is installed.
 
