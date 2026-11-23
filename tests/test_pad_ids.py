@@ -185,6 +185,48 @@ class Pad(PadTest):
         self.assertIn(f'decisions: "{new}"', text)
         self.assertIn("`DEC-001`", text)
 
+    def test_pad_updates_names_file_snapshot_and_current_translation(self):
+        self.cfg.write_text(
+            "schema_version: 2\nproject:\n  name: Acme Portal\n  manager: Sam Example\n"
+            "languages:\n  translations: [ar]\n  ar: {label: AR, dir: rtl, names: pmo/data/names-ar.yaml}\n",
+            encoding="utf-8",
+        )
+        names_file = self.root / "pmo/data/names-ar.yaml"
+        names_file.parent.mkdir(parents=True, exist_ok=True)
+        names_file.write_text("approved:\n  tasks:\n    T-1: {title: عنوان}\n", encoding="utf-8")
+
+        snap_file = self.root / "pmo/snapshots/2026-03-01.json"
+        snap_file.parent.mkdir(parents=True, exist_ok=True)
+        snap_file.write_text('{"date": "2026-03-01", "entries": {"tasks": {"T-1": "in-progress", "T-2": "not-started"}}}\n', encoding="utf-8")
+
+        orig = self.root / "pmo/documents/Decision log.md"
+        orig.write_text("---\ntitle: Decision log\ntype: decision-log\nstatus: finished\n---\n\n# Decision log\n\n| `DEC-1` | x |\n", encoding="utf-8")
+        old_body = pc.body_hash(orig.read_text(encoding="utf-8"))
+        trans = self.root / "pmo/documents/Decision log.ar.md"
+        trans.write_text(
+            f'---\ntitle: Decision log\ntype: decision-log\nstatus: finished\nlang: ar\ndir: rtl\ntranslation_of: "Decision log.md"\nsource_hash: "{old_body}"\n---\n\n# Decision log\n\n| `DEC-1` | x |\n',
+            encoding="utf-8",
+        )
+
+        code, out = run("renumber.py", self.root, "--pad", "--yes")
+        self.assertEqual(code, 0, out)
+        self.assertIn("snapshots: 2 in 1 files", out)
+        self.assertIn("other files: 1 in 1 files", out)
+
+        names_text = names_file.read_text(encoding="utf-8")
+        self.assertIn("T-001:", names_text)
+        self.assertNotIn("T-1:", names_text)
+
+        snap_text = snap_file.read_text(encoding="utf-8")
+        self.assertIn('"T-001"', snap_text)
+        self.assertIn('"T-002"', snap_text)
+
+        new_body = pc.body_hash(orig.read_text(encoding="utf-8"))
+        self.assertNotEqual(old_body, new_body)
+        trans_text = trans.read_text(encoding="utf-8")
+        self.assertIn("`DEC-001`", trans_text)
+        self.assertIn(f'source_hash: "{new_body}"', trans_text)
+
 
 class Upgrade(PadTest):
     def test_migration_pads_and_sets_schema_2(self):

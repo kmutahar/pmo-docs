@@ -113,7 +113,7 @@ def rename_ids(text, rx, prefix, width, fenced):
 
 def raw(root, rel):
     """The text of a file with its line endings kept."""
-    return open(Path(root) / rel, encoding="utf-8", newline="").read()
+    return renumber.read_raw(Path(root) / rel)
 
 
 def main(argv=None):

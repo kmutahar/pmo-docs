@@ -706,6 +706,25 @@ class Publish(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertIn("publish.layout must be a map", err)
 
+    def test_name_prefix_by_lang_must_be_a_map_of_text(self):
+        base = (self.root / "pmo/config.yaml").read_text(encoding="utf-8")
+        for bad in ("[en]", "{en: 5}", '{1: "a"}'):
+            with self.subTest(bad=bad):
+                (self.root / "pmo/config.yaml").write_text(base, encoding="utf-8")
+                self.set_config(f"publish:\n  mode: folder\n  path: published\n  name_prefix_by_lang: {bad}\n")
+                code, _, err = run(self.root)
+                self.assertEqual(code, 2)
+                self.assertIn("publish.name_prefix_by_lang must be a map of text to text", err)
+
+    def test_layout_escaping_publish_dir_exits_2(self):
+        self.set_config("publish:\n  mode: folder\n  path: published\n  layout: {decision-log: ../x}\n")
+        self.finish_decision_log()
+        for args in ((), ("--apply",)):
+            code, _, err = run(self.root, *args)
+            self.assertEqual(code, 2, args)
+            self.assertIn("escapes publish directory", err)
+            self.assertFalse((self.root / "x").exists())
+
     def test_valid_finished_document_still_publishes(self):
         self.set_config("publish:\n  mode: folder\n  path: published\n")
         self.finish_decision_log()

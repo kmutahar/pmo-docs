@@ -370,7 +370,8 @@ def main(argv=None):
                 bad += 1
                 continue
             rel = f.resolve().relative_to(root) if root in f.resolve().parents else f
-            print("\n".join(f"{rel}:{n}: look-alike dash in {i}, use -" for n, i in hits))
+            if hits:
+                print("\n".join(f"{rel}:{n}: look-alike dash in {i}, use -" for n, i in hits))
             bad += len(hits)
         print(f"\n{bad} finding(s)")
         return 1 if bad else 0

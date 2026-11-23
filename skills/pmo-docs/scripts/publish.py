@@ -113,7 +113,7 @@ def main(argv=None) -> int:
 
     # Candidates scan
     docs_base = root / cfg["paths"]["documents"]
-    files = [f for f in sorted(docs_base.rglob("*.md")) if f.is_file()] if docs_base.exists() else []
+    files = [f for f in sorted(docs_base.rglob("*.md")) if f.is_file() and not f.is_symlink() and not pc.outside(root, f)] if docs_base.exists() else []
 
     doc_types = cfg.get("doc_types", {})
     candidates = []

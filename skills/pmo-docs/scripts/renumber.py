@@ -286,7 +286,14 @@ def refresh_hashes(root, cfg, pending):
         rel = f"{reg_dir}/{reg.get('file')}"
         if rel in pending:
             moved[name] = (sha(read(rel)), sha(pending[rel]))
-    doc_rels = [r for r in pad_files(root, cfg) if r.startswith(docs + "/") and r.endswith(".md")]
+    doc_rels = []
+    for r in pad_files(root, cfg):
+        if r.startswith(docs + "/") and r.endswith(".md"):
+            try:
+                read(r)
+            except UnicodeDecodeError:
+                continue  # not UTF-8 text: nothing to rewrite
+            doc_rels.append(r)
     old = {r: read(r) for r in doc_rels}
     new = {r: pending.get(r, old[r]) for r in doc_rels}
     for rel in doc_rels:

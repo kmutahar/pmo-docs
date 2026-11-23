@@ -20,6 +20,7 @@ if sys.version_info < (3, 10):
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import pmo_common as pc  # noqa: E402
+from renumber import read_raw  # noqa: E402
 
 OLD = re.compile(r"^## Risks and issues([ \t]*\r?)$", re.M)
 NEW = "## Risks and issues: changes since last report"
@@ -38,7 +39,7 @@ def main(argv=None):
     for f in sorted(folder.glob("*.md")) if folder.is_dir() else []:
         if TRANSLATION.search(f.name):
             continue
-        text = open(f, encoding="utf-8", newline="").read()
+        text = read_raw(f)
         front = pc.FRONT_MATTER.match(text)
         if not (f.name.startswith("status-report") or front and front[1] and TYPE.search(front[1])):
             continue
