@@ -20,21 +20,21 @@
 
 **docs**
 
-| id | title | priority | owner | status | due |
-|---|---|---|---|---|---|
-| T-003 | Write API outline | low | alice | done | 2026-03-05 |
+| id | title | priority | goal | owner | status | due |
+|---|---|---|---|---|---|---|
+| T-003 | Write API outline | low | GL-002 | alice | done | 2026-03-05 |
 
 **infra**
 
-| id | title | priority | owner | status | due |
-|---|---|---|---|---|---|
-| T-001 | Set up staging server | high | alice | in-progress | 2026-03-10 |
+| id | title | priority | goal | owner | status | due |
+|---|---|---|---|---|---|---|
+| T-001 | Set up staging server | high | GL-001 | alice | in-progress | 2026-03-10 |
 
 ### web
 
 **ui**
 
-| id | title | priority | owner | status | due |
-|---|---|---|---|---|---|
-| T-002 | Design login page | medium | bob | not-started | 2026-03-25 |
-| T-004 | Pick a payment vendor | medium | bob | blocked | 2026-04-01 |
+| id | title | priority | goal | owner | status | due |
+|---|---|---|---|---|---|---|
+| T-002 | Design login page | medium | GL-001 | bob | not-started | 2026-03-25 |
+| T-004 | Pick a payment vendor | medium |  | bob | blocked | 2026-04-01 |

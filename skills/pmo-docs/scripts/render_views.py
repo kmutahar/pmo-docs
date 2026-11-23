@@ -679,8 +679,21 @@ def view_tasks(rows, cfg, missing=None):
             out.append(f"**{g or 'no group'}**\n")
             sub = [r for r in rows if (r.get("team") or "") == team and (r.get("group") or "") == g]
             sub.sort(key=lambda r: (key(r.get("priority")), _id_num(r.get("id"))))
-            out.append(table(sub, ["id", "title", "priority", "owner", "status", "due"]))
+            out.append(table(sub, ["id", "title", "priority", "goal", "owner", "status", "due"]))
     return "\n".join(out)
+
+
+def view_goals(rows, tasks, cfg):
+    """The goals table, then one line per goal that has tasks: how many of its tasks (dropped ones left out) are done."""
+    body = table(rows, cfg["registers"]["goals"]["fields"])
+    done = set(pc.statuses(cfg, "tasks", "done"))
+    dropped = set(pc.statuses(cfg, "tasks", "closed")) - done
+    lines = []
+    for g in rows:
+        mine = [t for t in tasks if t.get("goal") == g.get("id") and t.get("status") not in dropped]
+        if mine:
+            lines.append(f"- {g.get('id')}: {sum(1 for t in mine if t.get('status') in done)} of {len(mine)} tasks done ({', '.join(str(t.get('id')) for t in mine)})")
+    return body + ("\n## Tasks by goal\n\n" + "\n".join(lines) + "\n" if lines else "")
 
 
 def view_permissions(rows, cfg):
@@ -704,6 +717,8 @@ def render(data, cfg):
             rows = [r for _, r in sorted(enumerate(rows), key=lambda x: (_id_num(x[1].get("id")), x[0]))]
         if name == "tasks":
             body = view_tasks(rows, cfg, missing=missing)
+        elif name == "goals" and "tasks" in data:
+            body = "# Goals\n\n" + view_goals(rows, data["tasks"], cfg)
         elif name == "permissions" and "roles" in fields:
             body = view_permissions(rows, cfg)
         else:

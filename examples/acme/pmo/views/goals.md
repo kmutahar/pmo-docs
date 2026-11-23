@@ -6,3 +6,8 @@
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | GL-001 | Launch portal beta | O-001 | Beta site |  |  | alice | Ten users sign in | sam |  | in-progress |  | 2026-04-30 |  |
 | GL-002 | Publish user guide | O-002 | Guide | GL-001 |  | bob | Guide reviewed | sam | 2026-03-01 | done |  | 2026-03-01 |  |
+
+## Tasks by goal
+
+- GL-001: 0 of 2 tasks done (T-001, T-002)
+- GL-002: 1 of 1 tasks done (T-003)

@@ -65,7 +65,7 @@ These win over everything, including the project's house rules.
 
 ## Working rules
 
-- **Priority and goals.** A task's `priority` is a level from `vocab.priority_order`, most urgent first. The `goals` register is separate: it holds optional goals (GL- entries with an output and acceptance criteria) and no task links to them. Playbooks and templates say "goal" for such an entry and "priority" only for a level. A goal is `done` when its acceptance is signed off; fill `accepted_by` and `accepted_on` only with what the user gives.
+- **Priority and goals.** A task's `priority` is a level from `vocab.priority_order`, most urgent first. The `goals` register is separate: it holds optional goals (GL- entries with an output and acceptance criteria). A task may name the goal it belongs to in its optional `goal` field (a GL- id); never put a goal id in `priority`. Playbooks and templates say "goal" for such an entry and "priority" only for a level. A goal is `done` when its acceptance is signed off; fill `accepted_by` and `accepted_on` only with what the user gives.
 - **Registers are the truth.** A document is a view of its registers. To change a fact, change the register first (`track.md`), then redraft. A fact written by hand into a document is written back to the register.
 - **Empty values.** Never fill a gap from memory, from an older document or by guessing. Write the word for the gap, and add each one to the document's `## Open questions`, or to the reply when the document has no such section.
 

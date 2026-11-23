@@ -456,6 +456,8 @@ def generate_project_plan(ctx: Ctx) -> Filled:
     # 2. Goals
     goals = sorted(ctx.data.get("goals", []), key=lambda p: id_number(p.get("id")))
     goal_blocks = []
+    task_done = pc.statuses(ctx.cfg, "tasks", "done")
+    task_dropped = set(pc.statuses(ctx.cfg, "tasks", "closed")) - set(task_done)
     for p in goals:
         pid = p.get("id", "")
         title = p.get("title") or "not recorded"
@@ -477,6 +479,8 @@ def generate_project_plan(ctx: Ctx) -> Filled:
         acceptance = p.get("acceptance") or "not recorded"
         status = p.get("status") or "not recorded"
         due = str(p.get("due")) if p.get("due") else "not set"
+        linked = [t for t in ctx.data.get("tasks", []) if t.get("goal") == pid and t.get("status") not in task_dropped]
+        tasks_line = f"**Tasks:** {sum(1 for t in linked if t.get('status') in task_done)} of {len(linked)} done\n" if linked else ""
 
         block = (
             f"### {pid} - {pc.inline(title)}\n"
@@ -484,6 +488,7 @@ def generate_project_plan(ctx: Ctx) -> Filled:
             f"**Output:** {pc.inline(output)}\n"
             f"**Depends on:** {dep_str}\n"
             f"**Owner:** {pc.inline(owner)}\n"
+            f"{tasks_line}"
             f"**Acceptance criteria:** {pc.inline(acceptance)}\n"
             f"**Status:** {pc.inline(status)} - **Due:** {due}"
         )

@@ -1,4 +1,4 @@
 # tasks: one entry per line, e.g.
-#   - {id: ..., title: ..., team: ..., group: ..., priority: ..., owner: ..., status: ..., due: ..., done_on: ..., period: ..., notes: ..., origin: ..., tests: ...}
+#   - {id: ..., title: ..., team: ..., group: ..., priority: ..., goal: ..., owner: ..., status: ..., due: ..., done_on: ..., period: ..., notes: ..., origin: ..., tests: ...}
 # ids look like T-001
 tasks: []

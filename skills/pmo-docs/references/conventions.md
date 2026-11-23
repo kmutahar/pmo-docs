@@ -135,6 +135,7 @@ When a format has to change again (a breaking change, which waits for a major ve
 
 ## Views and catalogue
 
+- A task's `priority` is its urgency level (a value of `vocab.priority_order`); its optional `goal` is the id of the goals entry it belongs to (`refs` checks it). The goals view lists each goal's tasks with a done count, and the project plan shows it per goal.
 - Register views (`pmo/views/<name>.md`) summarize each register, listing entries by id number (registers without ids keep file order; the tasks view sorts by priority, then id number).
 - The catalogue view (`pmo/views/catalogue.md`) is rendered by `render_views.py` from `doc_types` in `pmo/config.yaml`. It lists doc type, title, made by (`generator` or `agent`), when to make it, regenerate guidance, stale period, and publish status.
 

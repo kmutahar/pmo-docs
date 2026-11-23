@@ -671,6 +671,8 @@ class RegisterLinks(unittest.TestCase):
         })
         (self.reg / "tasks.yaml").unlink()
         (self.views / "tasks.md").unlink()
+        goals = self.views / "goals.md"  # without tasks the goals view has no task lines
+        goals.write_text(goals.read_text(encoding="utf-8").split("\n## Tasks by goal")[0], encoding="utf-8")
         code, out = run(self.root, "--check")
         self.assertEqual(code, 0, out)
 

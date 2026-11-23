@@ -22,7 +22,7 @@ last_updated: "{{date}}"
 | {{role}} | {{name}} |
 
 ## Goals
-<!-- One subsection per goal (an entry of the goals register), in register order. Tasks are not linked to goals. -->
+<!-- One subsection per goal (an entry of the goals register), in register order. A goal with linked tasks (task field `goal`) shows how many are done. -->
 
 ### {{id}} - {{title}}
 - {{goal}}
@@ -30,6 +30,7 @@ last_updated: "{{date}}"
 **Output:** {{output}}
 **Depends on:** {{depends_on}}
 **Owner:** {{lead}}
+**Tasks:** {{done}} of {{total}} done
 **Acceptance criteria:** {{acceptance}}
 **Status:** {{status}} - **Due:** {{due}}
 

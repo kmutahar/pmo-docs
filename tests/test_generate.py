@@ -310,7 +310,7 @@ class TestGenerate(unittest.TestCase):
         self.assertNotIn("Progress by sub-project", out)
         cfg_file = self.root / "pmo/config.yaml"
         cfg_file.write_text(cfg_file.read_text(encoding="utf-8")
-                            + "\nsubprojects:\n  api: {}\n  web: {}\nregisters:\n  tasks:\n    fields: [id, title, team, group, priority, owner, status, due, done_on, period, notes, origin, tests, subproject]\n    enums: {subproject: subprojects}\n",
+                            + "\nsubprojects:\n  api: {}\n  web: {}\nregisters:\n  tasks:\n    fields: [id, title, team, group, priority, goal, owner, status, due, done_on, period, notes, origin, tests, subproject]\n    enums: {subproject: subprojects}\n",
                             encoding="utf-8")
         self.assertNotIn("Progress by sub-project", tool("generate.py", self.root, *args)[1])  # configured, but no task is tagged
         tasks_file = self.root / "pmo/registers/tasks.yaml"

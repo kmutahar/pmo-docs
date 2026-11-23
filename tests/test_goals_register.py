@@ -148,5 +148,48 @@ class Migrate(unittest.TestCase):
         self.assertEqual((self.root / "pmo/names.ar.yaml").read_text(encoding="utf-8"), "approved:\n  goals:\n    GL-1:\n      objectives: x\n      title: y\n")
 
 
+class TaskGoal(unittest.TestCase):
+    """A task's optional `goal` field: validated as an id of the goals register and shown in the views and the project plan."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.root = self.tmp / "acme"
+        shutil.copytree(REPO / "examples/acme", self.root)
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def test_field_after_priority_with_ref(self):
+        tasks = pc.load_config(self.root)["registers"]["tasks"]
+        self.assertEqual(tasks["fields"][tasks["fields"].index("priority") + 1], "goal")
+        self.assertEqual(tasks["refs"]["goal"], "goals")
+
+    def test_unknown_goal_id_is_an_error(self):
+        f = self.root / "pmo/registers/tasks.yaml"
+        f.write_text(f.read_text(encoding="utf-8").replace("goal: GL-001", "goal: GL-099", 1), encoding="utf-8")
+        code, out = run("render_views.py", self.root, "--check")
+        self.assertEqual(code, 1, out)
+        self.assertIn("GL-099", out)
+
+    def test_views_show_the_goal(self):
+        self.assertEqual(run("render_views.py", self.root)[0], 0)
+        goals = (self.root / "pmo/views/goals.md").read_text(encoding="utf-8")
+        self.assertIn("- GL-001: 0 of 2 tasks done (T-001, T-002)", goals)
+        self.assertIn("- GL-002: 1 of 1 tasks done (T-003)", goals)
+        self.assertIn("| id | title | priority | goal | owner |", (self.root / "pmo/views/tasks.md").read_text(encoding="utf-8"))
+
+    def test_goals_view_without_linked_tasks_has_no_task_section(self):
+        f = self.root / "pmo/registers/tasks.yaml"
+        f.write_text(f.read_text(encoding="utf-8").replace("goal: GL-001, ", "").replace("goal: GL-002, ", ""), encoding="utf-8")
+        self.assertEqual(run("render_views.py", self.root)[0], 0)
+        self.assertNotIn("Tasks by goal", (self.root / "pmo/views/goals.md").read_text(encoding="utf-8"))
+
+    def test_project_plan_shows_done_count_per_goal(self):
+        code, out = run("generate.py", self.root, "project-plan", "--stdout")
+        self.assertEqual(code, 0, out)
+        self.assertIn("**Tasks:** 0 of 2 done", out)
+        self.assertIn("**Tasks:** 1 of 1 done", out)
+
+
 if __name__ == "__main__":
     unittest.main()
