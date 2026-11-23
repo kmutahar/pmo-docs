@@ -105,6 +105,8 @@ def config_errors(cfg, root=None):
                     errors.append(f"config: registers {views[v]} and {n} both use view {v}")
                 else:
                     views[v] = n
+            if r.get("defaults") is not None and not isinstance(r.get("defaults"), dict):
+                errors.append(f"config: registers.{n}.defaults must be a map of field to value")
             fields = r.get("fields")
             if isinstance(fields, list) and "id" in fields:
                 p = r.get("prefix")
@@ -423,7 +425,7 @@ def read_registers(root, cfg):
             errors.append(f"{reg['file']}: every entry must be on one line (`- {{id: ..., title: ...}}`)")
         else:
             for e in entries:   # registers.<name>.defaults fills a field an entry leaves out
-                for k, v in (reg.get("defaults") or {}).items():
+                for k, v in (reg.get("defaults") if isinstance(reg.get("defaults"), dict) else {}).items():
                     e.setdefault(k, v)
             data[name] = entries
     return data, errors

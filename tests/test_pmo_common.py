@@ -315,7 +315,7 @@ class Helpers(unittest.TestCase):
         green_tasks = [{"id": "T-003", "priority": "low", "status": "done", "due": "2026-03-01"}]
         val, reason = pc.rag(cfg, datetime.date(2026, 3, 15), green_tasks)
         self.assertEqual(val, "green")
-        self.assertIn("all items on track", reason)
+        self.assertIn("all entries on track", reason)
 
     def test_rag_with_empty_priority_order_has_no_top_priority(self):
         acme = Path(__file__).resolve().parents[1] / "examples/acme"
@@ -326,7 +326,7 @@ class Helpers(unittest.TestCase):
 
     def test_rag_without_risk_levels_ignores_unrated_risks(self):
         cfg = {"vocab": {"risk_level": []}}
-        self.assertEqual(pc.rag(cfg, datetime.date(2026, 3, 15), [], risks=[{"id": "R-001", "status": "open"}]), ("green", "all items on track"))
+        self.assertEqual(pc.rag(cfg, datetime.date(2026, 3, 15), [], risks=[{"id": "R-001", "status": "open"}]), ("green", "all entries on track"))
 
     def test_week_and_period_helpers_refuse_a_start_outside_0_to_6(self):
         for bad in (-1, 7):
@@ -487,6 +487,16 @@ class Helpers(unittest.TestCase):
         self.assertIsNone(pc.glossary_path({"languages": {"xx": "s"}}, "xx"))
         self.assertIsNone(pc.glossary_path({"languages": [1]}, "xx"))
         self.assertIsNone(pc.glossary_path([], "xx"))
+
+    def test_names_path_shapes(self):
+        np = lambda n, lang="xx": pc.names_path({"languages": {"xx": {"names": n}}}, lang)  # noqa: E731
+        self.assertEqual(np("pmo/data/names-xx.yaml"), "pmo/data/names-xx.yaml")
+        for bad in (None, 5, "  ", ["a"]):
+            self.assertIsNone(np(bad))
+        self.assertIsNone(np("pmo/data/names-xx.yaml", "yy"))
+        self.assertIsNone(pc.names_path({"languages": {"xx": "s"}}, "xx"))
+        self.assertIsNone(pc.names_path({"languages": [1]}, "xx"))
+        self.assertIsNone(pc.names_path([], "xx"))
 
     def test_languages_shapes(self):
         self.assertEqual(pc.languages({"languages": "x"}), {"draft": "en", "translations": [], "info": {"en": {}}})
@@ -947,6 +957,27 @@ class ConfigGuards(unittest.TestCase):
             pc.load_config(self.root)
         self.assertEqual(cm.exception.code, 2)
         self.assertIn("doc_types.decision-log.name", err.getvalue())
+
+    def test_id_width_boolean_and_negative_refused(self):
+        for bad in (True, False, -1):
+            errs = pc.config_type_errors({"project": {"id_width": bad}})
+            self.assertTrue(any("project.id_width must be a whole number from 0 to 9" in e for e in errs), (bad, errs))
+            self.assertEqual(pc.id_width({"project": {"id_width": bad}}), 0, bad)
+        acme_text = (Path(__file__).resolve().parents[1] / "examples/acme/pmo/config.yaml").read_text(encoding="utf-8")
+        for raw in ("true", "false", "-1"):
+            with self.subTest(id_width=raw):
+                cfg_text = acme_text.replace("project:\n", f"project:\n  id_width: {raw}\n", 1)
+                code, _, stderr = self.cfg_run(cfg_text, append=False)
+                self.assertEqual(code, 2)
+                self.assertIn("project.id_width", stderr)
+                self.assertNotIn("Traceback", stderr)
+
+    def test_doc_type_name_or_title_backslash_and_dot_dot_refused(self):
+        for key in ("name", "title"):
+            for val in ("a\\b", ".."):
+                with self.subTest(key=key, val=val):
+                    errs = pc.config_type_errors({"project": {}, "doc_types": {"decision-log": {key: val}}})
+                    self.assertIn(f"doc_types.decision-log.{key} must not contain a slash or a backslash", errs)
 
     def test_safe_write_refuses_a_symlink_out(self):
         outside_file = self.tmp / "outside.md"

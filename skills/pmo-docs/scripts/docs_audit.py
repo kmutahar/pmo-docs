@@ -322,7 +322,7 @@ def glossary_problems(root, cfg) -> list[str]:
             cell = line.strip("| ").split("|")[0].strip()
             if cell == "ID" or set(cell) <= set("-: "):
                 continue
-            if not re.fullmatch(r"G-\d{3,}", cell):
+            if not re.fullmatch(r"G-[0-9]{3,}", cell):
                 out.append(f"{g}:{n}: first column `{cell}` is not an ID like G-001")
             elif cell in seen:
                 out.append(f"{g}:{n}: ID {cell} is also used on line {seen[cell]}")
@@ -359,7 +359,10 @@ def names_problems(root, cfg) -> list[str]:
                     out.append(f"{n}: {sec}.{reg} is not a register")
                     continue
                 key = "slug" if reg == "roster" else "id"
-                known = {str(e.get(key)) for e in pc.load_register(root, cfg, reg) if isinstance(e, dict)}
+                try:
+                    known = {str(e.get(key)) for e in pc.load_register(root, cfg, reg) if isinstance(e, dict)}
+                except (pc.yaml.YAMLError, AttributeError, ValueError):
+                    continue  # render_views.py reports an unreadable register
                 for eid, fields in (ids or {}).items() if isinstance(ids, dict) else []:
                     if str(eid) not in known:
                         out.append(f"{n}: {sec}.{reg}.{eid} is not an id in {reg}")
@@ -385,7 +388,7 @@ def xref_problems(root, cfg) -> list[str]:
         try:
             entries = [e for e in pc.load_register(root, cfg, name) if isinstance(e, dict)]
             gone = {}
-            for target in set(rcfg["refs"].values()):
+            for target in {t for v in rcfg["refs"].values() for t in (v if isinstance(v, list) else [v]) if isinstance(t, str)}:
                 tkey = "slug" if target == "roster" else "id"
                 gone[target] = {str(e.get(tkey)): e.get("status") for e in pc.load_register(root, cfg, target)
                                 if isinstance(e, dict) and e.get("status") in GONE}
@@ -397,8 +400,9 @@ def xref_problems(root, cfg) -> list[str]:
             for field, target in rcfg["refs"].items():
                 value = e.get(field)
                 for v in value if isinstance(value, list) else [value]:
-                    if v is not None and str(v) in gone[target]:
-                        out.append(f"{name} {e.get(key)}: `{field}` points at {v}, which is {gone[target][str(v)]}")
+                    for t in target if isinstance(target, list) else [target]:
+                        if v is not None and t in gone and str(v) in gone[t]:
+                            out.append(f"{name} {e.get(key)}: `{field}` points at {v}, which is {gone[t][str(v)]}")
     return out
 
 

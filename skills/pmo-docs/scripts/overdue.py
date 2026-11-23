@@ -22,6 +22,7 @@ from pathlib import Path
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import pmo_common as pc  # noqa: E402
+import render_views  # noqa: E402
 
 
 def table(head, rows):
@@ -57,7 +58,7 @@ def report(root, cfg, as_of, days):
     limit = as_of + datetime.timedelta(days=days)
     ms = sorted((m for m in ms if m["_due"] and m["_due"] <= limit), key=lambda m: (m["_due"], by_id(m)))
     sev_vocab = cfg["registers"].get("issues", {}).get("enums", {}).get("severity")
-    sev = list(reversed(cfg["vocab"].get(sev_vocab) or []))  # vocab is least severe first
+    sev = list(reversed(render_views.allowed(cfg, sev_vocab) if sev_vocab else []))  # vocab is least severe first
     issues = sorted(open_entries(root, cfg, "issues"),
                     key=lambda i: (sev.index(i.get("severity")) if i.get("severity") in sev else len(sev), by_id(i)))
     risks = sorted(open_entries(root, cfg, "risks"), key=by_id)

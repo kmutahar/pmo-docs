@@ -48,7 +48,7 @@ def proposed_terms(root, cfg, lang):
         if ln.startswith("## "):
             inside = ln[3:].strip().lower() == "proposed"
         cells = [c.strip() for c in ln.strip().strip("|").split("|")]
-        if inside and re.fullmatch(r"G-\d+", cells[0]) and len(cells) > 2:
+        if inside and re.fullmatch(r"G-[0-9]+", cells[0]) and len(cells) > 2:
             rows.append((cells[0], " -> ".join(c for c in cells[1:3] if c)))
     return rows
 

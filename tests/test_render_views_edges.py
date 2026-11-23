@@ -705,10 +705,6 @@ class RegisterGuards(Base):
         self.assertEqual(rv.entry_lines(text_ff), [2, 3])
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
 class TestsRegisterDefaults(Base):
     def test_missing_test_status_is_planned_and_task_may_be_a_list(self):
         (self.reg / "tests.yaml").write_text(
@@ -716,3 +712,25 @@ class TestsRegisterDefaults(Base):
         code, out, err = cli("--project", str(self.root))
         self.assertEqual(code, 0, out + err)
         self.assertIn("planned", (self.views / "tests.md").read_text(encoding="utf-8"))
+
+    def test_explicit_value_and_explicit_null_are_kept(self):
+        (self.reg / "tests.yaml").write_text(
+            "tests:\n  - {id: TST-001, title: Login, kind: smoke, status: passed}\n", encoding="utf-8")
+        code, out, err = cli("--project", str(self.root))
+        self.assertEqual(code, 0, out + err)
+        view = (self.views / "tests.md").read_text(encoding="utf-8")
+        self.assertIn("passed", view)
+        self.assertNotIn("planned", view)
+
+        (self.reg / "tests.yaml").write_text(
+            "tests:\n  - {id: TST-001, title: Login, kind: smoke, status: null}\n", encoding="utf-8")
+        data, errs = rv.read_registers(self.root, self.cfg)
+        self.assertEqual(errs, [])
+        self.assertIsNone(data["tests"][0]["status"])
+        code, out, err = cli("--project", str(self.root))
+        self.assertEqual(code, 1, out + err)
+        self.assertIn("tests TST-001: status is missing", out)
+
+
+if __name__ == "__main__":
+    unittest.main()

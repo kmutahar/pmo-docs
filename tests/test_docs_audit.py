@@ -331,7 +331,7 @@ class Audit(unittest.TestCase):
         f.write_text(f.read_text(encoding="utf-8").replace("last_updated: 2026-03-14", "last_updated: 2024-02-28"), encoding="utf-8")
         stale = pc.load_config(self.p)["doc_types"]["status-report"]["stale_days"]
         last_ok = datetime.date(2024, 2, 28) + datetime.timedelta(days=stale)
-        self.assertEqual(da.audit_file(self.p, pc.load_config(self.p), f, self.docs, last_ok)[0:0], [])
+        self.assertEqual(da.audit_file(self.p, pc.load_config(self.p), f, self.docs, last_ok), [])
         old = [c for c, _ in da.audit_file(self.p, pc.load_config(self.p), f, self.docs, last_ok + datetime.timedelta(days=1))]
         self.assertIn("old", old)
         self.assertNotIn("old", [c for c, _ in da.audit_file(self.p, pc.load_config(self.p), f, self.docs, last_ok)])

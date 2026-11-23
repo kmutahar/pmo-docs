@@ -147,6 +147,47 @@ class TeamReview(unittest.TestCase):
             self.import_csv("register,id\ntasks,T-001\n", "--csv")
         self.assertEqual(cm.exception.code, 2)
 
+    def test_import_missing_non_utf8_and_header_only_files_exit_2(self):
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err), self.assertRaises(SystemExit) as cm:
+            self.run_tool("--import", str(self.d / "missing.csv"))
+        self.assertEqual(cm.exception.code, 2)
+        self.assertIn("cannot read", err.getvalue())
+
+        bad_utf8 = self.d / "bad.csv"
+        bad_utf8.write_bytes(b"register,id,done\ntasks,T-001,\xff\xfe\n")
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err), self.assertRaises(SystemExit) as cm:
+            self.run_tool("--import", str(bad_utf8))
+        self.assertEqual(cm.exception.code, 2)
+        self.assertIn("cannot read", err.getvalue())
+
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err), self.assertRaises(SystemExit) as cm:
+            self.import_csv("register,id,done\n")
+        self.assertEqual(cm.exception.code, 2)
+        self.assertIn("at least one row", err.getvalue())
+
+    def test_import_skips_register_without_done_or_closed_status(self):
+        cfg_file = self.p / "pmo/config.yaml"
+        cfg_file.write_text(cfg_file.read_text(encoding="utf-8") + "\nregisters:\n  issues:\n    closed: []\n", encoding="utf-8")
+        code, out = self.import_csv("register,id,done\nissues,I-003,x\n")
+        self.assertEqual(code, 0)
+        self.assertIn("## Skipped (not a register with a done status) (1)\n\n- `I-003` (issues)\n", out)
+
+    def test_invalid_yaml_names_file_falls_back(self):
+        (self.p / "pmo/data/names-ar.yaml").write_text("approved: [\n", encoding="utf-8")
+        code, out = self.run_tool("--csv", "--lang", "ar")
+        self.assertEqual(code, 0)
+        self.assertIn("Users get an error page", out)
+
+    def test_help_exits_0(self):
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out), self.assertRaises(SystemExit) as cm:
+            tr.main(["--help"])
+        self.assertEqual(cm.exception.code, 0)
+        self.assertIn("usage", out.getvalue().lower())
+
 
 if __name__ == "__main__":
     unittest.main()

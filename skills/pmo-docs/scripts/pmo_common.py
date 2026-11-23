@@ -84,7 +84,7 @@ def enum_source_ok(v) -> bool:
 def config_type_errors(cfg) -> list[str]:
     """Type checks on cfg: project, registers, vocab, doc_types. Returns list of messages without prefix."""
     errors = []
-    if "project" in cfg and not isinstance(cfg["project"], dict):
+    if not isinstance(cfg.get("project"), dict):
         errors.append("project must be a map")
     elif "id_width" in cfg["project"]:
         w = cfg["project"]["id_width"]
@@ -227,6 +227,11 @@ def load_config(root=".", must_exist=True):
             if k in r and (not isinstance(x, str) or Path(x).name in ("", "..") or Path(x).name != x
                            or (isinstance(base, str) and base and is_outside(base, x))):
                 bad.append(f"registers.{n}.{k}: {x!r}")
+    for lang in (cfg.get("languages") or {}):  # glossary and names files are read by docs_audit and team_review
+        for k, get in (("glossary", glossary_path), ("names", names_path)):
+            x = get(cfg, lang)
+            if x and (Path(x).is_absolute() or is_outside(x)):
+                bad.append(f"languages.{lang}.{k}: {x!r}")
     if bad:
         errs.append(f"{f}: these must stay inside the project (no absolute paths, '..', symlinks out or '.git'; register file and view bare file names): {'; '.join(bad)}")
     if errs:
@@ -647,7 +652,7 @@ def rag(cfg, as_of: datetime.date, tasks, milestones=(), issues=(), risks=()) ->
     if soon_ms:
         return amber_val, say("milestone", soon_ms, "is", "due within 7 days")
 
-    return green_val, "all items on track"
+    return green_val, "all entries on track"
 
 
 def id_width(cfg):
