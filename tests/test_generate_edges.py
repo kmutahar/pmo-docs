@@ -429,10 +429,10 @@ class Odd(unittest.TestCase):
     def test_schedule_naming_project_playbook_passes_config_errors(self):
         playbooks = self.root / "pmo/playbooks"
         playbooks.mkdir(parents=True, exist_ok=True)
-        (playbooks / "team-review.md").write_text("# Team review\n", encoding="utf-8")
+        (playbooks / "retro-prep.md").write_text("# Retro prep\n", encoding="utf-8")
         cfg_file = self.root / "pmo/config.yaml"
         cfg_text = cfg_file.read_text(encoding="utf-8")
-        cfg_file.write_text(cfg_text + '\nschedule:\n  - {recipe: team-review, when: "Fri 16:00"}\n', encoding="utf-8")
+        cfg_file.write_text(cfg_text + '\nschedule:\n  - {recipe: retro-prep, when: "Fri 16:00"}\n', encoding="utf-8")
         out, _ = self.gen("decision-log")
         self.assertIn("Decision log", out)
 
