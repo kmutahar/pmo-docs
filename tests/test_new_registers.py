@@ -93,6 +93,26 @@ class NewRegisters(unittest.TestCase):
         code, out, _ = run_render(self.root)
         self.assertEqual(code, 0, out)
 
+    def test_permission_roles_map_keys_are_checked_and_conditions_are_text(self):
+        self.append("permissions", '  - {id: PERM-99, resource: Profile, action: delete, roles: {owner: all}, condition: "", source: src/auth.js, notes: "", origin: stated}')
+        code, out, _ = run_render(self.root)
+        self.assertEqual(code, 1)
+        self.assertIn("roles 'owner' not in", out)
+        path = self.reg / "permissions.yaml"
+        path.write_text(path.read_text(encoding="utf-8").replace("{owner: all}", "{admin: [a, b]}"), encoding="utf-8")
+        code, out, _ = run_render(self.root)
+        self.assertEqual(code, 1)
+        self.assertIn("roles 'admin' must map to text", out)
+
+    def test_permissions_view_has_one_column_per_role(self):
+        self.append("permissions", '  - {id: PERM-99, resource: Order, action: view, roles: [viewer], condition: "", source: "", notes: "", origin: stated}')  # a plain list still works
+        code, out, _ = run_render(self.root)
+        self.assertEqual(code, 0, out)
+        view = (self.views / "permissions.md").read_text(encoding="utf-8")
+        self.assertIn("| id | resource | action | admin | editor | viewer | condition |", view)
+        self.assertIn("| PERM-1 | Profile | view own | x | own profile only | own profile only |", view)
+        self.assertIn("| PERM-99 | Order | view |  |  | x |", view)
+
     def test_test_links_must_exist(self):
         # task: T-99 fails
         tests_path = self.reg / "tests.yaml"

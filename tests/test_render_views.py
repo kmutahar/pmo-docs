@@ -631,13 +631,13 @@ class RegisterLinks(unittest.TestCase):
         self.write_config({
             "domain": {"roles": ["Project manager", "Platform lead", "Web lead", "admin", "editor", "viewer"]},
         })
-        code, out = run(self.root, "--check")
+        code, out = run(self.root)  # writes views: the permissions view has a column per role
         self.assertEqual(code, 0, out)
 
         self.write_config({
             "domain": {"roles": []},
         })
-        code, out = run(self.root, "--check")
+        code, out = run(self.root)  # writes views: the permissions view has a column per role
         self.assertEqual(code, 0, out)
 
     def test_refs_report_an_unknown_id(self):

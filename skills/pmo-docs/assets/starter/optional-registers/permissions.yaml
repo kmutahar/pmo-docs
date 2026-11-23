@@ -1,4 +1,4 @@
 # permissions: one entry per line, e.g.
-#   - {id: ..., resource: ..., action: ..., roles: [], condition: ..., source: ..., notes: ..., origin: ...}
-# ids look like PERM-1
+#   - {id: ..., resource: ..., action: ..., roles: {}, condition: ..., source: ..., notes: ..., origin: ...}
+# ids look like PERM-1; roles maps each role to the condition under which it may do this (text, or empty for no condition), e.g. roles: {customer: own orders only, admin: ""}
 permissions: []

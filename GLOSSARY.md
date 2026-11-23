@@ -121,7 +121,7 @@ An entry of the `environments` register (`ENV-`): a runtime context (e.g. dev, s
 _Avoid_: stage, tier, deployment
 
 **Permission**:
-An entry of the `permissions` register (`PERM-`): an access rule mapping a role or action to an entity or operation.
+An entry of the `permissions` register (`PERM-`): an access rule mapping a role or action to an entity or operation; its `roles` map each role to a condition.
 _Avoid_: right, privilege, auth rule, ACL
 
 **Team**:

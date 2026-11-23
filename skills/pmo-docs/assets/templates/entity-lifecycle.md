@@ -40,7 +40,7 @@ checks:
 | {{from}} | {{to}} | {{trigger}} | {{path:line}} |
 
 ## Who can do what
-<!-- Actions on the entity and allowed roles; from permissions register and code findings (marked as proposals); Allowed roles is required. -->
+<!-- Actions on the entity and allowed roles; from permissions register and code findings (marked as proposals); Allowed roles are the keys of the entry's `roles` (each role's text there is its condition) and are required. -->
 | Action | Allowed roles | Condition | Source |
 |---|---|---|---|
 | {{action}} | {{allowed_roles}} | {{condition}} | {{source}} |

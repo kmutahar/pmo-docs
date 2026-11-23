@@ -27,7 +27,7 @@ checks:
 {{Authentication scheme in one line}}
 
 ## Authentication and permissions
-<!-- Resource access rules and required roles from the permissions register; Allowed roles is required; write "not recorded" for an empty field. -->
+<!-- Resource access rules and required roles from the permissions register; Allowed roles are the keys of the entry's `roles` (each role's text there is its condition) and are required; write "not recorded" for an empty field. -->
 | Resource | Action | Allowed roles | Condition |
 |---|---|---|---|
 | {{resource}} | {{action}} | {{allowed_roles}} | {{condition}} |

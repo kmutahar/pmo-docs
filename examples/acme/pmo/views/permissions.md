@@ -2,7 +2,7 @@
 
 # Permissions
 
-| id | resource | action | roles | condition | source | notes | origin |
-|---|---|---|---|---|---|---|---|
-| PERM-1 | Profile | view own | viewer, editor, admin |  | src/auth/profile.js |  | stated |
-| PERM-2 | Profile | reset password | admin |  | src/auth/admin.js |  | stated |
+| id | resource | action | admin | editor | viewer | condition | source | notes | origin |
+|---|---|---|---|---|---|---|---|---|---|
+| PERM-1 | Profile | view own | x | own profile only | own profile only |  | src/auth/profile.js |  | stated |
+| PERM-2 | Profile | reset password | x |  |  |  | src/auth/admin.js |  | stated |

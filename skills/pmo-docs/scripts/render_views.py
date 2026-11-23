@@ -540,6 +540,10 @@ def validate(data, cfg, root=None):
             for field in single_value_fields:
                 if isinstance(r.get(field), (list, dict)):
                     errors.append(f"{who}: {field} must be one value, not a list")
+            if name == "permissions" and isinstance(r.get("roles"), dict):
+                for role, cond in r["roles"].items():
+                    if not isinstance(cond, (str, type(None))):
+                        errors.append(f"{who}: roles {role!r} must map to text (the condition) or be empty")
             for field, vname in reg.get("enums", {}).items():
                 values = r.get(field)  # null is allowed (never guess), except for status
                 ok = allowed(cfg, vname)
@@ -548,7 +552,7 @@ def validate(data, cfg, root=None):
                 if values is None:
                     errors.append(f"{who}: {field} is missing; use one of {ok}")
                     continue
-                for v in values if isinstance(values, list) else [values]:
+                for v in values if isinstance(values, list) else list(values) if isinstance(values, dict) else [values]:  # a map is checked by its keys
                     if v not in ok:
                         errors.append(f"{who}: {field} {v!r} not in {ok}")
             for field in reg.get("dates", []):
@@ -670,6 +674,16 @@ def view_tasks(rows, cfg, missing=None):
     return "\n".join(out)
 
 
+def view_permissions(rows, cfg):
+    """One column per role (domain.roles, else the roles found); a cell holds the role's condition, or x for a bare role. A list of roles counts as roles with no condition."""
+    as_map = lambda r: r["roles"] if isinstance(r.get("roles"), dict) else {x: None for x in (r.get("roles") or []) if isinstance(x, str)}
+    roles = list((cfg.get("domain") or {}).get("roles") or []) or list(dict.fromkeys(k for r in rows for k in as_map(r)))
+    fields = cfg["registers"]["permissions"]["fields"]
+    head = [c for f in fields for c in (roles if f == "roles" else [f])]
+    body = [[c for f in fields for c in ([(as_map(r)[k] or "x") if k in as_map(r) else "" for k in roles] if f == "roles" else [r.get(f)])] for r in rows]
+    return "# Permissions\n\n" + pc.md_table(head, body)
+
+
 def render(data, cfg):
     """{view file name: text}, in config order."""
     views = {}
@@ -679,7 +693,12 @@ def render(data, cfg):
         fields = reg.get("fields") or []
         if "id" in fields:
             rows = [r for _, r in sorted(enumerate(rows), key=lambda x: (_id_num(x[1].get("id")), x[0]))]
-        body = view_tasks(rows, cfg, missing=missing) if name == "tasks" else f"# {name.capitalize()}\n\n" + table(rows, reg["fields"])
+        if name == "tasks":
+            body = view_tasks(rows, cfg, missing=missing)
+        elif name == "permissions" and "roles" in fields:
+            body = view_permissions(rows, cfg)
+        else:
+            body = f"# {name.capitalize()}\n\n" + table(rows, reg["fields"])
         views[reg["view"]] = HEADER.format(f=f"{cfg['paths']['registers']}/{reg['file']}") + body
     cat_headers = ["Doc type", "Title", "Made by", "When", "Regenerate", "Stale after", "Published"]
     cat_rows = []
