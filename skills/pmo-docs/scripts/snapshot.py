@@ -34,25 +34,34 @@ def take(root, cfg, day):
     return {"date": str(day), "hashes": {r: register_hash(root, cfg, r) for r in sorted(cfg["registers"])}, "entries": entries}
 
 
-def delta(root, cfg, as_of):
-    """Output lines for what changed since the latest snapshot dated before as_of; one line `delta: no snapshot` when there is none."""
+def changes(root, cfg, as_of):
+    """(date of the latest snapshot dated before as_of, or None; {(kind, register): [(id, old status, new status)]}).
+    kind is changed, added or removed; the status of an absent side is None. Registers missing from the snapshot or the config are skipped."""
     d = Path(root) / cfg["paths"]["snapshots"]
     files = sorted(f for f in d.glob("????-??-??.json") if f.stem < str(as_of)) if d.is_dir() else []
     if not files:
-        return ["delta: no snapshot"]
+        return None, {}
     old = json.loads(pc.read(files[-1]))["entries"]
     new = take(root, cfg, as_of)["entries"]
-    lines = [f"delta: since {files[-1].stem}"]
+    out = {}
     for r in TRACKED:
-        if r not in old or r not in new:
-            continue
-        o, n = old[r], new[r]
-        for kind, items in (("changed", [f"{i} {o[i]}->{n[i]}" for i in n if i in o and o[i] != n[i]]),
-                            ("added", [f"{i} {n[i]}" for i in n if i not in o]),
-                            ("removed", [f"{i} {o[i]}" for i in o if i not in n])):
-            if items:
-                lines.append(f"{kind}_{r}: {', '.join(items)}")
-    return lines
+        if r in old and r in new:
+            o, n = old[r], new[r]
+            for kind, rows in (("changed", [(i, o[i], n[i]) for i in n if i in o and o[i] != n[i]]),
+                               ("added", [(i, None, n[i]) for i in n if i not in o]),
+                               ("removed", [(i, o[i], None) for i in o if i not in n])):
+                if rows:
+                    out[kind, r] = rows
+    return files[-1].stem, out
+
+
+def delta(root, cfg, as_of):
+    """Output lines for what changed since the latest snapshot dated before as_of; one line `delta: no snapshot` when there is none."""
+    since, found = changes(root, cfg, as_of)
+    if since is None:
+        return ["delta: no snapshot"]
+    show = {"changed": lambda i, o, n: f"{i} {o}->{n}", "added": lambda i, o, n: f"{i} {n}", "removed": lambda i, o, n: f"{i} {o}"}
+    return [f"delta: since {since}"] + [f"{k}_{r}: {', '.join(show[k](*row) for row in rows)}" for (k, r), rows in found.items()]
 
 
 def main(argv=None):

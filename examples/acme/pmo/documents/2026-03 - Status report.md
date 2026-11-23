@@ -53,7 +53,7 @@ Staging is late and the vendor choice is blocked. The API outline is done. Next 
 | CR-1 | Add dark mode | proposed | 2026-03-06 |
 | DEC-2 | Host on shared cloud | proposed | 2026-03-09 |
 
-## Risks and issues
+## Risks and issues: changes since last report
 - Vendor delay is open `R-1`
 - Login fails on staging is open `I-3`
 

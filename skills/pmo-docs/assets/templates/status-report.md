@@ -51,7 +51,8 @@ last_updated: "{{date}}"
 |---|---|---|---|
 | {{id}} | {{title}} | {{status}} | {{date}} |
 
-## Risks and issues
+## Risks and issues: changes since last report
+<!-- risks and issues added, closed or changed in status since the last snapshot (`where.py --delta`); with no snapshot, every open one -->
 - {{new, changed or closed risk or issue}} `{{id}}`
 
 ## Milestones

@@ -345,6 +345,36 @@ class TestGenerate(unittest.TestCase):
         # Notes on data has the RAG line
         self.assertIn("- RAG rule: weekly-status; overdue measured at 2026-03-15; registers read on 2026-03-15.", out)
 
+    def test_status_report_risks_and_issues_without_a_snapshot(self):
+        code, out, err = tool("generate.py", self.root, "status-report", "2026-03", "--as-of", "2026-03-15", "--stdout")
+        self.assertEqual(code, 0, err)
+        section = out[out.index("## Risks and issues: changes since last report"):out.index("## Milestones")]
+        self.assertIn("No snapshot yet: every open risk and issue is listed.", section)
+        self.assertIn("- Vendor delay `R-1` - open", section)
+        self.assertIn("- Slow search `I-2` - in-progress", section)
+        self.assertNotIn("R-2", section)  # closed
+        self.assertNotIn("I-4", section)  # resolved
+
+    def test_status_report_risks_and_issues_since_a_snapshot(self):
+        tool("snapshot.py", self.root, "--as-of", "2026-03-01")
+        risks = self.root / "pmo/registers/risks.yaml"
+        risks.write_text(risks.read_text(encoding="utf-8").replace("status: open, origin: stated, raised: 2026-02-10", "status: closed, origin: stated, raised: 2026-02-10", 1), encoding="utf-8")
+        issues = self.root / "pmo/registers/issues.yaml"
+        issues.write_text(issues.read_text(encoding="utf-8") + "  - {id: I-9, title: Broken link, severity: low, owner: bob, status: open, origin: stated, raised: 2026-03-10}\n", encoding="utf-8")
+        code, out, err = tool("generate.py", self.root, "status-report", "2026-03", "--as-of", "2026-03-15", "--stdout")
+        self.assertEqual(code, 0, err)
+        section = out[out.index("## Risks and issues: changes since last report"):out.index("## Milestones")]
+        self.assertIn("- Vendor delay `R-1` - closed (open->closed)", section)
+        self.assertIn("- Broken link `I-9` - added, open", section)
+        self.assertNotIn("No snapshot", section)
+        self.assertNotIn("I-2", section)  # unchanged
+
+    def test_status_report_risks_and_issues_no_changes(self):
+        tool("snapshot.py", self.root, "--as-of", "2026-03-01")
+        code, out, err = tool("generate.py", self.root, "status-report", "2026-03", "--as-of", "2026-03-15", "--stdout")
+        self.assertEqual(code, 0, err)
+        self.assertIn("- No risks or issues added, closed or changed since 2026-03-01.", out)
+
     def test_status_report_week(self):
         code, out, err = tool("generate.py", self.root, "status-report", "2026-W11", "--stdout")
         self.assertEqual(code, 0, err)
@@ -382,7 +412,6 @@ class TestGenerate(unittest.TestCase):
                 "comment",
                 "delta",
                 "id",
-                "new, changed or closed risk or issue",
                 "task",
             },
         )

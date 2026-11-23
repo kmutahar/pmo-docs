@@ -23,7 +23,7 @@ Run as `monthly-status [--period YYYY-MM]`. Produces a draft `status-report` for
    - Progress by priority: one row per priority level; in each Comment, the main change since the previous report.
    - Milestones: each milestone due in the month, with its result.
    - Decisions and changes: approved changes and decisions dated in the month.
-   - Risks and issues: opened, closed and still open in the month.
+   - Risks and issues (changes since last report): opened, closed and still open in the month.
    - Forecast, as one line in Summary: tasks still open against the weeks left, flagged when the open count is more than the pace of recent weeks would finish. Label it an estimate and give the method in Notes on data.
 
 4. **Draft**

@@ -33,6 +33,7 @@ Run as `weekly-status [--week YYYY-Www]`. Produces a draft `status-report` for o
    Only when `doc_types.status-report.generator` is not `true`: fill the status-report template (`references/draft.md` steps 4 to 8) from these, and write it to the path from step 1.
    - Count only tasks whose `period` is the month that holds at least 4 of the window's 7 days (the month of its fourth day; a task with no `period` counts when its `due` falls in the window). Done tasks of earlier periods appear on one line ("completed before <period>: N") and stay out of totals, percentages and deltas.
    - Compute totals and percentages per priority level and per team; blocked and overdue tasks (`python3 ${CLAUDE_SKILL_DIR}/scripts/overdue.py --as-of <last day of the window>`); milestones due in the next 14 days; the change since the previous report. A done task is new when its id is not in the previous report's Completed section.
+   - Risks and issues (changes since last report): `python3 ${CLAUDE_SKILL_DIR}/scripts/where.py --delta` lists the risks and issues added, removed or changed in status since the last snapshot (titles from the registers); with `delta: no snapshot`, list every open one and say so.
    - Set the RAG as defined in `references/conventions.md` (evaluated with `pmo_common.rag`) and state the rule in Notes on data. A house rule can replace this rule.
 
 7. **Reply**

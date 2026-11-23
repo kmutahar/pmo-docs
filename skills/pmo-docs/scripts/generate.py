@@ -28,6 +28,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import pmo_common as pc  # noqa: E402
 import render_views  # noqa: E402
 import docs_audit  # noqa: E402
+import snapshot  # noqa: E402
 
 GENERATORS = {}
 
@@ -835,6 +836,32 @@ def generate_status_report(ctx: Ctx) -> Filled:
     ms_rows.sort(key=lambda x: (x[0], x[1], x[2]))
     milestones_body = pc.md_table(["ID", "Milestone", "Due", "Status"], [r[3] for r in ms_rows]).strip()
 
+    # 6b. Risks and issues: changes since the last snapshot (all open ones when there is none)
+    since, found = snapshot.changes(ctx.root, ctx.cfg, ctx.as_of)
+    ri_lines = []
+    if since is None:
+        ri_lines.append("- No snapshot yet: every open risk and issue is listed.")
+        for reg in ("risks", "issues"):
+            closed = pc.statuses(ctx.cfg, reg, "closed")
+            ri_lines += [f"- {pc.inline(e.get('title') or 'not recorded')} `{e.get('id')}` - {e.get('status') or 'not recorded'}"
+                         for e in (all_risks if reg == "risks" else all_issues) if e.get("status") not in closed]
+    else:
+        for reg in ("risks", "issues"):
+            titles = {str(e.get("id")): e.get("title") or "not recorded" for e in ctx.data.get(reg, [])}
+            closed = pc.statuses(ctx.cfg, reg, "closed")
+            for (kind, r), rows in found.items():
+                for i, old, new in rows if r == reg else ():
+                    if kind == "added":
+                        what = f"added, {new}"
+                    elif kind == "removed":
+                        what = "removed from the register"
+                    else:
+                        what = f"{'closed' if new in closed else 'changed'} ({old}->{new})"
+                    ri_lines.append(f"- {pc.inline(titles.get(i, 'not recorded'))} `{i}` - {what}")
+        if not ri_lines:
+            ri_lines.append(f"- No risks or issues added, closed or changed since {since}.")
+    risks_issues_body = "\n".join(ri_lines)
+
     # 7. Notes on data
     notes_on_data_lines = [
         f"- RAG rule: weekly-status; overdue measured at {at}; registers read on {ctx.as_of}.",
@@ -852,6 +879,7 @@ def generate_status_report(ctx: Ctx) -> Filled:
             "Blockers and decisions needed": blockers_body,
             "Decisions and changes": decisions_changes_body,
             "Milestones": milestones_body,
+            "Risks and issues: changes since last report": risks_issues_body,
             "Notes on data": notes_on_data_body,
         },
         slots={},
