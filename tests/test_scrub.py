@@ -85,8 +85,13 @@ class ScrubTest(unittest.TestCase):
         self.assertEqual(self.scrub().returncode, 1)
 
     def test_bracketed_phone_fails(self):
-        self.write("a.md", "call +" "1 (555) 010-0199\n")
+        self.write("a.md", "call +" "1 (55" "5) 010-0199\n")
         self.assertEqual(self.scrub().returncode, 1)
+
+    def test_local_phone_forms_fail(self):
+        for text in ("call 05" "5 123 4567\n", "call 00" "15550100199\n", "call (55" "5) 010-0199\n", "see /home/" "Someone/x\n"):
+            self.write("a.md", text)
+            self.assertEqual(self.scrub().returncode, 1, text)
 
     def test_tilde_path_is_allowed(self):
         self.write("a.md", "see ~/project/notes.md\n")

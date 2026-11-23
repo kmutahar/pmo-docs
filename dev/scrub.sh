@@ -63,7 +63,7 @@ fi
 cd "$(dirname "$0")/.." || exit 2
 fail=0
 skip=(':!dev/scrub.sh' ':!LICENSE' ':!skills/pmo-docs/LICENSE' ':!skills/pmo-docs/scripts/_vendor') # vendored upstream code
-generic='/home/[a-z]|/Users/[A-Za-z]|[A-Za-z]:\\Users\\|\.bashrc|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[a-z]{2,}|\+[0-9][0-9 ().-]{8,}'
+generic='/home/[A-Za-z]|/Users/[A-Za-z]|[A-Za-z]:\\Users\\|\.bashrc|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[a-z]{2,}|\+[0-9][0-9 ().-]{8,}|(^|[^0-9A-Za-z])00[0-9]{8,}|\([0-9]{3}\)[ .-]?[0-9]{3}[ .-][0-9]{4}|(^|[^0-9A-Za-z-])0[0-9]{2,3}[ .-][0-9]{3,4}[ .-][0-9]{3,4}([^0-9]|$)'
 
 if [ "$msg_mode" -eq 1 ]; then
   hits=$(printf '%s\n' "$msg_text" | grep -nE -e "$generic")
