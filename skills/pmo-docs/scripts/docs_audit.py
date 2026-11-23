@@ -15,6 +15,8 @@ be a doc type in the config. Checks:
   old           a finished document is older than its type's `stale_days` (front-matter
                 `last_updated`; a finished document without it is a front-matter finding)
   broken links  relative Markdown links that point at a missing file
+  registers_xref an open register entry whose `registers.<name>.refs` field points at an id that is dropped, closed
+                or superseded (ids only are printed)
 
 Recorded hashes (written by the Finish step) live in front matter as
     source_hashes: {tasks: "ab12cd34", risks: "0f9e8d7c"}
@@ -45,7 +47,7 @@ def _unquote(s):
     return re.sub(r"(?:%[0-9A-Fa-f]{2})+", lambda m: bytes.fromhex(m[0].replace("%", "")).decode("utf-8", "replace"), s)
 
 
-CHECKS = ("front matter", "stale", "old", "broken links", "override drift", "translation behind", "parity", "glossary", "names")
+CHECKS = ("front matter", "stale", "old", "broken links", "override drift", "translation behind", "parity", "glossary", "names", "registers_xref")
 STALE_CHECKS = ("stale", "translation behind")
 
 
@@ -370,6 +372,36 @@ def names_problems(root, cfg) -> list[str]:
     return out
 
 
+GONE = ("dropped", "closed", "superseded")  # shortcut: fixed status words, not per-register config; move to the config if a project needs others
+
+
+def xref_problems(root, cfg) -> list[str]:
+    """An open entry whose `registers.<name>.refs` field points at an entry that is dropped, closed or superseded. Names ids only."""
+    out = []
+    for name, rcfg in cfg["registers"].items():
+        if not isinstance(rcfg, dict) or not rcfg.get("refs"):
+            continue
+        key = "slug" if name == "roster" else "id"
+        try:
+            entries = [e for e in pc.load_register(root, cfg, name) if isinstance(e, dict)]
+            gone = {}
+            for target in set(rcfg["refs"].values()):
+                tkey = "slug" if target == "roster" else "id"
+                gone[target] = {str(e.get(tkey)): e.get("status") for e in pc.load_register(root, cfg, target)
+                                if isinstance(e, dict) and e.get("status") in GONE}
+        except (pc.yaml.YAMLError, AttributeError, ValueError):
+            continue  # render_views.py reports an unreadable register
+        for e in entries:
+            if e.get("status") in pc.statuses(cfg, name, "closed"):
+                continue
+            for field, target in rcfg["refs"].items():
+                value = e.get(field)
+                for v in value if isinstance(value, list) else [value]:
+                    if v is not None and str(v) in gone[target]:
+                        out.append(f"{name} {e.get(key)}: `{field}` points at {v}, which is {gone[target][str(v)]}")
+    return out
+
+
 def audit(root, cfg, today):
     """(files scanned, {check: [message]})."""
     base = Path(root) / cfg["paths"]["documents"]
@@ -383,6 +415,7 @@ def audit(root, cfg, today):
     found["override drift"].extend(t_drift + p_drift)
     found["glossary"].extend(glossary_problems(root, cfg))
     found["names"].extend(names_problems(root, cfg))
+    found["registers_xref"].extend(xref_problems(root, cfg))
     return len(files), found
 
 

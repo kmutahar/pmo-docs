@@ -44,6 +44,17 @@ class Audit(unittest.TestCase):
             f"---\ntype: status-report\nstatus: finished\nlast_updated: 2026-03-14\n{extra}source_hashes:\n{h}\n---\n# Report\n",
             encoding="utf-8")
 
+    def test_open_entry_pointing_at_a_dropped_or_closed_entry_is_a_registers_xref_finding(self):
+        self.finish()
+        t = self.p / "pmo/registers/tasks.yaml"
+        t.write_text(t.read_text(encoding="utf-8").replace("status: in-progress, due: 2026-03-10", "status: dropped, due: 2026-03-10"), encoding="utf-8")
+        code, out = self.run_audit()
+        self.assertEqual(code, 1)
+        self.assertIn("## Registers_xref (1)", out)
+        self.assertIn("- issues I-3: `related_tasks` points at T-1, which is dropped", out)  # I-4 is resolved, so not listed
+        self.assertNotIn("I-4", out)
+        self.assertNotIn("Staging server", out)  # ids only
+
     def test_clean_project_exits_0(self):
         self.finish()
         code, out = self.run_audit()
