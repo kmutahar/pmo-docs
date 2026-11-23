@@ -63,7 +63,7 @@ fi
 cd "$(dirname "$0")/.." || exit 2
 fail=0
 skip=(':!dev/scrub.sh' ':!LICENSE' ':!skills/pmo-docs/LICENSE' ':!skills/pmo-docs/scripts/_vendor') # vendored upstream code
-generic='/home/[A-Za-z]|/Users/[A-Za-z]|[A-Za-z]:\\Users\\|\.bashrc|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[a-z]{2,}|\+[0-9][0-9 ().-]{8,}|(^|[^0-9A-Za-z])00[0-9]{8,}|\([0-9]{3}\)[ .-]?[0-9]{3}[ .-][0-9]{4}|(^|[^0-9A-Za-z-])0[0-9]{2,3}[ .-][0-9]{3,4}[ .-][0-9]{3,4}([^0-9]|$)'
+generic='/home/[A-Za-z]|/Users/[A-Za-z]|/root/|/var/home/|/Volumes/|[A-Za-z]:\\Users\\|\.bashrc|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[a-z]{2,}|\+[0-9][0-9 ().-]{8,}|(^|[^0-9A-Za-z])00[0-9]{8,}|\([0-9]{3}\)[ .-]?[0-9]{3}[ .-][0-9]{4}|(^|[^0-9A-Za-z-])0[0-9]{2,3}[ .-][0-9]{3,4}[ .-][0-9]{3,4}([^0-9]|$)'
 
 if [ "$msg_mode" -eq 1 ]; then
   hits=$(printf '%s\n' "$msg_text" | grep -nE -e "$generic")
@@ -107,6 +107,13 @@ if [ -s .scrub-names ]; then
   [ $? -eq 2 ] && { echo "error: .scrub-names holds an invalid regex, so names can't be checked" >&2; exit 1; }
   hits=$(scan -iE -f .scrub-names)
   [ -n "$hits" ] && { echo "== blocked names =="; echo "$hits"; fail=1; }
+  # quotepath=off keeps non-ASCII names unquoted; a directory argument lists the files inside it
+  if [ "${#paths[@]}" -gt 0 ]; then
+    hits=$(git -c core.quotepath=off ls-files --cached --others --exclude-standard -- "${paths[@]}" "${skip[@]}" | grep -iEf .scrub-names)
+  else
+    hits=$(git -c core.quotepath=off ls-files --cached --others --exclude-standard -- . "${skip[@]}" | grep -iEf .scrub-names)
+  fi
+  [ -n "$hits" ] && { echo "== blocked names in file paths =="; echo "$hits"; fail=1; }
   # commit messages become CHANGELOG entries (git-cliff), so they must be clean too
   hits=$(history_text | grep -iEf .scrub-names)
   [ -n "$hits" ] && { echo "== blocked names in commit messages or tags =="; echo "$hits"; fail=1; }

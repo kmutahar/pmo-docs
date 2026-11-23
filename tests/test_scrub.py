@@ -80,6 +80,29 @@ class ScrubTest(unittest.TestCase):
         self.write("a.md", "see C:\\Us" "ers\\x\n")
         self.assertEqual(self.scrub().returncode, 1)
 
+    def test_extra_machine_paths_and_bashrc_fail(self):
+        for text in ("see /ro" "ot/x\n", "see /var/ho" "me/x\n", "see /Volu" "mes/Disk\n", "edit ~/.bash" "rc\n"):
+            self.write("a.md", text)
+            self.assertEqual(self.scrub().returncode, 1, text)
+
+    def test_blocked_name_in_file_path_fails(self):
+        self.write("acmecorp/notes.md", "clean body\n")
+        self.assertEqual(self.scrub().returncode, 1)
+        self.git("add", "acmecorp/notes.md")
+        self.assertEqual(self.scrub().returncode, 1)
+
+    def test_blocked_non_ascii_name_in_file_path_fails(self):
+        (self.tmp / ".scrub-names").write_text("acmecorp\nünïcode\n", encoding="utf-8")
+        self.write("ünïcode/notes.md", "clean body\n")
+        self.assertEqual(self.scrub().returncode, 1)
+        self.assertEqual(self.scrub("--", "ünïcode/notes.md").returncode, 1)
+
+    def test_directory_arg_checks_file_names_inside_it(self):
+        self.write("docs/acmecorp.md", "clean body\n")
+        self.write("other/ok.md", "clean body\n")
+        self.assertEqual(self.scrub("--", "docs").returncode, 1)
+        self.assertEqual(self.scrub("--", "other").returncode, 0)
+
     def test_dashed_phone_fails(self):
         self.write("a.md", "call +" "1-555-010-0199\n")
         self.assertEqual(self.scrub().returncode, 1)
