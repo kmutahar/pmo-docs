@@ -290,7 +290,7 @@ def refresh_hashes(root, cfg, pending):
         hashes = fm.get("source_hashes")
         for reg, h in (hashes.items() if isinstance(hashes, dict) else ()):
             if reg in moved and moved[reg][0] == h:
-                text = re.sub(r'^(\s+' + re.escape(reg) + r':\s*"?)' + re.escape(h), lambda m, reg=reg: m[1] + moved[reg][1], text, count=1, flags=re.M)
+                text = re.sub(r'((?:^[ \t]+|[{,][ \t]*)' + re.escape(reg) + r':[ \t]*"?)' + re.escape(h), lambda m, reg=reg: m[1] + moved[reg][1], text, count=1, flags=re.M)
         orig = f"{docs}/{fm.get('translation_of')}"
         if orig in old and fm.get("source_hash") == body(old[orig]):
             text = text.replace(f'"{fm["source_hash"]}"', f'"{body(new[orig])}"', 1)

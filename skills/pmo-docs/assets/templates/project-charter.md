@@ -8,7 +8,7 @@ status: draft
 last_updated: "{{date}}"
 ---
 
-<!-- Reads: objectives, priorities, budget, assumptions, roster -->
+<!-- Reads: objectives, goals, budget, assumptions, roster -->
 
 # Project charter - {{project}}
 
@@ -16,7 +16,7 @@ last_updated: "{{date}}"
 <!-- Why the project exists, in two or three sentences. -->
 
 ## Objectives and success measures
-<!-- Each objective is measurable and names the goal it serves. Goal is not an objectives field: take the id of the goal from the priorities register, or write "not set". Measure of success is the objective's `measure` with its `target`; Target date is its `due`. -->
+<!-- Each objective is measurable and names the goal it serves. Goal is not an objectives field: take the id of the goal whose `objectives` lists this objective, or write "not set". Measure of success is the objective's `measure` with its `target`; Target date is its `due`. -->
 | Objective | Goal | Measure of success | Target date |
 |---|---|---|---|
 | {{title}} | {{goal}} | {{measure}} | {{due}} |

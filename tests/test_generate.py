@@ -281,8 +281,8 @@ class TestGenerate(unittest.TestCase):
         self.assertIn("Bob Example", out)
 
         # Every Acme goal appears as a ### block
-        self.assertIn("### P-001 - Launch portal beta", out)
-        self.assertIn("### P-002 - Publish user guide", out)
+        self.assertIn("### GL-001 - Launch portal beta", out)
+        self.assertIn("### GL-002 - Publish user guide", out)
 
         # Open risks only
         self.assertIn("R-001", out)

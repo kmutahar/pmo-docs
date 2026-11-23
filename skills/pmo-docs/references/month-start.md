@@ -2,7 +2,7 @@
 playbook_version: 1
 ---
 
-Reads: pmo/config.yaml (registers, doc_types), pmo/house-rules.md, registers `tasks`, `milestones`, `priorities` (goals), `capacity`, `risks`, `assumptions`, `dependencies`, `actions`.
+Reads: pmo/config.yaml (registers, doc_types), pmo/house-rules.md, registers `tasks`, `milestones`, `goals`, `capacity`, `risks`, `assumptions`, `dependencies`, `actions`.
 
 # Recipe: month-start
 

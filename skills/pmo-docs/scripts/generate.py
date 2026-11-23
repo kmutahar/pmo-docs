@@ -340,7 +340,7 @@ def generate_team_checklist(ctx: Ctx) -> Filled:
     month = majority_month(ctx.window) if ctx.window else ctx.period
     month_title = f"{calendar.month_name[int(month[5:7])]} {month[:4]}"
 
-    # Sort priorities
+    # Sort tasks by priority
     task_sort_key = task_sort_key_for(ctx.cfg)
 
     # Team matching
@@ -454,19 +454,19 @@ def generate_project_plan(ctx: Ctx) -> Filled:
     team_body = pc.md_table(["Role", "Name"], team_rows).strip()
 
     # 2. Goals
-    priorities = sorted(ctx.data.get("priorities", []), key=lambda p: id_number(p.get("id")))
+    goals = sorted(ctx.data.get("goals", []), key=lambda p: id_number(p.get("id")))
     goal_blocks = []
-    for p in priorities:
+    for p in goals:
         pid = p.get("id", "")
         title = p.get("title") or "not recorded"
-        goals = p.get("goals")
+        objectives = p.get("objectives")
         goal_lines = []
-        if isinstance(goals, (list, tuple)):
-            for g in goals:
+        if isinstance(objectives, (list, tuple)):
+            for g in objectives:
                 if g:
                     goal_lines.append(f"- {pc.inline(g)}")
-        elif goals:
-            goal_lines.append(f"- {pc.inline(goals)}")
+        elif objectives:
+            goal_lines.append(f"- {pc.inline(objectives)}")
         if not goal_lines:
             goal_lines.append("- not recorded")
         goals_text = "\n".join(goal_lines)
@@ -544,7 +544,7 @@ def generate_project_plan(ctx: Ctx) -> Filled:
 
     # 4. Dependencies and sequencing
     dep_rows = []
-    for p in priorities:
+    for p in goals:
         deps = p.get("depends_on")
         blks = p.get("blocks")
         has_deps = bool(deps if isinstance(deps, (list, tuple)) else (deps and str(deps).strip()))

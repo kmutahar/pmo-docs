@@ -66,7 +66,7 @@ vocab:
   issue_severity: [low, medium, high, critical]
   rag: [green, amber, red]
   origin: [stated, proposed]
-  priority_order: [high, medium, low]   # sort order for priorities, first = most urgent
+  priority_order: [high, medium, low]   # sort order for task priority, first = most urgent
   requirement_status: [proposed, accepted, implemented, verified, dropped]
   requirement_kind: [functional, quality, constraint]
   test_status: [planned, passed, failed, blocked, skipped]
@@ -94,14 +94,14 @@ registers:
     # blocked and active: statuses that count as blocked and in progress (generators, RAG)
     blocked: [blocked]
     active: [in-progress]
-  priorities:
-    file: priorities.yaml
-    view: priorities.md
-    prefix: P
-    fields: [id, title, goals, output, depends_on, blocks, owner, acceptance, accepted_by, accepted_on, status, note, due, origin]
+  goals:
+    file: goals.yaml
+    view: goals.md
+    prefix: GL
+    fields: [id, title, objectives, output, depends_on, blocks, owner, acceptance, accepted_by, accepted_on, status, note, due, origin]
     enums: {status: task_status, origin: origin}
     dates: [due, accepted_on]
-    refs: {depends_on: priorities, blocks: priorities}
+    refs: {depends_on: goals, blocks: goals}
     closed: [done, dropped]
   milestones:
     file: milestones.yaml
@@ -287,16 +287,16 @@ doc_types:
     title: Project plan
     template: project-plan.md
     name: "{period} - {title}.md"
-    generated_from: [tasks, milestones, priorities, teams, risks, assumptions, dependencies, changes, roster]
+    generated_from: [tasks, milestones, goals, teams, risks, assumptions, dependencies, changes, roster]
     stale_days: 30
     generator: true
     when: at project start and monthly refresh
-    regenerate: when priorities or teams change
+    regenerate: when goals or teams change
   project-charter:
     title: Project charter
     template: project-charter.md
     name: "{title}.md"
-    generated_from: [objectives, priorities, budget, assumptions, roster]
+    generated_from: [objectives, goals, budget, assumptions, roster]
     stale_days: 90
     when: at project kickoff
     regenerate: never; edit the finished document
@@ -327,10 +327,10 @@ doc_types:
     title: Roadmap
     template: roadmap.md
     name: "{title}.md"
-    generated_from: [milestones, priorities, dependencies]
+    generated_from: [milestones, goals, dependencies]
     stale_days: 30
     when: quarterly or upon milestone reviews
-    regenerate: when milestones or priorities shift
+    regenerate: when milestones or goals shift
   retrospective:
     title: Retrospective
     template: retrospective.md
@@ -342,7 +342,7 @@ doc_types:
     title: Delivery report
     template: delivery-report.md
     name: "{period} - {title}.md"
-    generated_from: [tasks, milestones, priorities, issues, risks, changes]
+    generated_from: [tasks, milestones, goals, issues, risks, changes]
     stale_days: 30
     generator: true
     when: at milestone completion or release cutoff

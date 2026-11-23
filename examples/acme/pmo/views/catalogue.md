@@ -7,12 +7,12 @@
 | status-report | Status report | generator | every week or month before the status meeting | when tasks or milestones change | 30 days | yes |
 | overdue-report | Overdue report | agent | mid-month or on demand before review meetings | when tasks or actions are updated | not set | no |
 | docs-audit-report | Documentation audit | agent | monthly before project review | after fixing reported issues | not set | no |
-| project-plan | Project plan | generator | at project start and monthly refresh | when priorities or teams change | 30 days | yes |
+| project-plan | Project plan | generator | at project start and monthly refresh | when goals or teams change | 30 days | yes |
 | project-charter | Project charter | agent | at project kickoff | never; edit the finished document | 90 days | yes |
 | change-request | Change request | agent | whenever a scope or schedule change is proposed | never; edit the finished document | not set | yes |
 | meeting-minutes | Meeting minutes | agent | after governance and sync meetings | never; edit the finished document | not set | yes |
 | team-checklist | Team checklist | generator | start of each period | when period tasks change | 14 days | yes |
-| roadmap | Roadmap | agent | quarterly or upon milestone reviews | when milestones or priorities shift | 30 days | yes |
+| roadmap | Roadmap | agent | quarterly or upon milestone reviews | when milestones or goals shift | 30 days | yes |
 | retrospective | Retrospective | agent | end of each period or major delivery phase | never; edit the finished document | not set | yes |
 | delivery-report | Delivery report | generator | at milestone completion or release cutoff | when release tasks or issues close | 30 days | yes |
 | capacity-plan | Capacity plan | agent | monthly during resource planning | when leave or staffing changes | 30 days | yes |

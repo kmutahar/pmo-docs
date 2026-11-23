@@ -13,12 +13,12 @@ checks:
     columns: [Owner, Due, Exit criteria, Depends on]
 ---
 
-<!-- Reads: milestones, priorities, dependencies -->
+<!-- Reads: milestones, goals, dependencies -->
 
 # Roadmap - {{project}}
 
 ## Now ({{period}})
-<!-- One row per goal (an entry of the priorities register) of the period. -->
+<!-- One row per goal (an entry of the goals register) of the period. -->
 | ID | Item | Owner | Target | Status |
 |---|---|---|---|---|
 | {{id}} | {{title}} | {{lead}} | {{due}} | {{status}} |

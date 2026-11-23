@@ -69,7 +69,7 @@ A file holding every entry of one kind (tasks, risks, issues, decisions, ...). R
 _Avoid_: tracker, log, list, database
 
 **Goal**:
-An optional entry of the `priorities` register: an output with acceptance criteria. Tasks are not linked to goals. Not the same as a task's priority, which is a level (high, medium, low) from the vocabulary.
+An optional entry of the `goals` register: an output with acceptance criteria. Tasks are not linked to goals. Not the same as a task's priority, which is a level (high, medium, low) from the vocabulary.
 _Avoid_: priority (for a goal)
 
 **Entry**:

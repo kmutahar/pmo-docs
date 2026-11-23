@@ -1,0 +1,4 @@
+# goals: one entry per line, e.g.
+#   - {id: ..., title: ..., objectives: ..., output: ..., depends_on: ..., blocks: ..., owner: ..., acceptance: ..., accepted_by: ..., accepted_on: ..., status: ..., note: ..., due: ..., origin: ...}
+# ids look like GL-001
+goals: []

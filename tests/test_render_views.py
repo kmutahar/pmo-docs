@@ -55,7 +55,7 @@ class RenderViews(unittest.TestCase):
             "milestones": "{id: M-090, title: x, status: not-started, origin: proposed}",
             "dependencies": "{id: D-090, text: x, origin: proposed}",
             "teams": "{id: TM-090, heading: x, origin: proposed}",
-            "priorities": "{id: P-090, title: x, status: not-started, origin: proposed}",
+            "goals": "{id: GL-090, title: x, status: not-started, origin: proposed}",
         }
         for name, line in entries.items():
             self.append(name, "  - " + line)
@@ -70,7 +70,7 @@ class RenderViews(unittest.TestCase):
 
     def test_missing_register_is_not_an_error(self):
         (self.reg / "teams.yaml").unlink()
-        (self.reg / "priorities.yaml").unlink()
+        (self.reg / "goals.yaml").unlink()
         self.assertEqual(run(self.root)[0], 0)
         self.assertFalse((self.views / "teams.md").exists())
 

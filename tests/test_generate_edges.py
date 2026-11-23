@@ -399,17 +399,17 @@ class Odd(unittest.TestCase):
         self.assertIn("not recorded", out)
         self.assertEqual(out.count("DEC-003"), out.count("DEC-003"))
 
-    def test_priority_goals_as_text_as_list_and_missing(self):
-        self.put("priorities", "priorities:\n"
-                 "  - {id: P-001, status: done, title: Text goal, goals: Ship it}\n"
-                 "  - {id: P-002, status: done, title: List goal, goals: [A, null, B]}\n"
-                 "  - {id: P-003, status: done, title: No goal}\n"
-                 "  - {id: P-010, status: done, title: Last}\n")
+    def test_goal_objectives_as_text_as_list_and_missing(self):
+        self.put("goals", "goals:\n"
+                 "  - {id: GL-001, status: done, title: Text goal, objectives: Ship it}\n"
+                 "  - {id: GL-002, status: done, title: List goal, objectives: [A, null, B]}\n"
+                 "  - {id: GL-003, status: done, title: No goal}\n"
+                 "  - {id: GL-010, status: done, title: Last}\n")
         out, _ = self.gen("project-plan")
         self.assertIn("- Ship it", out)
         self.assertIn("- A\n- B", out)
         self.assertIn("- not recorded", out)
-        self.assertLess(out.index("P-003"), out.index("P-010"))
+        self.assertLess(out.index("GL-003"), out.index("GL-010"))
 
     def test_roster_entries_without_role_or_name(self):
         with open(self.reg / "roster.yaml", "a", encoding="utf-8") as f:

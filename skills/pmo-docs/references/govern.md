@@ -28,7 +28,7 @@ Defined once in `SKILL.md` (Definition of done).
 
 ## Sign-off and acceptance
 
-A goal's acceptance criteria are in `priorities` (`acceptance`, `accepted_by`, `accepted_on`; `SKILL.md`, Working rules). Fill the last two only with the name and date the user gives. A goal is `done` when its acceptance is signed off.
+A goal's acceptance criteria are in `goals` (`acceptance`, `accepted_by`, `accepted_on`; `SKILL.md`, Working rules). Fill the last two only with the name and date the user gives. A goal is `done` when its acceptance is signed off.
 
 ## Meeting minutes
 

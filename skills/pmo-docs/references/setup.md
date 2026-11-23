@@ -12,9 +12,9 @@ Set up a project's `pmo/` folder and starter registers.
 
 1. **Check for existing setup**
    Check if `pmo/config.yaml` exists. If it exists, do not overwrite anything.
-   Compare its `schema_version` with the skill's current version (1):
+   Compare its `schema_version` with the skill's current version (2):
    - Equal: project is current; nothing to do.
-   - Older: a migration is due (none exist yet).
+   - Older: a migration is due: run the scripts in `scripts/migrate/` in number order (`references/conventions.md`).
    - Newer: the skill is out of date; update the skill (`setup.py` exits 2).
    Stop after reporting the status.
 
@@ -33,8 +33,8 @@ Set up a project's `pmo/` folder and starter registers.
    └── registers/
        ├── actions.yaml       ├── assumptions.yaml   ├── budget.yaml
        ├── capacity.yaml      ├── changes.yaml       ├── decisions.yaml
-       ├── dependencies.yaml  ├── issues.yaml        ├── meetings.yaml
-       ├── milestones.yaml    ├── objectives.yaml    ├── priorities.yaml
+       ├── dependencies.yaml  ├── goals.yaml         ├── issues.yaml
+       ├── meetings.yaml      ├── milestones.yaml    ├── objectives.yaml
        ├── risks.yaml         ├── roster.yaml        ├── tasks.yaml
        └── teams.yaml
    ```

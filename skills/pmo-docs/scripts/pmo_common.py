@@ -327,7 +327,7 @@ def register_prefixes(cfg) -> list[str]:
         regs = {}
     prefixes = [r["prefix"] for r in regs.values() if isinstance(r, dict) and isinstance(r.get("prefix"), str) and r["prefix"]]
     if not prefixes:
-        prefixes = ["T", "P", "M", "R", "I", "A", "D", "DEC", "CR", "ACT", "MTG", "TM"]
+        prefixes = ["T", "GL", "M", "R", "I", "A", "D", "DEC", "CR", "ACT", "MTG", "TM"]
     return sorted(set(prefixes), key=lambda x: (-len(x), x))
 
 

@@ -8,7 +8,7 @@ status: draft
 last_updated: "{{date}}"
 ---
 
-<!-- Reads: tasks, milestones, priorities, teams, risks, assumptions, dependencies, changes, roster -->
+<!-- Reads: tasks, milestones, goals, teams, risks, assumptions, dependencies, changes, roster -->
 
 # Project plan - {{project}}
 
@@ -22,7 +22,7 @@ last_updated: "{{date}}"
 | {{role}} | {{name}} |
 
 ## Goals
-<!-- One subsection per goal (an entry of the priorities register), in register order. Tasks are not linked to goals. -->
+<!-- One subsection per goal (an entry of the goals register), in register order. Tasks are not linked to goals. -->
 
 ### {{id}} - {{title}}
 - {{goal}}
