@@ -239,6 +239,9 @@ def config_errors(cfg, root=None):
                 v = info.get(k)
                 if v is not None and not isinstance(v, str):
                     errors.append(f"config: doc_types.{dt}.{k} must be text")
+            md = info.get("max_heading_depth")
+            if md is not None and (isinstance(md, bool) or not isinstance(md, int) or not 1 <= md <= 6):
+                errors.append(f"config: doc_types.{dt}.max_heading_depth must be a whole number from 1 to 6")
             ps = info.get("per_subproject")
             name = info.get("name")
             if ps is not None and not isinstance(ps, bool):

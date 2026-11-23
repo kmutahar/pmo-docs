@@ -98,6 +98,7 @@ class ConfigErrors(Base):
 
     def test_doc_type_when_regenerate_must_be_text(self):
         self.has({"doc_types": {"status-report": {"regenerate": 3}}}, "doc_types.status-report.regenerate must be text")
+        self.has({"doc_types": {"status-report": {"max_heading_depth": 9}}}, "doc_types.status-report.max_heading_depth must be a whole number from 1 to 6")
 
     def test_doc_type_translate_and_translations(self):
         self.has({"doc_types": {"status-report": {"translate": "never"}}}, "translate `never`")

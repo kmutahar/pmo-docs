@@ -118,6 +118,15 @@ class Checks(unittest.TestCase):
         self.tpl("---\ntype: roadmap\nchecks:\n" + tpl_checks + "---\n# R\n\n## S\n| A | B |\n|---|---|\n| 1 | 2 |\n")
         return " | ".join(self.check("---\ntype: roadmap\n---\n" + doc_body)[0])
 
+    def test_max_heading_depth_warns_about_a_deeper_heading(self):
+        self.tpl("---\ntype: roadmap\n---\n# R\n\n## S\n")
+        doc = "---\ntype: roadmap\n---\n# R\n\n## S\n\n#### Deep\n"
+        self.assertFalse(any("max_heading_depth" in w for w in self.check(doc)[1]))
+        self.cfg["doc_types"]["roadmap"]["max_heading_depth"] = 3
+        errors, warns = self.check(doc)
+        self.assertEqual(errors, [])
+        self.assertTrue(any("`#### Deep` is deeper than doc_types.roadmap.max_heading_depth (3)" in w for w in warns))
+
     def test_empty_text_and_text_without_front_matter_warn_only(self):
         for text in ("", "# T\n", "\r\n"):
             self.assertEqual(self.check(text)[0], [])

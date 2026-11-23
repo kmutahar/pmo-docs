@@ -297,6 +297,11 @@ def check(root, cfg, text, hints=None):
     check_head(tfm, fm, errors, warns)
 
     tsec, dsec = sections(tbody), sections(body)
+    md = dt.get("max_heading_depth")
+    if isinstance(md, int) and not isinstance(md, bool):
+        for lv, title, _ in dsec:
+            if lv > md:
+                warns.append(f"heading `{'#' * lv} {title}` is deeper than doc_types.{tid}.max_heading_depth ({md})")
     if sum(1 for lv, _, _ in dsec if lv == 1) != 1:
         errors.append("document must have exactly one `#` title")
     pos = -1
