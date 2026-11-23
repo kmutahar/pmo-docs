@@ -375,6 +375,16 @@ class TestGenerate(unittest.TestCase):
         self.assertEqual(code, 0, err)
         self.assertIn("- No risks or issues added, closed or changed since 2026-03-01.", out)
 
+    def test_status_report_risks_and_issues_removed_since_snapshot(self):
+        tool("snapshot.py", self.root, "--as-of", "2026-03-01")
+        risks = self.root / "pmo/registers/risks.yaml"
+        lines = [ln for ln in risks.read_text(encoding="utf-8").splitlines(keepends=True) if "R-001" not in ln]
+        risks.write_text("".join(lines), encoding="utf-8")
+        code, out, err = tool("generate.py", self.root, "status-report", "2026-03", "--as-of", "2026-03-15", "--stdout")
+        self.assertEqual(code, 0, err)
+        section = out[out.index("## Risks and issues: changes since last report"):out.index("## Milestones")]
+        self.assertIn("- not recorded `R-001` - removed from the register", section)
+
     def test_status_report_week(self):
         code, out, err = tool("generate.py", self.root, "status-report", "2026-W11", "--stdout")
         self.assertEqual(code, 0, err)
@@ -455,6 +465,17 @@ class TestGenerate(unittest.TestCase):
         self.assertNotIn("| I-004 |", out)  # resolved
         self.assertIn("| REQ-001 | Users can log in | high | test failed |", out)
         self.assertIn("| REQ-002 | Pages load fast | medium | no test |", out)
+
+    def test_defect_gap_report_no_linked_issue_note_and_test_not_run_gap(self):
+        tests_file = self.root / "pmo/registers/tests.yaml"
+        text = tests_file.read_text(encoding="utf-8").replace("issue: I-003", "issue: null")
+        text += '  - {id: TST-003, title: Page load speed check, kind: acceptance, requirement: REQ-002, task: null, issue: null, expected: Under 2s, status: planned, run_on: null, owner: alice, evidence: "", notes: "", origin: stated}\n'
+        tests_file.write_text(text, encoding="utf-8")
+        code, out, err = tool("generate.py", self.root, "defect-gap-report", "2026-03", "--as-of", "2026-03-15", "--stdout")
+        self.assertEqual(code, 0, err)
+        self.assertIn("note: failed test TST-002 has no linked issue", err)
+        self.assertIn("| TST-002 | Login with valid credentials | REQ-001 | not set | not set | Bob Example |", out)
+        self.assertIn("| REQ-002 | Pages load fast | medium | test not run |", out)
 
     def test_non_english_draft_language_exits_2(self):
         cfg_path = self.root / "pmo/config.yaml"

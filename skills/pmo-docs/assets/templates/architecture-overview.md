@@ -3,7 +3,7 @@ title: "Architecture overview - {{project}}"
 type: architecture-overview
 project: "{{project}}"
 manager: "{{manager}}"
-template_version: 1
+template_version: 2
 status: draft
 last_updated: "{{date}}"
 code_ref: "{{commit}}"
@@ -29,10 +29,10 @@ checks:
 ```
 
 ## Components
-<!-- Major functional modules or packages, their purpose, technology stack, and folder or path:line location; Responsibility and Location are required. -->
-| Component | Responsibility | Technology | Location |
+<!-- Major functional modules or packages, their purpose, stack, and folder or path:line location; Responsibility and Location are required. -->
+| Component | Responsibility | Stack | Location |
 |---|---|---|---|
-| {{component}} | {{responsibility}} | {{technology}} | {{location}} |
+| {{component}} | {{responsibility}} | {{stack}} | {{location}} |
 
 ## Data and models
 <!-- Primary domain entities, their role, and definition location in code (path:line); write "not recorded" for an empty field. -->

@@ -4,7 +4,7 @@ type: status-report
 project: "{{project}}"
 manager: "{{manager}}"
 period: "{{period}}"
-template_version: 1
+template_version: 2
 status: draft
 last_updated: "{{date}}"
 ---

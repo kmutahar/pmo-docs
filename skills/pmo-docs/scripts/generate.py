@@ -848,7 +848,7 @@ def generate_status_report(ctx: Ctx) -> Filled:
         ri_lines.append("- No snapshot yet: every open risk and issue is listed.")
         for reg in ("risks", "issues"):
             closed = pc.statuses(ctx.cfg, reg, "closed")
-            ri_lines += [f"- {pc.inline(e.get('title') or 'not recorded')} `{e.get('id')}` - {e.get('status') or 'not recorded'}"
+            ri_lines += [f"- {pc.inline(e.get('title') or 'not recorded')} `{e.get('id')}` - {pc.inline(e.get('status') or 'not recorded')}"
                          for e in (all_risks if reg == "risks" else all_issues) if e.get("status") not in closed]
     else:
         for reg in ("risks", "issues"):
@@ -857,11 +857,11 @@ def generate_status_report(ctx: Ctx) -> Filled:
             for (kind, r), rows in found.items():
                 for i, old, new in rows if r == reg else ():
                     if kind == "added":
-                        what = f"added, {new}"
+                        what = f"added, {pc.inline(new)}"
                     elif kind == "removed":
                         what = "removed from the register"
                     else:
-                        what = f"{'closed' if new in closed else 'changed'} ({old}->{new})"
+                        what = f"{'closed' if new in closed else 'changed'} ({pc.inline(old)}->{pc.inline(new)})"
                     ri_lines.append(f"- {pc.inline(titles.get(i, 'not recorded'))} `{i}` - {what}")
         if not ri_lines:
             ri_lines.append(f"- No risks or issues added, closed or changed since {since}.")
@@ -903,7 +903,8 @@ def generate_scope_wbs(ctx: Ctx) -> Filled:
     tasks = sorted((t for t in ctx.data.get("tasks", []) if t.get("status") not in task_dropped), key=lambda t: id_number(t.get("id")))
     reqs_of_task = {}
     for r in ctx.data.get("requirements", []):
-        for tid in r.get("related_tasks") or []:
+        rt = r.get("related_tasks") or []
+        for tid in rt if isinstance(rt, list) else [rt]:
             reqs_of_task.setdefault(tid, []).append(r.get("id"))
 
     groups = {}
@@ -955,7 +956,7 @@ def generate_work_order(ctx: Ctx) -> Filled:
         notes.append(f"{missing_due} open tasks have no due date")
 
     return Filled(
-        values={"lead": ", ".join(order) or "not set", "due date": max(dues) if dues else "not set"},
+        values={"lead": pc.inline(", ".join(order)) or "not set", "due date": max(dues) if dues else "not set"},
         sections={"Tasks": pc.md_table(["Task", "Owner", "Due"], rows).strip()},
         slots={},
         notes=notes,
@@ -1015,7 +1016,8 @@ def generate_defect_gap_report(ctx: Ctx) -> Filled:
 
     defect_rows = []
     for t in failed:
-        iss = issues.get(t.get("issue"))
+        ref = t.get("issue")
+        iss = next((issues[i] for i in (ref if isinstance(ref, list) else [ref]) if isinstance(i, (str, int)) and i in issues), None)
         if not iss:
             notes.append(f"failed test {t.get('id')} has no linked issue")
         defect_rows.append([t.get("id") or "not set", t.get("title") or "not recorded", t.get("requirement") or "not recorded",
@@ -1046,8 +1048,8 @@ def generate_defect_gap_report(ctx: Ctx) -> Filled:
         values={},
         sections={
             "Summary": counts + "\n\n{{At most three sentences summarizing quality state, critical defects, and release readiness.}}",
-            "Defects": pc.md_table(["ID", "Failed test", "Requirement", "Issue", "Severity", "Lead"], defect_rows).strip(),
-            "Open issues": pc.md_table(["ID", "Issue", "Severity", "Lead", "Status", "Raised"], issue_rows).strip(),
+            "Defects": pc.md_table(["ID", "Failed test", "Requirement", "Issue", "Severity", "Owner"], defect_rows).strip(),
+            "Open issues": pc.md_table(["ID", "Issue", "Severity", "Owner", "Status", "Raised"], issue_rows).strip(),
             "Gaps": pc.md_table(["Requirement", "Title", "Priority", "Gap"], gap_rows).strip(),
         },
         slots={},

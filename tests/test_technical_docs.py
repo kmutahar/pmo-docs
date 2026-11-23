@@ -42,7 +42,7 @@ DRAFT_BODIES = {
 
 ## Requirements
 ### REQ-001 - User login
-- **Priority:** high - **Status:** verified - **Lead:** Alice
+- **Priority:** high - **Status:** verified - **Owner:** Alice
 - **Description:** User authentication flow
 - **Acceptance criteria:** Valid user can sign in
 - **Source:** Specification
@@ -102,12 +102,12 @@ Acceptance testing round for release 1.0.
 Quality state summary for current period.
 
 ## Defects
-| ID | Failed test | Requirement | Issue | Severity | Lead |
+| ID | Failed test | Requirement | Issue | Severity | Owner |
 |---|---|---|---|---|---|
 | TST-002 | Slow query | REQ-002 | I-001 | high | Bob |
 
 ## Open issues
-| ID | Issue | Severity | Lead | Status | Raised |
+| ID | Issue | Severity | Owner | Status | Raised |
 |---|---|---|---|---|---|
 | I-001 | Slow query on dashboard | high | Bob | open | 2026-03-10 |
 
@@ -240,7 +240,7 @@ Acme project architecture context.
 ```
 
 ## Components
-| Component | Responsibility | Technology | Location |
+| Component | Responsibility | Stack | Location |
 |---|---|---|---|
 | API Server | Handle HTTP requests | Express | src/server.js:1 |
 

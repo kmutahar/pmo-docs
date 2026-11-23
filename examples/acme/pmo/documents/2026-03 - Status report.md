@@ -4,7 +4,7 @@ type: status-report
 project: "Acme Portal"
 manager: "Sam Example"
 period: "2026-03"
-template_version: 1
+template_version: 2
 status: draft
 last_updated: "2026-03-15"
 ---

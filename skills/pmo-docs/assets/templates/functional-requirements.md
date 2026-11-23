@@ -3,7 +3,7 @@ title: "Functional requirements - {{project}}"
 type: functional-requirements
 project: "{{project}}"
 manager: "{{manager}}"
-template_version: 1
+template_version: 2
 status: draft
 last_updated: "{{date}}"
 checks:
@@ -29,7 +29,7 @@ checks:
 ## Requirements
 <!-- One subsection per functional requirement in the same order as the Summary; write "not recorded" for an empty field, "none" for linked tasks, never invent one. -->
 ### {{id}} - {{title}}
-- **Priority:** {{priority}} - **Status:** {{status}} - **Lead:** {{lead}}
+- **Priority:** {{priority}} - **Status:** {{status}} - **Owner:** {{lead}}
 - **Description:** {{description}}
 - **Acceptance criteria:** {{acceptance or "not recorded"}}
 - **Source:** {{source or "not recorded"}}

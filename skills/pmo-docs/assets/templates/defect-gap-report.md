@@ -4,13 +4,13 @@ type: defect-gap-report
 project: "{{project}}"
 manager: "{{manager}}"
 period: "{{period}}"
-template_version: 1
+template_version: 2
 status: draft
 last_updated: "{{date}}"
 checks:
   - kind: required_cells
     section: Open issues
-    columns: [Severity, Lead, Status]
+    columns: [Severity, Owner, Status]
   - kind: required_cells
     section: Gaps
     columns: [Gap]
@@ -30,13 +30,13 @@ checks:
 
 ## Defects
 <!-- One row per test in the tests register with status failed; Issue and Severity from the linked issue, or "not set" when unlinked (add to Open questions); write "not recorded" for an empty field. -->
-| ID | Failed test | Requirement | Issue | Severity | Lead |
+| ID | Failed test | Requirement | Issue | Severity | Owner |
 |---|---|---|---|---|---|
 | {{id}} | {{test}} | {{requirement}} | {{issue}} | {{severity}} | {{lead}} |
 
 ## Open issues
-<!-- From the issues register: issues whose status is not closed, ordered most severe first; Severity, Lead, and Status are required; write "not recorded" for an empty field. -->
-| ID | Issue | Severity | Lead | Status | Raised |
+<!-- From the issues register: issues whose status is not closed, ordered most severe first; Severity, Owner, and Status are required; write "not recorded" for an empty field. -->
+| ID | Issue | Severity | Owner | Status | Raised |
 |---|---|---|---|---|---|
 | {{id}} | {{issue}} | {{severity}} | {{lead}} | {{status}} | {{raised}} |
 

@@ -151,13 +151,13 @@ class Where(unittest.TestCase):
     def test_project_template_wins(self):
         tpl = self.root / "pmo/templates/status-report.md"
         tpl.parent.mkdir(parents=True)
-        tpl.write_text("---\ntype: status-report\ntemplate_version: 3\nbased_on: status-report@2\n---\n# x\n", encoding="utf-8")
+        tpl.write_text("---\ntype: status-report\ntemplate_version: 3\nbased_on: status-report@1\n---\n# x\n", encoding="utf-8")
         f = fields(run(self.root, "status-report", "2026-03")[1])
         self.assertEqual(f["template_source"], "project")
         self.assertEqual(f["template"], "pmo/templates/status-report.md")
         self.assertEqual(f["template_exists"], "yes")
         self.assertEqual(f["template_version"], "3")
-        self.assertEqual(f["based_on"], "status-report@2")
+        self.assertEqual(f["based_on"], "status-report@1")
         self.assertEqual(f["drift"], "yes")
 
     def test_drift_state(self):
@@ -363,6 +363,27 @@ class Where(unittest.TestCase):
         self.assertIn("decision-log.md: not UTF-8 text", err)
         self.assertNotIn("Traceback", err)
 
+    def test_malformed_template_front_matter(self):
+        tpl = self.root / "pmo/templates/decision-log.md"
+        tpl.parent.mkdir(parents=True, exist_ok=True)
+        tpl.write_text("---\ntemplate_version: [\n---\n# Decision log\n", encoding="utf-8")
+        code, out, err = run(self.root, "decision-log")
+        self.assertEqual(code, 0, err)
+        f = fields(out)
+        self.assertEqual(f["template_version"], "none")
+        self.assertEqual(f["based_on"], "none")
+        self.assertEqual(f["drift"], "yes")
+
+    def test_per_subproject_with_no_matching_entries(self):
+        make_per_subproject(self.root)
+        cfg_file = self.root / "pmo/config.yaml"
+        cfg_file.write_text(cfg_file.read_text(encoding="utf-8").replace("  web: {}\n", "  web: {}\n  mobile: {}\n", 1), encoding="utf-8")
+        code, out, err = run(self.root, "decision-log", "--subproject", "mobile")
+        self.assertEqual(code, 0, err)
+        f = fields(out)
+        self.assertEqual(f["document"], "pmo/documents/mobile - Decision log.md")
+        self.assertEqual(f["entries_decisions"], "none")
+
 
 class WhereTranslations(unittest.TestCase):
     def setUp(self):
@@ -410,6 +431,12 @@ class WhereTranslations(unittest.TestCase):
         self.assertEqual(f["glossary"], "pmo/data/glossary-xx.md")
         self.assertNotIn("glossary_proposed", f)
         self.assertEqual(f["names"], "none")
+
+    def test_lang_prints_names_file_when_configured(self):
+        tf.enable_languages(self.root, ("xx",), block="    names: pmo/data/names-xx.yaml\n")
+        code, out, err = run(self.root, "decision-log", "--lang", "xx")
+        self.assertEqual(code, 0, err)
+        self.assertEqual(fields(out)["names"], "pmo/data/names-xx.yaml")
 
     def test_lang_hashes_prints_source_hash(self):
         tf.enable_languages(self.root, ("xx",))
