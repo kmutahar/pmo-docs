@@ -10,7 +10,7 @@ Copies finished documents to the configured folder or git repository. With the p
 
 ## Without the plugin
 
-Use the launcher: `pmo/bin/pmo publish [--as-of YYYY-MM-DD]` is the dry run. Show its listing with the `target:` folder and explain each line in plain words (`new`, `unchanged`, `stale`, `conflict`, `stale, conflict`, `invalid`, plus `drafts:` and `excluded:`). Ask one question: "Copy these now?". Only on a yes, run the same command with `--apply` (and `--overwrite REL` or `--include REL` for the paths the user named). Never run `--apply` without a yes to that listing in this conversation.
+Use the launcher: `pmo/bin/pmo publish [--as-of YYYY-MM-DD]` is the dry run. Show its listing with the `target:` folder (relative to the project) and explain each line in plain words (`new`, `unchanged`, `stale`, `conflict`, `stale, conflict`, `invalid`, plus `drafts:` and `excluded:`). Ask one question: "Copy these now?". Only on a yes, run the same command with `--apply` (and `--overwrite REL` or `--include REL` for the paths the user named). Never run `--apply` without a yes to that listing in this conversation.
 
 ## Steps
 
@@ -20,7 +20,7 @@ Use the launcher: `pmo/bin/pmo publish [--as-of YYYY-MM-DD]` is the dry run. Sho
 
 2. **Review candidates**
    Show the listing grouped by state:
-   - For each `invalid`, run `python3 ${CLAUDE_SKILL_DIR}/scripts/structure_check.py <path>` and show the errors; it is not published until it passes.
+   - Each `invalid` line carries its error count; `publish.py --only invalid` lists just those files. For each `invalid`, run `python3 ${CLAUDE_SKILL_DIR}/scripts/structure_check.py <path>` and show the errors; it is not published until it passes.
    - For each `conflict`, show the diff of target vs source (read both files) and ask, per file, whether to overwrite.
    - For each `stale`, explain which registers changed since the document was finished (run `python3 ${CLAUDE_SKILL_DIR}/scripts/docs_audit.py`) and ask whether to publish anyway (`--include`) or redraft first.
    - A `stale, conflict` document needs both: show the diff, then `--include` and `--overwrite` if the user agrees.

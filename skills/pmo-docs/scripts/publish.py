@@ -2,7 +2,7 @@
 """Publish finished documents to a target folder or repo.
 
 Usage:
-    python3 publish.py [--apply] [--overwrite REL]... [--include REL]... [--as-of YYYY-MM-DD] [--project ROOT]
+    python3 publish.py [--apply] [--only invalid] [--overwrite REL]... [--include REL]... [--as-of YYYY-MM-DD] [--project ROOT]
 
 Exit codes:
     0 success, or mode is none, or dry run clean
@@ -32,11 +32,14 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     pc.add_project_arg(ap)
     ap.add_argument("--apply", action="store_true", help="perform the copy; without this flag, print a dry-run listing")
+    ap.add_argument("--only", choices=["invalid"], help="dry run: list only the files in this state")
     ap.add_argument("--overwrite", action="append", default=[], metavar="REL", help="overwrite a conflicting document")
     ap.add_argument("--include", action="append", default=[], metavar="REL", help="publish a stale document")
     ap.add_argument("--as-of", type=pc.as_of, default=datetime.date.today(),
                     metavar="YYYY-MM-DD", help="date for staleness checks (default: today)")
     args = ap.parse_args(argv)
+    if args.only and args.apply:
+        ap.error("--only is for the dry run; drop --apply")
 
     root = Path(args.project).resolve()
     if not root.is_dir():
@@ -177,10 +180,12 @@ def main(argv=None) -> int:
 
     # Dry-run listing
     if not args.apply:
-        print(f"target: {target_dir} ({mode})")
+        print(f"target: {os.path.relpath(target_dir, root)} ({mode})")
         url_base = pub.get("url")
         for rel, _, state, errors in classified:
-            print(f"{state}: {rel}")
+            if args.only and state != args.only:
+                continue
+            print(f"{state}: {rel}" + (f" ({len(errors)} error{'s' * (len(errors) != 1)})" if state == "invalid" else ""))
             if state == "invalid":
                 for err in errors[:3]:
                     print(f"  {err}")
@@ -189,8 +194,9 @@ def main(argv=None) -> int:
             elif state == "new" and url_base:
                 clean_url = str(url_base).rstrip("/")
                 print(f"url: {clean_url}/{urllib.parse.quote(rel)}")
-        print(f"drafts: {drafts_count}")
-        print(f"excluded: {excluded_count}")
+        if not args.only:
+            print(f"drafts: {drafts_count}")
+            print(f"excluded: {excluded_count}")
         return 1 if any(st == "invalid" for _, _, st, _ in classified) else 0
 
     # Apply copies

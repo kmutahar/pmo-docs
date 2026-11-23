@@ -93,7 +93,8 @@ class Publish(unittest.TestCase):
         self.finish_decision_log()
         code, out, _ = run(self.root)
         self.assertEqual(code, 0)
-        self.assertIn(f"target: {(self.root / 'published').resolve()} (folder)", out)
+        self.assertIn("target: published (folder)", out)
+        self.assertNotIn(str(self.root), out)
 
     def test_apply_refuses_an_existing_tmp_file_and_leaves_it(self):
         self.set_config("publish:\n  mode: folder\n  path: published\n")
@@ -651,7 +652,7 @@ class Publish(unittest.TestCase):
 
         code, out, _ = run(self.root)
         self.assertEqual(code, 1)
-        self.assertIn("invalid: Decision log.md\n  unreplaced {{placeholder}} left in text", out)
+        self.assertIn("invalid: Decision log.md (1 error)\n  unreplaced {{placeholder}} left in text", out)
 
         code, out, _ = run(self.root, "--apply")
         self.assertEqual(code, 1)
@@ -669,13 +670,25 @@ class Publish(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertRegex(
             out,
-            r"invalid: Decision log\.md\n"
+            r"invalid: Decision log\.md \(\d+ errors\)\n"
             r"  front matter key `title` missing\n"
             r"  front matter key `project` missing\n"
             r"  front matter key `manager` missing\n"
             r"  \.\.\. and \d+ more\n",
         )
         self.assertNotIn("template_version", out)
+
+    def test_only_invalid_lists_just_the_invalid_files(self):
+        self.set_config("publish:\n  mode: folder\n  path: published\n")
+        f = self.finish_decision_log()
+        code, out, _ = run(self.root, "--only", "invalid")
+        self.assertEqual((code, out), (0, "target: published (folder)\n"))
+        f.write_text(f.read_text(encoding="utf-8") + "\n{{placeholder}}\n", encoding="utf-8")
+        code, out, _ = run(self.root, "--only", "invalid")
+        self.assertEqual(code, 1)
+        self.assertIn("invalid: Decision log.md (1 error)", out)
+        self.assertNotIn("drafts:", out)
+        self.assertEqual(run(self.root, "--only", "invalid", "--apply")[0], 2)
 
     def test_valid_finished_document_still_publishes(self):
         self.set_config("publish:\n  mode: folder\n  path: published\n")
