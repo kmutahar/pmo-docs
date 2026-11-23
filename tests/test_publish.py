@@ -181,7 +181,7 @@ class Publish(unittest.TestCase):
             "---\ntype: status-report\nstatus: draft\n---\n# Draft report\n", encoding="utf-8"
         )
         # Add a finished docs-audit-report (which has publish: false in default config)
-        (self.docs / "2026-03 - Documentation audit.md").write_text(
+        (self.docs / "2026-03-09 - Documentation audit.md").write_text(
             "---\ntype: docs-audit-report\nstatus: finished\nlast_updated: 2026-03-15\n---\n# Audit\n", encoding="utf-8"
         )
         self.finish_decision_log()

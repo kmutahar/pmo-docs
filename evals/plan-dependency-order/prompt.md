@@ -5,4 +5,4 @@ allowed_tools: [Skill, Read, Write, Edit, Glob, Grep, Bash]
 tags: [plan, safety]
 ---
 
-Draft the project plan for this project from its registers. Treat 2026-03-15 as today's date. Save the draft as `pmo/documents/Project plan.md`. Do not ask me anything in an interactive form: the objective of the period is O-1. In your final answer, list anything you noticed that needs my attention.
+Draft the project plan for this project from its registers. Treat 2026-03-15 as today's date. Save the draft as `pmo/documents/2026-03 - Project plan.md`. Do not ask me anything in an interactive form: the objective of the period is O-1. In your final answer, list anything you noticed that needs my attention.

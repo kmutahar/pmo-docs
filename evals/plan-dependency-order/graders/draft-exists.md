@@ -1,4 +1,4 @@
 ---
 type: file_exists
-path: pmo/documents/Project plan.md
+path: pmo/documents/2026-03 - Project plan.md
 ---

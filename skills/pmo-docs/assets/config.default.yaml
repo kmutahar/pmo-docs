@@ -274,7 +274,7 @@ doc_types:
   docs-audit-report:
     title: Documentation audit
     template: docs-audit-report.md
-    name: "{period} - {title}.md"
+    name: "{date} - {title}.md"
     generated_from: []
     translations: []
     publish: false
@@ -283,7 +283,7 @@ doc_types:
   project-plan:
     title: Project plan
     template: project-plan.md
-    name: "{title}.md"
+    name: "{period} - {title}.md"
     generated_from: [tasks, milestones, priorities, teams, risks, assumptions, dependencies, changes, roster]
     stale_days: 30
     generator: true
@@ -314,7 +314,7 @@ doc_types:
   team-checklist:
     title: Team checklist
     template: team-checklist.md
-    name: "{title}.md"
+    name: "{period} - {title}.md"
     generated_from: [tasks, teams, milestones]
     stale_days: 14
     generator: true
