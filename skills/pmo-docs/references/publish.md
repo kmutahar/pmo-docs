@@ -6,11 +6,11 @@ Reads: pmo/config.yaml (publish, doc_types), `publish.py` output, `docs_audit.py
 
 # Publish
 
-Copies finished documents to the configured folder or git repository. With the plugin the user types `/pmo-docs:publish`; without it the steps are the same and the user's yes comes from step 3.
+Copies finished documents to the configured folder or git repository. With the plugin the user types `/pmo-docs:publish`; without it the steps below are the same, run through the launcher (see "Without the plugin").
 
 ## Without the plugin
 
-Use the launcher: `pmo/bin/pmo publish [--as-of YYYY-MM-DD]` is the dry run. Show its listing with the `target:` folder (relative to the project) and explain each line in plain words (`new`, `unchanged`, `stale`, `conflict`, `stale, conflict`, `invalid`, plus `drafts:` and `excluded:`). Ask one question: "Copy these now?". Only on a yes, run the same command with `--apply` (and `--overwrite REL` or `--include REL` for the paths the user named). Never run `--apply` without a yes to that listing in this conversation.
+Use `pmo/bin/pmo publish [--as-of YYYY-MM-DD]` wherever the steps say `python3 ${CLAUDE_SKILL_DIR}/scripts/publish.py`; the flags are the same, and the launcher form only changes the command. Explain each listing line in plain words (`new`, `unchanged`, `stale`, `conflict`, `stale, conflict`, `invalid`, plus `drafts:` and `excluded:`). Never run `--apply` without a yes to that listing in this conversation (step 3).
 
 `publish.layout` and `publish.name_prefix_by_lang` (`references/conventions.md`) change where a copy lands in the target: the listing's `REL` stays the source path, and the copy goes to the type's subfolder with the language's prefix on the file name. Both default to empty, so a copy keeps its source path.
 

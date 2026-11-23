@@ -8,6 +8,7 @@ Usage:
 Walks the documents folder (paths.documents). A document's type is its front-matter `type` and must
 be a doc type in the config. Checks:
   front matter  `type` is present and is a known doc type
+  glossary      glossary files (rows, ids, sections) and the names file are well formed
   stale         a document with `status: finished` is stale when the hash recorded in its front matter for any
                 register in the type's `generated_from` differs from the register's current hash
   translation behind a finished translation whose source_hash differs from body_hash of its original

@@ -12,11 +12,11 @@ Set up a project's `pmo/` folder and starter registers.
 
 1. **Check for existing setup**
    Check if `pmo/config.yaml` exists. If it exists, do not overwrite anything.
-   Compare its `schema_version` with the skill's current version (2):
+   Compare its `schema_version` with the skill's current version (`references/conventions.md`, Schema version and migrations):
    - Equal: project is current; nothing to do.
-   - Older: a migration is due: run the scripts in `scripts/migrate/` in number order (`references/conventions.md`).
+   - Older: a migration is due: list the migrations that are due, wait for one yes, then run the scripts in `scripts/migrate/` in number order (`references/conventions.md`).
    - Newer: the skill is out of date; update the skill (`setup.py` exits 2).
-   Stop after reporting the status.
+   If a launcher refresh was requested, go to step 3 with `--launcher`. Otherwise stop after reporting the status.
 
 2. **Gather configuration and confirm**
    Ask the user for initial project details (project name, project manager; priority order and week start use defaults unless mentioned). Ask for any missing name in its own question that takes free text, before the consent question, so the consent question is a plain yes or no. Unknown answers stay null and become open questions. Display the tree of files to be created and wait for one yes before running `setup.py` or writing any file (`SKILL.md`, Safety rule 3: ask before writing beyond the request):

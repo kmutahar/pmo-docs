@@ -52,8 +52,6 @@ The rules for translations live in `SKILL.md` (Translations) and `references/con
 
 ## Settings and scripts
 
-- `languages` in `pmo/config.yaml`: `draft` (default `en`), `translations` (target language codes), and one block per code (`label`, `dir`, optional `glossary`, `digits`, `connectors`, `separators`). See `references/conventions.md` (Config keys).
-- `doc_types.<type>.translate`: `in-period` (default) or `after-close`, controlling when Finish offers translation (`SKILL.md`, Finish step 8).
-- `doc_types.<type>.translations`: language codes that replace `languages.translations` for one doc type (`[]` disables translation for that type).
+- Config keys `languages` and `doc_types.<type>.translate` / `translations`: `references/conventions.md` (Config keys). Finish step 8 in `SKILL.md` says when translation is offered.
 - `parity_check.py`: compares a translation with its original (headings, tables, ids, numbers, list items, ticked boxes).
 - `docs_audit.py`: reports a translation that is behind its original checks parity and checks glossary IDs.

@@ -22,7 +22,7 @@ Run as `docs-audit [--fix]` (`--fix` is a recipe flag, not a script flag: `docs_
 
 3. **Do the checks by reading**
    - Document against register: a checklist's ticks against `tasks` statuses, and a plan's goals, owners and dependencies against the registers. List the differences both ways.
-   - Commits behind: for each document whose front matter has a `code_ref` other than `not set`, run read-only `git log <code_ref>..HEAD --oneline` and count the commits the document is behind. Skip documents without a `code_ref` or with `not set`.
+   - Commits behind: for each document whose front matter has a `code_ref` other than `not set`, run read-only `git log <code_ref>..HEAD --oneline` and count the commits the document is behind. Run it only when `code_ref` is 7 to 40 hex characters (Safety rule 1: never pass a value that starts with `-`); skip documents without a `code_ref`, with `not set` or with any other value.
    - Drift against code: only when the user names the folders that hold the code and the documents that describe it. Compare what the document claims with what the code does, read-only, and report only clear contradictions with a file and line on both sides. Without folders, list the check under Not checked.
 
 4. **Draft the report**

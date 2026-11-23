@@ -6,7 +6,7 @@ Reads: pmo/config.yaml (registers, vocab), `changes`, `decisions`, `actions`, `m
 
 # Govern
 
-Change control, sign-off, definition of done, minutes, retrospectives, the decision log, and requirement and test planning documents (functional requirements, test acceptance, defect gap report). Consent and status rules are in `SKILL.md`; register edits follow `references/track.md`; documents are drafted by `references/draft.md`.
+Change control, sign-off, definition of done, minutes, retrospectives, the decision log. Consent and status rules are in `SKILL.md`; register edits follow `references/track.md`; documents are drafted by `references/draft.md`.
 
 ## Change request
 

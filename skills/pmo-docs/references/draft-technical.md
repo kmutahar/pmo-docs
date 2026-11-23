@@ -17,13 +17,13 @@ Draft a technical document from the codebase and registers. Applies to `entity-l
    Read `technical.stacks`. If empty, read `Detected by:` across the project's `<paths.playbooks>/stacks/` files and the skill's `${CLAUDE_SKILL_DIR}/references/stacks/` files, compare with the repository, and propose a match to confirm with the user. The skill ships these stacks, each at `${CLAUDE_SKILL_DIR}/references/stacks/<name>.md`: `aspnet-core`, `django`, `express`, `fastapi` (also covers Flask), `flutter`, `nextjs`, `spring-boot`. A stack in this list needs no project stack file: open it by that path. If none matches, ask the user once. After a yes, write `pmo/playbooks/stacks/<stack>.md` from the framework's public documentation (read only pages you first show the user, and only for this) with a `Checked against:` line that names what you read (or `Checked against: not checked`) and the headings: `Routes, pages or screens`, `Data models`, `Permissions and auth`, `Config and environments`, `Tests`, `List the API live`. Offer to set `technical.stacks`. Open each project stack file `<paths.playbooks>/stacks/<stack>.md` if present, else the skill default `${CLAUDE_SKILL_DIR}/references/stacks/<stack>.md` (read it by that path).
 
 3. **Inventory**
-   Use the stack file "Look in" lines to find routes, pages, screens, models, auth rules, config and tests. If the project has a code-graph or index tool, use it for this step. Otherwise Glob, grep and Read. Keep a short summary table (kind, count, folders) for the reply; do not write it to a file.
+   Use the stack file "Look in" lines to find routes, pages, screens, models, auth rules, config and tests. Use Glob, grep and Read; run a project's own code-graph or index tool only if the user says yes. Keep a short summary table (kind, count, folders) for the reply; do not write it to a file.
 
 4. **Read the code**
    Open each item at file and line, read it and note facts. Cite `path:line` in the document. Skip generated files, vendored code and lockfiles (rules: `SKILL.md`, Documents).
 
 5. **Fan out**
-   When the inventory exceeds ~15 files, split by folder into slices. Run sub-agents if available (at most three at once), returning lines `item | path:line | fact` without code or secrets. Otherwise work through slices in order. Merge findings; conflicting facts go to Open questions.
+   When the inventory exceeds ~15 files, split by folder into slices. Run sub-agents if available (at most three at once), returning lines `item | path:line | fact` without code or secrets. Give each sub-agent the code-read rules of `SKILL.md` (Documents). Otherwise work through slices in order. Merge findings; conflicting facts go to Open questions.
 
 6. **Record findings**
    Show facts that belong in registers (new roles not in `domain.roles`, environments, permissions, requirements) as proposals first; after a yes write them with `origin: proposed` (`references/track.md`). Record role and variable names (`SKILL.md`, Documents). Note a secret by file and line only (`SKILL.md`, No credentials).

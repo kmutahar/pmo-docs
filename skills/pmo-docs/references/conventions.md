@@ -43,7 +43,7 @@ Every document starts with YAML front matter.
 
 | Key | Meaning |
 |---|---|
-| `title` | the document title |
+| `title` | the document title: the short label the catalogue shows; the first heading may add the item (`Change request {{id}} - {{title}}`) |
 | `type` | the doc type id; the checks are chosen by it |
 | `project`, `manager` | from the config |
 | `period` | `YYYY-MM` or `YYYY-Www`; on every type whose template has it (periodic types and the roadmap) |
@@ -70,7 +70,6 @@ A translation is a file next to its original, named `<name>.<lang>.md` (for exam
 - Statuses, severities, levels and similar values must come from the config's `vocab`. An empty vocab list accepts any value. `vocab.priority_order` lists the task priority levels, most urgent first.
 - Credential-like strings (a password, token, key or a link with a password) in any field are a validation error; the message names the entry and field, never the text.
 - Ids and dates use the ASCII digits 0 to 9 only; a register date with a time of day (a YAML timestamp) is a validation error. Dates are `YYYY-MM-DD`. The fields that hold dates are listed per register in the config (`dates`); `months`: fields that hold a month `YYYY-MM`; `tasks` and `milestones` list `period`; the statuses that mean an entry is closed are `closed`; `pending` on `decisions` and `changes` lists the statuses that still need a decision (the Blockers table of the status report).
-- Scripts read files with `pc.read()`, which strips a BOM and turns CRLF into LF; `split_front_matter` expects text read that way and does not strip them from a raw string.
 - Every register has an optional `origin` field (`vocab.origin`): `stated` means the user or owner said it and `proposed` means the agent suggested it and it is not confirmed.
 - Optional review text: `description` (default field of risks, issues, changes and requirements) and `question` (a plain-language question for the reviewer; no register has it by default). `team-review` shows both; to use them in a register that lacks them, add the field to its `fields` (`references/extend.md`). Quote a question in a one-line entry, because an unquoted value ending in `?` is a YAML error: `question: "Which vendors?"`.
 - To edit an entry: `SKILL.md`, Working rules (Edit one entry, not the file).
@@ -127,12 +126,10 @@ Version 2 made zero-padded ids the default (`project.id_width: 3`). A config at 
 
 Version 2 also renamed the `priorities` register to `goals` (a task's priority is its urgency level; a goal is an output with acceptance criteria): file `goals.yaml`, view `goals.md`, id prefix `GL`, entry field `objectives` (was `goals`). Until `python3 ${CLAUDE_SKILL_DIR}/scripts/migrate/0002_goals_register.py` has run, the skill does not read `priorities.yaml`. The script renames the file, the config names, the ids (the unpadded `P-1` becomes `GL-001`, padded to `project.id_width`), the `source_hashes` keys of documents and moves their recorded hashes along; it asks nothing and can be repeated. `0003_status_report_heading.py` renames the status report heading `## Risks and issues` to `## Risks and issues: changes since last report` in the project's own status report templates (`pmo/templates/status-report.md` and copies of it, translations left out), so that `generate.py` finds the section; it prints one line per file changed. Run the schema 2 scripts in number order (`0001`, `0002`, `0003`); together they are the one step from version 1 to 2.
 
-When a format has to change again (a breaking change, which waits for a major version), the release adds the next `scripts/migrate/NNNN_<what>.py`:
+When a format changes again (a breaking change, which waits for a major version), the release adds the next `scripts/migrate/NNNN_<what>.py`:
 
 - Scripts are numbered in order and a project at version N runs every script after N, in number order. Version 2 is one step made of several scripts (`0001_pad_ids.py` sets `schema_version: 2`, the others do not touch it).
 - A script works on the project folder it is given, changes only files inside it, and sets `schema_version` last, so a failed run can be repeated.
-- The release has an upgrade note in `CHANGELOG.md` that names the script.
-- Optional new keys and fields do not need a script and do not change `schema_version`.
 
 ## Views and catalogue
 
