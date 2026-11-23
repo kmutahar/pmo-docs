@@ -2,7 +2,8 @@
 
 # Budget
 
-| id | item | low | medium | high | note | origin |
-|---|---|---|---|---|---|---|
-| B-001 | Hosting | 100 | 150 | 250 | Per month | stated |
-| B-002 | Payment vendor fee | 0 | 50 | 120 | Per month | stated |
+| id | item | low | medium | high | currency | note | origin |
+|---|---|---|---|---|---|---|---|
+| B-001 | Hosting | 100 | 150 | 250 |  | Per month | stated |
+| B-002 | Payment vendor fee | 0 | 50 | 120 |  | Per month | stated |
+| B-003 | Design licence | 20 | 30 | 45 | EUR | Per month | stated |

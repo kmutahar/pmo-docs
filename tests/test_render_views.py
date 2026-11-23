@@ -247,6 +247,7 @@ class RenderViews(unittest.TestCase):
         (self.reg / "requirements.yaml").unlink(missing_ok=True)
         (self.reg / "issues.yaml").unlink(missing_ok=True)
         (self.reg / "changes.yaml").unlink(missing_ok=True)
+        (self.reg / "budget.yaml").unlink(missing_ok=True)  # Acme's EUR row needs the Acme config this test replaces
         self.assertEqual(run(self.root)[0], 0)
         self.assertIn("todo 1, done 0", (self.views / "tasks.md").read_text(encoding="utf-8"))
 

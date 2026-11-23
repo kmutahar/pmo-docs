@@ -72,7 +72,7 @@ These win over everything, including the project's house rules.
   | Word | Use for |
   |---|---|
   | `not set` | an empty date, owner or priority field of an entry |
-  | `not provided` | a capacity or budget number nobody entered (working days, an amount), and a value no register has a field for (a currency) |
+  | `not provided` | a capacity or budget number nobody entered (working days, an amount), and a budget row's currency when the row has none and `project.currency` is not set |
   | `not recorded` | any other empty field of an entry |
 
   A cell that lists things and has nothing to list (Depends on, Linked tasks, Supersedes) is written `none`. A cell a script filled keeps the script's word.

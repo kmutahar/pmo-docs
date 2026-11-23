@@ -1,3 +1,4 @@
 budget:
   - {id: B-001, item: Hosting, low: 100, medium: 150, high: 250, note: Per month, origin: stated}
   - {id: B-002, item: Payment vendor fee, low: 0, medium: 50, high: 120, note: Per month, origin: stated}
+  - {id: B-003, item: Design licence, low: 20, medium: 30, high: 45, currency: EUR, note: Per month, origin: stated}

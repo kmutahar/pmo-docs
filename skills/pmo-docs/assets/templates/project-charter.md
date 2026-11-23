@@ -41,7 +41,7 @@ last_updated: "{{date}}"
 - {{text}} `{{id}}`
 
 ## Budget
-<!-- Amounts exactly as stored in the register. The register has no currency field: state the currency once here, as a note under the table, or write "currency not provided". -->
+<!-- Amounts exactly as stored in the register. A row's currency is its `currency` field, or `project.currency` when empty: state it in a note under the table, or write "currency not provided". -->
 | Item | Low | Medium | High | Note |
 |---|---|---|---|---|
 | {{item}} | {{low}} | {{medium}} | {{high}} | {{note}} |

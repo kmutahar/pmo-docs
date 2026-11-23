@@ -2,6 +2,8 @@ schema_version: 2
 project:
   name: Acme Portal
   manager: Sam Example
+  currency: USD
+  exchange_rates: { EUR: 1.08 }
 domain:
   lifecycle_entity: account
   roles: [admin, editor, viewer]

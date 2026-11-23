@@ -1,4 +1,5 @@
 # budget: one entry per line, e.g.
-#   - {id: ..., item: ..., low: ..., medium: ..., high: ..., note: ..., origin: ...}
+#   - {id: ..., item: ..., low: ..., medium: ..., high: ..., currency: ..., note: ..., origin: ...}
+#   currency is optional: empty means project.currency; any other code needs project.exchange_rates
 # ids look like B-001
 budget: []

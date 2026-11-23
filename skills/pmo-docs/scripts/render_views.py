@@ -11,6 +11,7 @@ merged over the skill defaults. A register whose file is missing counts as empty
 """
 import argparse
 import datetime
+import math
 import re
 import sys
 from pathlib import Path
@@ -64,6 +65,10 @@ def entry_lines(text: str) -> list[int]:
         if re.match(r"\s*- ", line):
             result.append(lineno)
     return result
+
+
+def is_currency(v):
+    return isinstance(v, str) and re.fullmatch(r"[A-Z]{3}", v) is not None
 
 
 def config_errors(cfg, root=None):
@@ -121,6 +126,19 @@ def config_errors(cfg, root=None):
     ws = cfg.get("project", {}).get("week_start") if isinstance(cfg.get("project"), dict) else None
     if ws is not None and (not isinstance(ws, str) or ws.lower() not in pc.WEEKDAYS):
         errors.append(f"config: project.week_start `{ws}` not in {list(pc.WEEKDAYS)}")
+    proj = cfg.get("project") if isinstance(cfg.get("project"), dict) else {}
+    cur, rates = proj.get("currency"), proj.get("exchange_rates")
+    if cur is not None and not is_currency(cur):
+        errors.append(f"config: project.currency `{cur}` must be 3 uppercase letters, like USD")
+    if rates is not None and not isinstance(rates, dict):
+        errors.append("config: project.exchange_rates must be a map of currency code to rate")
+    for code, rate in (rates.items() if isinstance(rates, dict) else ()):
+        if not is_currency(code):
+            errors.append(f"config: project.exchange_rates key `{code}` must be 3 uppercase letters, like EUR")
+        elif code == cur:
+            errors.append(f"config: project.exchange_rates.{code} is not needed: {code} is the project currency")
+        if isinstance(rate, bool) or not isinstance(rate, (int, float)) or not math.isfinite(rate) or rate <= 0:
+            errors.append(f"config: project.exchange_rates.{code} `{rate}` must be a positive number (project currency units per 1 {code})")
     task_statuses = cfg.get("vocab", {}).get("task_status") or []
     for key in ("blocked", "active"):
         for s in pc.statuses(cfg, "tasks", key):
@@ -528,6 +546,14 @@ def validate(data, cfg, root=None):
                     errors.append(f"{who}: id must look like {prefix}-{'1'.zfill(width)}")
                 elif rid and isinstance(rid, str) and prefix and (padded := pc.unpadded(rid, width)):
                     errors.append(f"{who}: id {rid} is not padded; use {padded}, or run renumber.py --pad")
+            if name == "budget" and r.get("currency") not in (None, ""):
+                c, project = r["currency"], cfg.get("project") or {}
+                if not is_currency(c):
+                    errors.append(f"{who}: currency {c!r} must be 3 uppercase letters, like USD")
+                elif not project.get("currency"):
+                    errors.append(f"{who}: currency {c} needs a project currency. Set project.currency (for example USD) in pmo/config.yaml")
+                elif c != project["currency"] and c not in (project.get("exchange_rates") or {}):
+                    errors.append(f"{who}: currency {c} has no rate. Add project.exchange_rates.{c} (project currency units per 1 {c}) to pmo/config.yaml")
             if name == "roster":
                 slug_val = r.get("slug")
                 if slug_val is None or (isinstance(slug_val, str) and not slug_val.strip()):

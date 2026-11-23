@@ -81,6 +81,7 @@ A translation is a file next to its original, named `<name>.<lang>.md` (for exam
 ## Config keys
 
 - `project.name`, `project.manager`: the project's name and its project manager (default `null`; asked at setup).
+- `project.currency`: the project's currency as 3 uppercase letters (default `null`). `project.exchange_rates`: map of a foreign currency code to a positive number, the project currency units per 1 unit of it (`EUR: 1.08`; default `{}`). A budget row's optional `currency` is empty for the project currency; any other code needs a rate here, and a rate for the project currency itself is an error.
 - `paths.registers`, `paths.views`, `paths.house_rules`, `paths.snapshots`: folders and file as in the Folders table (defaults `pmo/registers`, `pmo/views`, `pmo/house-rules.md`, `pmo/snapshots`).
 - `registers.<name>.file`, `registers.<name>.view`: the register's YAML file and its view file in the views folder (for example `tasks.yaml`, `tasks.md`).
 - `registers.<name>.fields`: the list of fields an entry may hold; any other field is a validation error. `registers.<name>.enums`: field name to the `vocab` list that field's values come from (or `{from: <list>, extra: [values]}` to add values to that list).

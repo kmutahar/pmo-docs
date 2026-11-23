@@ -7,6 +7,9 @@ project:
   manager: null       # the project manager, asked by setup
   week_start: monday  # first day of a week: monday to sunday; a week is named by the ISO week of its fourth day
   id_width: 3         # minimum digits of an id number: T-001 (0 to 9; 0 = not padded; a longer number such as T-1000 is fine)
+  currency: null      # the project's currency as a 3-letter code (USD); a budget row with no currency uses it
+  # Project currency units per 1 unit of a foreign currency a budget row names (EUR: 1.08). One entry per foreign currency in use.
+  exchange_rates: {}
 
 # Folders, relative to the project root.
 paths:
@@ -205,7 +208,7 @@ registers:
     file: budget.yaml
     view: budget.md
     prefix: B
-    fields: [id, item, low, medium, high, note, origin]
+    fields: [id, item, low, medium, high, currency, note, origin]
     enums: {origin: origin}
   roster:
     file: roster.yaml
