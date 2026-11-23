@@ -17,7 +17,7 @@ Run as `overdue-report [--as-of YYYY-MM-DD]`. Produces a draft `overdue-report` 
    Run `python3 ${CLAUDE_SKILL_DIR}/scripts/render_views.py --check`, then `python3 ${CLAUDE_SKILL_DIR}/scripts/overdue.py [--as-of YYYY-MM-DD]`. Stop on register errors.
 
 3. **Draft**
-   Put the tool's tables into the template section by section and add nothing beside them except to replace each owner slug with the roster name (`references/draft.md` steps 4 to 8). Open tasks with no due date go in Open questions, counted.
+   Put the tool's tables into the template section by section and add nothing beside them except to replace each owner slug with the roster name (`references/draft.md` steps 4 to 8). Open tasks with no due date go in "Tasks with no due date", and the count goes in Open questions.
    If most open tasks have no due date, say so first and recommend setting dates for the most urgent priority with the user (`references/track.md`). Never infer a date.
 
 4. **Suggest next steps**

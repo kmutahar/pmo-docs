@@ -6,6 +6,7 @@ Usage:
 
 Lists open tasks and actions whose due date is before the as-of date, milestones that are
 overdue or due within N days inclusive (default 14), open issues by severity and open risks.
+Blocked tasks (status in `registers.tasks.blocked`) and open tasks with no due date have their own tables.
 "Open" means the entry's status is not one of the register's `closed` statuses in the config.
 Tasks are sorted by days late, then by vocab.priority_order. Issues are sorted most severe first:
 the vocab named by the issues register's `severity` enum is listed least severe first, so it is
@@ -49,6 +50,8 @@ def report(root, cfg, as_of, days):
     by_id = lambda e: (pc.id_num(e.get("id")), str(e.get("id")))  # noqa: E731
     tasks, acts, ms = (open_entries(root, cfg, n) for n in ("tasks", "actions", "milestones"))
     bad = [(n, e.get("id"), e["_bad"]) for n, es in (("tasks", tasks), ("actions", acts), ("milestones", ms)) for e in es if e["_bad"] is not None]
+    blocked = sorted((t for t in tasks if t.get("status") in pc.statuses(cfg, "tasks", "blocked")), key=by_id)
+    undated = sorted((t for t in tasks if t["_due"] is None and t["_bad"] is None), key=by_id)
     tasks = sorted((t for t in tasks if t["_due"] and t["_due"] < as_of), key=lambda t: (t["_due"], prio(t), by_id(t)))
     acts = sorted((a for a in acts if a["_due"] and a["_due"] < as_of), key=lambda a: (a["_due"], by_id(a)))
     limit = as_of + datetime.timedelta(days=days)
@@ -75,6 +78,12 @@ def report(root, cfg, as_of, days):
         "## Open risks\n",
         table(["ID", "Risk", "Probability", "Impact", "Owner", "Status"],
               [(r.get("id"), r.get("title"), r.get("probability"), r.get("impact"), r.get("owner"), r.get("status")) for r in risks]),
+        "## Blocked tasks\n",
+        table(["ID", "Task", "Owner", "Due", "Priority"],
+              [(t.get("id"), t.get("title"), t.get("owner"), t["_due"], t.get("priority")) for t in blocked]),
+        "## Tasks with no due date\n",
+        table(["ID", "Task", "Owner", "Status", "Priority"],
+              [(t.get("id"), t.get("title"), t.get("owner"), t.get("status"), t.get("priority")) for t in undated]),
     ]
     if bad:
         out += ["## Bad due dates\n", table(["Register", "ID", "Due"], bad)]

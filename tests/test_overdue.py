@@ -113,7 +113,7 @@ class Overdue(unittest.TestCase):
         shutil.rmtree(self.p / "pmo/registers")
         code, out = self.run_tool("--as-of", "2026-03-15")
         self.assertEqual(code, 0)
-        self.assertEqual(out.count("| None |"), 5)
+        self.assertEqual(out.count("| None |"), 7)
 
     def tasks(self, *lines):
         (self.p / "pmo/registers/tasks.yaml").write_text("tasks:\n" + "".join(f"  - {x}\n" for x in lines), encoding="utf-8")
@@ -165,6 +165,27 @@ class Overdue(unittest.TestCase):
         _, out = self.run_tool("--as-of", "2026-03-15")
         self.assertLess(out.index("M-8"), out.index("M-9"))  # 14 days after 03-15 is 03-29
 
+    def test_blocked_tasks_and_tasks_with_no_due_date_have_their_own_tables(self):
+        self.tasks("{id: T-1, title: a, status: blocked, due: 2026-03-01}", "{id: T-2, title: b, status: in-progress}",
+                   "{id: T-3, title: c, status: done}", "{id: T-4, title: d, status: not-started, due: TBD}")
+        _, out = self.run_tool("--as-of", "2026-03-15")
+        blocked = out[out.index("## Blocked tasks"):out.index("## Tasks with no due date")]
+        undated = out[out.index("## Tasks with no due date"):out.index("## Bad due dates")]
+        self.assertIn("| T-1 | a | not set | 2026-03-01 | not set |", blocked)
+        self.assertNotIn("T-2", blocked)
+        self.assertIn("| T-2 | b | not set | in-progress | not set |", undated)
+        self.assertNotIn("T-3", undated)  # closed
+        self.assertNotIn("T-4", undated)  # bad dates are listed under Bad due dates
+        self.assertNotIn("T-1", undated)
+
+    def test_blocked_statuses_come_from_config(self):
+        self.merge_config({"registers": {"tasks": {"blocked": ["waiting"]}}})
+        self.tasks("{id: T-1, title: a, status: blocked, due: 2026-03-20}", "{id: T-2, title: b, status: waiting, due: 2026-03-20}")
+        _, out = self.run_tool("--as-of", "2026-03-15")
+        blocked = out[out.index("## Blocked tasks"):out.index("## Tasks with no due date")]
+        self.assertIn("T-2", blocked)
+        self.assertNotIn("T-1", blocked)
+
     def test_missing_project_is_a_usage_error(self):
         with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as e:
             od.main(["--project", str(self.d / "nope")])
@@ -179,8 +200,8 @@ class Overdue(unittest.TestCase):
         self.assertEqual(e.exception.code, 2)
 
     def test_due_on_the_as_of_date_is_not_overdue_and_the_day_before_is_one_day_late(self):
-        self.replace_task("T-1", "{id: T-1, title: a, status: blocked, due: 2026-03-15}")
-        self.replace_task("T-2", "{id: T-2, title: b, status: blocked, due: 2026-03-14}")
+        self.replace_task("T-1", "{id: T-1, title: a, status: in-progress, due: 2026-03-15}")
+        self.replace_task("T-2", "{id: T-2, title: b, status: in-progress, due: 2026-03-14}")
         self.sync_views()
         _, out = self.run_tool("--as-of", "2026-03-15")
         self.assertNotIn("| T-1 |", out)

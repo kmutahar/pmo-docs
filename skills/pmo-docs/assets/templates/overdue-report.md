@@ -43,6 +43,18 @@ Overdue tasks: {{overdue_tasks}}, open actions past due: {{overdue_actions}}, mi
 |---|---|---|---|---|---|
 | {{id}} | {{title}} | {{probability}} | {{impact}} | {{lead}} | {{status}} |
 
+## Blocked tasks
+<!-- open tasks whose status is one of registers.tasks.blocked -->
+| ID | Task | Owner | Due | Priority |
+|---|---|---|---|---|
+| {{id}} | {{title}} | {{lead}} | {{due}} | {{priority}} |
+
+## Tasks with no due date
+<!-- open tasks without a due date; never infer one -->
+| ID | Task | Owner | Status | Priority |
+|---|---|---|---|---|
+| {{id}} | {{title}} | {{lead}} | {{status}} | {{priority}} |
+
 ## Bad due dates
 <!-- the tool prints this section only when a due date cannot be read; otherwise keep the header and add one row: None -->
 | Register | ID | Due |
