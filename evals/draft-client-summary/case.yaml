@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: draft-client-summary
+description: Draft the March 2026 client summary from the Acme registers; the draft must exist and match the registers.
+context:
+  scaffold_script: scaffold.sh

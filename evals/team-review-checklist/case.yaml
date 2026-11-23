@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: team-review-checklist
+description: Run team-review on the Acme project with a Proposed glossary row; the reply lists open entries per roster person and the Proposed glossary row for the project manager, and writes no files.
+context:
+  scaffold_script: scaffold.sh

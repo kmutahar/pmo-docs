@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: draft-scope-wbs
+description: Draft the scope and work breakdown document from the Acme registers; the draft must exist and match the requirements, tasks, milestones and objectives registers.
+context:
+  scaffold_script: scaffold.sh

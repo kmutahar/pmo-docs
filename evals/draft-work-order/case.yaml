@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: draft-work-order
+description: Draft a work order from the Acme registers; the draft must exist and list the open tasks of the tasks register with their roster owners.
+context:
+  scaffold_script: scaffold.sh

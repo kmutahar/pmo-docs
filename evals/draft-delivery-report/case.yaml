@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: draft-delivery-report
+description: Draft the March 2026 delivery report from the Acme registers; the draft must exist and match the tasks, milestones, goals, issues, risks and changes registers.
+context:
+  scaffold_script: scaffold.sh

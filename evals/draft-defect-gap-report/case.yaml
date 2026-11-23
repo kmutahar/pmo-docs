@@ -1,0 +1,5 @@
+schema_version: "1.0"
+name: draft-defect-gap-report
+description: Draft the March 2026 defect and gap report from the Acme registers; the draft must exist and match the tests, issues and requirements registers.
+context:
+  scaffold_script: scaffold.sh
