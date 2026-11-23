@@ -30,7 +30,7 @@ AI agents can make mistakes, and so can scripts and templates. The Software draf
 
 ## 5. Acceptable use
 
-You agree not to use the Software to break the law, to infringe the rights of others, or to process data you have no right to process. As a request, not a licence condition: please do not present a modified version as the original project or use the maintainer's name to suggest an endorsement you do not have. The MIT licence puts no other limit on what you can do with the code.
+You agree not to use the Software to break the law, to infringe the rights of others, or to process data you have no right to process. As a request, not a licence condition: please do not present a modified version as the original project or use the maintainer's name to suggest an endorsement you do not have. The MIT licence itself adds no limit beyond keeping the copyright notice and licence text.
 
 ## 6. No warranty
 

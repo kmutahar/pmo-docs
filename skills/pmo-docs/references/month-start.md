@@ -30,7 +30,7 @@ Run as `month-start [--period YYYY-MM]`. Sets up the registers and draft documen
    Apply the carry-over and the answers one line at a time (`references/track.md`): the tasks, new milestones with the new `period`, goals kept, dropped or changed (a dropped goal is a scope change, `references/govern.md`), new tasks, and capacity entries for the month (`null` where unknown). Run `python3 ${CLAUDE_SKILL_DIR}/scripts/render_views.py`.
 
 6. **Draft the new documents**
-   Draft `project-plan` and `team-checklist` (`references/draft.md`). Those types are not named by month, so an existing one follows draft.md step 2. Offer, do not create: `capacity-plan`, `weekly-plan`, `roadmap`, a charter review.
+   Draft `project-plan` and `team-checklist` (`references/draft.md`). Both types are named by month (`{period} - {title}.md`), so the new month gets a new file (if one already exists for this month, follow `draft.md` step 2). Offer, do not create: `capacity-plan`, `weekly-plan`, `roadmap`, a charter review.
 
 7. **Reply**
    What was carried over (counts by priority level), what was dropped, the decisions still needed, and the paths of the new drafts.

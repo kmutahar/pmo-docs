@@ -29,7 +29,7 @@ The skill's behaviour rules are in [`SKILL.md`](../skills/pmo-docs/SKILL.md); th
 pmo/
   config.yaml      project name, manager, domain, stack and the Arabic translation setting
   data/            the Arabic glossary
-  registers/       20 registers, one entry per line
+  registers/       21 registers, one entry per line
   views/           one view per register plus the catalogue, rendered from them
   documents/       a draft status report, a finished decision log and its Arabic translation
 ```
@@ -63,7 +63,7 @@ registers valid, views current
 
 ## 2. Change a register, then render
 
-**Do:** edit one task, check, render, check again. **You should see:** `ERROR stale view`, then `wrote 21 views`, then `views current`.
+**Do:** edit one task, check, render, check again. **You should see:** `ERROR stale view`, then `wrote 22 views`, then `views current`.
 
 Mark the login page design (`T-002`) done by editing its line in `pmo/registers/tasks.yaml`: change `status: not-started` to `status: done`. The view still shows the old state, so the check fails:
 
@@ -77,7 +77,7 @@ Render the views again. Views are never edited by hand:
 
 ```
 $ python3 "$SKILL/scripts/render_views.py"
-registers valid; wrote 21 views to pmo/views
+registers valid; wrote 22 views to pmo/views
 [exit 0]
 
 $ python3 "$SKILL/scripts/render_views.py" --check
@@ -227,6 +227,18 @@ None
 
 None
 
+## Glossary (0)
+
+None
+
+## Names (0)
+
+None
+
+## Registers_xref (0)
+
+None
+
 **Total findings: 0**
 [exit 0]
 ```
@@ -240,7 +252,7 @@ Acme's `pmo/config.yaml` declares Arabic (`ar`) as a translation language with a
 ```yaml
 languages:
   translations: [ar]
-  ar: { label: AR, dir: rtl, glossary: pmo/data/glossary-ar.md }
+  ar: { label: AR, dir: rtl, glossary: pmo/data/glossary-ar.md, names: pmo/data/names-ar.yaml }
 ```
 
 `render_views.py --check` validates the language keys. `where.py --lang` then gives the translation's path, the value for its `translation_of` and the `source_hash` of the original's body:
@@ -257,6 +269,7 @@ translation_of: "Decision log.md"
 lang: ar
 dir: rtl
 glossary: pmo/data/glossary-ar.md
+names: pmo/data/names-ar.yaml
 template: <skill folder>/assets/templates/decision-log.md
 template_source: skill
 template_exists: yes
@@ -277,8 +290,9 @@ A type that is not translated refuses the flag. The shipped defaults translate n
 ```
 $ python3 "$SKILL/scripts/where.py" docs-audit-report --lang ar
 usage: where.py [-h] [--project PROJECT] [--week] [--as-of YYYY-MM-DD]
-                [--hashes] [--title TITLE] [--lang CODE]
-                type [period]
+                [--hashes] [--title TITLE] [--lang CODE] [--delta]
+                [--subproject ID]
+                [type] [period]
 where.py: error: doc type 'docs-audit-report' has no translations configured
 [exit 2]
 ```

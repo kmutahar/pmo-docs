@@ -29,6 +29,9 @@ last_updated: "{{date}}"
 | Override drift | |
 | Translation behind | |
 | Parity | |
+| Glossary | |
+| Names | |
+| Registers_xref | |
 | Structure vs template | |
 | Document vs register | |
 | Commits behind | |
