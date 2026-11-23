@@ -1,5 +1,5 @@
 ---
-title: "Team checklist - {{project}}"
+title: "Team checklist - {{month}}"
 type: team-checklist
 project: "{{project}}"
 manager: "{{manager}}"
@@ -10,7 +10,7 @@ last_updated: "{{date}}"
 
 <!-- Reads: tasks, teams, milestones -->
 
-# Team checklist - {{project}}
+# Team checklist - {{month}}
 
 Tick a task only when it is finished and tested.
 

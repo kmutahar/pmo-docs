@@ -13,6 +13,7 @@ Exit codes:
     3 document already exists
 """
 import argparse
+import calendar
 import datetime
 import re
 import sys
@@ -66,6 +67,12 @@ class MissingSection(Exception):
 def majority_month(window) -> str:
     """YYYY-MM holding at least 4 of the window's 7 days (its 4th day), so a week lands in one month whatever the week start."""
     return (window[0] + datetime.timedelta(days=3)).strftime("%Y-%m")
+
+
+def percent(done, total) -> str:
+    """Share done as text: one decimal below 10% (2.8), whole numbers from 10% up, 0 for no tasks or none done."""
+    p = round(100 * done / total, 1) if total and done else 0
+    return f"{p:.1f}" if 0 < p < 10 else f"{p:.0f}"
 
 
 def task_sort_key_for(cfg):
@@ -323,8 +330,10 @@ def generate_team_checklist(ctx: Ctx) -> Filled:
 
     total = sum(1 for t in tasks if t.get("status") not in task_dropped)
     done = sum(1 for t in tasks if t.get("status") in task_done)
-    pct = round(100 * done / total) if total else 0
+    pct = percent(done, total)
     blocked = sum(1 for t in tasks if t.get("status") in task_blocked)
+    month = majority_month(ctx.window) if ctx.window else ctx.period
+    month_title = f"{calendar.month_name[int(month[5:7])]} {month[:4]}"
 
     # Sort priorities
     task_sort_key = task_sort_key_for(ctx.cfg)
@@ -414,8 +423,9 @@ def generate_team_checklist(ctx: Ctx) -> Filled:
         values={
             "done": str(done),
             "total": str(total),
-            "pct": str(pct),
+            "pct": pct,
             "blocked": str(blocked),
+            "month": month_title,
         },
         sections={
             "End-of-period target check": ms_body,

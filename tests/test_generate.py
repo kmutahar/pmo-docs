@@ -12,6 +12,7 @@ REPO = Path(__file__).resolve().parents[1]
 SCRIPTS = REPO / "skills/pmo-docs/scripts"
 sys.dont_write_bytecode = True  # importing the shipped scripts must leave no __pycache__
 sys.path.insert(0, str(SCRIPTS))
+import generate  # noqa: E402
 import pmo_common as pc  # noqa: E402
 os.environ["PYTHONDONTWRITEBYTECODE"] = "1"  # child scripts must leave no __pycache__ either
 
@@ -224,6 +225,15 @@ class TestGenerate(unittest.TestCase):
         total = len(march_tasks)
         pct = round(100 * done / total)
         self.assertIn(f"**Progress:** {done}/{total} done ({pct}%)", out)
+        self.assertIn("# Team checklist - March 2026", out)
+
+    def test_percent_shows_one_decimal_below_ten(self):
+        self.assertEqual(generate.percent(1, 36), "2.8")
+        self.assertEqual(generate.percent(1, 20), "5.0")
+        self.assertEqual(generate.percent(1, 10), "10")
+        self.assertEqual(generate.percent(2, 3), "67")
+        self.assertEqual(generate.percent(0, 5), "0")
+        self.assertEqual(generate.percent(0, 0), "0")
 
     def test_team_checklist_week_counts_only_the_week(self):
         tasks_file = self.root / "pmo/registers/tasks.yaml"
