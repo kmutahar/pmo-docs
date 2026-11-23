@@ -109,12 +109,15 @@ def config_errors(cfg, root=None):
         if isinstance(r, dict):
             refs = r.get("refs")
             if refs is not None and not isinstance(refs, dict):
-                errors.append(f"config: registers.{n}.refs must be a map of field to register")
+                errors.append(f"config: registers.{n}.refs must be a map of field to register (or a list of registers)")
             for f, target in (refs.items() if isinstance(refs, dict) else ()):
-                if not isinstance(target, str):
-                    errors.append(f"config: registers.{n}.refs must be a map of field to register")
-                elif target not in cfg.get("registers", {}):
-                    errors.append(f"config: registers.{n}.refs target `{target}` is not a register")
+                targets = target if isinstance(target, list) and target else [target]
+                if not all(isinstance(t, str) for t in targets):
+                    errors.append(f"config: registers.{n}.refs must be a map of field to register (or a list of registers)")
+                    continue
+                for t in targets:
+                    if t not in cfg.get("registers", {}):
+                        errors.append(f"config: registers.{n}.refs target `{t}` is not a register")
     ws = cfg.get("project", {}).get("week_start") if isinstance(cfg.get("project"), dict) else None
     if ws is not None and (not isinstance(ws, str) or ws.lower() not in pc.WEEKDAYS):
         errors.append(f"config: project.week_start `{ws}` not in {list(pc.WEEKDAYS)}")
@@ -550,7 +553,8 @@ def validate(data, cfg, root=None):
                     if not isinstance(val, str) or not re.match(r"^[0-9]{4}-(0[1-9]|1[0-2])$", val):
                         errors.append(f"{who}: {field} {val!r} is not a YYYY-MM month")
             for field, target in reg.get("refs", {}).items():
-                if field not in allowed_fields or target not in data:
+                targets = target if isinstance(target, list) else [target]
+                if field not in allowed_fields or not all(t in data for t in targets):
                     continue                      # a field the project dropped, or a target register file that does not exist
                 value = r.get(field)
                 for v in value if isinstance(value, list) else [value]:
@@ -559,8 +563,8 @@ def validate(data, cfg, root=None):
                     if not isinstance(v, (str, int)):
                         errors.append(f"{who}: {field} must be an id or a list of ids")
                         break
-                    if v not in ids[target]:
-                        errors.append(f"{who}: {field} {v!r} is not an id in {target}")
+                    if not any(v in ids[t] for t in targets):
+                        errors.append(f"{who}: {field} {v!r} is not an id in {', '.join(targets)}; refs can list several registers (refs: {{field: [a, b]}}) or be turned off with refs: {{field: null}}")
             owners = r.get("owner")
             for o in owners if isinstance(owners, list) else [owners]:
                 if o and slugs - {None} and not (isinstance(o, (str, int)) and o in slugs):  # a map or list is unhashable

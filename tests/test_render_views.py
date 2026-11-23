@@ -673,8 +673,29 @@ class RegisterLinks(unittest.TestCase):
         code, out = run(self.root)
         self.assertEqual(code, 0, out)
 
+    def test_refs_may_list_several_registers(self):
+        self.write_config({"registers": {"issues": {"refs": {"related_tasks": ["tasks", "risks"]}}}})
+        issue = "  - {id: I-99, title: Two targets, description: none, severity: low, owner: bob, status: open, origin: stated, raised: 2026-03-10, resolved: null, related_tasks: [%s]}"
+        self.append("issues", issue % "T-1, R-1")
+        code, out = run(self.root)
+        self.assertEqual(code, 0, out)
+        (self.reg / "issues.yaml").write_text((self.reg / "issues.yaml").read_text(encoding="utf-8").replace("[T-1, R-1]", "[T-1, X-9]"), encoding="utf-8")
+        code, out = run(self.root)
+        self.assertEqual(code, 1)
+        self.assertIn("related_tasks 'X-9' is not an id in tasks, risks; refs can list several registers (refs: {field: [a, b]}) or be turned off with refs: {field: null}", out)
+        self.write_config({"registers": {"issues": {"refs": {"related_tasks": ["tasks", "nowhere"]}}}})
+        code, out = run(self.root)
+        self.assertEqual(code, 2)
+        self.assertIn("refs target `nowhere` is not a register", out)
+
+    def test_refs_field_null_turns_the_check_off(self):
+        self.write_config({"registers": {"issues": {"refs": {"related_tasks": None}}}})
+        self.append("issues", "  - {id: I-99, title: Off, description: none, severity: low, owner: bob, status: open, origin: stated, raised: 2026-03-10, resolved: null, related_tasks: [T-999]}")
+        code, out = run(self.root)
+        self.assertEqual(code, 0, out)
+
     def test_refs_must_be_a_map_of_field_to_register(self):
-        for bad in ("tasks", ["tasks"], {"related_tasks": ["tasks"]}):
+        for bad in ("tasks", ["tasks"], {"related_tasks": []}, {"related_tasks": [1]}):
             self.write_config({"registers": {"issues": {"refs": bad}}})
             code, out = run(self.root)
             self.assertEqual(code, 2, bad)
