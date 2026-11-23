@@ -38,7 +38,7 @@ Set up a project's `pmo/` folder and starter registers.
        ├── risks.yaml         ├── roster.yaml        ├── tasks.yaml
        └── teams.yaml
    ```
-   Setup copies the project launcher `pmo/bin/pmo` (mode 755). On an existing project, `setup.py --launcher` writes only the launcher and replaces one that differs from the skill's: ask first when the project already has one (`SKILL.md`, Safety rule 3). Optional registers (`requirements`, `tests`, `environments`, `permissions`) are not created at setup; they are copied on their first entry (`references/track.md`).
+   Setup copies the project launcher `pmo/bin/pmo` (mode 755). On an existing project, `setup.py --launcher` writes only the launcher and replaces one that differs from the skill's: ask first when the project already has one (`SKILL.md`, Safety rule 3). Optional registers (`requirements`, `tests`, `environments`, `permissions`, `facts`) are not created at setup; they are copied on their first entry (`references/track.md`).
 
 3. **Run setup script**
    Execute `scripts/setup.py` with the chosen flags:

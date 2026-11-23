@@ -70,6 +70,7 @@ vocab:
   test_kind: [acceptance, regression, smoke, exploratory]
   environment_kind: [local, test, staging, production]
   environment_status: [planned, active, retired]
+  fact_status: [active, outdated]
 
 # Registers: file and view name, id prefix, fields, which fields are checked
 # against a vocab, which are dates, and which statuses mean the entry is closed.
@@ -207,7 +208,7 @@ registers:
     view: roster.md
     fields: [slug, name, role, areas, origin]
     enums: {origin: origin}
-  # tests, environments and permissions hold names and ids only. Never put a secret value in a register.
+  # tests, environments, permissions and facts hold names and ids only. Never put a secret value in a register.
   requirements:
     file: requirements.yaml
     view: requirements.md
@@ -239,6 +240,13 @@ registers:
     prefix: PERM
     fields: [id, resource, action, roles, condition, source, notes, origin]
     enums: {roles: domain.roles, origin: origin}
+  facts:
+    file: facts.yaml
+    view: facts.md
+    prefix: FACT
+    fields: [id, item, value, owner, status, notes, origin]
+    enums: {status: fact_status, origin: origin}
+    closed: [outdated]
 
 # Doc types. name is the file name; {period} is the month (YYYY-MM) or the week.
 # generated_from lists every register the template reads (checked for staleness).

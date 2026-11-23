@@ -1,4 +1,4 @@
-"""Tests for the requirements, tests, environments and permissions registers on a temp copy of examples/acme.
+"""Tests for the requirements, tests, environments, permissions and facts registers on a temp copy of examples/acme.
 Run from repo root: python3 -m unittest tests.test_new_registers
 """
 import shutil
@@ -48,15 +48,15 @@ class NewRegisters(unittest.TestCase):
         merged = pc.merge(cfg, extra)
         self.cfg_file.write_text(pc.yaml.safe_dump(merged), encoding="utf-8")
 
-    def test_acme_validates_with_the_four_registers(self):
+    def test_acme_validates_with_the_optional_registers(self):
         code, out, _ = run_render(self.root, "--check")
         self.assertEqual(code, 0, out)
-        for v in ("requirements.md", "tests.md", "environments.md", "permissions.md"):
+        for v in ("requirements.md", "tests.md", "environments.md", "permissions.md", "facts.md"):
             self.assertTrue((self.views / v).exists(), f"missing view {v}")
 
     def test_ids_use_the_prefixes(self):
         # every Acme entry matches its register's prefix; an entry with a bad id gives an error naming the expected form
-        for name, prefix in (("requirements", "REQ"), ("tests", "TST"), ("environments", "ENV"), ("permissions", "PERM")):
+        for name, prefix in (("requirements", "REQ"), ("tests", "TST"), ("environments", "ENV"), ("permissions", "PERM"), ("facts", "FACT")):
             path = self.reg / f"{name}.yaml"
             original = path.read_text(encoding="utf-8")
             entries = pc.yaml.safe_load(original)[name]
@@ -73,7 +73,7 @@ class NewRegisters(unittest.TestCase):
         empty_dir.mkdir()
         try:
             self.assertEqual(run_setup(empty_dir, "--name", "Demo")[0], 0)
-            for f in ("requirements", "tests", "environments", "permissions"):
+            for f in ("requirements", "tests", "environments", "permissions", "facts"):
                 shutil.copy(pc.SKILL / "assets/starter/optional-registers" / f"{f}.yaml", empty_dir / "pmo/registers" / f"{f}.yaml")
             code, out, _ = run_render(empty_dir)
             self.assertEqual(code, 0, out)
@@ -112,6 +112,13 @@ class NewRegisters(unittest.TestCase):
         self.assertIn("| id | resource | action | admin | editor | viewer | condition |", view)
         self.assertIn("| PERM-1 | Profile | view own | x | own profile only | own profile only |", view)
         self.assertIn("| PERM-99 | Order | view |  |  | x |", view)
+
+    def test_fact_status_is_checked_and_outdated_is_closed(self):
+        self.append("facts", '  - {id: FACT-99, item: x, value: y, owner: alice, status: stale, notes: "", origin: stated}')
+        code, out, _ = run_render(self.root)
+        self.assertEqual(code, 1)
+        self.assertIn("status 'stale' not in ['active', 'outdated']", out)
+        self.assertEqual(pc.load_config(self.root)["registers"]["facts"]["closed"], ["outdated"])
 
     def test_test_links_must_exist(self):
         # task: T-99 fails
@@ -153,14 +160,14 @@ class NewRegisters(unittest.TestCase):
         code, out, _ = run_render(self.root)
         self.assertEqual(code, 0, out)
 
-    def test_setup_does_not_create_the_four_registers(self):
+    def test_setup_does_not_create_the_optional_registers(self):
         empty_dir = Path(tempfile.mkdtemp()) / "demo"
         empty_dir.mkdir()
         try:
             code, out, err = run_setup(empty_dir, "--name", "Demo")
             self.assertEqual(code, 0, err)
             reg_dir = empty_dir / "pmo/registers"
-            for f in ("requirements.yaml", "tests.yaml", "environments.yaml", "permissions.yaml"):
+            for f in ("requirements.yaml", "tests.yaml", "environments.yaml", "permissions.yaml", "facts.yaml"):
                 self.assertFalse((reg_dir / f).exists(), f"{f} should not be created by setup")
             code, out, _ = run_render(empty_dir, "--check")
             self.assertEqual(code, 0, out)
@@ -168,11 +175,11 @@ class NewRegisters(unittest.TestCase):
             shutil.rmtree(empty_dir.parent)
 
     def test_project_without_the_new_files_still_validates(self):
-        for f in ("requirements.yaml", "tests.yaml", "environments.yaml", "permissions.yaml"):
+        for f in ("requirements.yaml", "tests.yaml", "environments.yaml", "permissions.yaml", "facts.yaml"):
             p = self.reg / f
             if p.exists():
                 p.unlink()
-        for v in ("requirements.md", "tests.md", "environments.md", "permissions.md"):
+        for v in ("requirements.md", "tests.md", "environments.md", "permissions.md", "facts.md"):
             p = self.views / v
             if p.exists():
                 p.unlink()

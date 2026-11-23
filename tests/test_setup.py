@@ -43,8 +43,8 @@ class Setup(unittest.TestCase):
         cfg = pc.load_config(self.root)
         self.assertEqual(cfg["project"]["name"], "Demo")
         self.assertEqual(cfg["project"]["manager"], "Pat Example")
-        optional = {"requirements", "tests", "environments", "permissions"}
-        self.assertEqual(len(cfg["registers"]), 20)
+        optional = {"requirements", "tests", "environments", "permissions", "facts"}
+        self.assertEqual(len(cfg["registers"]), 21)
         for name, reg in cfg["registers"].items():
             dest = self.root / cfg["paths"]["registers"] / reg["file"]
             self.assertEqual(dest.exists(), name not in optional, name)

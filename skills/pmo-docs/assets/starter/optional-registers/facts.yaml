@@ -1,0 +1,4 @@
+# facts: one entry per line, e.g.
+#   - {id: ..., item: ..., value: ..., owner: ..., status: ..., notes: ..., origin: ...}
+# ids look like FACT-1; status is active or outdated; a value is never a secret
+facts: []

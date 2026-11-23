@@ -124,6 +124,10 @@ _Avoid_: stage, tier, deployment
 An entry of the `permissions` register (`PERM-`): an access rule mapping a role or action to an entity or operation; its `roles` map each role to a condition.
 _Avoid_: right, privilege, auth rule, ACL
 
+**Fact**:
+An entry of the `facts` register (`FACT-`): one key/value row that fits no other register, such as a test-data prerequisite.
+_Avoid_: setting, note, parameter
+
 **Team**:
 A work stream in the `teams` register; not a group of people.
 _Avoid_: squad, department, division
