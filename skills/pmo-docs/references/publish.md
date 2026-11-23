@@ -12,6 +12,8 @@ Copies finished documents to the configured folder or git repository. With the p
 
 Use the launcher: `pmo/bin/pmo publish [--as-of YYYY-MM-DD]` is the dry run. Show its listing with the `target:` folder (relative to the project) and explain each line in plain words (`new`, `unchanged`, `stale`, `conflict`, `stale, conflict`, `invalid`, plus `drafts:` and `excluded:`). Ask one question: "Copy these now?". Only on a yes, run the same command with `--apply` (and `--overwrite REL` or `--include REL` for the paths the user named). Never run `--apply` without a yes to that listing in this conversation.
 
+`publish.layout` and `publish.name_prefix_by_lang` (`references/conventions.md`) change where a copy lands in the target: the listing's `REL` stays the source path, and the copy goes to the type's subfolder with the language's prefix on the file name. Both default to empty, so a copy keeps its source path.
+
 ## Steps
 
 1. **Check configuration**

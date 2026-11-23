@@ -51,6 +51,11 @@ def main(argv=None) -> int:
         print("ERROR publish must be a map with mode, path and url", file=sys.stderr)
         return 2
     mode = pub.get("mode", "none")
+    layout, prefixes = pub.get("layout") or {}, pub.get("name_prefix_by_lang") or {}
+    for key, val in (("layout", layout), ("name_prefix_by_lang", prefixes)):
+        if not isinstance(val, dict) or not all(isinstance(k, str) and isinstance(v, str) for k, v in val.items()):
+            print(f"ERROR publish.{key} must be a map of text to text", file=sys.stderr)
+            return 2
 
     if mode == "none":
         print("publish mode is none: set publish.mode and publish.path in pmo/config.yaml")
@@ -112,6 +117,7 @@ def main(argv=None) -> int:
 
     doc_types = cfg.get("doc_types", {})
     candidates = []
+    target_rel_of = {}  # source rel -> path under the target: publish.layout subfolder and publish.name_prefix_by_lang prefix applied
     drafts_count = 0
     excluded_count = 0
 
@@ -138,11 +144,14 @@ def main(argv=None) -> int:
             continue
 
         candidates.append((rel, f))
+        folder, name = os.path.split(rel)
+        lang = fm.get("lang") if isinstance(fm.get("lang"), str) else pc.languages(cfg)["draft"]
+        target_rel_of[rel] = (Path(layout.get(ty, "")) / folder / (prefixes.get(lang, "") + name)).as_posix()
 
     # Classify candidates
     classified = []
     for rel, f in candidates:
-        target_f = target_dir / rel
+        target_f = target_dir / target_rel_of[rel]
         try:
             target_f.resolve().relative_to(target_dir)
         except ValueError:
@@ -193,7 +202,7 @@ def main(argv=None) -> int:
                     print(f"  ... and {len(errors) - 3} more")
             elif state == "new" and url_base:
                 clean_url = str(url_base).rstrip("/")
-                print(f"url: {clean_url}/{urllib.parse.quote(rel)}")
+                print(f"url: {clean_url}/{urllib.parse.quote(target_rel_of[rel])}")
         if not args.only:
             print(f"drafts: {drafts_count}")
             print(f"excluded: {excluded_count}")
@@ -205,7 +214,7 @@ def main(argv=None) -> int:
     uncopied_issue = False
 
     for rel, src_f, state, _ in classified:
-        target_f = target_dir / rel
+        target_f = target_dir / target_rel_of[rel]
         to_copy = False
 
         if state == "unchanged":

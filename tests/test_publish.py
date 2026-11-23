@@ -690,6 +690,22 @@ class Publish(unittest.TestCase):
         self.assertNotIn("drafts:", out)
         self.assertEqual(run(self.root, "--only", "invalid", "--apply")[0], 2)
 
+    def test_layout_and_name_prefix_set_where_a_copy_lands(self):
+        self.set_config('publish:\n  mode: folder\n  path: published\n  layout: {decision-log: governance}\n  name_prefix_by_lang: {en: "EN - "}\n')
+        self.finish_decision_log()
+        code, out, _ = run(self.root, "--apply")
+        self.assertEqual(code, 0)
+        self.assertTrue((self.root / "published/governance/EN - Decision log.md").is_file())
+        self.assertFalse((self.root / "published/Decision log.md").exists())
+        code, out, _ = run(self.root)  # a second run sees the copy as unchanged
+        self.assertIn("unchanged: Decision log.md", out)
+
+    def test_layout_must_be_a_map_of_text(self):
+        self.set_config("publish:\n  mode: folder\n  path: published\n  layout: [a]\n")
+        code, _, err = run(self.root)
+        self.assertEqual(code, 2)
+        self.assertIn("publish.layout must be a map", err)
+
     def test_valid_finished_document_still_publishes(self):
         self.set_config("publish:\n  mode: folder\n  path: published\n")
         self.finish_decision_log()

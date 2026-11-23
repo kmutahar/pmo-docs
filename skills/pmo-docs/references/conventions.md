@@ -107,6 +107,8 @@ A translation is a file next to its original, named `<name>.<lang>.md` (for exam
 - `publish.mode`: `none` (default), `folder` (folder inside project), or `repo` (root of another local git repo).
 - `publish.path`: publish target path relative to project root or absolute (`repo` mode).
 - `publish.url`: optional web URL prefix used when printing published links.
+- `publish.layout`: map of doc type to a subfolder of the target; a type not listed stays at the top (default `{}`).
+- `publish.name_prefix_by_lang`: map of language code to a prefix for the published file name, for example `en: "EN - "`; a document's code is its `lang`, or the draft language (default `{}`).
 - `schedule`: optional list of entries recording scheduled recipes and times (e.g. `[{ recipe: weekly-status, when: "Mon 08:00" }]`) to record what runs unattended; see `references/schedule.md`.
 
 ## Schema version and migrations

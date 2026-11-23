@@ -478,10 +478,14 @@ doc_types:
 # another local git repository; the command commits there only after a yes and never pushes).
 # path: the target folder, relative to the project root or absolute (repo mode only).
 # url: optional web address of the target folder, used only to print links.
+# layout: map of doc type to a subfolder of the target (decision-log: governance). Types not listed stay at the top.
+# name_prefix_by_lang: map of language code to a file name prefix added in the target ("EN - "). Codes not listed get none.
 publish:
   mode: none
   path: null
   url: null
+  layout: {}
+  name_prefix_by_lang: {}
 
 # Schedule: optional list of recurring recipe runs, recorded as a record only.
 # Each item has recipe (a known recipe name or project playbook) and when (time description as text).
