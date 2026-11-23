@@ -98,6 +98,13 @@ class ScrubTest(unittest.TestCase):
         self.assertEqual(self.scrub().returncode, 1)
         self.assertEqual(self.scrub(CI="true").returncode, 0)
 
+    def test_message_mode_needs_names_locally_but_not_in_ci(self):
+        (self.tmp / ".scrub-names").unlink()
+        msg = self.tmp / "MSG"
+        msg.write_text("feat: add render\n", encoding="utf-8")
+        self.assertEqual(self.scrub("--message", str(msg)).returncode, 1)
+        self.assertEqual(self.scrub("--message", str(msg), CI="true").returncode, 0)
+
     def test_gitignored_workspace_is_skipped(self):
         self.write("tmp/source/raw.md", "acmecorp internals\n")
         self.assertEqual(self.scrub().returncode, 0)

@@ -73,6 +73,8 @@ if [ "$msg_mode" -eq 1 ]; then
     [ $? -eq 2 ] && { echo "commit-msg: .scrub-names holds an invalid regex" >&2; exit 1; }
     hits=$(printf '%s\n' "$msg_text" | grep -iEf .scrub-names)
     [ -n "$hits" ] && { echo "commit-msg: the message contains a blocked name (see .scrub-names)" >&2; fail=1; }
+  elif [ -z "${CI:-}" ]; then
+    echo "commit-msg: no .scrub-names file, so names can't be checked" >&2; fail=1
   fi
   exit "$fail"
 fi

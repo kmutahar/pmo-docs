@@ -128,6 +128,8 @@ class ReleaseTest(unittest.TestCase):
 
     def test_non_dry_run_writes_version_then_aborts_without_a_terminal(self):
         env = self.stub_non_dry()
+        old_version = json.loads((self.tmp / "skills/pmo-docs/.claude-plugin/plugin.json").read_text(encoding="utf-8"))["version"]
+        self.assertNotEqual(old_version, "9.9.9")
         before = self.git("rev-parse", "HEAD").stdout
         r = self.release("9.9.9", **env)  # no tty: the first prompt counts as No
         self.assertEqual(r.returncode, 1, r.stderr)
@@ -147,7 +149,7 @@ class ReleaseTest(unittest.TestCase):
         for rel in ("README.md", "docs/INSTALL_FOR_AGENTS.md"):
             text = (self.tmp / rel).read_text(encoding="utf-8")
             self.assertIn("v9.9.9", text, rel)
-            self.assertNotIn("v0.5.0", text, rel)
+            self.assertNotIn(f"v{old_version}", text, rel)
 
     def test_changelog_links_without_owner_repo_stop_the_release(self):
         env = self.stub_non_dry()
