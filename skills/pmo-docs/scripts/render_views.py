@@ -226,6 +226,8 @@ def config_errors(cfg, root=None):
                     errors.append("config: schedule entry needs recipe")
                 elif r == "release-notes":
                     errors.append("config: schedule recipe `release-notes` cannot be scheduled: it needs a person present")
+                elif r == "team-review":
+                    errors.append("config: schedule recipe `team-review` is not schedulable on purpose: a person reads it; run it from the team-review playbook (references/team-review.md)")
                 elif r not in known_recipes:
                     errors.append(f"config: schedule recipe `{r}` is unknown; known recipes: {', '.join(sorted(known_recipes))}")
                 w = item.get("when")

@@ -816,6 +816,13 @@ class ScheduleConfig(unittest.TestCase):
         errs = render_views.config_errors(cfg, root=self.root)
         self.assertIn("config: schedule recipe `release-notes` cannot be scheduled: it needs a person present", errs)
 
+    def test_team_review_cannot_be_scheduled(self):
+        cfg = pc.merge(self.defaults, {"schedule": [{"recipe": "team-review", "when": "Fri 16:00"}]})
+        errs = render_views.config_errors(cfg, root=self.root)
+        self.assertEqual(len(errs), 1, errs)
+        self.assertIn("not schedulable on purpose", errs[0])
+        self.assertIn("references/team-review.md", errs[0])
+
     def test_release_notes_cannot_be_scheduled_even_with_playbook(self):
         pb_dir = self.root / "pmo/playbooks"
         pb_dir.mkdir(parents=True, exist_ok=True)
