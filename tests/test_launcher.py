@@ -94,6 +94,18 @@ class Launcher(unittest.TestCase):
         self.assertEqual(code, 0, err)
         self.assertIn("version=0.1.0", out)
 
+    def test_missing_python3_stops_with_a_message(self):
+        make_fake_skill(self.home / ".claude/skills/pmo-docs", "0.1.0")
+        bin_dir = self.tmp / "nobin"
+        bin_dir.mkdir()
+        for tool in ("dirname", "ls", "sort", "head", "cat", "tr", "sed", "grep", "basename", "readlink", "pwd", "env"):
+            p = shutil.which(tool)
+            if p:
+                (bin_dir / tool).symlink_to(p)
+        code, out, err = self.run_launcher("where", env={"PATH": str(bin_dir)})
+        self.assertEqual(code, 2)
+        self.assertIn("python3 not found", err)
+
     def test_cache_version_choice(self):
         make_fake_skill(self.claude / "plugins/cache/pmo-docs/0.4.0", "0.4.0")
         make_fake_skill(self.claude / "plugins/cache/pmo-docs/0.10.0", "0.10.0")

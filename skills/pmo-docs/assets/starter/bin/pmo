@@ -143,5 +143,6 @@ if [ ! -f "$SKILL_DIR/scripts/${SCRIPT}.py" ]; then
     exit 2
 fi
 
+command -v python3 >/dev/null 2>&1 || { echo "python3 not found: install Python 3.10 or newer" >&2; exit 2; }
 cd "$PROJECT_ROOT"
 exec python3 "$SKILL_DIR/scripts/${SCRIPT}.py" --project "$PROJECT_ROOT" "$@"
