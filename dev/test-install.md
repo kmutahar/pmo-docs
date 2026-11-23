@@ -2,11 +2,11 @@
 
 A maintainer checklist, not shipped to users. It checks that a stranger can follow the README's **Installation** section: add the marketplace, install the plugin (latest and pinned to a tag), get a working skill, and install from the release zip. Nothing here touches your real Claude Code setup if you follow Part 1. Run Parts 1 to 3 before the tag against a local marketplace (and after any change to the manifests or layout); run Part 4 against the published zip after the tag. Record results in your `tmp/` notes or the current plan.
 
-You need: Claude Code (`claude --version` prints a version), `git`, `python3` 3.10 or newer, `gh` (for the zip, Part 4) and an internet connection (for the live GitHub check and zip). Time: about 20 minutes.
+You need: Claude Code (`claude --version` prints a version), `git`, `python3` 3.10 or newer, `unzip` and `gh` (for the zip, Part 4) and an internet connection (for the live GitHub check and zip). Time: about 20 minutes.
 
 Set `V` to the version under test (without the `v`) and use it in the steps below, for example `export V=0.9.0`. It must equal `version` in `skills/pmo-docs/.claude-plugin/plugin.json` (in the local clone before the tag, or at the tag for the live check).
 
-Before the tag exists, pass `"$REPO"` (your clone) to `marketplace add` in Part 2. For the live GitHub check and Part 4, run against the **pushed** repo on GitHub, because that is what a user installs:
+Before the tag exists, pass `"$REPO"` (your clone, set in Part 1 step 1) to `marketplace add` in Part 2 (step 4, local form). For the live GitHub check and Part 4, run against the **pushed** repo on GitHub, because that is what a user installs:
 
 ```
 cd <your clone of pmo-docs>    # or: cd "$(git rev-parse --show-toplevel)" from inside the clone
@@ -28,10 +28,11 @@ Claude Code keeps its settings, marketplaces and installed plugins in one folder
    ```
    export TRY=$(mktemp -d -t pmo-install-XXXXXX)
    export LOG=~/pmo-release-logs/install-$(date -u +%Y%m%dT%H%M%SZ)
+   export REPO=<path of your pmo-docs clone>
    mkdir -p "$TRY/claude-home" "$TRY/project" "$LOG"
    echo "TRY=$TRY LOG=$LOG"
    ```
-   Keep this terminal open: `TRY` and `LOG` only exist in it. `echo $TRY` printed the path; note it in case you close the terminal.
+   Keep this terminal open: `TRY`, `LOG` and `REPO` only exist in it. `echo $TRY` printed the path; note it in case you close the terminal.
 
 2. Point Claude Code at the throwaway home and go to the scratch project:
    ```
@@ -52,7 +53,11 @@ Claude Code keeps its settings, marketplaces and installed plugins in one folder
 
 The README gives two slash commands for inside a Claude Code session. The command-line forms below do the same thing and need no login, so run them first; they are the verified path.
 
-4. Add the marketplace:
+4. Add the marketplace. Before the tag exists, add your local clone (the pre-tag run):
+   ```
+   claude --debug-file "$LOG/04-marketplace-add.log" plugin marketplace add "$REPO" 2>&1 | tee -a "$LOG/transcript.txt"
+   ```
+   After the tag is pushed, add it from GitHub (the live check):
    ```
    claude --debug-file "$LOG/04-marketplace-add.log" plugin marketplace add kmutahar/pmo-docs 2>&1 | tee -a "$LOG/transcript.txt"
    ```
@@ -127,9 +132,8 @@ The README gives two slash commands for inside a Claude Code session. The comman
 
 Needs the live session of Part 3 (a login in the throwaway home). Run it against the same `$V` and the same `$TRY`, in the same terminal. The installed plugin is the released one, which is enough: the four behaviours do not depend on unreleased changes. Use Claude Code in its default permission mode: do not pass `--dangerously-skip-permissions` or `--permission-mode`.
 
-3a.1. Put the Acme fixture and a git history into the scratch project, and make a log folder outside the throwaway folder. `REPO` is your clone of this repository. The project keeps its `.claude/` folder, so the plugin installed in step 5 stays installed:
+3a.1. Put the Acme fixture and a git history into the scratch project, and make a log folder outside the throwaway folder. `REPO` is set in Part 1 step 1. The project keeps its `.claude/` folder, so the plugin installed in step 5 stays installed:
 ```
-export REPO=<path of your pmo-docs clone>
 export LOGA=~/pmo-release-logs/pre-approval-$(date -u +%Y%m%dT%H%MZ)
 mkdir -p "$LOGA"
 cd "$TRY/project" && rm -rf pmo
@@ -174,7 +178,7 @@ Delete the new draft between runs (`git -C "$TRY/project" clean -fd pmo/document
 
 ## Part 4: the release zip (other agents)
 
-The README says other agents can take the zip from the GitHub release. This needs no Claude Code and no login beyond `gh`.
+The README says other agents can take the zip from the GitHub release. This needs no Claude Code and no login beyond `gh`. Run alone after the tag, it needs only Part 1 steps 1 and 2 (for `TRY`, `LOG` and `V`) and skips step 17, because no plugin was installed.
 
 14. Download the asset the release workflow built and look inside:
     ```
@@ -199,7 +203,7 @@ The README says other agents can take the zip from the GitHub release. This need
 
 ## Part 5: clean up and share
 
-17. Remove the plugin and the marketplace (the folder removal does it anyway):
+17. Remove the plugin and the marketplace (the folder removal does it anyway; skip this step if you ran Part 4 alone):
     ```
     claude plugin uninstall pmo-docs@pmo-docs --scope project 2>&1 | tee -a "$LOG/transcript.txt"
     claude plugin marketplace remove pmo-docs 2>&1 | tee -a "$LOG/transcript.txt"
@@ -213,7 +217,7 @@ The README says other agents can take the zip from the GitHub release. This need
     ```
     cd ~
     rm -rf "$TRY"
-    unset TRY LOG CLAUDE_CONFIG_DIR SKILLDIR V
+    unset TRY LOG LOGA REPO CLAUDE_CONFIG_DIR SKILLDIR V
     ```
     Check that your real setup is untouched: in a normal terminal `claude plugin list` shows your usual plugins.
 

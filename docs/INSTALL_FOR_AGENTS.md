@@ -59,7 +59,7 @@ Read the release version from `https://raw.githubusercontent.com/kmutahar/pmo-do
 - **Case A: Copy already matches the release version:**
   If the highest-precedence copy already has the release version (e.g. `0.9.0`), write nothing. Inform the user that the skill is up to date and proceed directly to Step 5 (Verification).
 - **Case B: Older copy found:**
-  Show the installed version and the release version. Identify any files that differ. Ask the user for confirmation before replacing or updating it.
+  Show the installed version and the release version. Identify any files that differ. Name which copy that is: the launcher uses the highest-precedence copy, so update that one. If you install elsewhere, the higher-precedence older copy still wins and shadows the new one: say so and ask which to update, or suggest `PMO_DOCS_SKILL`. Ask the user for confirmation before replacing or updating it.
 - **Case C: Multiple copies with different versions:**
   List every copy and its version. Explain which copy the launcher will pick by precedence. Suggest setting `PMO_DOCS_SKILL` if needed. Do not delete any copy without explicit instruction.
 - **Case D: No copy found:**

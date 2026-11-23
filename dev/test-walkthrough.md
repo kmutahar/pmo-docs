@@ -12,7 +12,7 @@ None of your own plugins, hooks or settings are loaded. Everything goes to `$LOG
 - `*.jsonl`: the session transcript
 - `agent-diff.txt`: file changes made by the agent
 
-Share the `$LOG` folder. Use one terminal throughout, zsh or bash. Step 4 needs a login and uses a little usage.
+Read through `$LOG` before sharing it: the session `.jsonl` files hold your account email and ids, and the logs hold your temp paths. Share the `$LOG` folder only after that. Use one terminal throughout, zsh or bash. Step 4 needs a login and uses a little usage.
 
 **Keep in step:** when `docs/walkthrough.md` changes a command, an output or an agent prompt, change section 3 or 4 here in the same commit. When a version adds behaviour the agent should show, add a prompt to section 4.
 
@@ -73,7 +73,7 @@ Sign in with `/login` if asked. Type these one at a time and read each answer be
 1. `Treat 2026-03-15 as today. mark T-001 done`
    Expect: the skill fires and asks for QA or test evidence. No file changes.
 2. `QA passed, it was tested on staging`
-   Expect: only the T-001 line changes, to `status: done` and `done_on: 2026-03-15`. The views are rendered with `render_views.py`, never edited by hand.
+   Expect: only the T-001 entry changes, to `status: done` and `done_on: 2026-03-15`. The views are rendered with `render_views.py`, never edited by hand.
 3. `weekly-status for the week of 2026-03-09`
    Expect: a new draft weekly status, with numbers from the registers.
    It may first ask which roster person you are: answer `sam` (it writes `pmo/.me`, which `pmo/.gitignore` hides from git).

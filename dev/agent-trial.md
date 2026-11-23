@@ -2,7 +2,7 @@
 
 A maintainer checklist, not shipped. Record results in your `tmp/` notes (section 5) and update the README's agent table at release. You run each agent yourself, in its own terminal session, and save what it did. The commands below are for zsh and write to `~/pmo-trial-logs/`.
 
-Each trial works on a copy of the example project, `examples/acme`, in `~/pmo-trial/`, and installs the skill temporarily in `~/.agents/skills/pmo-docs` until cleanup. Nothing here touches your real projects' files, though your agents will see the trial skill until you remove it in cleanup.
+Each trial works on a copy of the example project, `examples/acme`, in `~/pmo-trial/`, and installs the skill temporarily in `~/.agents/skills/pmo-docs` until cleanup. Nothing here touches your real projects' files, though your agents will see the trial skill until you remove it in cleanup. Step 1 deletes any existing `~/.agents/skills/pmo-docs`: if you use that copy, move it aside first and put it back after cleanup.
 
 Set these once per terminal, from the root of your clone:
 
@@ -85,10 +85,10 @@ The expected files come from `docs/walkthrough.md` and the scripts. To build the
 
 | # | Prompt | Folder | Expected file changes | Pass when |
 |---|---|---|---|---|
-| 1 | setup | `~/pmo-trial/setup` | `pmo/config.yaml`, `pmo/house-rules.md`, `pmo/documents/.gitkeep`, the starter registers under `pmo/registers/`, `pmo/views/` (one view per register plus the catalogue), `pmo/bin/pmo` | Files match the reference. The agent asked for the project name and manager, and did not overwrite anything. |
+| 1 | setup | `~/pmo-trial/setup` | `pmo/config.yaml`, `pmo/house-rules.md`, `pmo/documents/.gitkeep`, `pmo/.gitignore`, the starter registers under `pmo/registers/`, `pmo/views/` (one view per register plus the catalogue), `pmo/bin/pmo` | Files match the reference. The agent asked for the project name and manager, and did not overwrite anything. |
 | 2 | track | `acme` | Two turns. Turn 1 ("mark T-001 done"): asks for QA evidence and changes nothing. Turn 2 (give the evidence): only the `T-001` line in `pmo/registers/tasks.yaml` changes (`status: done`, `done_on` set); `pmo/views/tasks.md` is re-rendered. | No change before the evidence. Then only that line and that view change. |
 | 3 | render | `acme` | Hand-edit one status in `tasks.yaml`, then ask for a re-render. Only `pmo/views/tasks.md` changes. | `render_views.py --check` exits 0 after the prompt. No view was edited by hand. |
-| 4 | draft | `acme` | One new draft under `pmo/documents/`, at the path `where.py status-report --week` gives. The 2026-03 report is untouched. No register changes. | `structure_check.py` passes on the new file. Its status is `draft`. |
+| 4 | draft | `acme` | One new draft under `pmo/documents/`, at the path `where.py status-report --week` gives. The 2026-03 report is untouched. No register changes; Acme has three roster entries, so the agent asks who you are (answer `sam`) and writes `pmo/.me` and `pmo/.gitignore`. | `structure_check.py` passes on the new file. Its status is `draft`. |
 | 5 | finish | `acme` | Only `pmo/documents/2026-03 - Status report.md`: `status` becomes `finished`, the template version and hashes are recorded, template comments are removed. Acme configures `ar` under `languages`, so Finish asks once whether to translate into `ar` (answer `no`). | `structure_check.py` passes. The new draft from prompt 4 is still a draft. |
 
 The prompt texts for the agent:
@@ -175,7 +175,7 @@ Record a failure as one line in the Notes cell, with this form:
 YYYY-MM-DD UTC | <prompt> | <what happened, in one sentence> | likely file: <path in the skill or the project>
 ```
 
-Example: `2026-11-12 UTC | track | agent wrote the views by hand | likely file: skills/pmo-docs/references/track.md`.
+Example: `<date> UTC | track | agent wrote the views by hand | likely file: skills/pmo-docs/references/track.md`.
 
 If an agent cannot load skill folders at all, say so in the table and stop there, and tell the maintainer.
 

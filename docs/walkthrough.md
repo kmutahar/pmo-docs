@@ -6,7 +6,7 @@ Every command and output below was run on a fresh copy. From the root of a clone
 
 ```sh
 SKILL="$PWD/skills/pmo-docs"
-cp -r examples/acme /tmp/acme && cd /tmp/acme
+rm -rf /tmp/acme && cp -r examples/acme /tmp/acme && cd /tmp/acme
 ```
 
 **The 7 sections (about 15 minutes in all):**
@@ -43,7 +43,7 @@ roster:
   - {slug: bob, name: Bob Example, role: Web lead}
 ```
 
-A task is one line. Its `owner` is a roster slug:
+A task is one entry. Its `owner` is a roster slug:
 
 ```yaml
   - {id: T-001, title: Set up staging server, team: platform, group: infra, priority: high, owner: alice, status: in-progress, due: 2026-03-10, period: 2026-03, notes: Overdue on purpose}
@@ -65,7 +65,7 @@ registers valid, views current
 
 **Do:** edit one task, check, render, check again. **You should see:** `ERROR stale view`, then `wrote 22 views`, then `views current`.
 
-Mark the login page design (`T-002`) done by editing its line in `pmo/registers/tasks.yaml`: change `status: not-started` to `status: done`. The view still shows the old state, so the check fails:
+Mark the login page design (`T-002`) done by editing its entry in `pmo/registers/tasks.yaml`: change `status: not-started` to `status: done`. The view still shows the old state, so the check fails:
 
 ```
 $ python3 "$SKILL/scripts/render_views.py" --check
@@ -85,7 +85,7 @@ registers valid, views current
 [exit 0]
 ```
 
-A value that is not in the vocabulary is reported instead. With `status: bogus` on that line:
+A value that is not in the vocabulary is reported instead. With `status: bogus` in that entry:
 
 ```
 $ python3 "$SKILL/scripts/render_views.py" --check
@@ -93,7 +93,7 @@ ERROR tasks T-002: status 'bogus' not in ['not-started', 'in-progress', 'blocked
 [exit 1]
 ```
 
-Put the line back before going on (`status: not-started`), then render again.
+Put the value back before going on (`status: not-started`), then render again.
 
 A view is plain Markdown. This is `pmo/views/risks.md`:
 
@@ -316,8 +316,8 @@ The agent writes the translation with the `translate` playbook, and only when as
 Open a copy of Acme in your agent (Claude Code, Antigravity or Codex) with `pmo-docs` installed and ask:
 
 - "weekly-status" or "monthly-status": a draft report from the registers.
-- "mark T-001 done": the agent first asks for QA or test evidence (the definition of done) and changes nothing until you answer. Then it changes that one line, sets `done_on` to the date the work was finished, and renders the views.
-- "finish the status report": Finish records the template version and the hashes, removes the template's comments and checks, and marks the document finished. With the `languages` block of section 6, it then asks once whether to translate the report now.
-- "take the tasks from this chat export": the agent reads the export, shows the entries it proposes and writes nothing until you confirm. It never copies a password or token from the chat.
+- "mark T-001 done": the agent asks for QA or test evidence first and changes nothing until you answer; then only that entry changes and the views are rendered.
+- "finish the status report": the document is marked finished. With the `languages` block of section 6, it then asks once whether to translate the report now.
+- "take the tasks from this chat export": the agent shows the entries it proposes and writes nothing until you confirm.
 
-The agent never commits or pushes unless you ask. When you want a check before every commit, see [Working with git](../README.md#working-with-git) in the README.
+The rules behind these (definition of done, what the agent never does) are in [`SKILL.md`](../skills/pmo-docs/SKILL.md). When you want a check before every commit, see [Working with git](../README.md#working-with-git) in the README.

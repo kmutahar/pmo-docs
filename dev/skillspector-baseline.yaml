@@ -1,4 +1,4 @@
-# SkillSpector baseline: findings reviewed and accepted on 2026-11-05, extended 2026-11-16.
+# SkillSpector baseline: findings reviewed and accepted.
 # Run: see dev/maintaining.md (SkillSpector).
 # Scan a clean copy (git archive HEAD skills/pmo-docs), not a working tree with __pycache__.
 version: 2

@@ -6,15 +6,17 @@ Not shipped. Linked from [`AGENTS.md`](../AGENTS.md) (which holds the standing r
 
 ### Evals (heavy check)
 - Command: `dev/run-evals [--case <name>]... [--runs N] [--jobs N] [--out DIR]` (all cases, 4 at once, Sonnet as agent and judge; estimated ~$5 for a full run; Haiku fails 5 of 9 and splits judge votes).
-- Output folder: `~/pmo-eval-runs/<UTC time>/` holding `summary.log`, a throwaway plugin copy, and per case: `eval.log`, `report.html`, `aggregate-result.json`, and `sandbox-<n>/` (never run git inside a sandbox).
+- Output folder: `~/pmo-eval-runs/<UTC time>/` holding `summary.log`, a throwaway plugin copy, and `plugin/`, and per case `cases/<case>/` with `eval.log`, `report.html`, `aggregate-result.json` and `sandbox-<n>/` (never run git inside a sandbox).
 - Why a throwaway copy: the plugin root is `skills/pmo-docs` and `claude plugin eval` needs `evals/` inside the plugin; running `claude plugin eval` from the repo root never fires the skill.
 - Single samples can flip: re-run a failing case before changing `SKILL.md`.
 - Authoring rules: pin today's date in prompts; name output files in prompts; `llm` graders see paths, not file text (unless `focus: {source: file}` is used); `max: 0` needs `min: 0`; keep grader text short and positive. Bash fails in the eval sandbox (`apply-seccomp ... setgroups`), so graders must not rely on Bash; `dontAsk` mode denies Glob/Grep in the skill folder, so playbooks name skill files by exact `${CLAUDE_SKILL_DIR}/...` path.
 
 ### SkillSpector (heavy check)
-- Scan a clean copy of tracked files (a tree with `__pycache__` gives false findings):
+- Scan a clean copy of the tracked files (a working tree with `__pycache__` gives false findings). From the repo root:
   ```sh
-  SKILLSPECTOR_PROVIDER=claude_cli SKILLSPECTOR_MODEL=sonnet skillspector scan skills/pmo-docs --baseline dev/skillspector-baseline.yaml
+  scan=$(mktemp -d) && git archive HEAD skills/pmo-docs | tar -x -C "$scan"
+  SKILLSPECTOR_PROVIDER=claude_cli SKILLSPECTOR_MODEL=sonnet skillspector scan "$scan/skills/pmo-docs" --baseline "$PWD/dev/skillspector-baseline.yaml"
+  rm -rf "$scan"
   ```
 - A valid result is `SAFE` with full coverage and all LLM calls succeeded (`llm_calls_succeeded`); a cut-off run is not a result.
 - Haiku produces false positives on vendored PyYAML. Avoid apostrophes in `config.default.yaml` comments (they break the static parser). Every baseline entry needs a reason.
@@ -30,22 +32,30 @@ Not shipped. Linked from [`AGENTS.md`](../AGENTS.md) (which holds the standing r
 ## Working on a version
 
 Rules in [`AGENTS.md`](../AGENTS.md) apply in full.
-- Check the plan against the working tree before any package starts.
+- The maintainer's plan (untracked, in `tmp/plans/`) splits a version into packages, each with a "Touches" list of files and a "Done when" list of checks. Check the plan against the working tree before any package starts.
 - Packages run sequentially; parallel only when the plan says so and their "Touches" lists do not overlap.
 - A package is done when its "Done when" list, unit tests and `bash dev/scrub.sh` pass. Per-package reviews are skipped in favour of one whole-tree review before release.
 - Each package carries its own docs (`SKILL.md`, `references/conventions.md`, `GLOSSARY.md`). `README.md` rewording waits for a docs pass.
 - Test files follow `tests/test_render_views.py` (`unittest`, `subprocess` + `sys.executable` on a temp copy of `examples/acme`, first-line docstring stating what it tests and how to run it).
-- Unfinished work moves to the next plan or a `<version>-skipped.md` note.
+- Unfinished work moves to the maintainer's next plan (untracked, in `tmp/plans/`).
 
 ## Release checklist
 
-1. All packages committed on `dev` in order, with approval; cleanup in its own commit before `dev/release`.
+1. All packages committed on `dev` in order, with approval; any cleanup (stale files, local-only index entries) in its own commit before `dev/release`.
 2. `python3 -m unittest discover tests` and `bash dev/scrub.sh` pass; CI is green on `dev`.
-3. `claude plugin validate .` and `claude plugin validate skills/pmo-docs` exit 0 (`dev/release` prints warnings and stops only on failure; read warnings); plugin listing shows each skill once.
-4. Dry runs: `dev/release --bump --dry-run`, then `dev/release --dry-run X.Y.Z` (in 0.x `--bump` proposes minor for `feat`/breaking, patch otherwise). Verify the changelog reads well and has no private names or machine paths.
-5. Release (maintainer only): `dev/release X.Y.Z` (asks twice at the terminal; steps in `dev/release --help`).
+3. Heavy checks (the maintainer runs them): the evals and SkillSpector above, the walkthrough check, and the install check Parts 1 to 3 (local marketplace). Update the README agent table from the latest agent trial.
+4. `claude plugin validate .` and `claude plugin validate skills/pmo-docs` exit 0 (`dev/release` prints warnings and stops only on failure; read warnings); plugin listing shows each skill once.
+5. Dry runs: `dev/release --bump --dry-run`, then `dev/release --dry-run X.Y.Z` (in 0.x `--bump` proposes minor for `feat`/breaking, patch otherwise; 1.0.0 is explicit, `dev/release 1.0.0`, and the `cliff.toml` bump block needs revisiting after it). Verify the changelog reads well and has no private names or machine paths.
+6. Release (maintainer only): `dev/release X.Y.Z` (asks twice at the terminal; steps in `dev/release --help`).
    - The release commit holds only `CHANGELOG.md` and the four version files (`skills/pmo-docs/SKILL.md`, `skills/pmo-docs/.claude-plugin/plugin.json`, `README.md`, `docs/INSTALL_FOR_AGENTS.md`).
    - It pushes `dev` and the `v*` tag. `.github/workflows/release.yml` builds the release (fails if the changelog section is missing), then its `fast-forward-main` job moves `main` to the tag. Never commit to `main` directly or that job fails.
+7. After the push: install check Part 4 (the release zip), last.
+
+## Script and format notes
+
+- Scripts read files with `pc.read()`, which strips a BOM and turns CRLF into LF; `split_front_matter` expects text read that way and does not strip them from a raw string.
+- A release that adds a `scripts/migrate/NNNN_<what>.py` also has an upgrade note in `CHANGELOG.md` that names the script.
+- Optional new keys and fields need no migration script and do not change `schema_version`.
 
 ## Never in a tracked file or a commit message
 
