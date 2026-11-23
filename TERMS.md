@@ -1,6 +1,6 @@
 # Terms of Service
 
-Last updated: 2026-11-22 (UTC)
+Last updated: 2026-11-23 (UTC)
 
 These terms cover your use of pmo-docs, a project-office and documentation workflow packaged as an Agent Skill (the "Software"). By installing or using it, you agree to them. If you do not agree, do not use it.
 

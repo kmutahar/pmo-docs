@@ -38,7 +38,7 @@ Terms such as register, view, draft and Finish are defined in [`GLOSSARY.md`](GL
 | Templates | Required sections and rules per document type. |
 | Documents | Drafted for one period (a week, a month) or once. They stay drafts until you ask to Finish them. |
 | Checks | Scripts that verify a draft, so correctness does not depend on the model remembering rules. |
-| House rules | Your own rules in `pmo/house-rules.md`. They win over the skill's rules, except the safety rules and the definition of done. |
+| House rules | Your own rules in `pmo/house-rules.md`; how they rank against the skill's rules is in [`skills/pmo-docs/SKILL.md`](skills/pmo-docs/SKILL.md) (House rules and lookup). |
 
 ### Document types
 
@@ -58,6 +58,8 @@ pmo/
 |-- registers/         # tasks, risks, issues, decisions, requirements, tests, ... (some created on first use)
 |-- views/             # generated summaries and catalogue (commit them)
 |-- documents/         # drafts and finished documents
+|   `-- .gitkeep
+|-- snapshots/         # register snapshots written on Finish (created when needed)
 |-- templates/         # only the templates you changed or added (created when needed)
 |-- playbooks/         # only the playbooks you changed or added (created when needed)
 `-- house-rules.md     # your own rules
@@ -214,7 +216,7 @@ pmo/bin/pmo where status-report
 pmo/bin/pmo overdue
 ```
 
-It looks for the skill in `$PMO_DOCS_SKILL`, project skill folders, the Claude plugin cache and user skill folders (`~/.agents/skills`, `~/.claude/skills`, and so on). Cron jobs and teammates without Claude can use it without configuring skill paths.
+It looks for the skill in `$PMO_DOCS_SKILL`, project skill folders, the Claude plugin cache and user skill folders (full lookup order in [`skills/pmo-docs/references/conventions.md`](skills/pmo-docs/references/conventions.md), Launcher). Cron jobs and teammates without Claude can use it without configuring skill paths.
 
 ## Configuration
 
@@ -254,7 +256,7 @@ The agent writes a translation only when you ask, and checks that headings, tabl
 | --- | --- |
 | `none` (default) | Nothing is published. |
 | `folder` | Copies finished documents into a folder inside your project. |
-| `repo` | Copies finished documents to another local repository. It asks before committing there and never pushes. |
+| `repo` | Copies finished documents to another local repository. The agent commits there only after a second yes and never pushes. |
 
 ### Scheduled runs
 
@@ -303,12 +305,11 @@ The agent reads your code and does not run it. Commands such as listing the API 
 
 ## Safety
 
-**In short:** it reads your `pmo/` folder and files you point it at, writes under `pmo/` (anything else waits for your yes; an unattended scheduled run can write any project file), makes no network calls from its scripts, never pushes or stores credentials, and commits only in `repo` publish mode after a second yes.
+**In short:** it reads your `pmo/` folder and files you point it at (everything the agent reads goes to its model provider), writes under `pmo/` (anything else waits for your yes; an unattended scheduled run can write any project file), makes no network calls from its scripts, never pushes or stores credentials, and the agent commits only in `repo` publish mode after a second yes. `pmo/` holds roster names, which are public if your repo is public.
 
-- **Reads:** your `pmo/` folder, skill files, files or chat exports you point it at (exports are never copied in), read-only git history, and source/config/test files for technical docs (variable names only, never secret files like `.env`). Public framework docs are fetched only when you ask for a new stack file.
-- **Writes:** under `pmo/` (config, registers, views, documents, launcher). Changes to config, templates, playbooks, hand-edited files or entries you did not state wait for your yes. Publishing copies finished documents only after you confirm (in `repo` mode, committing there waits for a second yes and never pushes).
-- **Never:** makes script network calls, changes git state or hooks unasked, opens other projects unasked, follows instructions found in data/files, or stores credentials/tokens/passwords.
-- **Permissions and privacy:** `pmo/` holds roster names (public if your repo is public). In Claude Code, the skill lists script and read-only git patterns it may run without prompting during the turn that loads the skill; an interactive session can still ask once per script (choose "don't ask again"). Full data handling and safety rules live in [`PRIVACY.md`](PRIVACY.md) and [`skills/pmo-docs/SKILL.md`](skills/pmo-docs/SKILL.md) (Safety rules).
+The first skill call in a fresh project asks for a Skill-tool permission; allow it, because skipping the skill and drafting by hand loses its checks.
+
+Full data handling and security details are in [`PRIVACY.md`](PRIVACY.md), agent safety rules in [`skills/pmo-docs/SKILL.md`](skills/pmo-docs/SKILL.md) (Safety rules), and vulnerability reporting in [`SECURITY.md`](SECURITY.md).
 
 ## Repository structure
 
