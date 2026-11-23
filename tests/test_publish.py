@@ -109,6 +109,15 @@ class Publish(unittest.TestCase):
         self.assertEqual(tmp_f.read_text(encoding="utf-8"), "Not ours.\n")
         self.assertFalse((pub / "Decision log.md").exists())
 
+    def test_a_symlinked_document_is_not_published(self):
+        self.set_config("publish:\n  mode: folder\n  path: published\n")
+        src = self.finish_decision_log()
+        (src.parent / "Link.md").symlink_to(src)
+        code, out, _ = run(self.root, "--apply")
+        self.assertEqual(code, 0)
+        self.assertNotIn("Link.md", out)
+        self.assertFalse((self.root / "published/Link.md").exists())
+
     def test_apply_copies_new_files_byte_identical(self):
         self.set_config("publish:\n  mode: folder\n  path: published\n")
         src = self.finish_decision_log()

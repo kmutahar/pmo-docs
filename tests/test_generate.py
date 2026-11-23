@@ -477,6 +477,14 @@ class TestGenerate(unittest.TestCase):
         self.assertIn("| TST-002 | Login with valid credentials | REQ-001 | not set | not set | Bob Example |", out)
         self.assertIn("| REQ-002 | Pages load fast | medium | test not run |", out)
 
+    def test_defect_gap_report_accepts_a_list_valued_issue_ref(self):
+        tests_file = self.root / "pmo/registers/tests.yaml"
+        tests_file.write_text(tests_file.read_text(encoding="utf-8").replace("issue: I-003", "issue: [I-003, I-001]"), encoding="utf-8")
+        code, out, err = tool("generate.py", self.root, "defect-gap-report", "2026-03", "--as-of", "2026-03-15", "--stdout")
+        self.assertEqual(code, 0, err)
+        self.assertNotIn("has no linked issue", err)
+        self.assertIn("| TST-002 | Login with valid credentials | REQ-001 |", out)
+
     def test_non_english_draft_language_exits_2(self):
         cfg_path = self.root / "pmo/config.yaml"
         base = re.sub(r"(?m)^languages:.*\n(?:[ \t#].*\n|\n)*", "", cfg_path.read_text(encoding="utf-8"))

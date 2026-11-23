@@ -301,7 +301,9 @@ class Cli(unittest.TestCase):
         self.assertIn("pmo/documents/Notes.md:6: look-alike dash in CR\u20147b, use -", out)
         self.assertEqual(out.count("look-alike dash in"), 3)  # not T-003, not the bare dash, not the fenced one
         f.write_text("# a\nT-14\n", encoding="utf-8")
-        self.assertEqual(main("--project", str(self.root), "--dashes")[0], 0)
+        code, out = main("--project", str(self.root), "--dashes", str(f))
+        self.assertEqual(code, 0)
+        self.assertNotIn("look-alike", out)  # a clean file reports nothing
 
     def test_no_documents_is_clean(self):
         code, out = main("--project", str(self.root))
