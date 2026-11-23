@@ -49,7 +49,7 @@ Rules in [`AGENTS.md`](../AGENTS.md) apply in full.
 
 ## Never in a tracked file or a commit message
 
-Real names and roster slugs (including `owner:` values in templates and fixtures); private repo URLs and machine paths; the source project's name and ids; emails, phone numbers and contact details; security issues, permission matrices and auth requirements from the source; snapshot SHAs and branch names from the source; contents of memory files, scratch folders or private notes. Learnings (`.trail/learnings/`) are local and untracked, and hold rules only. `dev/scrub.sh` catches patterns only: read each file when generalising, and rewrite anything taken from `tmp/source/` from scratch.
+Real names and roster slugs (including `owner:` values in templates and fixtures); private repo URLs and machine paths; the source project's name and ids; emails, phone numbers and contact details; security issues, permission matrices and auth requirements from the source; snapshot SHAs and branch names from the source; contents of memory files, scratch folders or private notes. Learnings (`.trail/learnings/`) are local and untracked, and hold rules only. `dev/scrub.sh` catches patterns only: read each file when generalising, and rewrite anything taken from `tmp/source/` from scratch. To see which names in a source project `.scrub-names` misses, run `python3 dev/scrub-coverage.py SRC .scrub-names tmp/uncaught.txt` (prints counts only; the output file holds the private names, so keep it under `tmp/`).
 
 ## Platform limits
 
