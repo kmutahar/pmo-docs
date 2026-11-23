@@ -21,6 +21,8 @@ import pmo_common as pc  # noqa: E402
 import render_views  # noqa: E402
 import structure_check as sc  # noqa: E402
 
+CONNECTOR_HINT = " (if the language uses its own words for of, to or and between numbers, set `languages.<code>.connectors`)"
+
 
 def normalise(text: str, info: dict) -> str:
     """Digits in info['digits'] become 0-9. Characters in info['separators'] become '.'. A connector word from info['connectors'], or of, to, and, or one of / : - en dash, em dash, between two numbers becomes '~'. Ids are not touched here."""
@@ -150,13 +152,13 @@ def compare(original: str, translation: str, info: dict, cfg) -> list[str]:
                     on = numbers(ohc, draft_info, idrx)
                     tn = numbers(thc, info, idrx)
                     if on != tn:
-                        errors.append(f"`{otitle}` table {t_idx} header cell {c_idx}: numbers differ: {tn} != {on}")
+                        errors.append(f"`{otitle}` table {t_idx} header cell {c_idx}: numbers differ: {tn} != {on}{CONNECTOR_HINT}")
                 for r_idx, (orow, trow) in enumerate(zip(orows, trows), 1):
                     for c_idx, (oc, tc) in enumerate(zip(orow, trow), 1):
                         on = numbers(oc, draft_info, idrx)
                         tn = numbers(tc, info, idrx)
                         if on != tn:
-                            errors.append(f"`{otitle}` table {t_idx} row {r_idx} cell {c_idx}: numbers differ: {tn} != {on}")
+                            errors.append(f"`{otitle}` table {t_idx} row {r_idx} cell {c_idx}: numbers differ: {tn} != {on}{CONNECTOR_HINT}")
 
         oi, ox, ou = list_counts(otext)
         ti, tx, tu = list_counts(ttext)
@@ -175,7 +177,7 @@ def compare(original: str, translation: str, info: dict, cfg) -> list[str]:
         onums = sorted(numbers(f"{otitle}\n{text_outside_tables(otext)}", draft_info, idrx))
         tnums = sorted(numbers(f"{ttitle}\n{text_outside_tables(ttext)}", info, idrx))
         if onums != tnums:
-            errors.append(f"`{otitle}`: numbers differ: {tnums} != {onums}")
+            errors.append(f"`{otitle}`: numbers differ: {tnums} != {onums}{CONNECTOR_HINT}")
 
     return errors
 

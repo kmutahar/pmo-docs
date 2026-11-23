@@ -131,6 +131,7 @@ class Compare(unittest.TestCase):
         o = "# T\n## A\n| 2026 |\n|---|\n| x |\n"
         t = "# T\n## A\n| 2027 |\n|---|\n| x |\n"
         self.assertIn("header cell 1: numbers differ: ['2027'] != ['2026']", " ".join(self.cmp(o, t)))
+        self.assertIn("languages.<code>.connectors", " ".join(self.cmp(o, t)))
 
     def test_digits_in_the_translation_language_are_normalised_but_not_the_original(self):
         info = {"digits": "٠١٢٣٤٥٦٧٨٩"}
