@@ -23,6 +23,7 @@ A project-office and documentation workflow packaged as an Agent Skill (`skills/
 
 ## Maintainer tasks
 - **Tests and scrub:** `python3 -m unittest discover tests`; `bash dev/scrub.sh` (bash, not `sh`).
+- **Eval retests:** when a change to `skills/pmo-docs/` or `examples/acme/` affects what an eval checks, and `.eval-runs/status.md` exists, mark those cases with `dev/eval-sync --plan --stale CASE...` (`--stale-all` when unsure; `--plan` marks without running anything). If the file does not exist, do nothing. A changed `evals/<case>/` marks itself. Never run evals (see `dev/maintaining.md`).
 - **Evals, SkillSpector, PyYAML updates, install/walkthrough checks, releases:** read `dev/maintaining.md` first.
 
 ## Layout

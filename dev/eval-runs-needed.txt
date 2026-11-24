@@ -1,0 +1,3 @@
+# cases that need more than one passing run (read by dev/eval-sync)
+intake-consent 2
+translation-parity 2

@@ -1,0 +1,244 @@
+#!/usr/bin/env python3
+"""Maintainer tool: run only the evals that are due, and keep a table of results.
+
+Every due case is a real agent run and uses Claude usage. State lives in .eval-runs/status.md
+(gitignored, created on first run from the folders in evals/). One run per case per call:
+
+  not-run, stale, fail or partial (fewer passes than runs_needed) -> run once; pass -> skipped.
+
+A case turns stale when its evals/<case>/ folder changes. A skill change only prints a warning
+(a script cannot tell which cases it affects): mark cases with --stale CASE or --stale-all.
+Counts above 1 come from dev/eval-runs-needed.txt (lines "case count"). Runs go in batches of --jobs
+cases; a batch that hits the usage limit stops the sync and its cases stay not-run.
+"""
+import argparse
+import hashlib
+import json
+import shlex
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+if sys.version_info < (3, 10):
+    sys.exit("eval-sync: needs Python 3.10 or newer")
+
+COLS = ["case", "status", "runs_done", "runs_needed", "passes", "case_hash", "skill_hash", "last_run", "notes"]
+DUE = {"not-run", "stale", "fail", "partial"}
+
+
+def files_under(root, prefix, skip=()):
+    out = {}
+    if root.is_dir():
+        for p in sorted(root.rglob("*")):
+            if not p.is_file() or "__pycache__" in p.parts or p.suffix == ".pyc":
+                continue
+            rel = p.relative_to(root)
+            if rel.parts[0] not in skip:
+                out[f"{prefix}/{rel.as_posix()}"] = p
+    return out
+
+
+def tree_hash(entries):
+    h = hashlib.sha256()
+    for rel in sorted(entries):
+        h.update(rel.encode() + b"\0" + entries[rel].read_bytes() + b"\0")
+    return h.hexdigest()[:12]
+
+
+def skill_hash(skill_dir, acme_dir, skip=()):
+    entries = files_under(skill_dir, "skill", skip)
+    entries.update(files_under(acme_dir, "acme"))
+    return tree_hash(entries)
+
+
+def case_hash(evals_dir, case):
+    return tree_hash(files_under(evals_dir / case, "case"))
+
+
+def list_cases(evals_dir):
+    return sorted(p.parent.name for p in evals_dir.glob("*/prompt.md"))
+
+
+def read_needed(path):
+    needed = {}
+    if path.is_file():
+        for n, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            line = line.split("#", 1)[0].strip()
+            if not line:
+                continue
+            parts = line.split()
+            if len(parts) != 2 or not parts[1].isdigit() or int(parts[1]) < 1:
+                sys.exit(f"eval-sync: {path}:{n}: expected '<case> <count>'")
+            needed[parts[0]] = int(parts[1])
+    return needed
+
+
+def read_table(path):
+    rows = {}
+    if path.is_file():
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if not line.startswith("|"):
+                continue
+            cells = [c.strip() for c in line.strip().strip("|").split("|")]
+            if len(cells) != len(COLS) or cells[0] in ("case", "---") or set(cells[0]) <= {"-", ":"}:
+                continue
+            row = dict(zip(COLS, cells))
+            for k in ("runs_done", "runs_needed", "passes"):
+                row[k] = int(row[k]) if row[k].isdigit() else 0
+            rows[row["case"]] = row
+    return rows
+
+
+def write_table(path, rows):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    out = ["| " + " | ".join(COLS) + " |", "|" + "---|" * len(COLS)]
+    for c in sorted(rows):
+        r = rows[c]
+        out.append("| " + " | ".join(str(r[k]).replace("|", "/").replace("\n", " ") for k in COLS) + " |")
+    path.write_text("\n".join(out) + "\n", encoding="utf-8")
+
+
+def new_row(case, needed):
+    return {"case": case, "status": "not-run", "runs_done": 0, "runs_needed": needed, "passes": 0,
+            "case_hash": "-", "skill_hash": "-", "last_run": "-", "notes": ""}
+
+
+def reset(row, status):
+    row.update(status=status, runs_done=0, passes=0)
+
+
+def refresh(row):
+    """Re-derive pass/partial after runs_needed changed."""
+    if row["status"] in ("pass", "partial") and row["runs_done"]:
+        row["status"] = "pass" if row["passes"] >= row["runs_needed"] else "partial"
+
+
+def read_runs(case_dir):
+    """Return [(kind, message)] with kind pass, fail or error (not graded: counts as not run)."""
+    try:
+        data = json.loads((case_dir / "aggregate-result.json").read_text(encoding="utf-8"))
+        runs = data["cases"][0]["arms"]["with"]
+    except (OSError, ValueError, KeyError, IndexError, TypeError):
+        return [("error", "no result")]
+    out = []
+    for r in runs:
+        judge = [g.get("explanation", "") for g in r.get("graders", []) if "judge call failed" in str(g.get("explanation", ""))]
+        if r.get("error"):
+            out.append(("error", str(r["error"])))
+        elif judge:
+            out.append(("error", judge[0]))
+        else:
+            out.append(("pass" if r.get("passed") else "fail", ""))
+    return out
+
+
+def record(row, runs, chash, shash):
+    graded = [k for k, _ in runs if k != "error"]
+    if not graded:
+        return
+    row["runs_done"] += len(graded)
+    row["passes"] += graded.count("pass")
+    row.update(case_hash=chash, skill_hash=shash, last_run=time.strftime("%Y-%m-%d", time.gmtime()))
+    if row["passes"] >= row["runs_needed"]:
+        row["status"] = "pass"
+    else:
+        row["status"] = "fail" if graded[-1] == "fail" else "partial"
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--plan", action="store_true", help="print what would run and stop")
+    ap.add_argument("--force", action="append", default=[], metavar="CASE", help="run this case even if done (repeatable)")
+    ap.add_argument("--force-all", action="store_true", help="run every case")
+    ap.add_argument("--stale", action="append", default=[], metavar="CASE", help="mark this case for retest (repeatable)")
+    ap.add_argument("--stale-all", action="store_true", help="mark every case for retest")
+    ap.add_argument("--import", dest="import_dir", metavar="RUN_DIR", help="record results from an old run-evals folder, then stop (spends nothing)")
+    ap.add_argument("--jobs", type=int, default=4, help="cases per batch and at once (default 4)")
+    ap.add_argument("--root", default=str(Path(__file__).resolve().parent.parent), help="repo root (for tests)")
+    ap.add_argument("--runner", default=None, help="command that runs cases (default: dev/run-evals)")
+    a = ap.parse_args()
+
+    root = Path(a.root)
+    evals = root / "evals"
+    table = root / ".eval-runs" / "status.md"
+    cases = list_cases(evals)
+    if not cases:
+        sys.exit(f"eval-sync: no cases in {evals}")
+    for c in a.force + a.stale:
+        if c not in cases:
+            sys.exit(f"eval-sync: no case {c}")
+    needed = read_needed(root / "dev" / "eval-runs-needed.txt")
+    for c in needed:
+        if c not in cases:
+            print(f"eval-sync: dev/eval-runs-needed.txt names unknown case {c}", file=sys.stderr)
+
+    rows = read_table(table)
+    rows = {c: rows.get(c) or new_row(c, 1) for c in cases}
+    hashes = {c: case_hash(evals, c) for c in cases}
+    sh = skill_hash(root / "skills" / "pmo-docs", root / "examples" / "acme")
+    for c, r in rows.items():
+        r["runs_needed"] = needed.get(c, 1)
+        if r["status"] == "not-run":
+            r["case_hash"] = hashes[c]
+        elif r["case_hash"] != hashes[c]:
+            reset(r, "stale")
+            r["case_hash"] = hashes[c]
+        refresh(r)
+    for c in cases if a.stale_all else a.stale:
+        reset(rows[c], "stale")
+
+    if a.import_dir:
+        old = Path(a.import_dir)
+        old_sh = skill_hash(old / "plugin", old / "plugin" / "examples" / "acme", skip=("evals", "examples"))
+        n = 0
+        for c in cases:
+            if rows[c]["status"] != "not-run" or not (old / "cases" / c).is_dir():
+                continue
+            if case_hash(old / "plugin" / "evals", c) != hashes[c]:
+                print(f"eval-sync: skipped {c} (case changed since that run)")
+                continue
+            before = rows[c]["runs_done"]
+            record(rows[c], read_runs(old / "cases" / c), hashes[c], old_sh)
+            n += rows[c]["runs_done"] > before
+        write_table(table, rows)
+        print(f"eval-sync: imported {n} case(s) into {table}")
+        return 0
+
+    forced = set(cases if a.force_all else a.force)
+    due = [c for c in cases if c in forced or rows[c]["status"] in DUE]
+    old_skill = [c for c in cases if rows[c]["skill_hash"] not in ("-", sh) and rows[c]["status"] == "pass"]
+    write_table(table, rows)
+    print(f"eval-sync: {len(due)} case(s) to run, {len(cases) - len(due)} skipped")
+    for c in due:
+        r = rows[c]
+        print(f"  {c}  ({r['status']}, {r['passes']}/{r['runs_needed']} passes)")
+    if old_skill:
+        print(f"eval-sync: {len(old_skill)} passed case(s) last ran on an older skill version: {', '.join(old_skill)}")
+        print("  retest the ones the change touches with --stale CASE (or --stale-all)")
+    if a.plan or not due:
+        return 0 if all(r["status"] == "pass" for r in rows.values()) else 1
+
+    runner = shlex.split(a.runner) if a.runner else [str(root / "dev" / "run-evals")]
+    stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
+    for i in range(0, len(due), a.jobs):
+        batch = due[i:i + a.jobs]
+        out = root / ".eval-runs" / "runs" / stamp / f"b{i // a.jobs + 1}"
+        cmd = runner + [x for c in batch for x in ("--case", c)] + ["--jobs", str(a.jobs), "--out", str(out)]
+        rc = subprocess.run(cmd).returncode
+        if rc == 2:
+            sys.exit("eval-sync: run-evals rejected its arguments (exit 2); table kept as is")
+        quota = False
+        for c in batch:
+            runs = read_runs(out / "cases" / c)
+            record(rows[c], runs, hashes[c], sh)
+            quota = quota or any(k == "error" and "limit" in m.lower() for k, m in runs)
+        write_table(table, rows)
+        if quota:
+            print("eval-sync: usage limit hit; stopped. Run again after the reset to continue.")
+            break
+    return 0 if all(r["status"] == "pass" for r in rows.values()) else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
