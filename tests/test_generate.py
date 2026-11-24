@@ -193,7 +193,7 @@ class TestGenerate(unittest.TestCase):
         self.assertIn("no generator configured", err)
 
     def test_team_checklist_on_acme(self):
-        # Add a task with unknown team in temp copy
+        # Add a task with no team in temp copy
         tasks_file = self.root / "pmo/registers/tasks.yaml"
         tasks_text = tasks_file.read_text(encoding="utf-8")
         tasks_file.write_text(tasks_text + "  - {id: T-099, title: Orphan task, status: not-started, due: 2026-03-20, period: 2026-03}\n", encoding="utf-8")
@@ -458,6 +458,20 @@ class TestGenerate(unittest.TestCase):
         self.assertLess(out.index("`T-001`"), out.index("`T-002`"))  # grouped by person in roster order
         self.assertLess(out.index("`T-002`"), out.index("`T-004`"))  # then by due date
         self.assertNotIn("`T-003`", out)  # done, so not open
+
+    def test_work_order_sorts_by_priority_then_due_date(self):
+        tasks_file = self.root / "pmo/registers/tasks.yaml"
+        tasks_file.write_text(
+            "tasks:\n"
+            "  - {id: T-001, title: Low early, team: platform, priority: low, owner: alice, status: not-started, due: 2026-03-01, period: 2026-03}\n"
+            "  - {id: T-002, title: High late, team: platform, priority: high, owner: alice, status: not-started, due: 2026-03-20, period: 2026-03}\n"
+            "  - {id: T-003, title: High early, team: platform, priority: high, owner: alice, status: not-started, due: 2026-03-10, period: 2026-03}\n",
+            encoding="utf-8",
+        )
+        code, out, err = tool("generate.py", self.root, "work-order", "--as-of", "2026-03-15", "--stdout")
+        self.assertEqual(code, 0, err)
+        self.assertLess(out.index("`T-003`"), out.index("`T-002`"))  # both high: earlier due first
+        self.assertLess(out.index("`T-002`"), out.index("`T-001`"))  # high before low even with later due
 
     def test_delivery_report_counts_and_carries_over(self):
         self._assert_generated_draft_placeholders(

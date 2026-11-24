@@ -979,13 +979,17 @@ def generate_work_order(ctx: Ctx) -> Filled:
     order = [p for p in roster_order if p in by_person]
     order += sorted(p for p in by_person if p not in order and p != "not set") + (["not set"] if "not set" in by_person else [])
 
-    def due_key(t):
+    prio_list = ctx.cfg.get("vocab", {}).get("priority_order") or []
+    prio_rank = {p: i for i, p in enumerate(prio_list)}
+
+    def task_key(t):
+        p = prio_rank.get(t.get("priority"), len(prio_list))
         d = str(t.get("due") or "")
-        return (not d, d, id_number(t.get("id")))
+        return (p, not d, d, id_number(t.get("id")))
 
     # one table (structure_check wants a table directly under `## Tasks`), grouped by person
     rows = [[f"{t.get('title') or 'not recorded'} `{t.get('id', '')}`", p, str(t.get("due") or "not set")]
-            for p in order for t in sorted(by_person[p], key=due_key)]
+            for p in order for t in sorted(by_person[p], key=task_key)]
 
     dues = [str(t["due"]) for t in open_tasks if t.get("due")]
     notes = []
