@@ -308,7 +308,7 @@ The agent reads your code and does not run it. Commands such as listing the API 
 
 **In short:** it reads your `pmo/` folder and files you point it at (everything the agent reads goes to its model provider), writes under `pmo/` (anything else waits for your yes; an unattended scheduled run can write any project file), makes no network calls from its scripts, never pushes or stores credentials, and the agent commits only in `repo` publish mode after a second yes. `pmo/` holds roster names, which are public if your repo is public.
 
-The first skill call in a fresh project asks for a Skill-tool permission; allow it, because skipping the skill and drafting by hand loses its checks.
+The first skill call in a fresh project asks for a Skill-tool permission; allow it, because skipping the skill and drafting by hand loses its checks. Headless runs (`claude -p`) ignore the project's allow rules, including those from `setup.py --permissions`, until the project folder has been opened in Claude Code once and trusted.
 
 Full data handling and security details are in [`PRIVACY.md`](PRIVACY.md), agent safety rules in [`skills/pmo-docs/SKILL.md`](skills/pmo-docs/SKILL.md) (Safety rules), and vulnerability reporting in [`SECURITY.md`](SECURITY.md).
 
