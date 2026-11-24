@@ -85,7 +85,7 @@ registers:
     file: tasks.yaml
     view: tasks.md
     prefix: T
-    fields: [id, title, team, group, priority, goal, owner, status, due, done_on, period, notes, origin, tests]
+    fields: [id, title, wbs, team, group, priority, goal, owner, status, due, done_on, period, notes, origin, tests]
     enums: {status: task_status, priority: priority_order, origin: origin}
     dates: [due, done_on]
     # months: fields that hold a month, YYYY-MM

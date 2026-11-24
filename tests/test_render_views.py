@@ -348,6 +348,34 @@ class RenderViews(unittest.TestCase):
         code, out = run(self.root)
         self.assertEqual(code, 0, out)
 
+    def test_wbs_valid_invalid_and_duplicate(self):
+        self.append("tasks", '  - {id: T-097, title: a, wbs: "1.2.1", status: not-started}')
+        self.assertEqual(run(self.root)[0], 0)
+        self.append("tasks", '  - {id: T-098, title: b, wbs: "1.2.1", status: not-started}')
+        code, out = run(self.root)
+        self.assertEqual(code, 1)
+        self.assertIn("duplicate wbs 1.2.1", out)
+        tasks_p = self.reg / "tasks.yaml"
+        tasks_p.write_text(tasks_p.read_text(encoding="utf-8").replace('wbs: "1.2.1"', "wbs: 1.2", 1), encoding="utf-8")
+        code, out = run(self.root)
+        self.assertEqual(code, 1)
+        self.assertIn("must be text", out)
+        tasks_p.write_text(tasks_p.read_text(encoding="utf-8").replace("wbs: 1.2", 'wbs: "1.a"', 1), encoding="utf-8")
+        code, out = run(self.root)
+        self.assertEqual(code, 1)
+        self.assertIn("dot-separated numbers", out)
+
+    def test_task_team_validated_against_teams_register(self):
+        self.append("tasks", "  - {id: T-097, title: by id, team: TM-001, status: not-started}")
+        self.append("tasks", "  - {id: T-098, title: by heading, team: Web, status: not-started}")
+        self.assertEqual(run(self.root)[0], 0)
+        self.append("tasks", "  - {id: T-099, title: typo, team: platfrom, status: not-started}")
+        code, out = run(self.root)
+        self.assertEqual(code, 1)
+        self.assertIn("team 'platfrom' is not a team id or heading in teams", out)
+        (self.reg / "teams.yaml").write_text("teams: []\n", encoding="utf-8")
+        self.assertEqual(run(self.root)[0], 0)
+
 
 class LanguageConfig(unittest.TestCase):
     def setUp(self):

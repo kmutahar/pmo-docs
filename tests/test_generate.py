@@ -196,7 +196,7 @@ class TestGenerate(unittest.TestCase):
         # Add a task with unknown team in temp copy
         tasks_file = self.root / "pmo/registers/tasks.yaml"
         tasks_text = tasks_file.read_text(encoding="utf-8")
-        tasks_file.write_text(tasks_text + "  - {id: T-099, title: Orphan task, team: unknown, status: not-started, due: 2026-03-20, period: 2026-03}\n", encoding="utf-8")
+        tasks_file.write_text(tasks_text + "  - {id: T-099, title: Orphan task, status: not-started, due: 2026-03-20, period: 2026-03}\n", encoding="utf-8")
 
         code, out, err = tool("generate.py", self.root, "team-checklist", "2026-03", "--as-of", "2026-03-15", "--stdout")
         self.assertEqual(code, 0, err)

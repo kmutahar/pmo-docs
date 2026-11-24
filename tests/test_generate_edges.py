@@ -314,7 +314,7 @@ class Odd(unittest.TestCase):
     def test_tasks_with_no_team_no_group_no_priority_or_unknown_priority(self):
         self.put("tasks", "tasks:\n"
                  "  - {id: T-001, title: Lone, status: not-started, period: 2026-03}\n"
-                 "  - {id: T-002, title: Odd team, team: ghost, group: g1, status: not-started, period: 2026-03}\n"
+                 "  - {id: T-002, title: Odd team, group: g1, status: not-started, period: 2026-03}\n"
                  "  - {id: T-003, title: Known, team: platform, priority: high, status: not-started, period: 2026-03}\n")
         plan, _ = self.gen("project-plan", "2026-03")
         self.assertIn("### No team - not set", plan)

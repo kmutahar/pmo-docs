@@ -136,6 +136,10 @@ _Avoid_: setting, note, parameter
 A work stream in the `teams` register; not a group of people.
 _Avoid_: squad, department, division
 
+**WBS**:
+Work breakdown structure number: an optional dot-separated code (such as `"1.2.1"`) on a task entry that places it in the deliverable hierarchy. Once assigned, a WBS number is never renumbered.
+_Avoid_: outline number, hierarchy id
+
 ## Documents
 
 **Doc type**:

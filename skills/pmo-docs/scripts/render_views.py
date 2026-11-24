@@ -501,9 +501,17 @@ def validate(data, cfg, root=None):
     errors = []
     ids = {n: {e.get("id") for e in rows if isinstance(e.get("id"), (str, int))} for n, rows in data.items()}
     slugs = {r.get("slug") for r in data.get("roster", []) if isinstance(r.get("slug"), (str, int))}
+    team_lookup = {
+        v.strip().lower()
+        for tm in data.get("teams", []) if isinstance(tm, dict)
+        for k in ("id", "heading")
+        if isinstance((v := tm.get(k)), str) and v.strip()
+    }
     roster_slugs = {}
     id_occurrences = {}
     id_order = []
+    wbs_occurrences = {}
+    wbs_order = []
     reg_lines = {}
     width = pc.id_width(cfg)
     prefixes = set(pc.register_prefixes(cfg))
@@ -584,12 +592,28 @@ def validate(data, cfg, root=None):
                         roster_slugs[slug_val] = pos_this
             single_value_fields = ["status"]
             if name == "tasks":
-                single_value_fields.extend(["priority", "team", "group", "period"])
+                single_value_fields.extend(["priority", "team", "group", "period", "wbs"])
             elif name == "roster":
                 single_value_fields.append("slug")
             for field in single_value_fields:
                 if isinstance(r.get(field), (list, dict)):
                     errors.append(f"{who}: {field} must be one value, not a list")
+            if name == "tasks":
+                wbs_val = r.get("wbs")
+                if wbs_val not in (None, "") and not isinstance(wbs_val, (list, dict)):
+                    if not isinstance(wbs_val, str):
+                        errors.append(f'{who}: wbs {wbs_val!r} must be text (quote it, e.g. "1.2.1")')
+                    elif not re.fullmatch(r"[0-9]+(?:\.[0-9]+)*", wbs_val):
+                        errors.append(f"{who}: wbs {wbs_val!r} must be dot-separated numbers like 1.2.1")
+                    else:
+                        if wbs_val not in wbs_occurrences:
+                            wbs_occurrences[wbs_val] = []
+                            wbs_order.append(wbs_val)
+                        wbs_occurrences[wbs_val].append(entry_pos(name, i))
+                team_val = r.get("team")
+                if team_lookup and team_val not in (None, "") and isinstance(team_val, str):
+                    if team_val.strip().lower() not in team_lookup:
+                        errors.append(f"{who}: team {team_val!r} is not a team id or heading in teams")
             if name == "permissions" and isinstance(r.get("roles"), dict):
                 for role, cond in r["roles"].items():
                     if not isinstance(cond, (str, type(None))):
@@ -637,6 +661,10 @@ def validate(data, cfg, root=None):
         if len(copies) > 1:
             rid = key[1]
             errors.append(f"duplicate id {rid}: {', '.join(copies)}; run renumber.py")
+    for w in wbs_order:
+        copies = wbs_occurrences[w]
+        if len(copies) > 1:
+            errors.append(f"duplicate wbs {w}: {', '.join(copies)}")
     return errors
 
 
