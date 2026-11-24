@@ -11,7 +11,7 @@ Drafts a `work-order` document listing open tasks grouped by person, ordered by 
 ## Steps
 
 1. **Find the path**
-   Run `python3 ${CLAUDE_SKILL_DIR}/scripts/where.py work-order [--title TEXT]`. A second work order needs its own `--title`, and the same title goes to `generate.py` in step 2. `--title` names the file only: the document's own `{{title}}` (the piece of work, for example `Login`) is filled from the request. If the document exists, follow `references/draft.md` step 2.
+   Run `python3 ${CLAUDE_SKILL_DIR}/scripts/where.py work-order [--title TEXT]`. A second work order needs its own `--title`, and the same title goes to `generate.py` in step 2. `--title` names the file only: the document's own `{{title}}` (the piece of work, for example `Login`) is filled from the request, without the type name (the heading adds it). If the document exists, follow `references/draft.md` step 2.
 
 2. **Generate**
    Run `python3 ${CLAUDE_SKILL_DIR}/scripts/generate.py work-order`; when the request names tasks, add `--task ID` for each (and the same `--title TEXT` as in step 1 when you gave one), so the list, lead and due date cover only those. Fill any remaining prose sections (`Purpose`, `Scope`, `Acceptance`) from the request or registers without inventing facts (`SKILL.md`, Safety rule 2).

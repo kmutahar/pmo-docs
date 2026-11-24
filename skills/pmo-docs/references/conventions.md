@@ -43,7 +43,7 @@ Every document starts with YAML front matter.
 
 | Key | Meaning |
 |---|---|
-| `title` | the document title: the short label the catalogue shows; the first heading may add the item (`Change request {{id}} - {{title}}`) |
+| `title` | the document title: the short label the catalogue shows; the first heading may add the item (`Change request {{id}} - {{title}}`). The heading already names the type, so never start `title` with the type name (`Login`, not `Work order - Login`) |
 | `type` | the doc type id; the checks are chosen by it |
 | `project`, `manager` | from the config |
 | `period` | `YYYY-MM` or `YYYY-Www`; on every type whose template has it (periodic types and the roadmap) |
