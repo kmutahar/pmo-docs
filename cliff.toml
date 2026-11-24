@@ -69,6 +69,9 @@ protect_breaking_commits = true
 commit_preprocessors = [
     # Remove issue and PR numbers like "(#12)" from subjects.
     { pattern = '\s*\((\w+\s)?#([0-9]+)\)', replace = "" },
+    # Escape angle brackets so placeholders like <code> are not parsed as raw HTML.
+    { pattern = '<', replace = '&lt;' },
+    { pattern = '>', replace = '&gt;' },
 ]
 # First match wins. Groups use the Keep a Changelog names; the "<!-- n -->" prefix
 # only fixes the order and is stripped by the template.
