@@ -70,6 +70,7 @@ Mark the login page design (`T-002`) done by editing its entry in `pmo/registers
 ```
 $ python3 "$SKILL/scripts/render_views.py" --check
 ERROR stale view: pmo/views/tasks.md
+ERROR stale view: pmo/views/goals.md
 [exit 1]
 ```
 
@@ -150,7 +151,7 @@ document_exists: yes
 template: <skill folder>/assets/templates/status-report.md
 template_source: skill
 template_exists: yes
-template_version: 1
+template_version: 2
 based_on: none
 drift: n/a
 generated_from: tasks, milestones, risks, issues, changes, actions, decisions, teams
@@ -158,7 +159,7 @@ stale_days: 30
 window: 2026-03-01..2026-03-31
 translations: ar
 translate: in-period
-source_hashes: {tasks: "86d95355", milestones: "0e9469b7", risks: "c0043131", issues: "fbf13b7c", changes: "5351a37c", actions: "3c2a3948", decisions: "988ad57c", teams: "e2679193"}
+source_hashes: {tasks: "91896c71", milestones: "11534a00", risks: "35d6837e", issues: "8f2823cb", changes: "e5d40ba4", actions: "cd9638d7", decisions: "55ed11b4", teams: "b4034128"}
 [exit 0]
 ```
 
@@ -203,6 +204,10 @@ Scanned 3 Markdown files.
 
 None
 
+## Structure (0)
+
+None
+
 ## Stale (0)
 
 None
@@ -216,6 +221,10 @@ None
 None
 
 ## Override drift (0)
+
+None
+
+## Missing translations (0)
 
 None
 
@@ -236,6 +245,10 @@ None
 None
 
 ## Registers_xref (0)
+
+None
+
+## Registry integrity (0)
 
 None
 
@@ -281,7 +294,7 @@ stale_days: 30
 window: none
 translations: ar
 translate: in-period
-source_hash: "f1bea050"
+source_hash: "01a627b2"
 [exit 0]
 ```
 
