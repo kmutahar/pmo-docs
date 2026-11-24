@@ -235,7 +235,7 @@ def duplicate_ids(text, cfg=None):
 
 def check_head(tfm, fm, errors, warns):
     """Front-matter keys the template has, and its template_version."""
-    errors += [f"front matter key `{k}` missing" for k in tfm if k != "checks" and k not in fm]
+    errors += [f"front matter key `{k}` missing" for k in tfm if k not in ("checks", "based_on") and k not in fm]
     tv, dv = tfm.get("template_version"), fm.get("template_version")
     if tv is not None and dv != tv:
         warns.append(f"template_version {dv} differs from template v{tv}" if dv is not None else f"no template_version (template is v{tv})")

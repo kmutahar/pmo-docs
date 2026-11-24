@@ -35,14 +35,48 @@ class Audit(unittest.TestCase):
             code = da.main(["--project", str(self.p), "--as-of", AS_OF])
         return code, out.getvalue()
 
-    def finish(self, hashes=None, extra=""):
+    def finish(self, hashes=None, extra="", with_translation=True):
         cfg = pc.load_config(self.p)
         if hashes is None:
             hashes = {r: da.register_hash(self.p, cfg, r) for r in cfg["doc_types"]["status-report"]["generated_from"]}
         h = "\n".join(f"  {k}: {v}" for k, v in hashes.items())
-        (self.docs / "2026-03 - Status report.md").write_text(
-            f"---\ntype: status-report\nstatus: finished\nlast_updated: 2026-03-14\n{extra}source_hashes:\n{h}\n---\n# Report\n",
-            encoding="utf-8")
+        orig_path = self.docs / "2026-03 - Status report.md"
+        _, body = pc.split_front_matter(orig_path.read_text(encoding="utf-8"))
+        body = re.sub(r"<!--.*?-->", "", body, flags=re.S)
+        text = (
+            "---\n"
+            'title: "Status report - Acme"\n'
+            "type: status-report\n"
+            'project: "Acme"\n'
+            'manager: "Alex"\n'
+            'period: "2026-03"\n'
+            "template_version: 2\n"
+            "status: finished\n"
+            "last_updated: 2026-03-14\n"
+            f"{extra}source_hashes:\n{h}\n"
+            "---\n"
+            f"{body}"
+        )
+        orig_path.write_text(text, encoding="utf-8")
+        if with_translation and "ar" in pc.type_translations(cfg, "status-report"):
+            trans = (
+                "---\n"
+                'title: "Status report - Acme"\n'
+                "type: status-report\n"
+                'project: "Acme"\n'
+                'manager: "Alex"\n'
+                'period: "2026-03"\n'
+                "template_version: 2\n"
+                "status: finished\n"
+                "last_updated: 2026-03-14\n"
+                "lang: ar\n"
+                "dir: rtl\n"
+                'translation_of: "2026-03 - Status report.md"\n'
+                f'source_hash: "{pc.body_hash(text)}"\n'
+                "---\n"
+                f"{body}"
+            )
+            (self.docs / "2026-03 - Status report.ar.md").write_text(trans, encoding="utf-8")
 
     def test_open_entry_pointing_at_a_dropped_or_closed_entry_is_a_registers_xref_finding(self):
         self.finish()
@@ -131,24 +165,20 @@ class Audit(unittest.TestCase):
         self.finish()
         (self.docs / "Decision log.ar.md").unlink()
         dec_log = self.docs / "Decision log.md"
-        dec_log.write_text(
-            '---\ntype: decision-log\nstatus: draft\nsource_hashes:\n  decisions: "00000000"\n---\n# Decision log\n',
-            encoding="utf-8")
+        _, body = pc.split_front_matter(dec_log.read_text(encoding="utf-8"))
+        head = 'title: "Decision log - Acme"\ntype: decision-log\nproject: "Acme"\nmanager: "Alex"\ntemplate_version: 1\nstatus: draft\nlast_updated: 2026-03-14\n'
+        dec_log.write_text(f'---\n{head}source_hashes:\n  decisions: "00000000"\n---\n{body}', encoding="utf-8")
         code, out = self.run_audit()
         self.assertEqual(code, 1)
         self.assertIn("## Stale", out)
         self.assertIn("draft is behind", out)
 
         cur_hash = da.register_hash(self.p, pc.load_config(self.p), "decisions")
-        dec_log.write_text(
-            f'---\ntype: decision-log\nstatus: draft\nsource_hashes:\n  decisions: "{cur_hash}"\n---\n# Decision log\n',
-            encoding="utf-8")
+        dec_log.write_text(f'---\n{head}source_hashes:\n  decisions: "{cur_hash}"\n---\n{body}', encoding="utf-8")
         code, out = self.run_audit()
         self.assertEqual(code, 0, out)
 
-        dec_log.write_text(
-            '---\ntype: decision-log\nstatus: draft\n---\n# Decision log\n',
-            encoding="utf-8")
+        dec_log.write_text(f'---\n{head}---\n{body}', encoding="utf-8")
         code, out = self.run_audit()
         self.assertEqual(code, 0, out)
 
@@ -267,9 +297,11 @@ class Audit(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("based_on names roadmap, the default is decision-log", out)
 
-        # Project-only template custom.md -> no finding
+        # Project-only template custom.md (wired to a doc type) -> no finding
         tpl.unlink()
         (tpl_dir / "custom.md").write_text("---\ntype: custom\n---\n# Custom\n", encoding="utf-8")
+        cfg_file = self.p / "pmo/config.yaml"
+        cfg_file.write_text(cfg_file.read_text(encoding="utf-8") + "\ndoc_types:\n  custom:\n    title: Custom\n    template: custom.md\n    name: '{title}.md'\n", encoding="utf-8")
         code, out = self.run_audit()
         self.assertEqual(code, 0, out)
         self.assertIn("## Override drift (0)", out)
@@ -661,7 +693,8 @@ class Translations(unittest.TestCase):
         # Comment-only change does not make it behind
         (self.docs / "Decision log.md").write_text(orig_text + "\n<!-- extra comment -->\n", encoding="utf-8")
         code, out = self.run_audit()
-        self.assertEqual(code, 0, out)
+        self.assertIn("## Translation behind (0)", out)
+        self.assertIn("HTML comment", out)  # caught by structure check on a finished doc
 
     def test_finishing_the_original_does_not_make_it_behind(self):
         tf.enable_languages(self.p, ("xx",))
@@ -828,6 +861,51 @@ class Translations(unittest.TestCase):
         code, out = self.run_audit()
         self.assertEqual(code, 1)
         self.assertIn("`Decision log.xx.md` - type differs from the original", out)
+
+    def test_registry_integrity_missing_template_orphan_and_schedule(self):
+        cfg_file = self.p / "pmo/config.yaml"
+        cfg_file.write_text(
+            cfg_file.read_text(encoding="utf-8")
+            + "\ndoc_types:\n  custom-brief:\n    title: Brief\n    template: missing-brief.md\n    name: '{title}.md'\n"
+            + "schedule:\n  - {recipe: no-such-recipe, when: 'Mon 08:00'}\n",
+            encoding="utf-8",
+        )
+        tpl_dir = self.p / "pmo/templates"
+        tpl_dir.mkdir(parents=True, exist_ok=True)
+        (tpl_dir / "orphan-tpl.md").write_text("---\ntype: orphan\n---\n# Orphan\n", encoding="utf-8")
+        code, out = self.run_audit()
+        self.assertEqual(code, 1)
+        self.assertIn("## Registry integrity (3)", out)
+        self.assertIn("`doc_types.custom-brief.template` -> `missing-brief.md` not found", out)
+        self.assertIn("`orphan-tpl.md` - orphan template", out)
+        self.assertIn("`schedule[0]` -> recipe `no-such-recipe` has no playbook", out)
+
+    def test_missing_translation_and_after_close_waiting(self):
+        tf.enable_languages(self.p, ("xx",))
+        self.finish_decision_log()
+        code, out = self.run_audit()
+        self.assertEqual(code, 1)
+        self.assertIn("## Missing translations (1)", out)
+        self.assertIn("`Decision log.md` - missing `xx` translation (`Decision log.xx.md`)", out)
+
+        cfg_file = self.p / "pmo/config.yaml"
+        cfg_file.write_text(
+            cfg_file.read_text(encoding="utf-8") + "\ndoc_types:\n  decision-log:\n    translate: after-close\n",
+            encoding="utf-8",
+        )
+        code, out = self.run_audit()
+        self.assertEqual(code, 0, out)
+        self.assertIn("## Missing translations (0)", out)
+        self.assertIn("## Waiting for period close (1, not counted)", out)
+        self.assertIn("`Decision log.md` - `xx` translation waiting for period close", out)
+
+    def test_structure_errors_reported_by_docs_audit(self):
+        f = self.docs / "Decision log.md"
+        f.write_text(f.read_text(encoding="utf-8").replace("## Decisions", "## Wrong heading"), encoding="utf-8")
+        code, out = self.run_audit()
+        self.assertEqual(code, 1)
+        self.assertIn("## Structure", out)
+        self.assertIn("heading `## Decisions` is missing", out)
 
 if __name__ == "__main__":
     unittest.main()

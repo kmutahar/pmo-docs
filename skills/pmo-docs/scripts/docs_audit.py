@@ -41,6 +41,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import parity_check as pcheck  # noqa: E402
 import pmo_common as pc  # noqa: E402
+import structure_check as scheck  # noqa: E402
 
 
 def _unquote(s):
@@ -48,7 +49,11 @@ def _unquote(s):
     return re.sub(r"(?:%[0-9A-Fa-f]{2})+", lambda m: bytes.fromhex(m[0].replace("%", "")).decode("utf-8", "replace"), s)
 
 
-CHECKS = ("front matter", "stale", "old", "broken links", "override drift", "translation behind", "parity", "glossary", "names", "registers_xref")
+CHECKS = (
+    "front matter", "structure", "stale", "old", "broken links", "override drift",
+    "missing translations", "translation behind", "parity", "glossary", "names",
+    "registers_xref", "registry integrity",
+)
 STALE_CHECKS = ("stale", "translation behind")
 
 
@@ -182,6 +187,11 @@ def audit_file(root, cfg, path, base, today):
                     out.append(("front matter", f"`{rel}` - finished but has no `last_updated`"))
             if stamp and t.get("stale_days") and (today - stamp).days > t["stale_days"]:
                 out.append(("old", f"`{rel}` - {(today - stamp).days} days old (limit {t['stale_days']})"))
+            if pc.translate_flag(cfg, ty) != "after-close":
+                for lang in pc.type_translations(cfg, ty):
+                    trans_rel = pc.translation_rel(rel.as_posix(), lang)
+                    if not (base / trans_rel).is_file():
+                        out.append(("missing translations", f"`{rel}` - missing `{lang}` translation (`{trans_rel}`)"))
         elif t and fm.get("status") == "draft":
             recorded = fm.get("source_hashes")
             if isinstance(recorded, dict):
@@ -190,6 +200,10 @@ def audit_file(root, cfg, path, base, today):
                         continue
                     if reg in recorded and recorded[reg] != register_hash(root, cfg, reg):
                         out.append(("stale", f"`{rel}` - draft is behind: register `{reg}` changed since the draft was made"))
+    if t:
+        s_errors, _ = scheck.check(root, cfg, text)
+        for err in s_errors:
+            out.append(("structure", f"`{rel}` - {err}"))
     unfenced = re.sub(r"^ {0,3}(```|~~~).*?^ {0,3}\1[^\n]*$", "", text, flags=re.S | re.M)  # links in fenced code are examples
     cleaned = re.sub(r"(`+)[^\n]+?\1", "", unfenced)
     for m in re.finditer(r"""\]\(\s*(?:<([^>\n]*)>|([^)\s]+))(?:\s+(?:"[^"\n]*"|'[^'\n]*'))?\s*\)""", cleaned):
@@ -434,6 +448,71 @@ def xref_problems(root, cfg) -> list[str]:
     return out
 
 
+def registry_integrity(root, cfg) -> list[str]:
+    """Check that configured doc_types templates and schedule playbooks exist, and flag orphan project templates."""
+    out = []
+    doc_types = cfg.get("doc_types") or {}
+    referenced = set()
+    for ty, info in sorted(doc_types.items()):
+        tpl_name = info.get("template", f"{ty}.md") if isinstance(info, dict) else f"{ty}.md"
+        referenced.add(tpl_name)
+        try:
+            tpl_path, _ = pc.find_asset(root, cfg, "templates", tpl_name)
+        except ValueError as e:
+            out.append(f"`doc_types.{ty}.template` - {e}")
+            continue
+        if not tpl_path.is_file():
+            out.append(f"`doc_types.{ty}.template` -> `{tpl_name}` not found")
+
+    tpl_dir = Path(root) / cfg["paths"]["templates"]
+    if tpl_dir.exists():
+        for p in sorted(tpl_dir.rglob("*.md")):
+            if not p.is_file():
+                continue
+            rel = p.relative_to(tpl_dir).as_posix()
+            if rel not in referenced and p.name not in referenced:
+                out.append(f"`{rel}` - orphan template (not referenced by any doc type)")
+
+    for idx, item in enumerate(cfg.get("schedule") or []):
+        if not isinstance(item, dict):
+            continue
+        recipe = item.get("recipe")
+        if not isinstance(recipe, str) or not recipe.strip():
+            continue
+        recipe = recipe.strip()
+        try:
+            pb_path, _ = pc.find_asset(root, cfg, "playbooks", f"{recipe}.md")
+        except ValueError as e:
+            out.append(f"`schedule[{idx}]` - {e}")
+            continue
+        if not pb_path.is_file():
+            out.append(f"`schedule[{idx}]` -> recipe `{recipe}` has no playbook")
+    return out
+
+
+def waiting_translations(root, cfg, files, base) -> list[str]:
+    """Informational list of finished originals awaiting an after-close translation (not counted as findings)."""
+    out = []
+    for p in files:
+        try:
+            fm, _ = pc.split_front_matter(pc.read(p), strict=True)
+        except (UnicodeDecodeError, pc.yaml.YAMLError):
+            continue
+        if not fm or "translation_of" in fm or fm.get("status") != "finished":
+            continue
+        ty = fm.get("type")
+        if not isinstance(ty, str) or ty not in (cfg.get("doc_types") or {}):
+            continue
+        if pc.translate_flag(cfg, ty) != "after-close":
+            continue
+        rel = p.relative_to(base).as_posix()
+        for lang in pc.type_translations(cfg, ty):
+            trans_rel = pc.translation_rel(rel, lang)
+            if not (base / trans_rel).is_file():
+                out.append(f"`{rel}` - `{lang}` translation waiting for period close (`{trans_rel}`)")
+    return out
+
+
 def audit(root, cfg, today):
     """(files scanned, {check: [message]})."""
     base = Path(root) / cfg["paths"]["documents"]
@@ -448,6 +527,7 @@ def audit(root, cfg, today):
     found["glossary"].extend(glossary_problems(root, cfg))
     found["names"].extend(names_problems(root, cfg))
     found["registers_xref"].extend(xref_problems(root, cfg))
+    found["registry integrity"].extend(registry_integrity(root, cfg))
     return len(files), found
 
 
@@ -460,13 +540,20 @@ def main(argv=None):
     if not Path(args.project).is_dir():
         ap.error(f"project folder not found: {args.project}")
     cfg = pc.load_config(args.project)
+    base = Path(args.project) / cfg["paths"]["documents"]
+    files = [p for p in sorted(base.rglob("*.md")) if p.is_file()] if base.exists() else []
     count, found = audit(args.project, cfg, args.as_of)
+    waiting = waiting_translations(args.project, cfg, files, base)
     print(f"# Docs audit - {args.as_of}\n\nScanned {count} Markdown files.\n")
     total = 0
     for check, items in found.items():
         total += len(items)
         print(f"## {check.capitalize()} ({len(items)})\n")
         print("\n".join(f"- {x}" for x in items) if items else "None")
+        print()
+    if waiting:
+        print(f"## Waiting for period close ({len(waiting)}, not counted)\n")
+        print("\n".join(f"- {x}" for x in waiting))
         print()
     print(f"**Total findings: {total}**")
     return 1 if total else 0
