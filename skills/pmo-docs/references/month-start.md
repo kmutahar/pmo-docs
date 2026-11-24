@@ -37,5 +37,6 @@ Run as `month-start [--period YYYY-MM]`. Sets up the registers and draft documen
 
 ## Do not
 
+- Redraft or regenerate a closed month's documents after carry-over; they stay as historical records.
 - Move or close a milestone, or change a committed date, without the user.
 - Finish, publish, send or commit.

@@ -26,7 +26,7 @@ Run as `release-notes [--repo PATH] [--since REF] [--until REF] [--period YYYY-M
    Categorise each commit by its subject:
    - `feat` → New
    - `fix` → Fixed
-   - `!` after the type or `BREAKING CHANGE` in subject → Breaking changes (only there)
+   - `!` after the type or `BREAKING CHANGE` in subject → Breaking changes (only there); state what consumers must do to adapt for each breaking change
    - `chore`, `ci`, `test`, `build`, `style`, `refactor`, `docs` → Internal
    - Anything else, including non-conventional subjects → Improved
    Rewrite each commit line for an external reader (short, concrete sentence). Keep the 7-character abbreviated SHA in backticks: `(`sha7`)`.

@@ -21,6 +21,7 @@ Run as `monthly-status [--period YYYY-MM]`. Produces a draft `status-report` for
 3. **Add the monthly view** to the matching sections of the template, with no new sections:
    - Trend: the done and total figures of the month's weekly reports, as one line in Summary.
    - Progress by priority: one row per priority level; in each Comment, the main change since the previous report.
+   - Goals: for each active goal in the period, state whether its output was delivered and its acceptance criteria were met.
    - Milestones: each milestone due in the month, with its result.
    - Decisions and changes: approved changes and decisions dated in the month.
    - Risks and issues (changes since last report): opened, closed and still open in the month.
