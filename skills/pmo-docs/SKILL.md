@@ -41,6 +41,7 @@ Work from the project root (the folder that holds `pmo/`). From a subfolder, go 
 | `overdue-report` | `references/overdue-report.md` |
 | `docs-audit` | `references/docs-audit.md` |
 | `team-review` (a review checklist per person, as Markdown or CSV) | `references/team-review.md` |
+| `work-order` (open tasks per person, ordered by priority and due date) | `references/work-order.md` |
 | to run a recipe on a schedule | `references/schedule.md` |
 | to commit, stage or push | `references/git.md` |
 
