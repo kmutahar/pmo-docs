@@ -11,6 +11,7 @@ Write one draft of one document from its template and the registers. Rules for f
 ## Steps
 
 1. **Identify the document**
+   First, when the roster has two or more people and `pmo/.me` is missing, ask "Which roster person are you?" and wait for the answer before anything else (`SKILL.md`, Documents, Editor). Never guess. Ask in text when the user said not to use interactive questions.
    A request to translate a document goes to `references/translate.md`. A generator writes English only (`references/conventions.md`). Take the doc type from `doc_types` in the config; ask if it is unclear. Take the period from the request. With none, use the current month (a weekly document, such as `weekly-plan`, uses the current week: pass `--week`). A type named by `{date}` needs the date of the event: ask. For an existing draft whose `editor` is someone else, see `SKILL.md` (Documents, Editor).
 
 2. **Find the paths**
@@ -20,6 +21,7 @@ Write one draft of one document from its template and the registers. Rules for f
    - Document exists and is finished: say so. If the user wants a new draft, set it back to `status: draft`, keep its `source_hashes` (Finish rewrites them) and continue as for a draft.
 
 3. **Check the registers**
+   If scripts cannot run (`where.py`, `render_views.py`, `generate.py`, `structure_check.py`): do not stop. Read the registers (`pmo/registers/`) and the template file directly, compute counts and lists by hand from the entries, write the document, and say in the reply that the script checks were not run.
    Run `python3 ${CLAUDE_SKILL_DIR}/scripts/render_views.py --check`. Stop on validation errors and report them. If only the views differ from the registers, say so, offer to render them, and carry on.
 
 4. **Read the template**
