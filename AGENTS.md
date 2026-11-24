@@ -31,7 +31,7 @@ A project-office and documentation workflow packaged as an Agent Skill (`skills/
 - `PRIVACY.md` and `TERMS.md` — linked from `plugin.json`; update when the skill reads or writes something new.
 - `dev/`, `tests/`, `docs/`, `evals/` — maintainer tools, tests, guides and evals (not shipped).
 - `.trail/`, `tmp/` and `claude-tests/` — local and untracked (`.gitignore`). `claude-tests/` holds an agent's scratch checks during development; the test suite is `tests/`.
-- `CLAUDE.md` — imports `AGENTS.md` and `memory.md` only.
+- `CLAUDE.md` — imports `AGENTS.md`, `memory.md` and `lessons.md` only.
 
 ## Settled design choices
 Do not reopen without a new reason:
@@ -41,10 +41,10 @@ Do not reopen without a new reason:
 - **House rules boundary:** `pmo/house-rules.md` wins over the skill's rules except the safety rules and the definition of done.
 - **Hash-based staleness:** Finish records a hash of each source register; exact and works without commits.
 
-## Memory (`memory.md`)
-Local, never committed. Read it at session start. On **wrap-up**, rewrite it, do not append:
+## Memory (`memory.md`) and lessons (`lessons.md`)
+Both local, never committed. Read them at session start. On **wrap-up**, rewrite it, do not append:
 - Keep an entry only if a later session would act differently without it and no other file holds it (`AGENTS.md`, the plans, code, `--help`, git history, learnings). If another file holds it, keep at most a pointer.
-- Four sections, in this order: How the maintainer works (standing rules, one or two lines each, with the why), Decisions no other file holds, State, Open threads.
+- Three sections, in this order: Decisions no other file holds, State, Open threads. Standing rules (one or two lines each, with the why) live in `lessons.md`, rewritten the same way on wrap-up.
 - State is replaced whole at every wrap-up: what is released, what is uncommitted, what is next. Ten lines at most. Check it against `git status -sb`, `git tag` and `git log` before writing, not against the old text.
 - Open threads: delete one when it closes. Each has the date it was opened; ask about any older than 30 days, then close or drop it.
 - No session stories: no "what worked" accounts, test counts, commit hashes, process ids, log paths or lists of deleted files. A lesson that outlives its task becomes a one-line rule, or a learning when it is about the repo and not about the maintainer.
