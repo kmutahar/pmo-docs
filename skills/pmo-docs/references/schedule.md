@@ -56,6 +56,14 @@ A scheduled run drafts only: it must never Finish, publish, or commit. The skill
 5. **Repository sync**
    To pull changes from a remote repository before running a scheduled recipe, add a `git pull` command before the agent command (the skill never pulls).
 
+## List schedules ("what is scheduled?")
+
+Read `schedule:` from `pmo/config.yaml` and print a table of `Recipe` and `When` (or say nothing is scheduled). Remind the user that `pmo/config.yaml` is the project's record and that they can run `crontab -l` (or check their agent harness) to confirm what is installed matches.
+
+## Stop a schedule ("stop X")
+
+Find the matching entry in `schedule:` in `pmo/config.yaml`, show the planned removal, and wait for a yes (`SKILL.md`, Safety rule 3). Remove the entry from `pmo/config.yaml`, then remind the user to delete the matching line from `crontab -e` (or cancel the job in their agent harness).
+
 ## Do not
 
 - Install a cron entry or edit crontab.
