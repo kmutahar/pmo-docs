@@ -17,10 +17,10 @@ The rules on consent, credentials, origin and definition of done live in `SKILL.
    Do not copy, quote or use anything that looks like a password, token, key or a link with a password. Count such lines and say so in the reply, without quoting; tell the user to remove them from the chat and change them if they were shared. The registers reject them anyway (`render_views.py`).
 
 3. **Extract candidates**
-   New tasks, finished work, decisions, risks, issues and actions. For each: the register, a short title you write from the fact, the owner (map the sender to a roster slug; an unknown sender leaves `owner` empty and goes to the open questions; never add a person to the roster from a chat), a date (the message date for finished work; a due date only when a message states one), the evidence as message date and sender (not the message text).
+   New tasks, finished work, decisions, risks, issues and actions. Check whether exported dates use `DD/MM` or `MM/DD` (from unambiguous dates such as `23/05`); if the order is ambiguous, ask before writing any dates. For each: the register, a short title you write from the fact, the owner (map the sender to a roster slug; an unknown sender leaves `owner` empty and goes to the open questions; never add a person to the roster from a chat), a date (the message date for finished work; a due date only when a message states one), the evidence as message date and sender (not the message text).
 
 4. **Compare with the registers**
-   `grep` titles. A match is shown as "already tracked as T-n", never added twice. A chat message never changes the status of an existing entry (`SKILL.md`, Status from evidence): show it as a proposal.
+   `grep` titles. A match is shown as "already tracked as T-n", never added twice. A chat message never changes the status of an existing entry (`SKILL.md`, Status from evidence): show it as a proposal. If a chat message conflicts with an accepted decision, propose a change request and an action to confirm — never overwrite the accepted decision.
 
 5. **Show the proposal**
    One table: register, proposed id, title, owner, status, date, evidence, and `origin: proposed` for all rows. Finished work is shown with `status: done`, the date it was finished in `done_on` and `period` the month of that date; `due` stays empty unless a message states a deadline. Ask once for the batch: was this work tested (QA passed), or may it be recorded with the note `no test evidence recorded` (`SKILL.md`, Definition of done)? Wait for the answer.
