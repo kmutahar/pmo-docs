@@ -6,6 +6,7 @@ Exit codes: 0 ok, 1 the new registers failed validation or pmo/bin/pmo exists an
 import argparse
 import contextlib
 import io
+import json
 import shutil
 import sys
 from pathlib import Path
@@ -19,6 +20,40 @@ import pmo_common as pc  # noqa: E402
 import render_views  # noqa: E402
 
 
+ALLOW_SCRIPTS = ("where", "render_views", "structure_check", "docs_audit", "parity_check",
+                 "overdue", "team_review", "generate", "snapshot", "finish")
+SETTINGS = ".claude/settings.json"
+
+
+def permissions(project, write):
+    """Claude Code approves allowed-tools only in the turn that loads the skill; project rules last."""
+    rules = [f"Bash(python3 {pc.SKILL}/scripts/{s}.py *)" for s in ALLOW_SCRIPTS] + [f"Read(/{pc.SKILL}/**)"]  # a leading // means an absolute path; one / is relative to the project
+    dest = Path(project) / SETTINGS
+    pc.check_inside(project, SETTINGS)
+    try:
+        data = json.loads(dest.read_text(encoding="utf-8")) if dest.exists() else {}
+        allow = data.setdefault("permissions", {}).setdefault("allow", [])
+        if not isinstance(allow, list):
+            raise ValueError("permissions.allow is not a list")
+    except (ValueError, AttributeError, OSError) as e:
+        print(f"{SETTINGS} is not readable ({e}); fix it, nothing written", file=sys.stderr)
+        return 2
+    new = [r for r in rules if r not in allow]
+    print(f"file: {SETTINGS} (this project only)")
+    for r in rules:
+        print(("kept:  " if r not in new else "add:   ") + r)
+    if not new:
+        return 0
+    if not write:
+        print("nothing written: ask the user, then run again with --yes")
+        return 0
+    allow.extend(new)
+    dest.parent.mkdir(exist_ok=True)
+    pc.safe_write(project, SETTINGS, json.dumps(data, indent=2) + "\n")
+    print(f"written: {len(new)} rule(s). Run again after a skill update (the skill path changes)")
+    return 0
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     pc.add_project_arg(ap)
@@ -30,10 +65,16 @@ def main(argv=None):
                     help="first day of the week (default monday)")
     ap.add_argument("--launcher", action="store_true",
                     help="write or replace only pmo/bin/pmo")
+    ap.add_argument("--permissions", action="store_true",
+                    help="show the allow rules for this skill's read-only scripts; with --yes, add them to the project's .claude/settings.json")
+    ap.add_argument("--yes", action="store_true", help="with --permissions: write the rules (ask the user first)")
     args = ap.parse_args(argv)
 
     if not Path(args.project).is_dir():
         ap.error(f"project folder not found: {args.project}")
+
+    if args.permissions:
+        return permissions(args.project, args.yes)
 
     launcher_src = pc.SKILL / "assets" / "starter" / "bin" / "pmo"
     launcher_dest = Path(args.project) / "pmo" / "bin" / "pmo"

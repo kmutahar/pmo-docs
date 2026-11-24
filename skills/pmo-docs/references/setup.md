@@ -45,6 +45,8 @@ Set up a project's `pmo/` folder and starter registers.
    `python3 ${CLAUDE_SKILL_DIR}/scripts/setup.py [--name TEXT] [--manager TEXT] [--priority-order LIST] [--week-start DAY] [--launcher]`
    Pass `--week-start` when it is not Monday. Pass `--launcher` on an existing project to write or replace only `pmo/bin/pmo`.
 
+   **Script approvals (Claude Code).** The skill's pre-approval of its scripts lasts only for the turn that loads it; later messages prompt for every script call. After setup, offer to fix that: run `python3 ${CLAUDE_SKILL_DIR}/scripts/setup.py --permissions` (writes nothing), show the user the file (`.claude/settings.json` in this project, never the global settings) and the rules it prints, and ask one yes/no. Only on yes run it again with `--yes`. It adds rules and keeps everything else in the file. Offer it again after a skill update, because the rules name the skill's folder. Claude Code applies project rules only after the user has trusted the folder; if prompts continue, say so.
+
 4. **Verify and next steps**
    Run `python3 ${CLAUDE_SKILL_DIR}/scripts/render_views.py --check` to confirm registers and views are valid.
    Advise next steps:

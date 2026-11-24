@@ -128,6 +128,38 @@ class Setup(unittest.TestCase):
         out = tool("setup.py", self.root)[1]
         self.assertIn("pmo/bin/pmo render_views --check", out)
 
+    def test_permissions_write_creates_the_claude_folder(self):
+        code, out, err = tool("setup.py", self.root, "--permissions", "--yes")
+        self.assertEqual(code, 0, err)
+        self.assertTrue((self.root / ".claude/settings.json").is_file())
+
+    def test_permissions_show_then_write_keeps_other_settings(self):
+        import json
+        s = self.root / ".claude/settings.json"
+        s.parent.mkdir()
+        s.write_text(json.dumps({"enabledPlugins": {"x": True}, "permissions": {"allow": ["Bash(ls)"]}}))
+        code, out, err = tool("setup.py", self.root, "--permissions")
+        self.assertEqual(code, 0, err)
+        self.assertIn("ask the user", out)
+        self.assertEqual(json.loads(s.read_text())["permissions"]["allow"], ["Bash(ls)"])
+        code, out, err = tool("setup.py", self.root, "--permissions", "--yes")
+        data = json.loads(s.read_text())
+        self.assertEqual(data["enabledPlugins"], {"x": True})
+        self.assertEqual(data["permissions"]["allow"][0], "Bash(ls)")
+        self.assertTrue(any("where.py *" in r for r in data["permissions"]["allow"]))
+        self.assertTrue(any(r.startswith("Read(//") for r in data["permissions"]["allow"]))
+        n = len(data["permissions"]["allow"])
+        tool("setup.py", self.root, "--permissions", "--yes")
+        self.assertEqual(len(json.loads(s.read_text())["permissions"]["allow"]), n)
+
+    def test_permissions_refuse_a_broken_settings_file(self):
+        s = self.root / ".claude/settings.json"
+        s.parent.mkdir()
+        s.write_text("{nope")
+        code, out, err = tool("setup.py", self.root, "--permissions", "--yes")
+        self.assertEqual(code, 2)
+        self.assertEqual(s.read_text(), "{nope")
+
     def test_launcher_flag_on_existing_project(self):
         tool("setup.py", self.root, "--name", "Demo")
         (self.root / "pmo/bin/pmo").unlink()
