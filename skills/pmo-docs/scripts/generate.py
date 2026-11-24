@@ -897,10 +897,35 @@ def code_list(ids):
     return ", ".join(f"`{x}`" for x in ids) or "none"
 
 
+def _wbs_key(val):
+    if isinstance(val, str) and re.fullmatch(r"[0-9]+(?:\.[0-9]+)*", val):
+        return tuple(int(p) for p in val.split("."))
+    return None
+
+
+def _group_wbs(group_tasks):
+    codes = [t["wbs"] for t in group_tasks if _wbs_key(t.get("wbs")) is not None]
+    if not codes:
+        return None
+    if len(codes) == 1:
+        return codes[0]
+    parts = [c.split(".") for c in codes]
+    prefix = []
+    for col in zip(*parts):
+        if len(set(col)) == 1:
+            prefix.append(col[0])
+        else:
+            break
+    return ".".join(prefix) if prefix else min(codes, key=_wbs_key)
+
+
 @generator("scope-wbs")
 def generate_scope_wbs(ctx: Ctx) -> Filled:
     task_dropped = set(pc.statuses(ctx.cfg, "tasks", "closed")) - set(pc.statuses(ctx.cfg, "tasks", "done"))
-    tasks = sorted((t for t in ctx.data.get("tasks", []) if t.get("status") not in task_dropped), key=lambda t: id_number(t.get("id")))
+    tasks = sorted(
+        (t for t in ctx.data.get("tasks", []) if t.get("status") not in task_dropped),
+        key=lambda t: (_wbs_key(t.get("wbs")) is None, _wbs_key(t.get("wbs")) or (), id_number(t.get("id"))),
+    )
     reqs_of_task = {}
     for r in ctx.data.get("requirements", []):
         rt = r.get("related_tasks") or []
@@ -911,11 +936,23 @@ def generate_scope_wbs(ctx: Ctx) -> Filled:
     for t in tasks:
         groups.setdefault(str(t.get("group") or "no group"), []).append(t)
 
+    group_wbs_map = {g: _group_wbs(ts) for g, ts in groups.items()}
+    ordered_groups = sorted(
+        groups,
+        key=lambda g: (group_wbs_map[g] is None, _wbs_key(group_wbs_map[g]) or (), g == "no group", g),
+    )
+
     rows = []
-    for g in sorted(groups, key=lambda g: (g == "no group", g)):
-        owners = list(dict.fromkeys(pc.person(t.get("owner"), ctx.names) for t in groups[g] if t.get("owner")))
-        ids = list(dict.fromkeys([t.get("id") for t in groups[g]] + [r for t in groups[g] for r in reqs_of_task.get(t.get("id"), [])]))
-        rows.append([g, "; ".join(pc.inline(t.get("title") or "not recorded") for t in groups[g]),
+    for g in ordered_groups:
+        ts = groups[g]
+        owners = list(dict.fromkeys(pc.person(t.get("owner"), ctx.names) for t in ts if t.get("owner")))
+        ids = list(dict.fromkeys([t.get("id") for t in ts] + [r for t in ts for r in reqs_of_task.get(t.get("id"), [])]))
+        parts = [
+            f"{t['wbs']} {pc.inline(t.get('title') or 'not recorded')}" if _wbs_key(t.get("wbs")) is not None
+            else pc.inline(t.get("title") or "not recorded")
+            for t in ts
+        ]
+        rows.append([group_wbs_map[g] or "not set", g, "; ".join(parts),
                      ", ".join(owners) or "not set", "not set", code_list(ids)])
 
     notes = ["Work breakdown: the Milestone column is not set because tasks carry no milestone link"] if rows else []
@@ -924,7 +961,7 @@ def generate_scope_wbs(ctx: Ctx) -> Filled:
 
     return Filled(
         values={},
-        sections={"Work breakdown": pc.md_table(["Deliverable", "Parts", "Owner", "Milestone", "Tasks and requirements"], rows).strip()},
+        sections={"Work breakdown": pc.md_table(["WBS", "Deliverable", "Parts", "Owner", "Milestone", "Tasks and requirements"], rows).strip()},
         slots={},
         notes=notes,
     )

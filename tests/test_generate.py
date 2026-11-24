@@ -432,8 +432,23 @@ class TestGenerate(unittest.TestCase):
     def test_scope_wbs_groups_tasks_by_area(self):
         self._assert_generated_draft_placeholders(("scope-wbs",), {"deliverable", "exclusion", "assumption"})
         code, out, _ = tool("generate.py", self.root, "scope-wbs", "--stdout")
-        self.assertIn("| ui | Design login page; Pick a payment vendor | Bob Example | not set | `T-002`, `T-004`, `REQ-001` |", out)
-        self.assertIn("| docs | Write API outline | Alice Example | not set | `T-003` |", out)
+        self.assertIn("| not set | ui | Design login page; Pick a payment vendor | Bob Example | not set | `T-002`, `T-004`, `REQ-001` |", out)
+        self.assertIn("| not set | docs | Write API outline | Alice Example | not set | `T-003` |", out)
+
+    def test_scope_wbs_orders_by_wbs_when_present(self):
+        tasks_file = self.root / "pmo/registers/tasks.yaml"
+        tasks_file.write_text(
+            "tasks:\n"
+            '  - {id: T-001, title: Second deliverable, wbs: "2.1", team: platform, group: zeta, priority: low, owner: alice, status: not-started, period: 2026-03}\n'
+            '  - {id: T-002, title: First part, wbs: "1.1", team: web, group: alpha, priority: high, owner: bob, status: not-started, period: 2026-03}\n'
+            '  - {id: T-003, title: Second part, wbs: "1.2", team: web, group: alpha, priority: medium, owner: bob, status: not-started, period: 2026-03}\n',
+            encoding="utf-8",
+        )
+        code, out, err = tool("generate.py", self.root, "scope-wbs", "--stdout")
+        self.assertEqual(code, 0, err)
+        self.assertIn("| 1 | alpha | 1.1 First part; 1.2 Second part | Bob Example | not set | `T-002`, `T-003`, `REQ-001` |", out)
+        self.assertIn("| 2.1 | zeta | 2.1 Second deliverable | Alice Example | not set | `T-001` |", out)
+        self.assertLess(out.index("| 1 | alpha |"), out.index("| 2.1 | zeta |"))
 
     def test_work_order_lists_open_tasks_by_person_then_due_date(self):
         self._assert_generated_draft_placeholders(("work-order",), {"title", "purpose", "scope item", "criterion", "budget and constraints"})

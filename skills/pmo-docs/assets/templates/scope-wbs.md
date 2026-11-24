@@ -25,10 +25,10 @@ checks:
 - {{exclusion}}
 
 ## Work breakdown
-<!-- One row per deliverable: its parts, the owner (a name from the roster), the milestone it belongs to and the ids of the tasks and requirements behind it. -->
-| Deliverable | Parts | Owner | Milestone | Tasks and requirements |
-|-------------|-------|-------|-----------|------------------------|
-| {{deliverable}} | {{parts}} | {{lead}} | {{milestone title}} | {{ids}} |
+<!-- One row per deliverable: its optional WBS number (dot-separated like 1.2), name, parts, owner (a name from the roster), milestone and the ids of the tasks and requirements behind it. -->
+| WBS | Deliverable | Parts | Owner | Milestone | Tasks and requirements |
+|---|---|---|---|---|---|
+| {{wbs}} | {{deliverable}} | {{parts}} | {{lead}} | {{milestone title}} | {{ids}} |
 
 ## Assumptions
 <!-- What the scope relies on, one bullet each. Write "- None" when there are none. -->
