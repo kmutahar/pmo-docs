@@ -45,6 +45,16 @@ class Where(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.root.parent)
 
+    def test_vocab_prints_the_effective_words(self):
+        code, out, err = run(self.root, "--vocab")
+        self.assertEqual(code, 0, err)
+        self.assertIn("task_status: not-started, in-progress, blocked, done, dropped", out)
+
+    def test_a_short_type_name_resolves_to_the_one_type_that_ends_with_it(self):
+        code, out, err = run(self.root, "charter")
+        self.assertEqual(code, 0, err)
+        self.assertEqual(fields(out)["type"], "project-charter")
+
     def test_document_with_period(self):
         code, out, _ = run(self.root, "status-report", "2026-03")
         f = fields(out)

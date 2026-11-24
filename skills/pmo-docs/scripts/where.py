@@ -40,10 +40,17 @@ def main(argv=None):
                     help="also print source_hashes: the Finish value for the type's generated_from registers")
     ap.add_argument("--title", help="override the doc type's title in the file name")
     ap.add_argument("--lang", metavar="CODE", help="language code for a translation")
+    ap.add_argument("--vocab", action="store_true", help="print the effective vocabulary (defaults plus the project's overrides): status, level, kind and priority words (no type needed)")
     ap.add_argument("--delta", action="store_true", help="print what changed in the tasks, risks, issues and actions since the latest snapshot (no type needed)")
     ap.add_argument("--subproject", metavar="ID", help="for a per_subproject doc type: the sub-project the document is about")
     args = ap.parse_args(argv)
 
+    if args.vocab:
+        if not Path(args.project).is_dir():
+            ap.error(f"project folder not found: {args.project}")
+        for k, v in pc.load_config(args.project).get("vocab", {}).items():
+            print(f"{k}: {', '.join(map(str, v)) if isinstance(v, list) else v}")
+        return 0
     if args.delta:
         if not Path(args.project).is_dir():
             ap.error(f"project folder not found: {args.project}")
@@ -66,6 +73,8 @@ def main(argv=None):
 
     cfg = pc.load_config(args.project)
     doc_types = cfg.get("doc_types", {})
+    if args.type not in doc_types and len(m := [t for t in doc_types if t.endswith('-' + args.type)]) == 1:
+        args.type = m[0]  # `charter` means `project-charter`
     if args.type not in doc_types:
         ap.error(f"unknown doc type {args.type!r}; known types: {', '.join(sorted(doc_types))}")
 
