@@ -104,7 +104,7 @@ def main(argv=None):
         print("nothing changed: fix the errors, then run finish.py again")
         return 1
     pc.write(f, set_status(new, a.as_of.isoformat()))
-    print(f"finished: {rel}")
+    print(f"finished: {rel} (last_updated {a.as_of.isoformat()})")
     return 0
 
 
