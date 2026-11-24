@@ -193,6 +193,9 @@ class StructureCheck(unittest.TestCase):
         self.assertIn("{{placeholder}}", self.errs(GOOD.replace("period: 2026-03", 'period: "{{period}}"')))
         self.assertNotIn("{{placeholder}}", self.errs(GOOD + "\n```\n{{ok}}\n```\n"))
 
+    def test_placeholder_inside_an_html_comment_is_not_a_leftover(self):
+        self.assertNotIn("{{placeholder}}", self.errs(GOOD + "\n<!-- {{title}} names the work -->\n"))
+
     def test_front_matter_that_is_not_a_map_or_has_non_text_type(self):
         self.assertIn("not valid YAML", self.errs("---\n- a\n- b\n---\n# t\n"))
         self.assertIn("is not a doc type", self.errs(GOOD.replace("type: roadmap", "type: [roadmap]")))

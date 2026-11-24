@@ -243,7 +243,8 @@ def check_head(tfm, fm, errors, warns):
 
 def check_tail(text, body, errors, warns, draft, cfg=None):
     """Placeholders, HTML comments (a warning in a draft) and duplicate ids left in a document."""
-    if re.search(r"\{\{.*?\}\}", strip_fences(text)):
+    # comments in a draft may quote placeholders (templates explain them there), so only visible text counts
+    if re.search(r"\{\{.*?\}\}", re.sub(r"<!--.*?-->", "", strip_fences(text), flags=re.S)):
         errors.append("unreplaced {{placeholder}} left in text")
     if "<!--" in strip_fences(body):
         if draft:
