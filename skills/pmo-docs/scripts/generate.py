@@ -51,6 +51,7 @@ class Ctx:
     as_of: datetime.date
     data: dict[str, list[dict]]
     names: dict[str, str]
+    tasks: tuple = ()  # --task ids (work-order only)
 
 
 @dataclass
@@ -139,6 +140,9 @@ def period_tasks(ctx: Ctx) -> tuple[list[dict], list[str]]:
         elif due:
             d = pc.to_date(due)
             if ctx.window and d and ctx.window[0] <= d <= ctx.window[1]:
+                matching.append(t)
+        elif (dn := pc.to_date(t.get("done_on"))) and ctx.window:
+            if ctx.window[0] <= dn <= ctx.window[1]:
                 matching.append(t)
         else:
             unassigned.append(t)
@@ -971,6 +975,8 @@ def generate_scope_wbs(ctx: Ctx) -> Filled:
 def generate_work_order(ctx: Ctx) -> Filled:
     task_closed = pc.statuses(ctx.cfg, "tasks", "closed")
     open_tasks = [t for t in ctx.data.get("tasks", []) if t.get("status") not in task_closed]
+    if ctx.tasks:
+        open_tasks = [t for t in open_tasks if t.get("id") in ctx.tasks]
     by_person = {}
     for t in open_tasks:
         by_person.setdefault(pc.person(t.get("owner"), ctx.names), []).append(t)
@@ -1107,6 +1113,8 @@ def main(argv=None) -> int:
     ap.add_argument("--as-of", type=pc.as_of, default=datetime.date.today(),
                     metavar="YYYY-MM-DD", help="date to evaluate period against (default: today)")
     ap.add_argument("--subproject", metavar="ID", help="for a per_subproject doc type: the sub-project the document is about")
+    ap.add_argument("--title", help="file name title, as for where.py --title (a second document of one type, e.g. another work order)")
+    ap.add_argument("--task", action="append", default=[], metavar="ID", help="work-order only: list just this task (repeatable)")
     ap.add_argument("--stdout", action="store_true", help="print document to stdout instead of writing to disk")
     args = ap.parse_args(argv)
 
@@ -1190,6 +1198,7 @@ def main(argv=None) -> int:
         as_of=args.as_of,
         data=data,
         names=names,
+        tasks=tuple(args.task),
     )
 
     gen_fn = GENERATORS[args.type]
@@ -1228,7 +1237,7 @@ def main(argv=None) -> int:
                 new_fm = re.sub(r"^status:.*$", _add_hashes, fm_text, count=1, flags=re.M)
                 doc_text = "---\n" + new_fm + "\n---\n" + doc_text[m.end():]
 
-    rel_path = pc.doc_rel_path(cfg, args.type, period, args.as_of, subproject=args.subproject)
+    rel_path = pc.doc_rel_path(cfg, args.type, period, args.as_of, title=args.title, subproject=args.subproject)
     pc.check_inside(root, rel_path)
     target_path = root / rel_path
 

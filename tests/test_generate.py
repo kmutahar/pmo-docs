@@ -459,6 +459,25 @@ class TestGenerate(unittest.TestCase):
         self.assertLess(out.index("`T-002`"), out.index("`T-004`"))  # then by due date
         self.assertNotIn("`T-003`", out)  # done, so not open
 
+    def test_work_order_task_flag_keeps_only_the_named_tasks(self):
+        code, out, err = tool("generate.py", self.root, "work-order", "--as-of", "2026-03-15", "--stdout", "--task", "T-002")
+        self.assertEqual(code, 0, err)
+        self.assertIn("`T-002`", out)
+        self.assertNotIn("`T-001`", out)
+        self.assertNotIn("`T-004`", out)
+
+    def test_work_order_title_flag_names_the_file(self):
+        code, out, err = tool("generate.py", self.root, "work-order", "--as-of", "2026-03-15", "--title", "Work order - Login", "--task", "T-002")
+        self.assertEqual(code, 0, err)
+        self.assertTrue((self.root / "pmo/documents/Work order - Login.md").is_file())
+
+    def test_weekly_status_counts_a_done_task_with_no_period_or_due(self):
+        f = self.root / "pmo/registers/tasks.yaml"
+        f.write_text(f.read_text(encoding="utf-8") + "  - {id: T-099, title: Logo, team: platform, priority: low, owner: alice, status: done, done_on: 2026-03-12}\n", encoding="utf-8")
+        code, out, err = tool("generate.py", self.root, "status-report", "--week", "--as-of", "2026-03-12", "--stdout")
+        self.assertEqual(code, 0, err)
+        self.assertNotIn("no period or due date", err + out)
+
     def test_work_order_sorts_by_priority_then_due_date(self):
         tasks_file = self.root / "pmo/registers/tasks.yaml"
         tasks_file.write_text(
