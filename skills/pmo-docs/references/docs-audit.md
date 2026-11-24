@@ -6,7 +6,7 @@ Reads: pmo/config.yaml (paths, doc_types), `where.py` output, the audit scripts'
 
 # Recipe: docs-audit
 
-Run as `docs-audit [--fix]` (`--fix` is a recipe flag, not a script flag: `docs_audit.py` does not take it); the scope is every document unless the user names a folder. Produces a draft `docs-audit-report` for the current month. Draft only. The scripts check what a script can; you check the rest by reading.
+Run as `docs-audit [--fix]` (`--fix` is a recipe flag, not a script flag: `docs_audit.py` does not take it). Run `docs_audit.py` on its own, with no pipe or `tail`: exit 1 only means it found something, and its output is the report; the scope is every document unless the user names a folder. Produces a draft `docs-audit-report` for the current month. Draft only. The scripts check what a script can; you check the rest by reading.
 
 ## Steps
 
