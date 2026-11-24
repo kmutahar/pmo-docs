@@ -1,34 +1,28 @@
-# local-only: names that must never enter the repo (used by dev/scrub.sh)
-.scrub-names
-
-# python
-__pycache__/
-*.pyc
-.venv/
-venv/
-.pytest_cache/
-
-# editors and OS
+# Editors and OS
 .DS_Store
 .idea/
 .vscode/
 
-# agent session state and local tool caches
-.claude/settings.local.json
-graphify-out/
-tmp/
-.trail/
-/graft/
-claude-tests/
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
 
-# secrets
+# Local secrets and private data (never commit)
+.scrub-names
 .env
 .env.*
 *.pem
 *.key
-
-# a project's private working data must never live in this repo
 pmo/inbox/
 
-# eval run output
-evals/results/
+# Maintainer and agent local files
+.claude/settings.local.json
+.trail/
+claude-tests/
+.agy/
+.eval-runs/
+tmp/
+lessons.md
+memory.md
