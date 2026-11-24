@@ -188,6 +188,7 @@ python3 "$SKILL/scripts/render_views.py" --check
 | `render_views.py` | Validate registers and render the views and catalogue. |
 | `generate.py` | Pre-fill generated document types from registers. |
 | `where.py` | Print where a document, its template and its inputs live. |
+| `finish.py` | Finish steps 5 to 7 on one draft: strips template comments and `checks:`, runs the structure check, then sets `status: finished` and the date (writes only when the check passes). |
 | `snapshot.py` | Write the register hashes and the ids and statuses of tasks, risks, issues and actions to `pmo/snapshots/` (Finish does it); `where.py --delta` lists what changed since the last one. |
 | `overdue.py` | Print overdue tasks, actions, milestones, open issues and open risks. |
 | `team_review.py` | Print a review checklist per person (Markdown, or CSV with `--csv`; `--lang` for translated text); `--import FILE.csv` prints the changes a reviewer's CSV proposes. |

@@ -5,7 +5,7 @@ license: MIT
 compatibility: Needs Python 3.10 or newer on Linux or macOS (Windows through WSL). PyYAML is bundled; nothing to install. Works on the project in the current folder.
 metadata:
   version: "0.9.0"
-allowed-tools: Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/setup.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/where.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/render_views.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/renumber.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/migrate/*) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/generate.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/structure_check.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/parity_check.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/docs_audit.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/overdue.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/team_review.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/snapshot.py *) Bash(git status *) Bash(git log *) Bash(git diff *) Bash(git show *) Bash(git rev-parse *) Bash(git tag --list *)
+allowed-tools: Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/setup.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/where.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/render_views.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/renumber.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/migrate/*) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/generate.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/structure_check.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/parity_check.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/docs_audit.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/overdue.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/team_review.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/snapshot.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/finish.py *) Bash(git status *) Bash(git log *) Bash(git diff *) Bash(git show *) Bash(git rev-parse *) Bash(git tag --list *)
 
 ---
 
@@ -136,9 +136,9 @@ Finish turns a draft into a finished document. It is defined here once; recipes 
 2. Run `where.py <type> [period] [--week] [--as-of DATE] [--title TEXT] --hashes`, with the period the document was drafted for (see Documents), with the same title the draft was made with, and read `template_version`, `generated_from`, the template path and `source_hashes`.
 3. Copy `template_version` from the winning template into the front matter.
 4. Record `source_hashes` in the front matter: copy the `source_hashes:` line `where.py --hashes` printed (format as today). If the draft already records `source_hashes` and a value differs from what `where.py` printed, the draft is behind its registers: ask whether to refresh it or to finish anyway, and replace the recorded value only after that answer.
-5. Remove every HTML comment and the `checks:` block from the document.
-6. Run `structure_check.py <file>`. Fix errors until it reports none; report warnings. The document is still a draft here, so a template-comment warning means step 5 missed a comment: remove it and run the check again.
-7. Set `status: finished` and `last_updated` to today.
+5. Run `finish.py <file>` (add `--as-of DATE` when the user named a date to treat as today). It does steps 5 to 7: it removes every HTML comment (not inside code fences) and the `checks:` block, runs the structure check, and only when that reports no errors sets `status: finished` and `last_updated` to today. On errors it changes nothing: fix them and run it again; report warnings.
+6. (Done by `finish.py`: the structure check.)
+7. (Done by `finish.py`: the status and date.)
 8. Translations. `where.py` prints `translations` and `translate` for the type. `after-close`: skip, and say translation waits until the period closes (a type with no period counts as `in-period`). `in-period`: ask once, "Translate into <codes> now and finish them?"; on yes, for each language follow `references/translate.md` and Finish the translation: the steps above, with `where.py --lang <code> --hashes`, `source_hash` in place of `source_hashes`, and `parity_check.py` before `structure_check.py`.
 9. Snapshot. Run `snapshot.py` once for the Finish run (not for each translation). It writes `<paths.snapshots>/<today>.json`: each register's hash and, for tasks, risks, issues and actions, only ids and statuses. `where.py --delta` compares the registers with the latest earlier snapshot.
 
@@ -166,7 +166,8 @@ The scripts are in this skill's own folder, `scripts/` next to this file. Playbo
 |---|---|
 | `scripts/setup.py` | create `pmo/` (never overwrites) |
 | `scripts/where.py <type> [period]` | where a document, its template and its inputs live; `--hashes` adds the Finish `source_hashes`; `--lang CODE` gives a translation's paths and `source_hash`; `--delta` (no type) lists tasks, risks, issues and actions added, removed or changed in status since the latest earlier snapshot |
-| `scripts/snapshot.py` | write `<paths.snapshots>/<date>.json`: register hashes and entry ids with statuses (Finish step 9) |
+| `scripts/finish.py <file>` | Finish steps 5 to 7 on one draft: strip comments and `checks:`, structure check, set `status: finished` and the date (writes only when the check passes) |
+| `scripts/snapshot.py` | write `<paths.snapshots>/<date>.json`: register hashes and entry ids with statuses (Finish step 9; a second Finish on the same day replaces that day's file, and `--delta` then compares against the earlier ones) |
 | `scripts/generate.py <type> [period]` | pre-fill a document from registers (`generator: true` doc types) |
 | `scripts/render_views.py [--check]` | validate registers, write or compare views |
 | `scripts/renumber.py [<ID>] [--apply]` | fix duplicate ids after a merge; `--pad [--yes]` pads old ids to `project.id_width` |

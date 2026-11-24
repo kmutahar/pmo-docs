@@ -77,7 +77,7 @@ class SkillRules(unittest.TestCase):
         self.assertNotIn("ignore those", self._playbook("draft.md"))
         self.assertNotIn("are expected: report every other error", self._playbook("docs-audit.md"))
         _, text = self._skill()
-        self.assertIn("a template-comment warning means step 5 missed a comment", text)
+        self.assertIn("On errors it changes nothing: fix them and run it again", text)  # Finish never sets finished past structure errors
 
     def test_finish_step_2_takes_a_title(self):
         _, text = self._skill()
