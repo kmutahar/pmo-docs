@@ -42,7 +42,7 @@ When the default template advances its version, `docs_audit.py` reports drift. C
 3. For a new status or level, add its list under `vocab`.
 4. Run `render_views.py`. It checks the new register and writes its view.
 
-To add a field to an existing register, set `registers.<name>.fields` in the config. It is a list, so it replaces the default: repeat every field of the default list from `${CLAUDE_SKILL_DIR}/assets/config.default.yaml` and add the new one. The register's `enums` and `dates` are maps, so give only the new entries. Run `render_views.py`.
+To add a field to an existing register, set `registers.<name>.fields` in the config. It is a list, so it replaces the default: first read `${CLAUDE_SKILL_DIR}/assets/config.default.yaml` (never list fields from memory), then repeat every field of its default list and add the new one. Show the full resulting list and the file (`pmo/config.yaml`) as a plan, and write only after a yes. The register's `enums` and `dates` are maps, so give only the new entries. Run `render_views.py`.
 
 **Sub-projects.** For a project with parts that have their own stack or docs folder, list them under `subprojects` in the config (`api: {kind: backend, stack: laravel, docs_dir: docs/api}`; all three keys optional, `docs_dir` inside the project). To tag entries, add a `subproject` field to a register (tasks, issues, requirements) and `enums: {subproject: subprojects}`; validation then rejects a value that is not a listed id. Ids are lowercase; give a capitalised display form with `name`. To accept the ids plus other values (such as `shared`), use `enums: {subproject: {from: subprojects, extra: [shared]}}`.
 
