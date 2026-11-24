@@ -47,7 +47,7 @@ Use `pmo/bin/pmo publish [--as-of YYYY-MM-DD]` wherever the steps say `python3 $
    Mention any pre-existing changes in that repository and leave them untouched.
 
 7. **Reply**
-   Summarise what was copied, what was skipped and why, commit status, and links when `url` is configured.
+   Summarise what was copied, what was skipped and why, commit status, and links when `url` is configured. Include a short, copy-pasteable announcement message in each language published so the user can share it if they wish; never send or post it.
 
 ## Limits
 
