@@ -52,12 +52,12 @@ For each copy found:
 - Read `metadata.version` from its `SKILL.md`.
 - Record its absolute path.
 
-Read the release version from `https://raw.githubusercontent.com/kmutahar/pmo-docs/v0.9.0/skills/pmo-docs/SKILL.md` (or inspect the release archive tag `v0.9.0`).
+Read the release version from `https://raw.githubusercontent.com/kmutahar/pmo-docs/v1.0.0/skills/pmo-docs/SKILL.md` (or inspect the release archive tag `v1.0.0`).
 
 ### Determine the situation
 
 - **Case A: Copy already matches the release version:**
-  If the highest-precedence copy already has the release version (e.g. `0.9.0`), write nothing. Inform the user that the skill is up to date and proceed directly to Step 5 (Verification).
+  If the highest-precedence copy already has the release version (e.g. `1.0.0`), write nothing. Inform the user that the skill is up to date and proceed directly to Step 5 (Verification).
 - **Case B: Older copy found:**
   Show the installed version and the release version. Identify any files that differ. Name which copy that is: the launcher uses the highest-precedence copy, so update that one. If you install elsewhere, the higher-precedence older copy still wins and shadows the new one: say so and ask which to update, or suggest `PMO_DOCS_SKILL`. Ask the user for confirmation before replacing or updating it.
 - **Case C: Multiple copies with different versions:**
@@ -115,7 +115,7 @@ Restart Claude Code afterwards.
 *Note:* Never touch the Claude plugin cache by hand.
 
 ### For all other agents
-Download and extract the `skills/pmo-docs` folder from the GitHub release tag `v0.9.0` (for a project-level install, replace `~/.agents/skills` with `.agents/skills`):
+Download and extract the `skills/pmo-docs` folder from the GitHub release tag `v1.0.0` (for a project-level install, replace `~/.agents/skills` with `.agents/skills`):
 
 ```sh
 # Create parent directory
@@ -123,10 +123,10 @@ mkdir -p ~/.agents/skills
 
 # Download and extract the skill folder
 TMP_DIR=$(mktemp -d)
-curl -fsSL https://github.com/kmutahar/pmo-docs/archive/refs/tags/v0.9.0.tar.gz | tar -xz -C "$TMP_DIR" \
-  && [ -f "$TMP_DIR/pmo-docs-0.9.0/skills/pmo-docs/SKILL.md" ] \
+curl -fsSL https://github.com/kmutahar/pmo-docs/archive/refs/tags/v1.0.0.tar.gz | tar -xz -C "$TMP_DIR" \
+  && [ -f "$TMP_DIR/pmo-docs-1.0.0/skills/pmo-docs/SKILL.md" ] \
   && rm -rf ~/.agents/skills/pmo-docs \
-  && cp -R "$TMP_DIR"/pmo-docs-0.9.0/skills/pmo-docs ~/.agents/skills/pmo-docs
+  && cp -R "$TMP_DIR"/pmo-docs-1.0.0/skills/pmo-docs ~/.agents/skills/pmo-docs
 rm -rf "$TMP_DIR"
 ```
 
