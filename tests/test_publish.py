@@ -734,6 +734,27 @@ class Publish(unittest.TestCase):
             self.assertIn("escapes publish directory", err)
             self.assertFalse((self.root / "x").exists())
 
+    def test_layout_targeting_dot_git_exits_2_in_folder_and_repo_modes(self):
+        self.finish_decision_log()
+        base_cfg = (self.root / "pmo/config.yaml").read_text(encoding="utf-8")
+        pub_folder = self.root / "published"
+        (pub_folder / ".git").mkdir(parents=True)
+        ext_repo = self.tmp / "ext_git_repo"
+        ext_repo.mkdir()
+        subprocess.run(["git", "init", str(ext_repo)], check=True, capture_output=True)
+        for mode, path in (("folder", "published"), ("repo", str(ext_repo))):
+            with self.subTest(mode=mode):
+                (self.root / "pmo/config.yaml").write_text(
+                    base_cfg + f"\npublish:\n  mode: {mode}\n  path: '{path}'\n  layout: {{decision-log: .git/hooks}}\n",
+                    encoding="utf-8",
+                )
+                for args in ((), ("--apply",)):
+                    code, _, err = run(self.root, *args)
+                    self.assertEqual(code, 2, (mode, args))
+                    self.assertIn("escapes publish directory", err)
+                self.assertFalse((pub_folder / ".git/hooks/Decision log.md").exists())
+                self.assertFalse((ext_repo / ".git/hooks/Decision log.md").exists())
+
     def test_valid_finished_document_still_publishes(self):
         self.set_config("publish:\n  mode: folder\n  path: published\n")
         self.finish_decision_log()

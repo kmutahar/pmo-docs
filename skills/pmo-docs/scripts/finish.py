@@ -81,8 +81,8 @@ def main(argv=None):
     if not root.is_dir():
         ap.error(f"project folder not found: {a.project}")
     f = Path(a.file).resolve()
-    if root not in f.parents:
-        print(f"{a.file} is outside the project", file=sys.stderr)
+    if pc.outside(root, f):
+        print(f"{a.file} is outside the project or inside .git", file=sys.stderr)
         return 2
     if not f.is_file():
         print(f"{a.file} is not a file", file=sys.stderr)

@@ -152,9 +152,7 @@ def main(argv=None) -> int:
     classified = []
     for rel, f in candidates:
         target_f = target_dir / target_rel_of[rel]
-        try:
-            target_f.resolve().relative_to(target_dir)
-        except ValueError:
+        if pc.outside(target_dir, target_rel_of[rel]):
             print(f"ERROR target path for {rel!r} escapes publish directory", file=sys.stderr)
             return 2
 

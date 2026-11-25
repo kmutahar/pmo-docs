@@ -64,6 +64,19 @@ class Finish(unittest.TestCase):
         code, out, err = run(self.root, str(outside))
         self.assertEqual(code, 2)
 
+    def test_a_file_inside_dot_git_is_refused(self):
+        git_doc = self.root / ".git/x.md"
+        git_doc.parent.mkdir(parents=True)
+        shutil.copyfile(self.doc, git_doc)
+        code, _, err = run(self.root, str(git_doc))
+        self.assertEqual(code, 2)
+        self.assertIn(".git", err)
+        link = self.root / "pmo/documents/Link.md"
+        link.symlink_to(git_doc)
+        code, _, err = run(self.root, str(link))
+        self.assertEqual(code, 2)
+        self.assertIn(".git", err)
+
 
 if __name__ == "__main__":
     unittest.main()
