@@ -151,22 +151,6 @@ def main(argv=None):
 
     actions = []
 
-    cfg_file.parent.mkdir(parents=True, exist_ok=True)
-    mine = {
-        "schema_version": pc.SCHEMA_VERSION,
-        "project": {
-            "name": args.name,
-            "manager": args.manager,
-        },
-    }
-    if args.week_start != "monday":
-        mine["project"]["week_start"] = args.week_start
-    if priority_order is not None:
-        mine["vocab"] = {"priority_order": priority_order}
-
-    pc.safe_write(args.project, pc.CONFIG.as_posix(), pc.yaml.safe_dump(mine, sort_keys=False, allow_unicode=True))
-    actions.append(f"created: {pc.CONFIG.as_posix()}")
-
     reg_dir.mkdir(parents=True, exist_ok=True)
     for name, r in cfg.get("registers", {}).items():
         rf = r["file"]
@@ -223,6 +207,22 @@ def main(argv=None):
         shutil.copyfile(launcher_src, launcher_dest)
         launcher_dest.chmod(0o755)
         actions.append("created: pmo/bin/pmo")
+
+    cfg_file.parent.mkdir(parents=True, exist_ok=True)
+    mine = {
+        "schema_version": pc.SCHEMA_VERSION,
+        "project": {
+            "name": args.name,
+            "manager": args.manager,
+        },
+    }
+    if args.week_start != "monday":
+        mine["project"]["week_start"] = args.week_start
+    if priority_order is not None:
+        mine["vocab"] = {"priority_order": priority_order}
+
+    pc.safe_write(args.project, pc.CONFIG.as_posix(), pc.yaml.safe_dump(mine, sort_keys=False, allow_unicode=True))
+    actions.append(f"created: {pc.CONFIG.as_posix()}")
 
     out = io.StringIO()
     try:

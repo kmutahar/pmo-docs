@@ -363,6 +363,18 @@ class Setup(unittest.TestCase):
         self.assertIn("definition of done", text)
         self.assertIn("House rules and lookup", text)
 
+    def test_mid_setup_failure_leaves_no_config_and_recovers(self):
+        import setup
+        with mock.patch.object(setup.shutil, "copyfile", side_effect=OSError("disk full")):
+            with self.assertRaises(OSError):
+                setup.main(["--project", str(self.root), "--name", "Demo", "--manager", "Pat Example"])
+        self.assertFalse((self.root / "pmo/config.yaml").exists())
+        code, out, err = tool("setup.py", self.root, "--name", "Demo", "--manager", "Pat Example")
+        self.assertEqual(code, 0, out + err)
+        self.assertTrue((self.root / "pmo/config.yaml").exists())
+        self.assertTrue((self.root / "pmo/bin/pmo").is_file())
+        self.assertEqual(tool("render_views.py", self.root, "--check")[0], 0)
+
     def test_help(self):
         self.assertEqual(tool("setup.py", self.root, "--help")[0], 0)
 
