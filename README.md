@@ -285,12 +285,21 @@ For documents drafted from code (API reference, integration guide, architecture 
 | Stack | Name |
 | --- | --- |
 | Next.js | `nextjs` |
+| Nuxt | `nuxt` |
+| Angular | `angular` |
 | Express | `express` |
+| NestJS | `nestjs` |
 | ASP.NET Core | `aspnet-core` |
 | Spring Boot | `spring-boot` |
 | FastAPI (also covers Flask) | `fastapi` |
 | Django | `django` |
+| Laravel | `laravel` |
+| Ruby on Rails | `rails` |
+| Go | `go` |
 | Flutter | `flutter` |
+| React Native | `react-native` |
+| Android (Kotlin) | `android-kotlin` |
+| iOS (Swift) | `ios-swift` |
 
 To use another stack, write `pmo/playbooks/stacks/<stack>.md` with the standard six headings and `playbook_version: 1`. See [`skills/pmo-docs/references/extend.md`](skills/pmo-docs/references/extend.md).
 
