@@ -5,8 +5,12 @@ Not shipped. Linked from [`AGENTS.md`](../AGENTS.md) (which holds the standing r
 ## Checks
 
 ### Evals (heavy check)
+- Run the due evals from the repo root, keeping the output (zsh):
+  ```
+  dev/eval-sync 2>&1 | tee -a .eval-runs/sync.log
+  ```
 - Command: `dev/run-evals [--case <name>]... [--runs N] [--jobs N] [--out DIR]` (all cases, 4 at once, Sonnet as agent and judge; estimated ~$5 for a full run; Haiku fails 5 of 9 and splits judge votes).
-- Incremental runs: `dev/eval-sync` keeps `.eval-runs/status.md` (gitignored, created on first run) and runs only cases that are not-run, failed, partial or stale, once each per call; `--plan` previews, `--force CASE`, `--stale CASE` / `--stale-all` (a skill change only prints a warning), `--import RUN_DIR` records an old run. Cases needing more than one pass are listed in `dev/eval-runs-needed.txt`. A usage-limit error stops the sync and leaves those cases not-run.
+- Incremental runs: `dev/eval-sync` keeps `.eval-runs/status.md` (gitignored, created on first run) and runs due cases in priority order: `not-run`, then `partial` (to `pass` or `fail`), then `stale`, then `fail` (fewest `runs_done` first, then alphabetical); `--plan` previews, `--force CASE`, `--stale CASE` / `--stale-all` (a skill change only prints a warning), `--import RUN_DIR` records an old run. Cases needing more than one pass are listed in `dev/eval-runs-needed.txt`. A usage-limit error stops the sync and leaves those cases not-run.
 - Output folder: `~/pmo-eval-runs/<UTC time>/` holding `summary.log`, a throwaway plugin copy, and `plugin/`, and per case `cases/<case>/` with `eval.log`, `report.html`, `aggregate-result.json` and `sandbox-<n>/` (never run git inside a sandbox).
 - Why a throwaway copy: the plugin root is `skills/pmo-docs` and `claude plugin eval` needs `evals/` inside the plugin; running `claude plugin eval` from the repo root never fires the skill.
 - Single samples can flip: re-run a failing case before changing `SKILL.md`.

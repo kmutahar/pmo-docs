@@ -2,14 +2,17 @@
 """Maintainer tool: run only the evals that are due, and keep a table of results.
 
 Every due case is a real agent run and uses Claude usage. State lives in .eval-runs/status.md
-(gitignored, created on first run from the folders in evals/). One run per case per call:
+(gitignored, created on first run from the folders in evals/). Priority order:
 
-  not-run, stale, fail or partial (fewer passes than runs_needed) -> run once; pass -> skipped.
+  not-run -> partial (re-run until pass or fail) -> stale -> fail (fewest runs_done first, then alphabetical) -> --force on pass
+
+not-run, stale, fail and forced pass cases run at most once per call; partial cases keep running
+within the same call until they reach pass, fail, or hit an error/usage limit. pass cases are skipped.
 
 A case turns stale when its evals/<case>/ folder changes. A skill change only prints a warning
 (a script cannot tell which cases it affects): mark cases with --stale CASE or --stale-all.
 Counts above 1 come from dev/eval-runs-needed.txt (lines "case count"). Runs go in batches of --jobs
-cases; a batch that hits the usage limit stops the sync and its cases stay not-run.
+cases within one tier; a batch that hits the usage limit stops the sync and its cases stay not-run.
 """
 import argparse
 import hashlib
@@ -25,6 +28,37 @@ if sys.version_info < (3, 10):
 
 COLS = ["case", "status", "runs_done", "runs_needed", "passes", "case_hash", "skill_hash", "last_run", "notes"]
 DUE = {"not-run", "stale", "fail", "partial"}
+TIER_ORDER = ("not-run", "partial", "stale", "fail", "pass")
+
+
+def due_key(row):
+    """Sort key for planned due cases: tier, fewest runs_done for fail, then case name."""
+    status = row["status"]
+    tier = TIER_ORDER.index(status) if status in TIER_ORDER else len(TIER_ORDER)
+    return (tier, row["runs_done"] if status == "fail" else 0, row["case"])
+
+
+def next_batch(rows, cases, jobs, initial_fail, fail_ran, forced_pass, forced_ran, errored):
+    """Pick the next tier name and up to jobs cases to run."""
+    not_run = [c for c in cases if rows[c]["status"] == "not-run" and c not in errored]
+    if not_run:
+        return "not-run", not_run[:jobs]
+    partial = [c for c in cases if rows[c]["status"] == "partial" and c not in errored]
+    if partial:
+        return "partial", partial[:jobs]
+    stale = [c for c in cases if rows[c]["status"] == "stale" and c not in errored]
+    if stale:
+        return "stale", stale[:jobs]
+    failed = sorted(
+        (c for c in cases if rows[c]["status"] == "fail" and c in initial_fail and c not in fail_ran and c not in errored),
+        key=lambda c: (rows[c]["runs_done"], c),
+    )
+    if failed:
+        return "fail", failed[:jobs]
+    extra = [c for c in cases if c in forced_pass and c not in forced_ran and c not in errored]
+    if extra:
+        return "forced", extra[:jobs]
+    return None, []
 
 
 def files_under(root, prefix, skip=()):
@@ -206,13 +240,16 @@ def main():
         return 0
 
     forced = set(cases if a.force_all else a.force)
-    due = [c for c in cases if c in forced or rows[c]["status"] in DUE]
+    due = sorted(
+        (c for c in cases if c in forced or rows[c]["status"] in DUE),
+        key=lambda c: due_key(rows[c]),
+    )
     old_skill = [c for c in cases if rows[c]["skill_hash"] not in ("-", sh) and rows[c]["status"] == "pass"]
     write_table(table, rows)
     print(f"eval-sync: {len(due)} case(s) to run, {len(cases) - len(due)} skipped")
     for c in due:
         r = rows[c]
-        print(f"  {c}  ({r['status']}, {r['passes']}/{r['runs_needed']} passes)")
+        print(f"  {c}  ({r['status']}, {r['passes']}/{r['runs_needed']} passes, {r['runs_done']} run(s))")
     if old_skill:
         print(f"eval-sync: {len(old_skill)} passed case(s) last ran on an older skill version: {', '.join(old_skill)}")
         print("  retest the ones the change touches with --stale CASE (or --stale-all)")
@@ -221,17 +258,31 @@ def main():
 
     runner = shlex.split(a.runner) if a.runner else [str(root / "dev" / "run-evals")]
     stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
-    for i in range(0, len(due), a.jobs):
-        batch = due[i:i + a.jobs]
-        out = root / ".eval-runs" / "runs" / stamp / f"b{i // a.jobs + 1}"
+    initial_fail = {c for c in cases if rows[c]["status"] == "fail"}
+    forced_pass = {c for c in forced if rows[c]["status"] == "pass"}
+    fail_ran, forced_ran, errored = set(), set(), set()
+    batch_num = 0
+    while True:
+        tier, batch = next_batch(rows, cases, a.jobs, initial_fail, fail_ran, forced_pass, forced_ran, errored)
+        if not batch:
+            break
+        batch_num += 1
+        out = root / ".eval-runs" / "runs" / stamp / f"b{batch_num}"
         cmd = runner + [x for c in batch for x in ("--case", c)] + ["--jobs", str(a.jobs), "--out", str(out)]
         rc = subprocess.run(cmd).returncode
         if rc == 2:
             sys.exit("eval-sync: run-evals rejected its arguments (exit 2); table kept as is")
+        if tier == "fail":
+            fail_ran.update(batch)
+        elif tier == "forced":
+            forced_ran.update(batch)
         quota = False
         for c in batch:
+            before = rows[c]["runs_done"]
             runs = read_runs(out / "cases" / c)
             record(rows[c], runs, hashes[c], sh)
+            if rows[c]["runs_done"] == before:
+                errored.add(c)
             quota = quota or any(k == "error" and "limit" in m.lower() for k, m in runs)
         write_table(table, rows)
         if quota:
