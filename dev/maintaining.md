@@ -50,7 +50,7 @@ Rules in [`AGENTS.md`](../AGENTS.md) apply in full.
 2. `python3 -m unittest discover tests` and `bash dev/scrub.sh` pass; CI is green on `dev`.
 3. Heavy checks (the maintainer runs them): the evals and SkillSpector above, the walkthrough check, and the install check Parts 1 to 3 (local marketplace). Update the README agent table from the latest agent trial.
 4. `claude plugin validate .` and `claude plugin validate skills/pmo-docs` exit 0 (`dev/release` prints warnings and stops only on failure; read warnings); plugin listing shows each skill once.
-5. Dry runs: `dev/release --bump --dry-run`, then `dev/release --dry-run X.Y.Z` (in 0.x `--bump` proposes minor for `feat`/breaking, patch otherwise; 1.0.0 is explicit, `dev/release 1.0.0`, and the `cliff.toml` bump block needs revisiting after it). Verify the changelog reads well and has no private names or machine paths.
+5. Dry runs: `dev/release --bump --dry-run`, then `dev/release --dry-run X.Y.Z` (`--bump` follows SemVer via `cliff.toml`: major for breaking, minor for `feat`, patch otherwise). Verify the changelog reads well and has no private names or machine paths.
 6. Release (maintainer only): `dev/release X.Y.Z` (asks twice at the terminal; steps in `dev/release --help`).
    - The release commit holds only `CHANGELOG.md` and the four version files (`skills/pmo-docs/SKILL.md`, `skills/pmo-docs/.claude-plugin/plugin.json`, `README.md`, `docs/INSTALL_FOR_AGENTS.md`).
    - It pushes `dev` and the `v*` tag. `.github/workflows/release.yml` builds the release (fails if the changelog section is missing), then its `fast-forward-main` job moves `main` to the tag. Never commit to `main` directly or that job fails.
