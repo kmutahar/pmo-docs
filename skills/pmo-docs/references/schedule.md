@@ -62,7 +62,7 @@ Read `schedule:` from `pmo/config.yaml` and print a table of `Recipe` and `When`
 
 ## Stop a schedule ("stop X")
 
-Find the matching entry in `schedule:` in `pmo/config.yaml`, show the planned removal, and wait for a yes (`SKILL.md`, Safety rule 3). Remove the entry from `pmo/config.yaml`, then remind the user to delete the matching line from `crontab -e` (or cancel the job in their agent harness).
+Find the matching entry in `schedule:` in `pmo/config.yaml`, show the planned removal, and wait for a yes (`SKILL.md`, Safety rule 3). Remove the entry from `pmo/config.yaml`, then remind the user to delete the matching line from `crontab -e` (or remove the job in their agent harness).
 
 ## Do not
 
