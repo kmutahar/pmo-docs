@@ -22,7 +22,7 @@ The rules for translations live in `SKILL.md` (Translations) and `references/con
    - Translation exists and differs: bring it back in step (step 4). Never overwrite a translation the user edited by hand: show the difference and ask (`SKILL.md`, Working rules).
 
 4. **Bring back in step**
-   Run `python3 ${CLAUDE_SKILL_DIR}/scripts/parity_check.py "<translation>"`; its messages name the sections that differ in structure, ids or numbers. Read the original and the translation side by side for sections whose wording changed with no id or number change. List the sections you will update and wait for a yes. Update those sections only. Leave the user's own wording in the others.
+   Run `python3 ${CLAUDE_SKILL_DIR}/scripts/parity_check.py "<translation>"`; its messages name the sections that differ in structure, ids or numbers. Read the original and the translation side by side for sections whose wording changed with no id or number change. List the sections you will update and wait for a yes. Update those sections only. Leave the user's own wording in the others. If `parity_check.py` cannot run, compare by hand section by section (headings, table row counts, ids, dates, numbers), report each difference as "section: original X, translation Y", change nothing until the user says yes, and do not finish.
    When a reviewer gives feedback on a translation: if it is wording or phrasing only (same facts, numbers, dates and structure), edit only the translation; if it changes facts, numbers, dates or meaning, propose the change to the original (and the underlying register when it is register data), wait for a yes, update the original first, then bring the translation back in step.
 
 5. **Read the glossaries**

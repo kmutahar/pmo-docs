@@ -11,15 +11,15 @@ Run as `weekly-status [--week YYYY-Www]`. Produces a draft `status-report` for o
 ## Steps
 
 1. **Find the week and the paths**
-   With no `--week`, use the current week. Run `python3 ${CLAUDE_SKILL_DIR}/scripts/where.py status-report [YYYY-Www] --week`. Read the `window` line (`YYYY-MM-DD..YYYY-MM-DD`) from its output (`SKILL.md`, Documents). If the document exists, follow `references/draft.md` step 2.
+   With no `--week`, use the current week. Run `python3 ${CLAUDE_SKILL_DIR}/scripts/where.py status-report [YYYY-Www] --week`. Read the `window` line (`YYYY-MM-DD..YYYY-MM-DD`) from its output (`SKILL.md`, Documents). If `where.py` cannot run, work the window out by hand: the week starts on `project.week_start` (default Monday) and is named by the ISO week of its fourth day (2026-W10 is 2026-03-02 to 2026-03-08), take the path from `paths.documents` and `doc_types.status-report.name` in `pmo/config.yaml` over `assets/config.default.yaml`, and say the script checks were not run. If the document exists, follow `references/draft.md` step 2.
    Find the previous report in `paths.documents`: the status report of the week before, or the latest one. With none, say "first report, no comparison" and skip deltas.
 
 
 2. **Validate the registers**
-   Run `python3 ${CLAUDE_SKILL_DIR}/scripts/render_views.py --check`. Stop on errors.
+   Run `python3 ${CLAUDE_SKILL_DIR}/scripts/render_views.py --check`. Stop on register errors it reports. If the script cannot run, say the check was not run and carry on.
 
 3. **Draft with the generator**
-   If `doc_types.status-report.generator` is `true`, run `python3 ${CLAUDE_SKILL_DIR}/scripts/generate.py status-report [YYYY-Www] --week`. Its numbers, its blocked and overdue lists, its deltas and its RAG are the result: do not recount them by hand. Without the generator, use step 6.
+   If `doc_types.status-report.generator` is `true`, run `python3 ${CLAUDE_SKILL_DIR}/scripts/generate.py status-report [YYYY-Www] --week`. Its numbers, its blocked and overdue lists, its deltas and its RAG are the result when it ran: do not recount them by hand. Without the generator, or when it cannot run (a sandbox error is not a register error), do not stop: use step 6 by hand from the registers and say in the reply that the script checks were not run. For a week already over, the generator measures overdue and RAG at the window's last day (the earlier of that day and the as-of date), not at today.
    If a house rule replaces the RAG rule, recompute Overall, its reason and the RAG column of Progress by priority by that rule, and change the RAG line in Notes on data.
 
 4. **Git evidence (optional)**
@@ -30,11 +30,11 @@ Run as `weekly-status [--week YYYY-Www]`. Produces a draft `status-report` for o
    Fill only what the generator left: prose placeholders, `{{comment}}`-style cells, agent sections. Blockers are the blocked tasks plus the open items that need someone's decision.
 
 6. **Without the generator**
-   Only when `doc_types.status-report.generator` is not `true`: fill the status-report template (`references/draft.md` steps 4 to 8) from these, and write it to the path from step 1.
+   When `doc_types.status-report.generator` is not `true`, or it cannot run (leave `source_hashes` out and keep the draft): fill the status-report template (`references/draft.md` steps 4 to 8) from these, and write it to the path from step 1.
    - Count only tasks whose `period` is the month that holds at least 4 of the window's 7 days (the month of its fourth day; a task with no `period` counts when its `due` falls in the window, or, with no `due`, when its `done_on` does). Done tasks of earlier periods appear on one line ("completed before <period>: N") and stay out of totals, percentages and deltas.
-   - Compute totals and percentages per priority level and per team; blocked and overdue tasks (`python3 ${CLAUDE_SKILL_DIR}/scripts/overdue.py --as-of <last day of the window>`); milestones due in the next 14 days; the change since the previous report. A done task is new when its id is not in the previous report's Completed section.
-   - Risks and issues (changes since last report): `python3 ${CLAUDE_SKILL_DIR}/scripts/where.py --delta` lists the risks and issues added, removed or changed in status since the last snapshot (titles from the registers); with `delta: no snapshot`, list every open one and say so.
-   - Set the RAG as defined in `references/conventions.md` (evaluated with `pmo_common.rag`) and state the rule in Notes on data. A house rule can replace this rule.
+   - Compute totals and percentages per priority level and per team; blocked and overdue tasks (`python3 ${CLAUDE_SKILL_DIR}/scripts/overdue.py --as-of <last day of the window>`; if it cannot run, take the open tasks with a `due` before that day, and the blocked ones, from `tasks.yaml`); milestones due in the next 14 days; the change since the previous report. A done task is new when its id is not in the previous report's Completed section.
+   - Risks and issues (changes since last report): `python3 ${CLAUDE_SKILL_DIR}/scripts/where.py --delta` lists the risks and issues added, removed or changed in status since the last snapshot (titles from the registers); with `delta: no snapshot`, or when `where.py` cannot run, list every open one and say there is no snapshot comparison. Decisions and changes: list those whose `date` is inside the window.
+   - Set the RAG as defined in `references/conventions.md` (evaluated with `pmo_common.rag`, with blocked and overdue taken at the window's last day when that day is before the as-of date) and state the rule in Notes on data. A house rule can replace this rule.
 
 7. **Reply**
    Path, overall RAG and its reason, the three numbers that matter, the status changes waiting for the user's confirmation, and the next step: edit it, then say it is ready and Finish (`references/finish.md`).
