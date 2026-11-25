@@ -134,6 +134,10 @@ class SkillRules(unittest.TestCase):
         self.assertIn("the command patterns the agent may run without asking", text)
         self.assertNotIn("the exact commands the agent may run", text)
 
+    def test_register_py_is_pre_approved(self):
+        fm, _ = self._skill()
+        self.assertIn("scripts/register.py *)", fm["allowed-tools"])
+
     def test_default_config_comments_have_no_apostrophes(self):
         text = (pc.SKILL / "assets/config.default.yaml").read_text(encoding="utf-8")
         for lineno, line in enumerate(text.splitlines(), 1):

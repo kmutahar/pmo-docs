@@ -1,6 +1,6 @@
 # Privacy Policy
 
-Last updated: 2026-11-23 (UTC)
+Last updated: 2026-11-26 (UTC)
 
 pmo-docs is a project-office and documentation workflow packaged as an Agent Skill. It is a folder of instructions, templates and Python scripts. An AI agent that you run (for example Claude Code) reads the instructions and runs the scripts on your own machine. This page explains what that means for your data.
 
@@ -57,7 +57,7 @@ pmo-docs is a project-office tool for working professionals. It is not directed 
 
 ## 7. Security
 
-All processing happens on your machine under your user account, with the permissions your agent has. You keep control through your agent's permission prompts and the skill's rules: `SKILL.md` pre-approves the skill's own scripts (`setup.py`, `generate.py`, `render_views.py`, `renumber.py`, `migrate/*`, `snapshot.py` and the read-only checks) so they run without prompting, limited by the skill's rules (dry run first, ask before writing beyond the request).
+All processing happens on your machine under your user account, with the permissions your agent has. You keep control through your agent's permission prompts and the skill's rules: `SKILL.md` pre-approves the skill's own scripts (`setup.py`, `register.py`, `generate.py`, `finish.py`, `render_views.py`, `renumber.py`, `migrate/*`, `snapshot.py` and the read-only checks) so they run without prompting, limited by the skill's rules (dry run first, ask before writing beyond the request).
 
 - **Script write boundary:** the scripts only write inside the project folder, with one exception: publish `repo` mode copies finished documents into another local repository after your confirmation. Inside `pmo/`, scripts may also delete stale generated views (`render_views.py`), rename a register file or remove an old view during migration (`migrate/0002`), and append `.me` to `pmo/.gitignore` (`setup.py`). The scripts take `--project DIR`, which the agent passes only for the project folder or a folder you named.
 - **Publishing and commits:** publishing copies finished documents only after you say yes to the dry-run listing the agent shows you (both with `/pmo-docs:publish` and without the plugin, in `folder` and `repo` modes). In `repo` mode, the scripts only copy; the agent commits the copied files there only after a second yes (which can run that repository's own git hooks) and never pushes. Outside `repo` publishing it commits only when you ask for a commit in the conversation, and pushes only when you ask for exactly that.

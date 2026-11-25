@@ -147,6 +147,7 @@ class Setup(unittest.TestCase):
         self.assertEqual(data["enabledPlugins"], {"x": True})
         self.assertEqual(data["permissions"]["allow"][0], "Bash(ls)")
         self.assertTrue(any("where.py *" in r for r in data["permissions"]["allow"]))
+        self.assertTrue(any("register.py *" in r for r in data["permissions"]["allow"]))
         self.assertTrue(any(r.startswith("Read(//") for r in data["permissions"]["allow"]))
         n = len(data["permissions"]["allow"])
         tool("setup.py", self.root, "--permissions", "--yes")

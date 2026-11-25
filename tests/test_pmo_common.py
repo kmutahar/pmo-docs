@@ -759,7 +759,7 @@ class EveryTool(unittest.TestCase):
         return p.returncode, p.stdout + p.stderr
 
     def test_every_tool_answers_help(self):
-        for name in TOOLS + ["renumber.py", "publish.py"]:
+        for name in TOOLS + ["renumber.py", "publish.py", "finish.py", "register.py"]:
             code, out = self.run_tool(name, "--help")
             self.assertEqual(code, 0, name)
             self.assertIn("usage", out.lower(), name)

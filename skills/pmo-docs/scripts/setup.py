@@ -21,7 +21,7 @@ import render_views  # noqa: E402
 
 
 ALLOW_SCRIPTS = ("where", "render_views", "structure_check", "docs_audit", "parity_check",
-                 "overdue", "team_review", "generate", "snapshot", "finish")
+                 "overdue", "team_review", "generate", "snapshot", "finish", "register")
 SETTINGS = ".claude/settings.json"
 
 

@@ -5,7 +5,7 @@ license: MIT
 compatibility: Needs Python 3.10 or newer on Linux or macOS (Windows through WSL). PyYAML is bundled; nothing to install. Works on the project in the current folder.
 metadata:
   version: "1.0.0"
-allowed-tools: Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/setup.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/where.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/render_views.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/renumber.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/migrate/*) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/generate.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/structure_check.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/parity_check.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/docs_audit.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/overdue.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/team_review.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/snapshot.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/finish.py *) Bash(git status *) Bash(git log *) Bash(git diff *) Bash(git show *) Bash(git rev-parse *) Bash(git tag --list *)
+allowed-tools: Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/setup.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/where.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/render_views.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/renumber.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/register.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/migrate/*) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/generate.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/structure_check.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/parity_check.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/docs_audit.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/overdue.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/team_review.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/snapshot.py *) Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/finish.py *) Bash(git status *) Bash(git log *) Bash(git diff *) Bash(git show *) Bash(git rev-parse *) Bash(git tag --list *)
 
 ---
 
@@ -170,6 +170,7 @@ The scripts are in this skill's own folder, `scripts/` next to this file. Playbo
 | `scripts/snapshot.py` | write `<paths.snapshots>/<date>.json`: register hashes and entry ids with statuses (Finish step 9; a second Finish on the same day replaces that day's file, and `--delta` then compares against the earlier ones) |
 | `scripts/generate.py <type> [period]` | pre-fill a document from registers (`generator: true` doc types) |
 | `scripts/render_views.py [--check]` | validate registers, write or compare views |
+| `scripts/register.py set <register> <id> field=value [...]` | update fields on one existing register entry (uses `slug` for `roster`, `<period>/<person>` for `capacity`), validates before writing |
 | `scripts/renumber.py [<ID>] [--apply]` | fix duplicate ids after a merge; `--pad [--yes]` pads old ids to `project.id_width` |
 | `scripts/migrate/NNNN_*.py` | move a project to the next `schema_version` when `setup.py` says a migration is due (`references/conventions.md`) |
 | `scripts/structure_check.py [--suggest] [files]` | check documents against their template; `--suggest` hints at missing headings |
