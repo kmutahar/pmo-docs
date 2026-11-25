@@ -1,7 +1,10 @@
 # Tests and the generic privacy scrub on every push and pull request.
 # The names list (.scrub-names) never leaves the maintainer's machine, so CI checks generic patterns only.
 name: ci
-on: [push, pull_request]
+on:
+  push:
+    branches: ["**"]
+  pull_request:
 permissions:
   contents: read
 jobs:
