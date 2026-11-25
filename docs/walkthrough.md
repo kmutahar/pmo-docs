@@ -303,7 +303,7 @@ A type that is not translated refuses the flag. The shipped defaults translate n
 ```
 $ python3 "$SKILL/scripts/where.py" docs-audit-report --lang ar
 usage: where.py [-h] [--project PROJECT] [--week] [--as-of YYYY-MM-DD]
-                [--hashes] [--title TITLE] [--lang CODE] [--delta]
+                [--hashes] [--title TITLE] [--lang CODE] [--vocab] [--delta]
                 [--subproject ID]
                 [type] [period]
 where.py: error: doc type 'docs-audit-report' has no translations configured

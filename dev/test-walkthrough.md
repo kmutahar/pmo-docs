@@ -47,7 +47,7 @@ echo "## 1"; run python3 "$SKILL/scripts/render_views.py" --check
 echo "## 2"; sed -i 's/\(id: T-002,.*\)status: not-started/\1status: done/' $T; run python3 "$SKILL/scripts/render_views.py" --check
 run python3 "$SKILL/scripts/render_views.py"; run python3 "$SKILL/scripts/render_views.py" --check
 sed -i 's/\(id: T-002,.*\)status: done/\1status: bogus/' $T; run python3 "$SKILL/scripts/render_views.py" --check
-sed -i 's/\(id: T-002,.*\)status: bogus/\1status: not-started/' $T; run python3 "$SKILL/scripts/render_views.py"
+sed -i 's/\(id: T-002,.*\)status: bogus/\1status: not-started/' $T; run python3 "$SKILL/scripts/render_views.py"; run python3 "$SKILL/scripts/render_views.py"
 echo "## 3"; run python3 "$SKILL/scripts/overdue.py" --as-of 2026-03-15
 echo "## 4"; run python3 "$SKILL/scripts/where.py" status-report 2026-03 --hashes
 echo "## 5"; run python3 "$SKILL/scripts/structure_check.py"
