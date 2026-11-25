@@ -60,6 +60,9 @@ class DraftTechnical(unittest.TestCase):
         for heading in HEADINGS:
             self.assertIn(heading, self.text)
 
+    def test_shows_drafted_stack_file_before_writing(self):
+        self.assertIn("show the drafted stack file to the user and write it only after they say yes", self.text)
+
 
 if __name__ == "__main__":
     unittest.main()
