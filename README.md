@@ -85,7 +85,7 @@ Run these slash commands inside a Claude Code session (this installs the skill p
 /plugin install pmo-docs@pmo-docs
 ```
 
-This installs a copy of the skill folder only. The short form clones over SSH. Without an SSH key on GitHub, use the web address:
+This installs a copy of the skill folder only. The short form clones over SSH when an SSH key is set up for GitHub, and over HTTPS otherwise. To force HTTPS, use the web address:
 
 ```text
 /plugin marketplace add https://github.com/kmutahar/pmo-docs.git

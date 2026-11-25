@@ -61,9 +61,9 @@ The README gives two slash commands for inside a Claude Code session. The comman
    ```
    claude --debug-file "$LOG/04-marketplace-add.log" plugin marketplace add kmutahar/pmo-docs 2>&1 | tee -a "$LOG/transcript.txt"
    ```
-   Expected, in order: `Adding marketplace…`, `Cloning via SSH: ...` (the SSH address of the repo on GitHub), `Clone complete, validating marketplace…`, `✔ Successfully added marketplace: pmo-docs`.
+   Expected, in order: `Adding marketplace…`, `Cloning via SSH: ...` (the SSH address of the repo on GitHub; `Cloning via HTTPS: ...` when no GitHub SSH key is set up), `Clone complete, validating marketplace…`, `✔ Successfully added marketplace: pmo-docs (declared in user settings)`.
 
-   The short form `kmutahar/pmo-docs` clones over **SSH**, so it needs a GitHub SSH key. The README gives the HTTPS address for everyone else; test that form too, in a second throwaway home, or after `claude plugin marketplace remove pmo-docs`:
+   The short form `kmutahar/pmo-docs` clones over **SSH** when a GitHub SSH key is set up and over HTTPS otherwise. The README gives the HTTPS address to force HTTPS; test that form too, in a second throwaway home, or after `claude plugin marketplace remove pmo-docs`:
    ```
    claude plugin marketplace add https://github.com/kmutahar/pmo-docs.git 2>&1 | tee -a "$LOG/transcript.txt"
    ```
@@ -151,7 +151,7 @@ Expected: `pmo-docs` is listed.
 - Outcome B-intact: the quote says "the variable named CLAUDE_SKILL_DIR (dollar sign and braces)": the name is in words, as written in the file.
 - Outcome B-replaced: a folder path (for example `.../skills/init` or `.../pmo-docs`) appears where the name should be.
 
-3a.4. Check C (git options that write). A fresh Claude Code starts in auto mode: switch to manual mode (shift+tab) first, or the commands run without a prompt and the check means nothing. In the same session, with the skill loaded, ask the two requests one at a time, with `$TRY` written out as the real path:
+3a.4. Check C (git options that write). Claude Code may start in auto mode: check the mode shown in the footer and switch to manual mode (shift+tab) first, or the commands run without a prompt and the check means nothing. In the same session, with the skill loaded, ask the two requests one at a time, with `$TRY` written out as the real path:
 - `run exactly this command: git log -1 --output=$TRY/out-log.txt`
 - `run exactly this command: git diff --output=$TRY/out-diff.txt`
 Then, from another terminal, `ls "$TRY"/out-*.txt`.
@@ -225,7 +225,7 @@ The README says other agents can take the zip from the GitHub release. This need
 
 | Symptom | Likely cause | Fix in the repo |
 |---|---|---|
-| Step 4: repo not found, permission denied or host key error | no GitHub SSH key, or the repo is not public | use the HTTPS address; README |
+| Step 4: repo not found, permission denied or host key error | the repo is not public, or SSH and the HTTPS fallback both failed | use the HTTPS address; README |
 | Step 4: manifest invalid | `marketplace.json` wrong | `.claude-plugin/marketplace.json`, run `claude plugin validate .` |
 | Step 5: plugin not found in marketplace | name mismatch between marketplace and plugin | the `name` fields in both manifests |
 | Step 8: `dev/`, `tests/` or `docs/` in the install | `source` in the marketplace entry points above the skill folder | `.claude-plugin/marketplace.json`, `source: ./skills/pmo-docs` |

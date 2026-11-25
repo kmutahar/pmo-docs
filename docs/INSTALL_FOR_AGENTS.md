@@ -95,7 +95,7 @@ Ask the user: *"Do you want to proceed with installing/updating pmo-docs?"*
 Once confirmed:
 
 ### For Claude Code
-For a fresh install from the terminal (the short form clones over SSH; without a GitHub SSH key, replace `kmutahar/pmo-docs` with `https://github.com/kmutahar/pmo-docs.git`):
+For a fresh install from the terminal (the short form clones over SSH when a GitHub SSH key is set up and over HTTPS otherwise; to force HTTPS, replace `kmutahar/pmo-docs` with `https://github.com/kmutahar/pmo-docs.git`):
 ```sh
 claude plugin marketplace add kmutahar/pmo-docs && claude plugin install pmo-docs@pmo-docs
 ```
