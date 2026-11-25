@@ -41,7 +41,7 @@ checks:
 | {{id}} | {{issue}} | {{severity}} | {{lead}} | {{status}} | {{raised}} |
 
 ## Gaps
-<!-- Requirements whose status is not closed with no linked test, or whose tests are all failed, blocked or planned; Gap is "no test", "test failed" or "test not run" and is required. Optional second paragraph for gaps against code when folders are named. -->
+<!-- Requirements whose status is not closed (default closed statuses: verified, dropped; see `closed:` in the config) with no linked test, or whose tests are all failed, blocked or planned; Gap is "no test", "test failed" or "test not run" and is required. Optional second paragraph for gaps against code when folders are named. -->
 | Requirement | Title | Priority | Gap |
 |---|---|---|---|
 | {{requirement}} | {{title}} | {{priority}} | {{gap}} |

@@ -28,7 +28,7 @@ last_updated: "{{date}}"
 - {{next outcome}} - {{date or period}}
 
 ## What we need from you
-<!-- Decisions, approvals, access or content the team is waiting for. Write "- None" when nothing is waiting. -->
+<!-- Decisions, approvals, access or content the team is waiting for. Include every proposed decision and proposed change in the decisions and changes registers. Write "- None" when nothing is waiting. -->
 - {{request}}
 
 ## Changes agreed
@@ -36,5 +36,5 @@ last_updated: "{{date}}"
 - {{change}}
 
 ## Open questions
-<!-- Points to confirm with the client. -->
+<!-- Points to confirm with the client, and any open high-impact risk that could move a date, in plain words (for example "The payment vendor may reply late, which could delay the vendor choice"). No ids. Do not invent questions the registers do not support. State an issue or risk only as the register records it: no cause, no fix under way, no forecast. -->
 - {{question}}
