@@ -189,4 +189,4 @@ Migrating an old document: run `structure_check.py --suggest <file>` (it writes 
 
 Migrating weekly documents: an old front-matter `period` that holds only the month (`2026-03`) must be rewritten to the week label (`2026-W10`, the ISO week of the week's fourth day) before `docs_audit.py` and the stale checks can place the document.
 
-Migrating the agent permissions: an old `.claude/settings.json` that allows `python3 pmo/tools/*.py` must allow the launcher instead (`Bash(pmo/bin/pmo:*)`), or every script asks for permission.
+Migrating the agent permissions: an old `.claude/settings.json` that allows `python3 pmo/tools/*.py` should be updated by running `setup.py --permissions` (which writes scoped per-script allow rules for the launcher), or every script asks for permission. Never allow a wildcard `Bash(pmo/bin/pmo:*)`, which would also pre-approve `publish --apply`, `setup`, and `renumber`.
