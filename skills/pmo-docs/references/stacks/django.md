@@ -2,8 +2,8 @@
 playbook_version: 1
 ---
 Detected by: manage.py, or requirements.txt / pyproject.toml containing "django" or "Django"
-Checked against: Django 6.1, URL dispatcher, Writing views, Models and migrations, User authentication, Django settings, 2026-11-11
-Unverified: DATABASES keys, client.get in tests, the Models and migrations page, DRF permission names
+Checked against: Django 6.1.3, URL dispatcher, Writing views, Class-based views, Models, Migrations, User authentication in Django, Using the Django authentication system, Django settings, Settings, Writing and running tests, Testing tools, DRF Testing, drf-spectacular, 2026-11-26
+Unverified: DRF permission_classes, pytest-django names, that manage.py spectacular needs no running server
 
 # Django
 
@@ -26,7 +26,7 @@ A high-level Python web framework with ORM, authentication and admin.
 
 ## Config and environments
 - **Look in:** settings.py, settings/*.py, .env.example, .env.sample, .env.template, DJANGO_SETTINGS_MODULE references
-- **Read:** setting names (ALLOWED_HOSTS, DATABASES keys); defined environments; read names from the example file only; key names only; stop reading a file if a value looks like a credential, and note it by file and line
+- **Read:** setting names (ALLOWED_HOSTS, DATABASES keys, MAILERS or EMAIL_*); defined environments; read names from the example file only; key names only; stop reading a file if a value looks like a credential, and note it by file and line
 - **Record as:** environments entries as proposals, variables as names
 
 ## Tests

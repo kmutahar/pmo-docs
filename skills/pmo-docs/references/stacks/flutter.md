@@ -2,8 +2,8 @@
 playbook_version: 1
 ---
 Detected by: pubspec.yaml with dependencies containing "flutter"
-Checked against: Flutter 3.47, Navigation and routing, Fetch data from the internet, State management, An introduction to widget testing, 2026-11-11
-Unverified: auto_route, GoRoute, --dart-define keys, dio and retrofit, drift, sqflite and hive paths
+Checked against: Flutter 3.50, Navigation and routing, Fetch data from the internet, State management, An introduction to widget testing, Check app functionality with an integration test, Set up Flutter flavors for Android, pub.dev (go_router, auto_route, dio, retrofit), 2026-11-26
+Unverified: onGenerateRoute, --dart-define keys, drift, sqflite and hive paths
 
 # Flutter
 

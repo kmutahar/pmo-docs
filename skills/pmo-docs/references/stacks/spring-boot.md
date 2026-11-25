@@ -2,8 +2,8 @@
 playbook_version: 1
 ---
 Detected by: pom.xml with spring-boot-starter or build.gradle with org.springframework.boot
-Checked against: Spring Boot 4.1, Building a RESTful Web Service, Spring Data JPA, Spring Security Architecture, Externalized Configuration, Actuator endpoints, 2026-11-11
-Unverified: springdoc /v3/api-docs, SPRING_PROFILES_ACTIVE, Flyway and Liquibase paths, test annotations other than @MockitoBean
+Checked against: Spring Boot 4.2.0, Externalized Configuration, Endpoints, Mappings, Testing Spring Boot Applications, Servlet Web Applications, Annotated Controllers, Functional Endpoints, SQL Databases, Initialize a Database, Spring Security Architecture, Java Configuration, Method Security, 2026-11-26
+Unverified: springdoc /v3/api-docs, SPRING_PROFILES_ACTIVE env var name, JPA relation annotations (@OneToMany/@ManyToOne), Liquibase migration path
 
 # Spring Boot
 
@@ -30,7 +30,7 @@ An opinionated framework for building production-ready applications on the JVM.
 - **Record as:** environments entries as proposals, variables as names
 
 ## Tests
-- **Look in:** src/test/java/**/*Test.java (JUnit 5, MockMvc, WebTestClient, @MockitoBean)
+- **Look in:** src/test/java/**/*Test.java (JUnit Jupiter / JUnit 6, MockMvc, WebTestClient, @MockitoBean)
 - **Read:** @Test methods, @SpringBootTest, @WebMvcTest, endpoint assertions
 - **Record as:** tests entries as proposals only when the user asks for them
 

@@ -2,8 +2,8 @@
 playbook_version: 1
 ---
 Detected by: pyproject.toml, requirements.txt or Pipfile containing "fastapi" or "flask"
-Checked against: FastAPI 0.162 and Flask 3.1, First Steps, Bigger Applications, Security and OAuth2, Application Configuration, 2026-11-11
-Unverified: the Security and OAuth2 page contents, flask routes, /openapi.json and /docs paths, Flask-Login and Flask-JWT-Extended names, test client calls
+Checked against: FastAPI 0.165.0 and Flask 3.1.3, First Steps, Bigger Applications - Multiple Files, Security, Security - First Steps, OAuth2 scopes, SQL (Relational) Databases, Response Model - Return Type, Settings and Environment Variables, Testing, Quickstart, Modular Applications with Blueprints, Configuration Handling, Testing Flask Applications, Command Line Interface, Flask-Login, Flask-JWT-Extended, 2026-11-26
+Unverified: flask routes (not on the Command Line Interface page), Flask-SQLAlchemy and Flask-Marshmallow names
 
 # FastAPI
 
@@ -11,15 +11,15 @@ A modern Python web framework for building APIs with type hints. Covers FastAPI 
 
 ## Routes, pages or screens
 - **Look in:** main.py, app/api/, routers/, api/v1/ (APIRouter, include_router)
-- **Read:** @app.get/post/put/delete, APIRouter decorators, path parameters, response_model, path:line
+- **Read:** @app.get/post/put/patch/delete, APIRouter decorators, path parameters, response_model, path:line
 - **Record as:** the endpoints or screens table of the document being drafted, each with path:line
 - **Flask:** app.py, routes.py; @app.route, Blueprint, register_blueprint, view functions
 
 ## Data models
-- **Look in:** models.py, schemas/, models/, schemas.py, database.py (SQLAlchemy, Pydantic, Alembic versions/)
-- **Read:** Pydantic BaseModel schemas, SQLAlchemy declarative models, fields, types, relations and enums
+- **Look in:** models.py, schemas/, models/, schemas.py, database.py (SQLAlchemy, SQLModel, Pydantic, Alembic versions/)
+- **Read:** Pydantic BaseModel schemas, SQLAlchemy declarative or SQLModel (table=True) models, fields, types, relations and enums
 - **Record as:** data models table with entity names, field lists, relations and lifecycle states
-- **Flask:** models.py with Flask-SQLAlchemy (db.Model, Column, relationship), Flask-Marshmallow schemas
+- **Flask:** models.py with Flask-SQLAlchemy (db.Model, mapped_column or Column, relationship), Flask-Marshmallow schemas
 
 ## Permissions and auth
 - **Look in:** auth/, security.py, dependencies.py, core/security.py
@@ -29,9 +29,9 @@ A modern Python web framework for building APIs with type hints. Covers FastAPI 
 
 ## Config and environments
 - **Look in:** core/config.py, config.py, .env.example, .env.sample, .env.template
-- **Read:** pydantic-settings BaseSettings classes, os.getenv calls; defined environments; read names from the example file only; key names only; stop reading a file if a value looks like a credential, and note it by file and line
+- **Read:** pydantic-settings BaseSettings classes (model_config env_file), os.getenv calls; defined environments; read names from the example file only; key names only; stop reading a file if a value looks like a credential, and note it by file and line
 - **Record as:** environments entries as proposals, variables as names
-- **Flask:** config.py, app.config.from_object/from_envvar, from_prefixed_env, FLASK_DEBUG (FLASK_ENV was removed in Flask 2.3; never open `instance/config.py`, which holds local deployment secrets)
+- **Flask:** config.py, .flaskenv, app.config.from_object/from_envvar, from_prefixed_env, FLASK_DEBUG (FLASK_ENV was removed in Flask 2.3; never open `instance/config.py`, which holds local deployment secrets)
 
 ## Tests
 - **Look in:** tests/, test_*.py, *_test.py (pytest, conftest.py, fixtures)

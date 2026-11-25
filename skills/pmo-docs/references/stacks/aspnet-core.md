@@ -2,8 +2,8 @@
 playbook_version: 1
 ---
 Detected by: *.csproj with Microsoft.AspNetCore.App or PackageReference to Microsoft.AspNetCore
-Checked against: ASP.NET Core 10.0 (LTS), Overview of ASP.NET Core MVC, Minimal APIs overview, Authentication and authorization, Configuration in ASP.NET Core, 2026-11-11
-Unverified: ASP.NET Core 11.0 changes, MapGroup, test project conventions
+Checked against: ASP.NET Core 10.0 (LTS) and 11.0 (STS), Overview of ASP.NET Core MVC, APIs overview, Minimal APIs quick reference, Overview of ASP.NET Core authentication, Introduction to authorization in ASP.NET Core, Configuration in ASP.NET Core, ASP.NET Core runtime environments, OpenAPI support in ASP.NET Core API apps, Generate OpenAPI documents, Integration tests in ASP.NET Core, 2026-11-26
+Unverified: NUnit and MSTest project conventions, Swashbuckle /swagger/v1/swagger.json path
 
 # ASP.NET Core
 
@@ -25,7 +25,7 @@ A cross-platform framework for building modern web applications and APIs with .N
 - **Record as:** permissions entries as proposals (origin: proposed), roles compared with domain.roles
 
 ## Config and environments
-- **Look in:** appsettings.json, appsettings.*.json, launchSettings.json
+- **Look in:** appsettings.json, appsettings.*.json, Properties/launchSettings.json
 - **Read:** configuration keys and connection string names; ASPNETCORE_ENVIRONMENT profiles; key names only; stop reading a file if a value looks like a credential, and note it by file and line
 - **Record as:** environments entries as proposals, variables as names
 
@@ -35,5 +35,5 @@ A cross-platform framework for building modern web applications and APIs with .N
 - **Record as:** tests entries as proposals only when the user asks for them
 
 ## List the API live
-- **Ask first:** OpenAPI endpoint (/openapi/v1.json or /swagger/v1/swagger.json) when app is running
+- **Ask first:** OpenAPI endpoint (/openapi/v1.json or /swagger/v1/swagger.json; MapOpenApi is Development only by default) when app is running
 - **Without running:** read the routes found above and say the list was read from the code, not run

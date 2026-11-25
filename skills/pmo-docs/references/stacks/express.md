@@ -2,8 +2,8 @@
 playbook_version: 1
 ---
 Detected by: package.json dependencies containing "express"
-Checked against: Express 5, Routing, Router, Using Middleware, 2026-11-11
-Unverified: Passport and JWT names, test tools, NODE_ENV, Express 5 path syntax changes (for example wildcards need a name)
+Checked against: Express 5.3.0, Routing, Using middleware, Upgrade to Express v5, 2026-11-26
+Unverified: Passport and JWT names, test tools, NODE_ENV
 
 # Express
 
@@ -11,7 +11,7 @@ A minimalist web framework for Node.js routing and middleware.
 
 ## Routes, pages or screens
 - **Look in:** app.js, server.js, index.js, src/index.*, routes/, src/routes/, controllers/
-- **Read:** app.METHOD, app.use with Router, router.METHOD, mount paths, path:line
+- **Read:** app.METHOD, app.use with Router, router.METHOD, mount paths, Express 5 path syntax (wildcards are named, `/*splat`; optional parts use `{}`), path:line
 - **Record as:** the endpoints or screens table of the document being drafted, each with path:line
 
 ## Data models

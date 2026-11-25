@@ -2,8 +2,8 @@
 playbook_version: 1
 ---
 Detected by: package.json dependencies containing "next"
-Checked against: Next.js 16, Project Structure, Route Handlers, Proxy, Environment Variables, Building your application, 2026-11-11
-Unverified: Pages Router paths, auth library file names (auth.ts, lib/auth.*), Prisma and Drizzle locations, test folders
+Checked against: Next.js 16.4, Project structure and organization (App and Pages Router), Route Handlers, proxy.js, How to use environment variables in Next.js, How to implement authentication in Next.js, Testing, 2026-11-26
+Unverified: auth library file names (auth.ts, lib/auth.*), Prisma and Drizzle locations, test folders
 
 # Next.js
 
@@ -20,7 +20,7 @@ A React framework for full-stack web applications with App Router and Pages Rout
 - **Record as:** data models table with entity names, field lists, relations and lifecycle states
 
 ## Permissions and auth
-- **Look in:** proxy.{js,ts} (named middleware.{js,ts} before Next.js 16), auth.ts, lib/auth.*, Server Actions session checks
+- **Look in:** proxy.{js,ts} (named middleware.{js,ts} before Next.js 16), auth.ts, lib/auth.*, lib/session.*, lib/dal.* (also under app/ or src/), Server Actions session checks
 - **Read:** how requests are authenticated, role verification logic, role names as spelled in code
 - **Record as:** permissions entries as proposals (origin: proposed), roles compared with domain.roles
 
