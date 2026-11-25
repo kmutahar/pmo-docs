@@ -1,29 +1,15 @@
 # SkillSpector baseline: findings reviewed and accepted.
 # Run: see dev/maintaining.md (SkillSpector).
 # Scan a clean copy (git archive HEAD skills/pmo-docs), not a working tree with __pycache__.
+# Order: by path (SKILL.md, assets/, references/, scripts/), then by rule id.
 version: 2
 rules:
-  - id: "LP1"
-    path: "*scripts/docs_audit.py"
-    reason: "Reads the project's documents to audit them; reading files is the job, and allowed-tools must not be widened to silence it"
-  - id: "LP1"
-    path: "*scripts/pmo_common.py"
-    reason: "Writes registers and views inside the configured paths, after the user agrees; writing files is the job"
-  - id: "AST7"
-    path: "*scripts/_vendor/yaml/*"
-    reason: "Vendored PyYAML. getattr only in token/event repr and the reader stream name; not user-controlled"
-  - id: "TP4"
-    path: "*scripts/_vendor/yaml/*"
-    reason: "Vendored PyYAML library code; it has no skill description to mismatch"
-  - id: "EA3"
-    path: "*scripts/_vendor/PyYAML-LICENSE"
-    reason: "False positive: the phrase 'NOT LIMITED TO' is licence text"
-  - id: "AST4"
-    path: "*scripts/publish.py"
-    reason: "Runs git rev-parse with an explicit argument list and no shell to verify publish targets"
-  - id: "LP1"
-    path: "*scripts/publish.py"
-    reason: "Uses urllib.parse.quote only to format printed URLs; makes no network requests"
+  # --- SKILL.md ---
+  - id: "P4"
+    path: "*SKILL.md"
+    reason: "The skill's own rule on how the agent asks the user questions; visible and user-facing, overrides nothing"
+
+  # --- assets/ ---
   - id: "LP1"
     path: "*assets/starter/bin/pmo"
     reason: "Launcher checks for SKILL.md and reads plugin.json in the plugin cache to find the installed skill; it only locates the skill and runs its scripts"
@@ -33,9 +19,51 @@ rules:
   - id: "P2"
     path: "*assets/templates/user-guide.md"
     reason: "Template section-guidance HTML comments shown in drafts and stripped on Finish; not hidden instructions"
+
+  # --- references/ ---
+  - id: "SQP-3"
+    path: "*references/draft.md"
+    reason: "Documented limit: generators write English only; other draft languages use the playbook and translate.md"
+  - id: "EA3"
+    path: "*references/schedule.md"
+    reason: "Warns that the scheduled run's Write and Edit grants are not limited to pmo/ so the user can decide; the skill installs nothing"
   - id: "RA2"
     path: "*references/schedule.md"
     reason: "Documents a crontab -e line for the user to add manually; the skill does not install cron jobs"
   - id: "RA2"
     path: "*references/stacks/flutter.md"
     reason: "Points the reader to iOS Info.plist for permission descriptions; does not create LaunchAgent plists"
+
+  # --- scripts/ ---
+  - id: "LP1"
+    path: "*scripts/docs_audit.py"
+    reason: "Reads the project's documents to audit them; reading files is the job, and allowed-tools must not be widened to silence it"
+  - id: "SQP-3"
+    path: "*scripts/generate.py"
+    reason: "Documented limit: generators write English only; the script exits 2 with the workaround instead of writing wrong-language text"
+  - id: "EA2"
+    path: "*scripts/migrate/*"
+    reason: "Migrations run only after the user's yes (references/setup.md); --yes passes that yes on a non-interactive shell; writes stay inside the project and git holds the undo"
+  - id: "LP1"
+    path: "*scripts/pmo_common.py"
+    reason: "Writes registers and views inside the configured paths, after the user agrees; writing files is the job"
+  - id: "AST4"
+    path: "*scripts/publish.py"
+    reason: "Runs git rev-parse with an explicit argument list and no shell to verify publish targets"
+  - id: "LP1"
+    path: "*scripts/publish.py"
+    reason: "Uses urllib.parse.quote only to format printed URLs; makes no network requests"
+  - id: "SDI-2"
+    path: "*scripts/setup.py"
+    reason: "setup.py --permissions writes nothing; only after the user says yes does --yes add the skill's own script and Read rules to the project .claude/settings.json (references/setup.md), keeping the rest of the file and writing nothing if it is unreadable"
+
+  # --- scripts/_vendor/ ---
+  - id: "EA3"
+    path: "*scripts/_vendor/PyYAML-LICENSE"
+    reason: "False positive: the phrase 'NOT LIMITED TO' is licence text"
+  - id: "AST7"
+    path: "*scripts/_vendor/yaml/*"
+    reason: "Vendored PyYAML. getattr only in token/event repr and the reader stream name; not user-controlled"
+  - id: "TP4"
+    path: "*scripts/_vendor/yaml/*"
+    reason: "Vendored PyYAML library code; it has no skill description to mismatch"

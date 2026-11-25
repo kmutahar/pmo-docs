@@ -17,14 +17,14 @@ Not shipped. Linked from [`AGENTS.md`](../AGENTS.md) (which holds the standing r
 - Authoring rules: pin today's date in prompts; name output files in prompts; `llm` graders see paths, not file text (unless `focus: {source: file}` is used); `max: 0` needs `min: 0`; keep grader text short and positive. Bash fails in the eval sandbox (`apply-seccomp ... setgroups`), so graders must not rely on Bash; `dontAsk` mode denies Glob/Grep in the skill folder, so playbooks name skill files by exact `${CLAUDE_SKILL_DIR}/...` path.
 
 ### SkillSpector (heavy check)
-- Scan a clean copy of the tracked files (a working tree with `__pycache__` gives false findings). From the repo root:
+- Before each release, run the free static scan (`--no-llm`, no usage) on a clean copy of the tracked files; a working tree with `__pycache__` gives false findings. From the repo root:
   ```sh
   scan=$(mktemp -d) && git archive HEAD skills/pmo-docs | tar -x -C "$scan"
-  SKILLSPECTOR_PROVIDER=claude_cli SKILLSPECTOR_MODEL=sonnet skillspector scan "$scan/skills/pmo-docs" --baseline "$PWD/dev/skillspector-baseline.yaml"
+  skillspector scan "$scan/skills/pmo-docs" --baseline "$PWD/dev/skillspector-baseline.yaml" --no-llm
   rm -rf "$scan"
   ```
-- A valid result is `SAFE` with full coverage and all LLM calls succeeded (`llm_calls_succeeded`); a cut-off run is not a result.
-- Haiku produces false positives on vendored PyYAML. Avoid apostrophes in `config.default.yaml` comments (they break the static parser). Every baseline entry needs a reason.
+- Every baseline entry needs a reason checked against the code. Never baseline AE1 (incomplete analysis): an AE1 on `scripts/docs_audit.py` from static parser limits is a known scanner limit, and any other AE1 is a failed scan. Avoid apostrophes in `config.default.yaml` comments (they break the static parser).
+- The LLM scan (about 450 `claude` calls) runs only after a big change to scripts, `SKILL.md` safety rules or `allowed-tools`, not in the routine.
 
 ### Install, walkthrough and agent checklists
 - **Install check:** [`dev/test-install.md`](test-install.md) — Parts 1–3 before a tag (local marketplace), Part 4 on the published release zip; uses a throwaway `CLAUDE_CONFIG_DIR`.
