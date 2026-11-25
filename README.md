@@ -321,7 +321,6 @@ See the Layout section of [`AGENTS.md`](AGENTS.md).
 - Several people can work on one project (see Working with git): duplicate ids fail validation (fix them with `renumber.py`) and views are deterministic. An `editor` field per draft gives a warning, not a lock.
 - Generators write English only. The agent drafts other languages, and parity checks compare structure, ids and numbers, not wording.
 - From `1.0`, the config format (`pmo/config.yaml`, `schema_version: 2`) and the register formats (`pmo/registers/*.yaml`) are stable. A project made with `1.x` keeps working with every later `1.x`: new keys and fields are optional, and a change that would invalidate an existing project waits for the next major version and ships with a migration script and an upgrade note in [`CHANGELOG.md`](CHANGELOG.md).
-- Until `1.0` the formats can change without a migration script.
 
 ## Contributing
 
