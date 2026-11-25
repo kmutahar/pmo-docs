@@ -5,7 +5,7 @@ allowed_tools: [Skill, Read, Write, Edit, Glob, Grep, Bash]
 tags: [track, git]
 ---
 
-Treat 2026-03-15 as today's date. A merge left a duplicate id in the tasks register. Running renumber.py gave this dry-run output:
+Treat 2026-03-15 as today's date. A merge left a duplicate id in the project office tasks register (pmo/). Running renumber.py gave this dry-run output:
 
 duplicate T-005 in pmo/registers/tasks.yaml
   keeps T-005  pmo/registers/tasks.yaml:6  "Write release notes"  owner alice

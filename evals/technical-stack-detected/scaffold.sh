@@ -10,3 +10,4 @@ printf '%s\n' 'API_KEY=Example-Key-zz-1234' > src/.env
 printf '%s\n' 'API_KEY=' > src/.env.example
 rm -f "pmo/documents/API reference.md"
 sed -i.bak 's/^  stacks: \[express\]/  stacks: []/' pmo/config.yaml && rm -f pmo/config.yaml.bak
+echo "sam" > pmo/.me
