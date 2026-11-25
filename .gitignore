@@ -21,6 +21,7 @@ pmo/inbox/
 .claude/settings.local.json
 .trail/
 claude-tests/
+.eval-runs/runs/
 .agy/
 .eval-runs/
 tmp/
