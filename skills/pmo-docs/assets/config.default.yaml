@@ -7,7 +7,7 @@ project:
   manager: null       # the project manager, asked by setup
   week_start: monday  # first day of a week: monday to sunday; a week is named by the ISO week of its fourth day
   id_width: 3         # minimum digits of an id number: T-001 (0 to 9; 0 = not padded; a longer number such as T-1000 is fine)
-  currency: null      # the project's currency as a 3-letter code (USD); a budget row with no currency uses it
+  currency: null      # the project currency as a 3-letter code (USD); a budget row with no currency uses it
   # Project currency units per 1 unit of a foreign currency a budget row names (EUR: 1.08). One entry per foreign currency in use.
   exchange_rates: {}
 
@@ -47,7 +47,7 @@ subprojects: {}
 # draft: the code of the language documents are written in. translations: the codes of the other languages.
 # Every code has a block: label (short name) and dir (ltr or rtl). Optional keys per language:
 #   glossary: term list, a Markdown file inside the project with an Approved and a Proposed section, and an optional Do not translate list
-#   names: a YAML file inside the project with the language's wording of register text (roster names, task titles)
+#   names: a YAML file inside the project with register text in that language (roster names, task titles)
 #   digits: the ten characters for 0 to 9, when the language does not write 0123456789
 #   connectors: the words for of, to and and between two numbers, as in 3 of 5
 #   separators: characters used as a decimal or thousands mark between digits (en has the comma; another draft language declares its own)
