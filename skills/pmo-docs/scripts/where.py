@@ -67,6 +67,8 @@ def main(argv=None):
         ap.error("title cannot be empty")
     if args.title is not None and "/" in args.title:
         ap.error("title cannot contain '/'")
+    if args.title is not None and (pc.BACKSLASH in args.title or ".." in args.title):
+        ap.error("title cannot contain '\\' or '..'")
 
     if not Path(args.project).is_dir():
         ap.error(f"project folder not found: {args.project}")

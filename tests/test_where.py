@@ -231,6 +231,13 @@ class Where(unittest.TestCase):
         code, _, err = run(self.root, "status-report", "2026-03", "--title", "a/b")
         self.assertEqual(code, 2)
         self.assertIn("title cannot contain '/'", err)
+        for bad in ("a\\b", "a..b"):
+            code, _, err = run(self.root, "status-report", "2026-03", "--title", bad)
+            self.assertEqual(code, 2, repr(bad))
+            self.assertIn("title cannot contain '\\' or '..'", err)
+        code, _, err = run(self.root, "status-report", "2026-03", "--title", "../escape")
+        self.assertEqual(code, 2)
+        self.assertIn("title cannot contain", err)
         for empty in ("", "   "):  # an empty title would give a name like "2026-03 - .md"
             code, _, err = run(self.root, "status-report", "2026-03", "--title", empty)
             self.assertEqual(code, 2, repr(empty))

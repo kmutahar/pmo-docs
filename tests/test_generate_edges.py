@@ -287,6 +287,16 @@ class Cli(unittest.TestCase):
         self.assertIn("must stay inside the project", err)
         self.assertFalse(outside_target.exists())
 
+    def test_title_with_traversal_or_empty_exits_2_without_writing(self):
+        before = sorted(p.name for p in self.docs.iterdir())
+        for bad in ("a/b", "a\\b", "../escape", "sub/../x", "", "   "):
+            with self.subTest(title=bad):
+                code, _, err = run(self.root, "work-order", "--title", bad)
+                self.assertEqual(code, 2, err)
+                self.assertIn("title", err)
+        self.assertEqual(sorted(p.name for p in self.docs.iterdir()), before)
+        self.assertFalse((self.root / "escape.md").exists())
+
 
 class Odd(unittest.TestCase):
     """Registers with entries the Acme data does not have: missing fields, odd shapes, dates outside the period."""

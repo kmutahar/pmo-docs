@@ -1118,6 +1118,11 @@ def main(argv=None) -> int:
     ap.add_argument("--stdout", action="store_true", help="print document to stdout instead of writing to disk")
     args = ap.parse_args(argv)
 
+    if args.title is not None and not args.title.strip():
+        ap.error("title cannot be empty")
+    if args.title is not None and ("/" in args.title or pc.BACKSLASH in args.title or ".." in args.title):
+        ap.error("title cannot contain '/', '\\' or '..'")
+
     root = Path(args.project).resolve()
     if not root.is_dir():
         ap.error(f"project folder not found: {args.project}")
@@ -1239,6 +1244,10 @@ def main(argv=None) -> int:
 
     rel_path = pc.doc_rel_path(cfg, args.type, period, args.as_of, title=args.title, subproject=args.subproject)
     pc.check_inside(root, rel_path)
+    docs_root = (root / cfg["paths"]["documents"]).resolve()
+    if pc.outside(docs_root, (root / rel_path).resolve()):
+        print(f"ERROR {rel_path}: must stay inside {cfg['paths']['documents']}", file=sys.stderr)
+        return 2
     target_path = root / rel_path
 
     if not args.stdout and target_path.exists():
