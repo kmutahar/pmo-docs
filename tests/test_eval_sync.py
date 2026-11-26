@@ -249,6 +249,57 @@ class EvalSync(unittest.TestCase):
         self.assertEqual(self.calls(), ["a b c"])
         self.assertEqual(self.table()["a"][1:5], ["not-run", "0", "1", "0"])
 
+    def test_case_filter_limits_plan_and_run_and_preserves_other_rows(self):
+        (self.root / "dev" / "eval-runs-needed.txt").write_text("b 2\n")
+        bad = self.sync("--case", "nope")
+        self.assertNotEqual(bad.returncode, 0)
+
+        plan = self.sync("--plan", "--case", "b")
+        self.assertEqual(plan.returncode, 1)
+        self.assertIn("1 case(s) to run, 0 skipped", plan.stdout)
+        planned = [line.split()[0] for line in plan.stdout.splitlines() if line.startswith("  ") and not line.startswith("  retest")]
+        self.assertEqual(planned, ["b"])
+
+        r = self.sync("--case", "b")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.calls(), ["b", "b"])
+        t = self.table()
+        self.assertEqual(t["b"][1:5], ["pass", "2", "2", "2"])
+        self.assertEqual(t["a"][1], "not-run")
+        self.assertEqual(t["c"][1], "not-run")
+
+    def test_import_updates_stale_partial_fail_and_forced_pass(self):
+        self.add_case("d")
+        (self.root / "dev" / "eval-runs-needed.txt").write_text("b 2\n")
+        self.set_status({
+            "a": ("stale", 0, 1, 0),
+            "b": ("partial", 1, 2, 1),
+            "c": ("fail", 1, 1, 0),
+            "d": ("pass", 1, 1, 1),
+        })
+        old = self.root / "old"
+        for c in ("a", "b", "c", "d"):
+            (old / "plugin" / "evals" / c).mkdir(parents=True)
+            (old / "plugin" / "evals" / c / "prompt.md").write_text(c)
+            d = old / "cases" / c
+            d.mkdir(parents=True, exist_ok=True)
+            (d / "aggregate-result.json").write_text(json.dumps({"cases": [{"arms": {"with": [{"passed": True, "error": None, "graders": []}]}}]}))
+        (old / "plugin" / "SKILL.md").write_text("v1")
+
+        r = self.sync("--import", str(old))
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("imported 3", r.stdout)
+        t = self.table()
+        self.assertEqual(t["a"][1:5], ["pass", "1", "1", "1"])
+        self.assertEqual(t["b"][1:5], ["pass", "2", "2", "2"])
+        self.assertEqual(t["c"][1:5], ["pass", "2", "1", "1"])
+        self.assertEqual(t["d"][1:5], ["pass", "1", "1", "1"])
+
+        r2 = self.sync("--import", str(old), "--force", "d", "--case", "d")
+        self.assertEqual(r2.returncode, 0, r2.stdout + r2.stderr)
+        self.assertIn("imported 1", r2.stdout)
+        self.assertEqual(self.table()["d"][1:5], ["pass", "1", "1", "1"])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -11,6 +11,8 @@ within the same call until they reach pass, fail, or hit an error/usage limit. p
 
 A case turns stale when its evals/<case>/ folder changes. A skill change only prints a warning
 (a script cannot tell which cases it affects): mark cases with --stale CASE or --stale-all.
+Use --case CASE (repeatable) to limit planning, running or importing to named cases; --import RUN_DIR
+updates due rows (or pass rows with --force).
 Counts above 1 come from dev/eval-runs-needed.txt (lines "case count"). Runs go in batches of --jobs
 cases within one tier; a batch that hits the usage limit stops the sync and its cases stay not-run.
 """
@@ -183,11 +185,12 @@ def record(row, runs, chash, shash):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--plan", action="store_true", help="print what would run and stop")
+    ap.add_argument("--case", action="append", default=[], metavar="CASE", help="limit to this case (repeatable)")
     ap.add_argument("--force", action="append", default=[], metavar="CASE", help="run this case even if done (repeatable)")
     ap.add_argument("--force-all", action="store_true", help="run every case")
     ap.add_argument("--stale", action="append", default=[], metavar="CASE", help="mark this case for retest (repeatable)")
     ap.add_argument("--stale-all", action="store_true", help="mark every case for retest")
-    ap.add_argument("--import", dest="import_dir", metavar="RUN_DIR", help="record results from an old run-evals folder, then stop (spends nothing)")
+    ap.add_argument("--import", dest="import_dir", metavar="RUN_DIR", help="record results from an old run-evals folder into due rows (or pass rows with --force), then stop (spends nothing)")
     ap.add_argument("--jobs", type=int, default=4, help="cases per batch and at once (default 4)")
     ap.add_argument("--root", default=str(Path(__file__).resolve().parent.parent), help="repo root (for tests)")
     ap.add_argument("--runner", default=None, help="command that runs cases (default: dev/run-evals)")
@@ -199,7 +202,7 @@ def main():
     cases = list_cases(evals)
     if not cases:
         sys.exit(f"eval-sync: no cases in {evals}")
-    for c in a.force + a.stale:
+    for c in a.case + a.force + a.stale:
         if c not in cases:
             sys.exit(f"eval-sync: no case {c}")
     needed = read_needed(root / "dev" / "eval-runs-needed.txt")
@@ -222,31 +225,38 @@ def main():
     for c in cases if a.stale_all else a.stale:
         reset(rows[c], "stale")
 
+    selected = sorted(set(a.case)) if a.case else cases
+    forced = set(selected if a.force_all else a.force)
+
     if a.import_dir:
         old = Path(a.import_dir)
         old_sh = skill_hash(old / "plugin", old / "plugin" / "examples" / "acme", skip=("evals", "examples"))
         n = 0
-        for c in cases:
-            if rows[c]["status"] != "not-run" or not (old / "cases" / c).is_dir():
+        for c in selected:
+            if not (old / "cases" / c).is_dir():
+                continue
+            if rows[c]["status"] not in DUE and c not in forced:
                 continue
             if case_hash(old / "plugin" / "evals", c) != hashes[c]:
                 print(f"eval-sync: skipped {c} (case changed since that run)")
                 continue
+            runs = read_runs(old / "cases" / c)
+            if rows[c]["status"] == "pass" and any(k != "error" for k, _ in runs):
+                reset(rows[c], "stale")
             before = rows[c]["runs_done"]
-            record(rows[c], read_runs(old / "cases" / c), hashes[c], old_sh)
+            record(rows[c], runs, hashes[c], old_sh)
             n += rows[c]["runs_done"] > before
         write_table(table, rows)
         print(f"eval-sync: imported {n} case(s) into {table}")
         return 0
 
-    forced = set(cases if a.force_all else a.force)
     due = sorted(
-        (c for c in cases if c in forced or rows[c]["status"] in DUE),
+        (c for c in selected if c in forced or rows[c]["status"] in DUE),
         key=lambda c: due_key(rows[c]),
     )
-    old_skill = [c for c in cases if rows[c]["skill_hash"] not in ("-", sh) and rows[c]["status"] == "pass"]
+    old_skill = [c for c in selected if rows[c]["skill_hash"] not in ("-", sh) and rows[c]["status"] == "pass"]
     write_table(table, rows)
-    print(f"eval-sync: {len(due)} case(s) to run, {len(cases) - len(due)} skipped")
+    print(f"eval-sync: {len(due)} case(s) to run, {len(selected) - len(due)} skipped")
     for c in due:
         r = rows[c]
         print(f"  {c}  ({r['status']}, {r['passes']}/{r['runs_needed']} passes, {r['runs_done']} run(s))")
@@ -254,16 +264,16 @@ def main():
         print(f"eval-sync: {len(old_skill)} passed case(s) last ran on an older skill version: {', '.join(old_skill)}")
         print("  retest the ones the change touches with --stale CASE (or --stale-all)")
     if a.plan or not due:
-        return 0 if all(r["status"] == "pass" for r in rows.values()) else 1
+        return 0 if all(rows[c]["status"] == "pass" for c in selected) else 1
 
     runner = shlex.split(a.runner) if a.runner else [str(root / "dev" / "run-evals")]
     stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
-    initial_fail = {c for c in cases if rows[c]["status"] == "fail"}
-    forced_pass = {c for c in forced if rows[c]["status"] == "pass"}
+    initial_fail = {c for c in selected if rows[c]["status"] == "fail"}
+    forced_pass = {c for c in forced if c in selected and rows[c]["status"] == "pass"}
     fail_ran, forced_ran, errored = set(), set(), set()
     batch_num = 0
     while True:
-        tier, batch = next_batch(rows, cases, a.jobs, initial_fail, fail_ran, forced_pass, forced_ran, errored)
+        tier, batch = next_batch(rows, selected, a.jobs, initial_fail, fail_ran, forced_pass, forced_ran, errored)
         if not batch:
             break
         batch_num += 1
@@ -288,7 +298,7 @@ def main():
         if quota:
             print("eval-sync: usage limit hit; stopped. Run again after the reset to continue.")
             break
-    return 0 if all(r["status"] == "pass" for r in rows.values()) else 1
+    return 0 if all(rows[c]["status"] == "pass" for c in selected) else 1
 
 
 if __name__ == "__main__":
